@@ -1,0 +1,16 @@
+<table cellspacing="0">
+        <thead>
+                <tr>
+                   <th>Repo Name</th><th>URL</th><th>Packages</th>
+                </tr>
+        </thead>
+    <tbody>
+    {% for repo in object_list %}
+                <tr class="{% cycle row1,row2 %}">
+                    <td><a href="{{ repo.get_absolute_url }}">{{ repo }}</a></td>
+                    <td><a href="{{ repo.url }}">{{ repo.url }}</a></td>
+                    <td>{{ repo.packages.count }}</td>
+                </tr>
+    {% endfor %}
+    </tbody>
+</table>

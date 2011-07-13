@@ -1,0 +1,106 @@
+{% extends "main.html" %}
+
+{% block title %}Host {{ host }} {% endblock %}
+
+{% block content_title %}Host Information{% endblock %}
+
+{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url host_list %}">Hosts</a> &rsaquo; {{ host }} {% endblock %}
+
+{% block content %}
+<div class="module">
+    <h2>{{host}}</h2>
+    <table>
+        <tr><td>Hostname</td><td> {{ host.hostname }} </td></tr>
+        <tr><td>Domain</td><td> <a href="{% url host_list %}?domain={{ host.domain.id }}">{{ host.domain }}</a> </td></tr>
+        <tr><td>Reporting IP Address</td><td> {{ host.ipaddress }} </td></tr>
+        <tr><td>Reverse DNS</td><td> {{ reversedns }} </td></tr>
+        <tr><td>OS</td><td> <a href="{{ host.os.get_absolute_url }}">{{ host.os }}</a> </td></tr>
+        <tr><td>OS Group</td><td> <a href="{{ host.os.osgroup.get_absolute_url }}">{{ host.os.osgroup }}</a> </td></tr>
+        <tr><td>Kernel</td><td> {{host.kernel }} </td></tr>
+        <tr><td>Architecture</td><td> {{ host.arch }} </td></tr>
+        <tr><td>Tags</td><td> <a href="{% url host_list %}?tag={{ host.tag }}">{{ host.tag }}</a> </td></tr>
+        <tr><td>Last Update</td><td> {{ host.lastreport }} </td></tr>
+        <tr><td>Updates Available</td><td> <a href="#updates">{{ host.updates.count }}</a> </td></tr>
+        <tr><td>Reboot Required</td><td> {{ host.reboot_required }} </td></tr>
+        <tr><td>Packages Installed</td><td> <a href="#installedpackages">{{host.packages.count}}</a> </td></tr>
+    </table>
+</div>
+<div class="module">
+    <h2>Last 3 reports</h2>
+    <table>
+    </table>
+</div>
+<div class="module" id="updates">
+    <h2>Updates Available</h2>
+    <table>
+        <thead>
+            <tr><th></th><th>Installed</th><th>Available</th></tr>
+        </thead>
+        {% for update in host.updates.select_related %}
+        <tr>
+            <td>
+            <span style="border-radius: 4px; display:block;
+            {% if update.security %}
+            background:#ff5555
+            {% else %}
+            background:#ff9933
+            {% endif %}
+            ">&nbsp;&nbsp;&nbsp;</span>
+            </td>
+            <td>
+                <a style="color:#222222" href="{{ update.oldpackage.name.get_absolute_url }}"> {{ update.oldpackage }} </a>
+            </td>
+            <td>
+                <a style="color:#222222" href="{{ update.newpackage.name.get_absolute_url }}"> {{ update.newpackage }} </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+<div class="module">
+    <h2>Repositories</h2>
+    <table>
+    {% with host.repos.select_related as hostrepos %}
+    {% with host.os.osgroup.repos.select_related as osrepos %}
+    {% if hostrepos or osrepos %}
+        <thead>
+            <tr>
+                <th>Name</th><th>URL</th>
+            </tr>
+        </thead>
+    {% else %}
+        <p>No repositories associated with this host yet.</p>
+    {% endif %}
+    {% for hostrepo in hostrepos %}
+        {% if hostrepo.arch == host.arch %}
+            <tr class="{% cycle row1,row2 %}">
+                <td> <a href="{{hostrepo.get_absolut_url}}">{{ hostrepo.name }}</a> </td><td> {{ hostrepo.url }} </td>
+            </tr>
+        {% endif %}
+    {% endfor %}
+    {% for osrepo in osrepos %}
+        {% if osrepo.arch == host.arch %}
+            <tr class="{% cycle row1,row2 %}">
+                <td> <a href="{{osrepo.get_absolute_url}}">{{ osrepo.name }}</a> </td><td> {{ osrepo.url }} </td>
+            </tr>
+        {% endif %}
+    {% endfor %}
+    {% endwith %}
+    {% endwith %}
+    </table>
+</div>
+<div class="module" id="installedpackages">
+    <h2>Installed Packages</h2>
+    <table>
+        <tr>
+            <td>
+            {% for package in host.packages.select_related %}
+            <span style="border-radius: 4px; margin: 2px 2px; padding:4px 4px; display:block; height:15px; float:left; {% cycle background:#bfdddd,background:#deeeee %}">
+            <a style="color:#222222" href="{{ package.name.get_absolute_url }}"> {{ package }} </a></span>
+            {% endfor %}
+            </td>
+        </tr>
+    </table>
+</div>
+{% endblock %}
+

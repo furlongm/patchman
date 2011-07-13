@@ -1,0 +1,64 @@
+{% extends "main.html" %}
+
+{% block title %}OS Group {{ osgroup }} {% endblock %}
+
+{% block content_title %}OS Group Information{% endblock %}
+
+{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url osgroup_list %}">OS Groups</a> &rsaquo; {{ osgroup }} {% endblock %}
+
+{% block content %}
+<div class="module">
+    <h2>{{ osgroup }} Details</h2>
+    <table>
+        <tr>
+            <td>Name</td><td> {{ osgroup.name }} </td>
+        </tr>
+    </table>
+</div>
+<div class="module">
+    {% if osgroup.repos.count == 0 %}
+    <h2>{{ osgroup }} has no Repositories</h2>
+{% else %}
+    <h2>{{ osgroup }} Repositories</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>Repo Name</th><th>URL</th><th>Packages</th>
+        </tr>
+        </thead>
+        {% for repo in osgroup.repos.select_related %}
+        <tr class="{% cycle row1,row2 %}">
+            <td><a href="{{ repo.get_absolute_url }}">{{ repo }}</a></td>
+            <td><a href="{{ repo.url }}">{{ repo.url }}</a></td>
+            <td>{{ repo.packages.count }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+{% endif %}
+            {% if user.is_authenticated %}
+                {% if perms.is_admin %}
+                <form action={{ request.path }} method="post">{% csrf_token %}
+                {{ form }}
+                <input type="submit" value="Add" />
+                </form>
+                {% endif %}
+            {% endif %}
+</div>
+<div class="module">
+    <h2>Operating Systems linked to OS Group {{ osgroup }}</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>OS Name</th>
+        </tr>
+        </thead>
+        {% for repo in osgroup.os_set.select_related %}
+        <tr class="{% cycle row1,row2 %}">
+            <td><a href="{{ repo.get_absolute_url }}">{{ repo }}</a></td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+{% endblock %}
+

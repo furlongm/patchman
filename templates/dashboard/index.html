@@ -1,0 +1,73 @@
+{% extends "main.html" %}
+{% load common %}
+{% block title %}Patchman Dashboard{% endblock %}
+
+{% block content_title %}{{ site.name }} Patch Management Dashboard{% endblock %}
+
+{% block breadcrumbs %}<a href="/">Home</a>{% endblock %}
+    
+{% block content %}
+<div id="content-main">
+  <div class="module">
+    <h2>Operating Systems not linked to any OS Group:</h2>
+        <table><tr><td>
+        {% for os in lonely_oses %}
+        <div style="border-radius: 4px; margin: 2px 2px; padding:4px 4px; display:block; height:15px; float:left; {% cycle background:#bfdddd,background:#deeeee %}">
+        <a style="color:#222222" href="{{ os.get_absolute_url }}">{{ os }}</a></div>
+        {% endfor %}
+        </td></tr></table>
+  </div>
+  <div class="module">
+    <h2>OS Groups with no repositories:</h2>
+        <table><tr><td>
+        {% for osgroup in norepo_osgroups %}
+        <div style="border-radius: 4px; margin: 2px 2px; padding:4px 4px; display:block; height:15px; float:left; {% cycle background:#bfdddd,background:#deeeee %}">
+        <a style="color:#222222" href="{{ osgroup.get_absolute_url }}">{{ osgroup }}</a></div>
+        {% endfor %}
+        </td></tr></table>
+  </div>
+  <div class="module">
+   	<h2>Hosts that have not reported in 2 weeks:</h2>
+        <table><tr><td>
+        {% for host in stale_hosts %}
+        <div style="border-radius: 4px; margin: 2px 2px; padding:4px 4px; display:block; height:15px; float:left; {% cycle background:#bfdddd,background:#deeeee %}">
+        <a style="color:#222222" href="{{ host.get_absolute_url }}">{{ host }}</a></div>
+        {% endfor %}
+        </td></tr></table>
+  </div>
+  <div class="module">
+    <h2>Hosts with security updates pending:</h2>
+        <table><tr><td>
+        {% for host in secupdate_hosts %}
+        <div style="border-radius: 4px; margin: 2px 2px; padding:4px 4px; display:block; height:15px; float:left; {% cycle background:#bfdddd,background:#deeeee %}">
+        <a style="color:#222222" href="{% url host_detail host.hostname %}">{{ host.hostname }} ({{ host.hostname__count }})</a></div>
+        {% endfor %}
+        </td></tr></table>
+  </div>
+  <div class="module">
+    <h2>Hosts with normal updates pending:</h2>
+        <table><tr><td>
+        {% for host in update_hosts %}
+        <div style="border-radius: 4px; margin: 2px 2px; padding:4px 4px; display:block; height:15px; float:left; {% cycle background:#bfdddd,background:#deeeee %}">
+        <a style="color:#222222" href="{% url host_detail host.hostname %}">{{ host.hostname }} ({{ host.hostname__count }})</a></div>
+        {% endfor %}
+        </td></tr></table>
+  </div>
+  <div class="module">
+    <h2>Hosts with no associated repositories:</h2>
+        <table><tr><td>
+        {% for host in norepo_hosts %}
+        <div style="border-radius: 4px; margin: 2px 2px; padding:4px 4px; display:block; height:15px; float:left; {% cycle background:#bfdddd,background:#deeeee %}">
+        <a style="color:#222222" href="{{ host.get_absolute_url }}">{{ host }}</a></div>
+        {% endfor %}
+        </td></tr></table>
+  </div>
+  <div class="module">
+    <h2>Unused repositories:</h2>
+  </div>
+  <div class="module">
+    <h2>Orphaned packages and updates (no repo or host contains them):</h2>
+  </div>
+
+</div>
+{% endblock %}

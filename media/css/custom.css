@@ -1,0 +1,72 @@
+/* Sam Morrison */
+
+.newsimg { float: left; padding-right: 10px; padding-bottom: 10px; }
+
+#news-detail { padding-left: 30px; padding-right: 30px; padding-bottom: 30px; padding-top: 15px;}
+
+#news-detail img { padding-top: 20px; padding-left: 30px; padding-right: 30px; }
+
+.caption { margin-left: 25px; padding-top: 0px; font-size: 8pt;}
+
+.important { color: red; font-weight: bolder; text-decoration: blink; }
+
+td.alt { color: silver; }
+td.right { text-align:right; }
+.middle { vertical-align:middle }
+
+
+#timesheet .weekend { background-color: silver !important; }
+#timesheet .today { background-color: #FF9933 !important; }
+#timesheet .holiday { background-color: green !important; }
+#timesheet td, th { padding-left: 0px; padding-right: 0px; text-align: center; }
+#timesheet input {  margin: 0px; }
+
+ul.biglist { padding: 10px; }
+.biglist li { font-size: 18px; padding: 10px; list-style-type:none; }
+
+#row1 tr { background:#EDF3FE; }
+#row2 tr { background:white; }
+
+.staffimg { float: right; padding-bottom: 10px; }
+
+ul.widelist { margin-left:0 !important; padding: 10px; }
+ul.widelist li { list-style-type:none; padding: 10px; }
+
+.big { font-size:16px; font-weight: bold; color:#666; margin-bottom: 3px; }
+
+ul.inline li { list-style-type:none;  display:inline; padding-right: 10px; }
+
+.response { color: #5f5f5f; font-style: italic; list-style-type:none; padding-top: 5px; padding-bottom: 15px; }
+
+.date { font-size: 10px; font-weight: normal; }
+
+div.form-row li { list-style-type:none; }
+
+.red { color: red; }
+.green { color: green; }
+.hidden { display: none; }
+
+a:link.active, a:visited.active { color: #666; text-decoration:none; }
+
+.yeslink { padding-left:12px; background:url(../img/admin/icon-yes.gif) 0 .2em no-repeat; }
+.nolink { padding-left:12px; background:url(../img/admin/icon-no.gif) 0 .2em no-repeat; }
+
+.paginator { padding: .25em .25em .6em .25em; }
+.paginate-pages { padding: 2px 3px; border: 1px solid #ddd;  }
+.paginate-first, .paginate-last { padding: 2px 6px; border: 1px solid #ddd; font-weight: bold; }
+.paginate-previous, .paginate-next { padding: 2px 3px; border: 1px solid #ddd; }
+.paginate-link { padding: 2px 4px; border: 1px solid #ddd; }
+.paginate-current { padding: 2px 4px; border: 1px solid #ddd; font-weight: bold; background:#417690; color:#f4f379; }
+
+.graph_key_red { background-color: red; }
+.graph_key_blue { background-color: blue; }
+.graph_key_green { background-color: green; }
+.graph_key_yellow { background-color: yellow; }
+.graph_key_orange { background-color: orange; }
+.graph_key_cyan { background-color: cyan; }
+.graph_key_magenta { background-color: magenta; }
+.graph_key_purple { background-color: purple; }
+.graph_key_grey { background-color: grey; }
+.graph_key_pink { background-color: pink; }
+
+.barwidth { padding-left: 0px; padding-right: 0px; margin: 0px; width: 100px; background-color: white; }

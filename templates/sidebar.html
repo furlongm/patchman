@@ -1,0 +1,16 @@
+{% load common %}
+<div id="content-related">
+  <div class="module">
+    <h2>links</h2>
+    <ul>
+      <li><h3><a class="{% active request "hosts/" %}" href="{% url host_list %}">Hosts</a></h3></li>
+      <li><h3><a class="{% active request "packages/" %}" href="{% url package_list %}">Packages</a></h3></li>
+      <li><h3><a class="{% active request "repos/" %}" href="{% url repo_list %}">Repos</a></h3></li>
+      <li><h3><a class="{% active request "os/" %}" href="{% url os_list %}">OS's</a></h3></li>
+      <li><h3><a class="{% active request "os/groups/" %}" href="{% url osgroup_list %}">OS Groups</a></h3></li>
+      {% if user.is_superuser %}
+      <li><h3><a href="{% url admin:index %}">Django Admin</a></h3></li>
+      {% endif %}
+    </ul>
+  </div>
+</div>
