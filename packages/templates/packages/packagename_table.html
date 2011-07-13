@@ -1,0 +1,14 @@
+<table cellspacing="0">
+        <thead>
+                <tr>
+                   <th>Package</th>
+                </tr>
+        </thead>
+    <tbody>
+    {% for package in object_list %}
+                <tr class="{% cycle row1,row2 %}">
+                    <td><a href="{{ package.get_absolute_url }}">{{ package }}</a></td>
+                </tr>
+    {% endfor %}
+    </tbody>
+</table>

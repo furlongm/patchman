@@ -1,0 +1,74 @@
+{% extends "main.html" %}
+
+{% block title %}Operating System {{ os }} {% endblock %}
+
+{% block content_title %}OS Information{% endblock %}
+
+{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url os_list %}">Operating Systems</a> &rsaquo; {{ os }} {% endblock %}
+
+{% block content %}
+<div class="module">
+<h2>{{ os }} Details</h2>
+<table>
+<tr><td>Name</td><td> {{ os.name }} </td></tr>
+<tr><td>OS Group</td><td><a href="{{ os.osgroup.get_absolute_url }}"> {{ os.osgroup }} </a></td></tr>
+</table>
+</div>
+<div class="module">
+<h2>{{ os }} Repositories</h2>
+<table>
+        <thead>
+                <tr>
+                    <th>Repo Name</th><th>URL</th><th>Packages</th>
+                </tr>
+        </thead>
+{% for repo in os.osgroup.repos.select_related %}
+                <tr class="{% cycle row1,row2 %}">
+                    <td><a href="{{ repo.get_absolute_url }}">{{ repo }}</a></td>
+                    <td><a href="{{ repo.url }}">{{ repo.url }}</a></td>
+                    <td>{{ repo.packages.count }}</td>
+                </tr>
+{% endfor %}
+</table>
+</div>
+<div class="module">
+<h2>Hosts where {{ os }} is installed</h2>
+    <table>
+        <tr><td>
+        {% for host in os.host_set.select_related %}
+            <div style="border-radius: 4px; margin: 2px 2px; padding:4px 4px; display:block; height:15px; float:left; {% cycle background:#bfdddd,background:#deeeee %}">
+            <a style="color:#222222" href="{{ host.get_absolute_url }}">{{ host }}</a></div>
+        {% endfor %}
+        </td></tr>
+    </table>
+</div>
+<div class="module">
+{% if os.osgroup == None %}
+    <h2>{{ os.name }} is not linked to any OS Group</h2>
+    {% if user.is_authenticated %}
+        {% if perms.is_admin %}
+        <form action={{ request.path }} method="post">{% csrf_token %}
+        {{ form }}
+            <input type="submit" value="Link" />
+        </form>
+        {% endif %}
+    {% endif %}
+{% else %}
+    <h2>Operating Systems linked to OS Group {{ os.osgroup }}</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>OS Name</th>
+                </tr>
+            </thead>
+            {% for repo in os.osgroup.os_set.select_related %}
+            <tr class="{% cycle row1,row2 %}">
+                 <td><a href="{{ repo.get_absolute_url }}">{{ repo }}</a></td>
+            </tr>
+            {% endfor %}
+        </table>
+{% endif %}
+</div>
+
+{% endblock %}
+

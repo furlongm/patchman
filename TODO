@@ -1,0 +1,13 @@
+fix reports/models to only use text
+fix database race conditions with django transaction support
+use querysets to update/remove packages from repos
+303 redirect for report upload
+install certs on clients, require tinyca? 
+use django tags for host tags
+fix web interface css (content_block in andsome)
+andsome paginator
+refactor to re-use code between scripts and models
+check database integrity script
+prettify repo urls
+allows repo urls to be added without binary-amd64/Packages.bz2 at the end
+fix memory leakage in patchman-tool (try -f -v -u with a lot of repos)

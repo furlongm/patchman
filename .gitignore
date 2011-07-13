@@ -1,0 +1,10 @@
+*~
+*.orig
+*.pyc
+*.rej
+tmp*
+*.pyc
+*.pyo
+*~
+#*
+.svn

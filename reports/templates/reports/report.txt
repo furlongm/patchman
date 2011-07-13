@@ -1,0 +1,12 @@
+The following data has been submitted for processing:
+host:    {{ data.host }}
+os:      {{ data.os }}
+kernel:  {{ data.kernel }}
+report:  {{ data.report }}
+proxy:   {{ data.proxy }}
+tag:     {{ data.tag }}
+version: {{ data.version }}
+packages:
+{% for p in packages %}{% for info in p %} {{ info }} |{% endfor %}
+{% endfor %}
+

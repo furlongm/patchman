@@ -1,0 +1,703 @@
+#!/usr/bin/env python
+
+from django.core.management import setup_environ
+
+import os
+import sys
+import MySQLdb
+import string
+import bz2
+import gzip
+import StringIO
+import re
+import hashlib
+import datetime
+import argparse
+from xml.dom.minidom import parse, parseString
+from lxml import etree
+from debian.debian_support import Version
+from urllib2 import Request, urlopen
+
+sys.path.append('/usr/local/src')
+
+os.environ['DJANGO_SETTINGS_MODULE'] = 'patchman.settings'
+
+from patchman import settings
+setup_environ(settings)
+
+from django.db.utils import IntegrityError
+from django.db import connection
+from django.db.models import Q, Count
+from django.dispatch import Signal
+
+from patchman.hosts.models import Host
+from patchman.operatingsystems.models import OS, OSGroup
+from patchman.domains.models import Domain
+from patchman.packages.models import Package, PackageName, PackageString, PackageUpdate
+from patchman.repos.models import Repository
+from patchman.arch.models import PackageArchitecture, MachineArchitecture
+from patchman.reports.models import Report
+
+from patchman.hosts.signals import host_update_found
+
+from progressbar import Bar, ETA, Percentage, ProgressBar
+
+force = False
+verbose = False
+
+def progress_bar(ptext, plength):
+
+    jtext = string.ljust(ptext, 35)
+    pbar = ProgressBar(widgets=[jtext, Percentage(), Bar(), ETA()], maxval=plength).start()
+    return pbar
+
+def gunzip(contents):
+
+    try:
+        gzipdata = gzip.GzipFile(fileobj=contents)
+        gzipdata = gzipdata.read()
+        contents = StringIO.StringIO(gzipdata)
+    except IOError, e:
+        import warnings
+        warnings.filterwarnings('ignore', category=DeprecationWarning)
+        if e.message == 'Not a gzipped file':
+            pass
+
+    return contents.getvalue()
+
+def find_release(s):
+    r = s.rpartition('-')
+    if r[0] == '':
+        return ''
+    else:
+        return r[2]
+
+def find_epoch(s):
+    r = s.partition(':')
+    if r[1] == '':
+        return ''
+    else:
+        return r[0]
+
+def find_version(s, epoch, release):
+    try:
+        es = '%s:' % epoch
+        e = s.index(es) + len(epoch) + 1
+    except ValueError:
+        e = 0
+    try:
+        rs = '-%s' % release
+        r = s.index(rs)
+    except ValueError:
+        r = len(s)
+    return s[e:r]
+
+
+def unpack_debpackages(packagefile, packages):
+
+    package_re =  re.compile('^Package: (.*)$\n(?:^.*$\n)*?^Architecture: (.*)$\n(?:^.*$\n?)*?^Version: (.*)$\n(?:^.+$\n)+', re.M)
+#    package_re =  re.compile('^Package: (.*)$\n(?:^.*$\n)*?^Architecture: (.*)$\n(?:^.*$\n?)*?^Version: (.*)$\n(?:^.*$\n?)*?^Description: (.*)$\n(?:^.*$\n?)*?^Homepage: (.*)$\n(?:^.+$\n)+', re.M)
+    data = packagefile.read()
+    sha1 = hashlib.sha1(data).hexdigest()
+    data = bz2.decompress(data)
+    package_data = package_re.findall(data)
+
+    if len(package_data) > 0:
+        if verbose == True:
+            pbar = progress_bar('Extracting packages: ', len(package_data))
+            i = 0
+
+        for p in package_data:
+            if verbose == True:
+                pbar.update(i+1)
+                i += 1
+            name = p[0]
+            fullversion=Version(p[2])
+            epoch = fullversion._BaseVersion__epoch
+            if epoch == None:
+                epoch = ''
+            version = fullversion._BaseVersion__upstream_version
+            release = fullversion._BaseVersion__debian_revision
+            if release == None:
+                release = ''
+            arch = p[1]
+#            desc = p[3]
+#            url = p[4]
+            package = PackageString(name=name, epoch=epoch, version=version, release=release, arch=arch, packagetype='D')
+            packages.add(package)
+
+    return sha1
+
+def get_primary_url(repomdxml):
+
+    data = StringIO.StringIO(repomdxml.read())
+    repodom = parseString(gunzip(data))
+    nodes = repodom.getElementsByTagName('data')
+    location = ''
+    checksum = ''
+
+    for node in nodes:
+        if node.getAttribute('type') == 'primary':
+            l = node.getElementsByTagName('location')[0]
+            location = l.getAttribute('href').rsplit('repodata')[1]
+            c = node.getElementsByTagName('checksum')[0]
+            if c.getAttribute('type') == 'sha':
+                checksum = c.firstChild.nodeValue
+
+    primary_url = str(repomdxml.geturl().rsplit('/', 1)[0]) + location
+    return primary_url, checksum
+
+def unpack_primary(primary, packages):
+
+    data = primary.read()
+    sha1 = hashlib.sha1(data).hexdigest()
+    data = gunzip(StringIO.StringIO(data))
+    del primary
+    
+    repodom = parseString(data)
+
+    nodes = repodom.getElementsByTagName('package')
+
+    if len(nodes) > 0:
+ 
+        name = ''
+        epoch = ''
+        version = ''
+        release = ''
+        arch = ''
+#        desc = ''
+#        url = ''
+        if verbose == True:
+            pbar = progress_bar('Extracting packages: ', len(nodes))
+            i = 0
+
+        for node in nodes:
+            if verbose == True:
+                pbar.update(i+1)
+                i += 1
+            name = node.getElementsByTagName('name')[0].childNodes[0].data.lower()
+            arch = node.getElementsByTagName('arch')[0].childNodes[0].data
+            fullversion = node.getElementsByTagName('version')[0]
+            epoch = fullversion.getAttribute('epoch')
+            if epoch == '0':
+                epoch = ''
+            version = fullversion.getAttribute('ver')
+            release = fullversion.getAttribute('rel')
+#            desc = node.getElementsByTagName('description')[0].childNodes[0].data
+#            try:
+#                url = node.getElementsByTagName('url')[0].childNodes[0].data
+#            except IndexError:
+#                pass
+            if name != '' and version != '' and arch !='':
+                package = PackageString(name=name, epoch=epoch, version=version, release=release, arch=arch, packagetype='R')
+#, description=desc, url=url)
+                packages.add(package)
+                name = ''
+                epoch = ''
+                version = ''
+                release = ''
+                arch = ''
+#                desc = ''
+#                url = ''
+    else:
+        if verbose == True:
+            print 'No packages in found in repo.'
+
+    repodom.unlink()
+    del repodom, nodes, data
+   
+    return sha1
+
+def get_repo_url(url):
+
+    try:
+        response = urlopen(url)
+        return response
+    except IOError, e:
+        print >> sys.stderr, url
+        if hasattr(e, 'reason'):
+            print >> sys.stderr, ('Failed to reach the server: %s' % e.reason)
+            return -1
+        elif hasattr(e, 'code'):
+            print >> sys.stderr, ('The server couldn\'t fulfill the request: %s' % e)
+            return e.code 
+        else:
+            print >> sys.stderr, ('Error: %s' % e)
+            return -1
+
+def update_packages(repo, packages):
+
+    new = set()
+    old = set()
+    removed = set()
+
+    repopackages = repo.packages.all()
+    reposize = len(repopackages)
+
+    if reposize > 0:
+        if verbose == True:
+            pbar = progress_bar('Obtaining stored packages: ', reposize)
+            i = 0
+
+        for package in repopackages:
+            if verbose == True:
+                pbar.update(i+1)
+                i += 1
+            name=str(package.name)
+            arch=str(package.arch)
+            strpackage = PackageString(name=name, epoch=package.epoch, version=package.version, release=package.release, arch=arch, packagetype=package.packagetype)
+            old.add(strpackage)
+
+    new = packages.difference(old)
+    removed = old.difference(packages)
+
+    old.clear()
+    del old
+
+    newlen = len(new)
+    removedlen = len(removed)
+
+    if removedlen > 0:
+        if verbose == True:
+            ptext = 'Removing %s obsolete packages:' % removedlen
+            pbar = progress_bar(ptext, removedlen)
+            i = 0
+
+        for package in removed:
+            if verbose == True:
+                pbar.update(i+1)
+                i += 1
+            package_id = PackageName.objects.get(name=package.name)
+            epoch = package.epoch
+            version = package.version
+            release = package.release
+            arch = PackageArchitecture.objects.get(name=package.arch)
+            packagetype = package.packagetype
+            p = Package.objects.get(name=package_id, epoch=epoch, version=version, arch=arch, release=release, packagetype=packagetype)
+            repo.packages.remove(p)
+        repo.save()
+        removed.clear()
+
+    if newlen > 0:
+        if verbose == True:
+            ptext = 'Adding %s new packages:' % newlen
+            pbar = progress_bar(ptext, newlen)
+            i = 0
+
+        for package in new:
+            if verbose == True:
+                pbar.update(i+1)
+                i += 1
+            package_id, c = PackageName.objects.get_or_create(name=package.name)
+            epoch = package.epoch
+            version = package.version
+            release = package.release
+            packagetype = package.packagetype
+            arch, c = PackageArchitecture.objects.get_or_create(name=package.arch)
+            p, c = Package.objects.get_or_create(name=package_id, epoch=epoch, version=version, arch=arch, release=release, packagetype=packagetype)
+#            p.description = package.description
+#            p.url = package.url
+#            p.save()
+            repo.packages.add(p)
+        repo.save()
+        new.clear()
+
+    del new
+    del removed
+    del repopackages
+
+def update_deb_repo(repo):
+
+    if verbose == True:
+        print 'Retrieving deb-style repo at: %s' % repo.url
+
+    res = get_repo_url(repo.url)
+   
+    if type(res) == int:
+        repo.last_access_ok = False
+    else:
+        packages = set()
+        sha1 = unpack_debpackages(res, packages)
+        repo.last_access_ok = True
+        repo.timestamp = datetime.datetime.now()
+        if repo.file_checksum == sha1 and verbose == True:
+            print 'Repo checksum has not changed, not updating packages'
+        else:
+            update_packages(repo, packages)
+            repo.file_checksum = sha1
+        packages.clear()
+        del packages
+    repo.save()
+
+def update_rpm_repo(repo):
+
+    if verbose == True:
+        print 'Retrieving rpm-style repo at: %s' % repo.url
+
+    res = get_repo_url(repo.url)
+
+    if type(res) == int:
+        repo.last_access_ok = False
+    else:
+        primary, checksum = get_primary_url(res)
+        res = get_repo_url(primary)
+        if res == 404:
+            print >> sys.stderr, ('404 not found for %s' % primary)
+            repo.last_access_ok = False
+        else:
+            packages = set()
+            sha1 = unpack_primary(res, packages)
+            repo.last_access_ok = True
+            repo.timestamp = datetime.datetime.now()
+            if sha1 != checksum:
+                print >> sys.stderr, ('SHA1 checksum failed for repo %s, not updating packages' % repo.id)
+            elif repo.file_checksum == sha1 and verbose == True:
+                print 'Repo checksum has not changed, not updating packages'
+            else:
+                repo.file_checksum = sha1
+                update_packages(repo, packages)
+                repo.file_checksum = sha1
+            packages.clear()
+            del packages
+    repo.save()
+
+def update_repos(repo):
+
+    update_repos = []
+
+    if repo:
+        try:
+            update_repos.append(Repository.objects.get(id=repo))
+            message = 'Updating repository with id: %s' % repo
+        except:
+            message = 'repo with id %s does not exist' % repo
+    else:
+        message = 'Updating all repositories'
+        update_repos=Repository.objects.all()
+
+    if verbose:
+        print message
+
+    for repo in update_repos:
+        if force == True:
+            repo.file_checksum = ''
+        if verbose:    
+            print '\n%s' % repo
+        if repo.repotype == Repository.DEB:
+            update_deb_repo(repo)  
+        elif repo.repotype == Repository.RPM:
+            update_rpm_repo(repo)
+        else:
+            print >> sys.stderr, ('Error: unknown repo type for repo %s: %s' % (repo.id, repo.repotype))
+
+
+def list_repos():
+
+    print 'Defined repositories:'
+    print 'id : name\n'
+    for repo in Repository.objects.all():
+        print '%s : %s' % (repo.id, repo)
+        if verbose:
+            print '%s' % repo.url
+            print 'arch: %s    checksum: %s' % (repo.arch, repo.file_checksum)
+            print 'security: %s  last_updated: %s\n' % (repo.security, repo.timestamp)
+
+def remove_orphaned_packages():
+
+    allpackages = Package.objects.all()
+    allhosts = Host.objects.all()
+    allrepos = Repository.objects.all()
+
+    packagelen = len(allpackages)
+    repolen = len(allrepos)
+    hostlen = len(allhosts)
+
+    allpackagestrings = set()
+    allusedpackages = set()
+    orphanedpackages = set()
+
+    if verbose == True:
+        print '\nPruning orphaned packages'
+        pbar = progress_bar('Obtaining all stored packages:', packagelen)
+        i = 0
+
+    for p in allpackages:
+        allpackagestrings.add(PackageString(name=p.name, epoch=p.epoch, version=p.version, release=p.release, arch=p.arch, packagetype=p.packagetype))
+        if verbose == True:
+            pbar.update(i+1)
+            i += 1
+
+    if repolen > 0:
+        if verbose == True:
+            pbar = progress_bar('Obtaining repo packages:', repolen)
+            i = 0
+
+        for r in allrepos:
+            for p in r.packages.all():
+                allusedpackages.add(PackageString(name=p.name, epoch=p.epoch, version=p.version, release=p.release, arch=p.arch, packagetype=p.packagetype))
+            if verbose == True:
+                pbar.update(i+1)
+                i += 1
+
+    if hostlen > 0:
+        if verbose == True:
+            pbar = progress_bar('Obtaining host packages:', hostlen)
+            i = 0
+
+        for h in allhosts:
+            for p in h.packages.all():
+                allusedpackages.add(PackageString(name=p.name, epoch=p.epoch, version=p.version, release=p.release, arch=p.arch, packagetype=p.packagetype))
+            if verbose == True:
+                pbar.update(i+1)
+                i += 1
+
+    orphanedpackages = allpackagestrings.difference(allusedpackages)
+    orphanedlen = len(orphanedpackages)
+
+    if orphanedlen > 0:
+        if verbose == True:
+            ptext = 'Removing %s orphaned packages:' % orphanedlen
+            pbar = progress_bar(ptext, orphanedlen)
+            i = 0
+        for o in orphanedpackages:
+            try:
+                p = Package.objects.get(name=o.name, epoch=o.epoch, version=o.version, release=o.release, arch=o.arch, packagetype=o.packagetype)
+            except MultipleObjectsReturned:
+                print "You have duplicate packages in your database for %s." % o
+                print "Please re-run this tool with the duplicate-removing option first."
+                exit
+            p.delete()
+            if verbose == True:
+                pbar.update(i+1)
+                i += 1
+    else:
+        if verbose == True:
+            print 'No orphaned packages found.'
+
+def remove_unused_package_names():
+
+    allnames = PackageName.objects.all()
+    allpackages = Package.objects.all()
+    allnameslen = len(allnames)
+    p = 0
+
+    if verbose == True:
+        ptext = 'Removing unused package names:'
+        pbar = progress_bar(ptext, allnameslen)
+        i = 0
+    for packagename in allnames:
+        if verbose == True:
+            pbar.update(i+1)
+            i += 1
+        if allpackages.filter(name=packagename):
+            pass
+        else:
+            packagename.delete()
+            p += 1
+            
+    if verbose == True:
+        print 'Removed %s unused package names.' % p
+
+
+def remove_duplicates(keep, remove):
+
+    allhosts = Host.objects.all()
+    removed = 0
+
+    for host in allhosts:
+        if remove in host.packages.all():
+            host.packages.remove(remove)
+            host.packages.add(keep)
+            removed += 1
+            host.save()
+    return removed
+
+
+def remove_duplicate_packages():
+
+    allpackages = Package.objects.all()
+    allpackageslen = len(allpackages)
+    total_removed = 0
+
+    if verbose == True:
+        ptext = 'Finding duplicate packages:'
+        pbar = progress_bar(ptext, allpackageslen)
+        i = 0
+
+    for package in allpackages:
+        if verbose == True:
+            pbar.update(i+1)
+            i += 1
+        query = allpackages.filter(Q(name=package.name)&Q(epoch=package.epoch)&Q(version=package.version)&Q(release=package.release)&Q(arch=package.arch)&Q(packagetype=package.packagetype))
+        if query.count() > 1:
+            for p in query.all():
+                if package.id != p.id:
+                    total_removed += remove_duplicates(package, p)
+                    p.delete()
+
+    if verbose == True and total_removed != 0:
+        print "Removed %s duplicate packages." % total_removed
+
+def process_packages(report, host):
+
+    packages = []
+    package_count = 0
+
+    if report.packages:
+        for p in report.packages.splitlines():
+            packages.append(p.replace('\'','').split(' '))
+            package_count +=1
+        if verbose == True:
+            ptext = '%s package updates' % host
+            pbar = progress_bar(ptext, package_count)
+            i = 0
+        for pkg in packages:
+            if report.version == '42': # patchman-style
+                if pkg[4] != '':
+                    p_arch, c = PackageArchitecture.objects.get_or_create(name=pkg[4])
+                else:
+                    p_arch, c = PackageArchitecture.objects.get_or_create(name='unknown')
+                p_name, c = PackageName.objects.get_or_create(name=pkg[0].lower())
+                if pkg[1]:
+                    p_epoch = pkg[1]
+                else:
+                    p_epoch = ''
+                p_version = pkg[2]
+                if pkg[3]:
+                    p_release = pkg[3]
+                else:
+                    p_release = ''
+                package, c = Package.objects.get_or_create(name=p_name, arch=p_arch, epoch=p_epoch, version=p_version, release=p_release, packagetype=report.repotype)
+                host.packages.add(package)
+                del package
+            if verbose == True:
+                pbar.update(i+1)
+                i += 1
+        host.save()
+
+def create_or_update_host(report):
+
+    if report.host and report.os and report.kernel and report.domain and report.arch:
+        os, c = OS.objects.get_or_create(name=report.os)
+        domain, c = Domain.objects.get_or_create(name=report.domain)
+        arch, c = MachineArchitecture.objects.get_or_create(name=report.arch)
+        host, c = Host.objects.get_or_create(
+            hostname=report.host,
+            defaults={
+                'ipaddress':report.report_ip,
+                'arch':arch,
+                'os':os,
+                'domain':domain,
+                'lastreport':report.time
+            }
+        )
+        if verbose == True and c == True:
+            print 'Created host %s' % host
+        host.ipaddress=report.report_ip
+        host.arch=arch
+        host.os=os
+        host.domain=domain
+        host.lastreport=report.time
+        host.tag=report.tag
+        host.kernel=report.kernel
+# TODO: fix this to use stringpackage sets to remove/add
+# or queryset sets
+        for package in host.packages.all():
+            host.packages.remove(package)
+        process_packages(report, host)
+        host.save()
+        return True
+    else:
+        return False
+
+def process_reports():
+
+    for report in Report.objects.filter(processed=False):
+        if create_or_update_host(report) == True:
+            report.processed = True
+            report.save()
+
+def print_update(update, signal, *args, **kwargs):
+    if verbose == True:
+        print update
+
+def find_host_updates(update_host):
+
+    update_hosts = []
+
+    if update_host:
+        try:
+            update_hosts.append(Host.objects.get(hostname=update_host))
+            message = 'Finding updates for host %s' % update_host
+        except:
+            message = 'Host %s does not exist' % update_host
+    else:
+        message = 'Finding updates for all hosts'
+        update_hosts = Host.objects.all()
+
+    if verbose:
+        print message
+
+    for host in update_hosts:
+        if verbose == True:
+            print '\n%s' % host
+        host_update_found.connect(print_update)
+        host.find_updates()
+
+def clean_updates():
+
+    for update in PackageUpdate.objects.all():
+        if update.host_set.all().count() == 0:
+            if verbose == True:
+                print 'Removing %s' % update
+            update.delete()
+        
+        
+if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser(description='Patchman repository tool')
+    parser.add_argument('-u', '--update', action='store_true',
+                help='update repositories')
+    parser.add_argument('-f', '--force', action='store_true',
+                help='disregard stored checksums and force-update all repositories')
+    parser.add_argument('-R','--repo',
+                help='only update the repository with this ID')
+    parser.add_argument('-l', '--list', action='store_true',
+                help='list all available repositories')
+    parser.add_argument('-v', '--verbose', action='store_true',
+                help='verbose output (default is to be silent, for cronjobs)')
+    parser.add_argument('-o', '--orphans', action='store_true',
+                help='find and remove all orphaned packages')
+    parser.add_argument('-d', '--dups', action='store_true',
+                help='find and remove all duplicates packages')
+    parser.add_argument('-p', '--process-reports', action='store_true',
+                help='process all pending reports')
+    parser.add_argument('-U', '--find-updates', action='store_true',
+                help='find updates for all hosts')
+    parser.add_argument('-H','--host',
+                help='only find updates for this host (fqdn)')
+    parser.add_argument('-c', '--clean-updates', action='store_true',
+                help='find and remove updates that are no longer required') 
+
+    args = parser.parse_args()
+
+    force = args.force
+    verbose = args.verbose
+
+    if args.list == True:
+        list_repos()
+        exit
+    if args.update == True:
+        update_repos(args.repo)
+        exit 
+    if args.orphans == True:
+        remove_orphaned_packages()
+        remove_unused_package_names()
+    if args.dups == True:
+        remove_duplicate_packages()
+    if args.process_reports == True:
+        process_reports(args.host)
+    if args.find_updates == True:
+        find_host_updates(args.host)
+    if args.clean_updates == True:
+        clean_updates()
