@@ -1,0 +1,16 @@
+<table cellspacing="0">
+        <thead>
+                <tr>
+                   <th>Host</th><th>Time</th><th>IP Address</th>
+                </tr>
+        </thead>
+    <tbody>
+    {% for report in object_list %}
+                <tr class="{% cycle row1,row2 %}">
+                    <td><a href="{{ report.get_absolute_url }}"> {{ report.host }} </a></td>
+                    <td> {{ report.time }} </td>
+                    <td> {{ report.report_ip }} </td>
+                </tr>
+    {% endfor %}
+    </tbody>
+</table>
