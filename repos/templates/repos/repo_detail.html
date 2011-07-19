@@ -1,10 +1,10 @@
 {% extends "main.html" %}
 
-{% block title %}Repository {{ repo }} {% endblock %}
+{% block title %}Repositories {{ repo }} {% endblock %}
 
 {% block content_title %}Repository Information{% endblock %}
 
-{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url repo_list %}">Repository</a> &rsaquo; {{ repo }} {% endblock %}
+{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url repo_list %}">Repositories</a> &rsaquo; {{ repo }} {% endblock %}
 
 {% block content %}
 <div class="module">

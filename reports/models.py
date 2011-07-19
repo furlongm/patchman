@@ -34,8 +34,7 @@ class Report(models.Model):
     packages = models.TextField(null=True, blank=True)
 
     def __unicode__(self):
-        host=self.host
-        return '%s %s' % (self.time, host)
+        return '%s %s' % (self.host, self.time)
 
     def parse (self, data, meta):
 
@@ -77,4 +76,8 @@ class Report(models.Model):
             self.packages = data['pkgs']
 
         self.save()
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ('report_detail', [self.id])
 

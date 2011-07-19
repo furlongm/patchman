@@ -19,6 +19,7 @@ from patchman.packages.models import Package, PackageName
 from patchman.arch.models import MachineArchitecture
 from patchman.repos.models import Repository
 from patchman.operatingsystems.models import OS, OSGroup
+from patchman.reports.models import Report
 
 @login_required
 def host_list(request):
@@ -121,6 +122,9 @@ def host_detail(request, hostname):
         reversedns = str(socket.gethostbyaddr(host.ipaddress)[0])
     except socket.gaierror:
         reversedns = 'None'
+
+    reports = Report.objects.all().filter(host=hostname).order_by('-time')[:3]
+    print reports
  
-    return render_to_response('hosts/host_detail.html', {'host': host, 'reversedns': reversedns }, context_instance=RequestContext(request))
+    return render_to_response('hosts/host_detail.html', {'host': host, 'reversedns': reversedns, 'reports': reports }, context_instance=RequestContext(request))
 

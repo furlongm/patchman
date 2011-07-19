@@ -23,11 +23,13 @@
         <tr><td>Updates Available</td><td> <a href="#updates">{{ host.updates.count }}</a> </td></tr>
         <tr><td>Reboot Required</td><td> {{ host.reboot_required }} </td></tr>
         <tr><td>Packages Installed</td><td> <a href="#installedpackages">{{host.packages.count}}</a> </td></tr>
-    </table>
-</div>
-<div class="module">
-    <h2>Last 3 reports</h2>
-    <table>
+        <tr><td>Last 3 reports</td><td>
+            {% for report in reports %}
+            <span style="border-radius: 4px; margin: 2px 2px; padding:4px 4px; display:block; height:15px; float:left; {% cycle background:#bfdddd,background:#deeeee %}">
+                <a href="{{report.get_absolute_url}}">{{ report.time }} </a>
+            </span>
+            {% endfor %}
+        </td></tr>
     </table>
 </div>
 <div class="module" id="updates">

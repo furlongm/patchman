@@ -16,6 +16,7 @@ import argparse
 from xml.dom.minidom import parse, parseString
 from lxml import etree
 from debian.debian_support import Version
+from debian.deb822 import Sources
 from urllib2 import Request, urlopen
 
 sys.path.append('/usr/local/src')
@@ -95,24 +96,21 @@ def find_version(s, epoch, release):
 
 def unpack_debpackages(packagefile, packages):
 
-    package_re =  re.compile('^Package: (.*)$\n(?:^.*$\n)*?^Architecture: (.*)$\n(?:^.*$\n?)*?^Version: (.*)$\n(?:^.+$\n)+', re.M)
-#    package_re =  re.compile('^Package: (.*)$\n(?:^.*$\n)*?^Architecture: (.*)$\n(?:^.*$\n?)*?^Version: (.*)$\n(?:^.*$\n?)*?^Description: (.*)$\n(?:^.*$\n?)*?^Homepage: (.*)$\n(?:^.+$\n)+', re.M)
+    package_re =  re.compile('^Package: ', re.M)
     data = packagefile.read()
     sha1 = hashlib.sha1(data).hexdigest()
     data = bz2.decompress(data)
-    package_data = package_re.findall(data)
+    lenpackages = len(package_re.findall(data))
 
-    if len(package_data) > 0:
+    if lenpackages > 0:
         if verbose == True:
-            pbar = progress_bar('Extracting packages: ', len(package_data))
+            pbar = progress_bar('Extracting packages: ', lenpackages)
             i = 0
 
-        for p in package_data:
-            if verbose == True:
-                pbar.update(i+1)
-                i += 1
-            name = p[0]
-            fullversion=Version(p[2])
+        for stanza in Sources.iter_paragraphs(StringIO.StringIO(data)):
+            fullversion = Version(stanza['version'])
+            arch = stanza['architecture']
+            name = stanza['package']
             epoch = fullversion._BaseVersion__epoch
             if epoch == None:
                 epoch = ''
@@ -120,11 +118,12 @@ def unpack_debpackages(packagefile, packages):
             release = fullversion._BaseVersion__debian_revision
             if release == None:
                 release = ''
-            arch = p[1]
-#            desc = p[3]
-#            url = p[4]
+            if verbose == True:
+                pbar.update(i+1)
+                i += 1
             package = PackageString(name=name, epoch=epoch, version=version, release=release, arch=arch, packagetype='D')
             packages.add(package)
+            del package
 
     return sha1
 
@@ -154,58 +153,45 @@ def unpack_primary(primary, packages):
     data = gunzip(StringIO.StringIO(data))
     del primary
     
-    repodom = parseString(data)
+    ns='http://linux.duke.edu/metadata/common'
+    context = etree.iterparse(StringIO.StringIO(data), tag = '{%s}metadata' % ns)
+    numpackages = int(context.next()[1].get('packages'))
+    context = etree.iterparse(StringIO.StringIO(data), tag = '{%s}package' % ns)
 
-    nodes = repodom.getElementsByTagName('package')
+    if numpackages > 0:
 
-    if len(nodes) > 0:
- 
-        name = ''
-        epoch = ''
-        version = ''
-        release = ''
-        arch = ''
-#        desc = ''
-#        url = ''
         if verbose == True:
-            pbar = progress_bar('Extracting packages: ', len(nodes))
+            pbar = progress_bar('Extracting packages: ', numpackages)
             i = 0
 
-        for node in nodes:
+        for event, elem in context:
             if verbose == True:
                 pbar.update(i+1)
                 i += 1
-            name = node.getElementsByTagName('name')[0].childNodes[0].data.lower()
-            arch = node.getElementsByTagName('arch')[0].childNodes[0].data
-            fullversion = node.getElementsByTagName('version')[0]
-            epoch = fullversion.getAttribute('epoch')
-            if epoch == '0':
-                epoch = ''
-            version = fullversion.getAttribute('ver')
-            release = fullversion.getAttribute('rel')
-#            desc = node.getElementsByTagName('description')[0].childNodes[0].data
-#            try:
-#                url = node.getElementsByTagName('url')[0].childNodes[0].data
-#            except IndexError:
-#                pass
+            name = elem.xpath('//ns:name', namespaces = {'ns': ns})[0].text.lower()
+            arch = elem.xpath('//ns:arch', namespaces = {'ns': ns})[0].text
+            fullversion = elem.xpath('//ns:version', namespaces = {'ns': ns})[0]
+            epoch = fullversion.get('epoch')
+            version = fullversion.get('ver')
+            release = fullversion.get('rel')
+
+            elem.clear()
+            while elem.getprevious() is not None:
+                del elem.getparent()[0]
+    
             if name != '' and version != '' and arch !='':
+                if epoch == '0':
+                    epoch = ''
                 package = PackageString(name=name, epoch=epoch, version=version, release=release, arch=arch, packagetype='R')
-#, description=desc, url=url)
                 packages.add(package)
-                name = ''
-                epoch = ''
-                version = ''
-                release = ''
-                arch = ''
-#                desc = ''
-#                url = ''
+                #print name, epoch, version, release, arch
+        del context
+        del data
+
     else:
         if verbose == True:
             print 'No packages in found in repo.'
 
-    repodom.unlink()
-    del repodom, nodes, data
-   
     return sha1
 
 def get_repo_url(url):
@@ -612,7 +598,7 @@ def create_or_update_host(report):
 
 def process_reports():
 
-    for report in Report.objects.filter(processed=False):
+    for report in Report.objects.filter(processed=False):#orderby date
         if create_or_update_host(report) == True:
             report.processed = True
             report.save()
@@ -696,7 +682,7 @@ if __name__ == '__main__':
     if args.dups == True:
         remove_duplicate_packages()
     if args.process_reports == True:
-        process_reports(args.host)
+        process_reports()
     if args.find_updates == True:
         find_host_updates(args.host)
     if args.clean_updates == True:
