@@ -10,4 +10,7 @@ refactor to re-use code between scripts and models
 check database integrity script
 prettify repo urls
 allows repo urls to be added without binary-amd64/Packages.bz2 at the end
-fix memory leakage in patchman-tool (try -f -v -u with a lot of repos)
+use python-debian to extract packages from Packages.bz2
+add descriptions?
+fix pakiti2-import script
+fix patchman-tool spacing for -p -v

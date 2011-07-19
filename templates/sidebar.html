@@ -8,6 +8,7 @@
       <li><h3><a class="{% active request "repos/" %}" href="{% url repo_list %}">Repos</a></h3></li>
       <li><h3><a class="{% active request "os/" %}" href="{% url os_list %}">OS's</a></h3></li>
       <li><h3><a class="{% active request "os/groups/" %}" href="{% url osgroup_list %}">OS Groups</a></h3></li>
+      <li><h3><a class="{% active request "reports/" %}" href="{% url report_list %}">Reports</a></h3></li>
       {% if user.is_superuser %}
       <li><h3><a href="{% url admin:index %}">Django Admin</a></h3></li>
       {% endif %}
