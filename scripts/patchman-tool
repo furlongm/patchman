@@ -13,6 +13,7 @@ import re
 import hashlib
 import datetime
 import argparse
+import math
 from xml.dom.minidom import parse, parseString
 from lxml import etree
 from debian.debian_support import Version
@@ -103,11 +104,9 @@ def find_version(s, epoch, release):
     return s[e:r]
 
 
-def unpack_debpackages(packagefile, packages):
+def unpack_debpackages(data, packages):
 
     package_re =  re.compile('^Package: ', re.M)
-    data = packagefile.read()
-    sha1 = hashlib.sha1(data).hexdigest()
     extracted = bunzip2(data)
     if not extracted:
         extracted = gunzip(StringIO.StringIO(data))
@@ -137,9 +136,10 @@ def unpack_debpackages(packagefile, packages):
             del package
 
     del data, extracted
-    return sha1
 
 def get_primary_url(repomdxml):
+
+    # TODO, use lxml
 
     data = StringIO.StringIO(repomdxml.read())
     repodom = parseString(gunzip(data))
@@ -158,17 +158,18 @@ def get_primary_url(repomdxml):
     primary_url = str(repomdxml.geturl().rsplit('/', 1)[0]) + location
     return primary_url, checksum
 
-def unpack_primary(primary, packages):
+def get_sha1(data):
 
-    data = primary.read()
-    sha1 = hashlib.sha1(data).hexdigest()
-    data = gunzip(StringIO.StringIO(data))
-    del primary
+    return hashlib.sha1(data).hexdigest()
+
+def unpack_primary(data, packages):
+
+    extracted = gunzip(StringIO.StringIO(data))
     
     ns='http://linux.duke.edu/metadata/common'
-    context = etree.iterparse(StringIO.StringIO(data), tag = '{%s}metadata' % ns)
+    context = etree.iterparse(StringIO.StringIO(extracted), tag = '{%s}metadata' % ns)
     numpackages = int(context.next()[1].get('packages'))
-    context = etree.iterparse(StringIO.StringIO(data), tag = '{%s}package' % ns)
+    context = etree.iterparse(StringIO.StringIO(extracted), tag = '{%s}package' % ns)
 
     if numpackages > 0:
 
@@ -204,13 +205,11 @@ def unpack_primary(primary, packages):
         if verbose == True:
             print 'No packages in found in repo.'
 
-    return sha1
-
 def get_repo_url(url):
 
     try:
-        response = urlopen(url)
-        return response
+        req = Request(url)
+        return urlopen(req)
     except IOError, e:
         if hasattr(e, 'reason'):
             print 'Failed to reach the server: %s' % e.reason
@@ -302,17 +301,44 @@ def update_packages(repo, packages):
     del removed
     del repopackages
 
-def update_deb_repo(repo):
+def find_repo_url(stored_repo_url, formats):
 
-    formats = [ 'Packages.bz2', 'Packages.gz', 'Packages']
     for fmt in formats:
-        repo_url = repo.url
+        repo_url = stored_repo_url
         for f in formats:
             repo_url = repo_url.rstrip(f)
         repo_url  = repo_url.rstrip('/') + '/' + fmt
         res = get_repo_url(repo_url)
         if type(res) != int:
             break
+    return repo_url, res
+
+def download_url(res):
+
+    headers = dict(res.headers.items())
+    if verbose and 'content-length' in headers:
+        ptext = 'Downloading repository info'
+        contentlen = int(headers['content-length'])
+        chunk_size = 16384.0
+        pbar = progress_bar(ptext, contentlen)
+        i = 0
+        chunks = int(math.ceil(contentlen / chunk_size))
+        data = ''
+        chunk = ''
+        for x in range(1, chunks + 1):
+            chunk = res.read(int(chunk_size)) 
+            i += len(chunk)
+            pbar.update(i)
+            data += chunk
+        return data 
+    else:
+        return res.read()
+        
+
+def update_deb_repo(repo):
+
+    formats = [ 'Packages.bz2', 'Packages.gz', 'Packages']
+    repo_url, res = find_repo_url(repo.url, formats)
 
     if type(res) == int:
         repo.last_access_ok = False
@@ -321,30 +347,25 @@ def update_deb_repo(repo):
     else:
         if verbose == True:
             print 'Found deb-style repo at: %s' % repo_url
-        packages = set()
-        sha1 = unpack_debpackages(res, packages)
-        repo.last_access_ok = True
-        repo.timestamp = datetime.datetime.now()
+        data = download_url(res)
+        sha1 = get_sha1(data)
         if repo.file_checksum == sha1 and verbose == True:
             print 'Repo checksum has not changed, not updating packages'
         else:
+            packages = set()
+            unpack_debpackages(data, packages)
+            repo.last_access_ok = True
+            repo.timestamp = datetime.datetime.now()
             update_packages(repo, packages)
             repo.file_checksum = sha1
-        packages.clear()
-        del packages
+            packages.clear()
+            del packages
     repo.save()
 
 def update_rpm_repo(repo):
 
     formats = [ 'repomd.xml.gz', 'repomd.xml' ]
-    for fmt in formats:
-        repo_url = repo.url
-        for f in formats:
-            repo_url = repo_url.rstrip(f)
-        repo_url  = repo_url.rstrip('/') + '/' + fmt
-        res = get_repo_url(repo_url)
-        if type(res) != int:
-            break
+    repo_url, res = find_repo_url(repo.url, formats)
 
     if type(res) == int:
         repo.last_access_ok = False
@@ -355,20 +376,22 @@ def update_rpm_repo(repo):
             print 'Found rpm-style repo at: %s' % repo_url
         primary, checksum = get_primary_url(res)
         res = get_repo_url(primary)
-        packages = set()
-        sha1 = unpack_primary(res, packages)
-        repo.timestamp = datetime.datetime.now()
-        repo.last_access_ok = True
+        data = res.read()
+        sha1 = get_sha1(data)
         if sha1 != checksum:
-            print >> sys.stderr, ('SHA1 checksum failed for repo %s, not updating packages' % repo.id)
+            print 'SHA1 checksum failed for repo %s, not updating packages' % repo.id
             repo.last_access_ok = False
         elif repo.file_checksum == sha1 and verbose == True:
             print 'Repo checksum has not changed, not updating packages'
         else:
+            packages = set()
+            unpack_primary(data, packages)
+            repo.timestamp = datetime.datetime.now()
+            repo.last_access_ok = True
             update_packages(repo, packages)
             repo.file_checksum = sha1
-        packages.clear()
-        del packages
+            packages.clear()
+            del packages
     repo.save()
 
 def update_repo(repo):
@@ -562,7 +585,7 @@ def process_packages(report, host):
             packages.append(p.replace('\'','').split(' '))
             package_count +=1
         if verbose == True:
-            ptext = '%s packages' % host[0:25]
+            ptext = '%s packages' % host.__unicode__().ljust(25)
             pbar = progress_bar(ptext, package_count)
             i = 0
         for pkg in packages:

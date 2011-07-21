@@ -11,4 +11,5 @@ allows repo urls to be added without e.g. binary-amd64
 add descriptions?
 fix pakiti2-import script
 fix patchman-tool spacing for -p -v
-packaages not in any repo on a host
+packages not in any repo on a host
+/hosts does not work when there are no hosts:
