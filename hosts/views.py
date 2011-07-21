@@ -102,8 +102,8 @@ def host_list(request):
         page = p.page(p.num_pages)
 
     filter_list = []
-    # TODO filter by tags
-    filter_list.append(Filter(request, 'tag', Host.objects.values_list('tag', flat=True).distinct()))
+    # TODO filter by tags, implemented in new andsome
+    #filter_list.append(Filter(request, 'tag', Host.objects.values_list('tag', flat=True).distinct()))
     filter_list.append(Filter(request, 'domain', Domain.objects.all()))
     filter_list.append(Filter(request, 'os', OS.objects.all()))
     filter_list.append(Filter(request, 'osgroup', OSGroup.objects.all()))

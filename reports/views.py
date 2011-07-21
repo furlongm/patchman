@@ -17,13 +17,12 @@ from patchman.reports.models import Report
 @csrf_exempt
 def upload(request):
 
-# TODO redirect 302 to report view if report is requested
-
+    response = HttpResponse()
+    
     if request.method == 'POST':
         
         data = request.POST.copy()
         meta = request.META.copy()
-        response = HttpResponse()
 
         report = Report.objects.create()
         report.parse(data, meta)
@@ -34,9 +33,11 @@ def upload(request):
                 for p in data['pkgs'].splitlines():
                     packages.append(p.replace('\'','').split(' '))
             return render_to_response('reports/report.txt', {'data':data, 'packages':packages}, context_instance=RequestContext(request), mimetype='text/plain')
-        return response
+        else:
+            response.status=302
+            return response
     else:
-        raise Http404() 
+        raise Http404
 
 @login_required
 def report_list(request):
