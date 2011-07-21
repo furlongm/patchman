@@ -1,11 +1,11 @@
 from django.db import models
-from django import forms
+from django.forms import ModelForm
 from patchman.repos.models import Repository
 
 class OSGroup(models.Model):
 
     name = models.CharField(max_length=255)
-    repos = models.ManyToManyField(Repository)
+    repos = models.ManyToManyField(Repository, blank=True, null=True)
 
     class Meta:
         verbose_name = 'Operating System Group'
@@ -34,10 +34,15 @@ class OS(models.Model):
     def get_absolute_url(self):
         return ('os_detail', [self.id])
 
-class LinkOSGroupForm(forms.Form):
+class LinkOSGroupForm(ModelForm):
 
-    osgroup = forms.ModelChoiceField(queryset=OSGroup.objects.all())
+#    osgroup = forms.ModelChoiceField(queryset=OSGroup.objects.all())
+    class Meta:
+        model = OS
 
-class AddRepoToOSGroupForm(forms.Form):
+class AddReposToOSGroupForm(ModelForm):
 
-    repo = forms.ModelChoiceField(queryset=Repository.objects.all())
+    class Meta:
+        model = OSGroup
+        fields = ('repos',)
+#    repos = forms.ModelMultipleChoiceField(queryset=Repository.objects.all(), required=False)

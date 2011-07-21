@@ -1,7 +1,5 @@
-fix reports/models to only use text
 fix database race conditions with django transaction support
 use querysets to update/remove packages from repos
-303 redirect for report upload
 install certs on clients, require tinyca? 
 use django tags for host tags
 fix web interface css (content_block in andsome)
@@ -9,8 +7,8 @@ andsome paginator
 refactor to re-use code between scripts and models
 check database integrity script
 prettify repo urls
-allows repo urls to be added without binary-amd64/Packages.bz2 at the end
-use python-debian to extract packages from Packages.bz2
+allows repo urls to be added without e.g. binary-amd64
 add descriptions?
 fix pakiti2-import script
 fix patchman-tool spacing for -p -v
+packaages not in any repo on a host

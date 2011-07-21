@@ -13,7 +13,7 @@ from andsome.util.filterspecs import Filter, FilterBar
 from datetime import datetime, date, time
 import socket
 
-from patchman.operatingsystems.models import OS, OSGroup, LinkOSGroupForm, AddRepoToOSGroupForm
+from patchman.operatingsystems.models import OS, OSGroup, LinkOSGroupForm, AddReposToOSGroupForm
 from patchman.repos.models import Repository
 
 @login_required
@@ -102,13 +102,13 @@ def osgroup_list(request):
 def osgroup_detail(request, osgroup_id):
 
     osgroup = get_object_or_404(OSGroup, id=osgroup_id)
-    form = AddRepoToOSGroupForm()
 
     if request.method == 'POST':
-        data = request.POST.copy()
-        repo_id = data['repo']
-        repo = Repository.objects.get(id=repo_id)
-        osgroup.repos.add(repo)
-        osgroup.save()
+        form = AddReposToOSGroupForm(request.POST, instance=osgroup)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect(osgroup.get_absolute_url())
+
+    form = AddReposToOSGroupForm(instance=osgroup)
 
     return render_to_response('operatingsystems/osgroup_detail.html', {'osgroup': osgroup, 'form': form }, context_instance=RequestContext(request))

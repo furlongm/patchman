@@ -35,14 +35,6 @@
         {% endfor %}
     </table>
 {% endif %}
-            {% if user.is_authenticated %}
-                {% if perms.is_admin %}
-                <form action={{ request.path }} method="post">{% csrf_token %}
-                {{ form }}
-                <input type="submit" value="Add" />
-                </form>
-                {% endif %}
-            {% endif %}
 </div>
 <div class="module">
     <h2>Operating Systems linked to OS Group {{ osgroup }}</h2>
@@ -59,6 +51,16 @@
         {% endfor %}
     </table>
 </div>
-
+<div class="module">
+    <h2>Modify {{ osgroup }} repos</h2>
+        {% if user.is_authenticated %}
+            {% if perms.is_admin %}
+            <form action="." method="post">{% csrf_token %}
+            {{ form }}
+            <br /><input type="submit" value="Modify" />
+            </form>
+            {% endif %}
+        {% endif %}
+</div>
 {% endblock %}
 

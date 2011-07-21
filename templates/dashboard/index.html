@@ -8,6 +8,7 @@
     
 {% block content %}
 <div id="content-main">
+  {% if lonely_oses.count > 0 %}
   <div class="module">
     <h2>Operating Systems not linked to any OS Group:</h2>
         <table><tr><td>
@@ -17,6 +18,8 @@
         {% endfor %}
         </td></tr></table>
   </div>
+  {% endif %}
+  {% if norepo_osgroups.count > 0 %}
   <div class="module">
     <h2>OS Groups with no repositories:</h2>
         <table><tr><td>
@@ -26,6 +29,8 @@
         {% endfor %}
         </td></tr></table>
   </div>
+  {% endif %}
+  {% if stale_hosts.count > 0 %}
   <div class="module">
    	<h2>Hosts that have not reported in 2 weeks:</h2>
         <table><tr><td>
@@ -35,6 +40,8 @@
         {% endfor %}
         </td></tr></table>
   </div>
+  {% endif %}
+  {% if secupdate_hosts.count > 0 %}
   <div class="module">
     <h2>Hosts with security updates pending:</h2>
         <table><tr><td>
@@ -44,6 +51,8 @@
         {% endfor %}
         </td></tr></table>
   </div>
+  {% endif %}
+  {% if update_hosts.count > 0 %}
   <div class="module">
     <h2>Hosts with normal updates pending:</h2>
         <table><tr><td>
@@ -53,6 +62,8 @@
         {% endfor %}
         </td></tr></table>
   </div>
+  {% endif %}
+  {% if norepo_hosts.count > 0 %}
   <div class="module">
     <h2>Hosts with no associated repositories:</h2>
         <table><tr><td>
@@ -62,11 +73,9 @@
         {% endfor %}
         </td></tr></table>
   </div>
+  {% endif %}
   <div class="module">
     <h2>Unused repositories:</h2>
-  </div>
-  <div class="module">
-    <h2>Orphaned packages and updates (no repo or host contains them):</h2>
   </div>
 
 </div>

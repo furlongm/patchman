@@ -66,6 +66,15 @@ def gunzip(contents):
 
     return contents.getvalue()
 
+def bunzip2(contents):
+
+    try:
+        bzip2data = bz2.decompress(contents)
+        return bzip2data
+    except IOError, e:
+        if e == 'invalid data stream':
+            pass
+
 def find_release(s):
     r = s.rpartition('-')
     if r[0] == '':
@@ -99,15 +108,17 @@ def unpack_debpackages(packagefile, packages):
     package_re =  re.compile('^Package: ', re.M)
     data = packagefile.read()
     sha1 = hashlib.sha1(data).hexdigest()
-    data = bz2.decompress(data)
-    lenpackages = len(package_re.findall(data))
+    extracted = bunzip2(data)
+    if not extracted:
+        extracted = gunzip(StringIO.StringIO(data))
+    lenpackages = len(package_re.findall(extracted))
 
     if lenpackages > 0:
         if verbose == True:
             pbar = progress_bar('Extracting packages: ', lenpackages)
             i = 0
 
-        for stanza in Sources.iter_paragraphs(StringIO.StringIO(data)):
+        for stanza in Sources.iter_paragraphs(StringIO.StringIO(extracted)):
             fullversion = Version(stanza['version'])
             arch = stanza['architecture']
             name = stanza['package']
@@ -125,6 +136,7 @@ def unpack_debpackages(packagefile, packages):
             packages.add(package)
             del package
 
+    del data, extracted
     return sha1
 
 def get_primary_url(repomdxml):
@@ -200,15 +212,16 @@ def get_repo_url(url):
         response = urlopen(url)
         return response
     except IOError, e:
-        print >> sys.stderr, url
         if hasattr(e, 'reason'):
-            print >> sys.stderr, ('Failed to reach the server: %s' % e.reason)
+            print 'Failed to reach the server: %s' % e.reason
             return -1
         elif hasattr(e, 'code'):
-            print >> sys.stderr, ('The server couldn\'t fulfill the request: %s' % e)
+            if verbose:
+                print url
+                print '%s - This may not be fatal, check below.' % e
             return e.code 
         else:
-            print >> sys.stderr, ('Error: %s' % e)
+            print 'Error: %s' % e
             return -1
 
 def update_packages(repo, packages):
@@ -281,9 +294,6 @@ def update_packages(repo, packages):
             packagetype = package.packagetype
             arch, c = PackageArchitecture.objects.get_or_create(name=package.arch)
             p, c = Package.objects.get_or_create(name=package_id, epoch=epoch, version=version, arch=arch, release=release, packagetype=packagetype)
-#            p.description = package.description
-#            p.url = package.url
-#            p.save()
             repo.packages.add(p)
         repo.save()
         new.clear()
@@ -294,14 +304,23 @@ def update_packages(repo, packages):
 
 def update_deb_repo(repo):
 
-    if verbose == True:
-        print 'Retrieving deb-style repo at: %s' % repo.url
+    formats = [ 'Packages.bz2', 'Packages.gz', 'Packages']
+    for fmt in formats:
+        repo_url = repo.url
+        for f in formats:
+            repo_url = repo_url.rstrip(f)
+        repo_url  = repo_url.rstrip('/') + '/' + fmt
+        res = get_repo_url(repo_url)
+        if type(res) != int:
+            break
 
-    res = get_repo_url(repo.url)
-   
     if type(res) == int:
         repo.last_access_ok = False
+        if verbose == True:
+            print 'No usable repo found.'
     else:
+        if verbose == True:
+            print 'Found deb-style repo at: %s' % repo_url
         packages = set()
         sha1 = unpack_debpackages(res, packages)
         repo.last_access_ok = True
@@ -317,49 +336,62 @@ def update_deb_repo(repo):
 
 def update_rpm_repo(repo):
 
-    if verbose == True:
-        print 'Retrieving rpm-style repo at: %s' % repo.url
-
-    res = get_repo_url(repo.url)
+    formats = [ 'repomd.xml.gz', 'repomd.xml' ]
+    for fmt in formats:
+        repo_url = repo.url
+        for f in formats:
+            repo_url = repo_url.rstrip(f)
+        repo_url  = repo_url.rstrip('/') + '/' + fmt
+        res = get_repo_url(repo_url)
+        if type(res) != int:
+            break
 
     if type(res) == int:
         repo.last_access_ok = False
+        if verbose == True:
+            print 'No usable repo found.'
     else:
+        if verbose == True:
+            print 'Found rpm-style repo at: %s' % repo_url
         primary, checksum = get_primary_url(res)
         res = get_repo_url(primary)
-        if res == 404:
-            print >> sys.stderr, ('404 not found for %s' % primary)
+        packages = set()
+        sha1 = unpack_primary(res, packages)
+        repo.timestamp = datetime.datetime.now()
+        repo.last_access_ok = True
+        if sha1 != checksum:
+            print >> sys.stderr, ('SHA1 checksum failed for repo %s, not updating packages' % repo.id)
             repo.last_access_ok = False
+        elif repo.file_checksum == sha1 and verbose == True:
+            print 'Repo checksum has not changed, not updating packages'
         else:
-            packages = set()
-            sha1 = unpack_primary(res, packages)
-            repo.last_access_ok = True
-            repo.timestamp = datetime.datetime.now()
-            if sha1 != checksum:
-                print >> sys.stderr, ('SHA1 checksum failed for repo %s, not updating packages' % repo.id)
-            elif repo.file_checksum == sha1 and verbose == True:
-                print 'Repo checksum has not changed, not updating packages'
-            else:
-                repo.file_checksum = sha1
-                update_packages(repo, packages)
-                repo.file_checksum = sha1
-            packages.clear()
-            del packages
+            update_packages(repo, packages)
+            repo.file_checksum = sha1
+        packages.clear()
+        del packages
     repo.save()
 
-def update_repos(repo):
+def update_repo(repo):
+    if repo.repotype == Repository.DEB:
+        update_deb_repo(repo)
+    elif repo.repotype == Repository.RPM:
+        update_rpm_repo(repo)
+    else:
+        print 'Error: unknown repo type for repo %s: %s' % (repo.id, repo.repotype)
+
+def update_repos(single_repo):
 
     update_repos = []
 
-    if repo:
+    if single_repo:
         try:
-            update_repos.append(Repository.objects.get(id=repo))
-            message = 'Updating repository with id: %s' % repo
+            update_repos.append(Repository.objects.get(id=single_repo))
+            message = 'Updating repository with id: %s' % single_repo
         except:
-            message = 'repo with id %s does not exist' % repo
+            message = 'repo with id %s does not exist' % single_repo
     else:
         message = 'Updating all repositories'
-        update_repos=Repository.objects.all()
+        update_repos = Repository.objects.all()
 
     if verbose:
         print message
@@ -367,15 +399,11 @@ def update_repos(repo):
     for repo in update_repos:
         if force == True:
             repo.file_checksum = ''
+            repo.save()
         if verbose:    
             print '\n%s' % repo
-        if repo.repotype == Repository.DEB:
-            update_deb_repo(repo)  
-        elif repo.repotype == Repository.RPM:
-            update_rpm_repo(repo)
-        else:
-            print >> sys.stderr, ('Error: unknown repo type for repo %s: %s' % (repo.id, repo.repotype))
-
+        update_repo(repo)
+    del message, update_repos
 
 def list_repos():
 
@@ -534,7 +562,7 @@ def process_packages(report, host):
             packages.append(p.replace('\'','').split(' '))
             package_count +=1
         if verbose == True:
-            ptext = '%s package updates' % host
+            ptext = '%s packages' % host[0:25]
             pbar = progress_bar(ptext, package_count)
             i = 0
         for pkg in packages:
@@ -598,7 +626,8 @@ def create_or_update_host(report):
 
 def process_reports():
 
-    for report in Report.objects.filter(processed=False):#orderby date
+    for report in Report.objects.filter(processed=False).order_by('time'):
+        print report
         if create_or_update_host(report) == True:
             report.processed = True
             report.save()
