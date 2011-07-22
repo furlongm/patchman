@@ -238,7 +238,7 @@ def update_packages(repo, packages):
 
     if newlen > 0:
         pbar = create_pbar('Adding %s new packages:' % newlen, newlen)
-        for package in new:
+        for i, package in enumerate(new):
             update_pbar(pbar, i+1)
             package_id, c = PackageName.objects.get_or_create(name=package.name)
             epoch = package.epoch
@@ -533,7 +533,7 @@ def process_packages(report, host):
                 package, c = Package.objects.get_or_create(name=p_name, arch=p_arch, epoch=p_epoch, version=p_version, release=p_release, packagetype=report.repotype)
                 host.packages.add(package)
                 del package
-            update_pbar(pbar, i+1)
+            update_pbar(pbar, i)
         host.save()
 
 def create_or_update_host(report):
