@@ -11,24 +11,7 @@
 <h2>{{ os }} Details</h2>
 <table>
 <tr><td>Name</td><td> {{ os.name }} </td></tr>
-<tr><td>OS Group</td><td><a href="{{ os.osgroup.get_absolute_url }}"> {{ os.osgroup }} </a></td></tr>
-</table>
-</div>
-<div class="module">
-<h2>{{ os }} Repositories</h2>
-<table>
-        <thead>
-                <tr>
-                    <th>Repo Name</th><th>URL</th><th>Packages</th>
-                </tr>
-        </thead>
-{% for repo in os.osgroup.repos.select_related %}
-                <tr class="{% cycle row1,row2 %}">
-                    <td><a href="{{ repo.get_absolute_url }}">{{ repo }}</a></td>
-                    <td><a href="{{ repo.url }}">{{ repo.url }}</a></td>
-                    <td>{{ repo.packages.count }}</td>
-                </tr>
-{% endfor %}
+<tr><td>OS Group</td><td>{% if os.osgroup != None %}<a href="{{ os.osgroup.get_absolute_url }}"> {{ os.osgroup }} </a>{% else %}No OS Group{% endif %}</td></tr>
 </table>
 </div>
 <div class="module">
@@ -68,6 +51,23 @@
             {% endfor %}
         </table>
 {% endif %}
+</div>
+<div class="module">
+<h2>{{ os }} Repositories</h2>
+<table>
+        <thead>
+                <tr>
+                    <th>Repo Name</th><th>URL</th><th>Packages</th>
+                </tr>
+        </thead>
+{% for repo in os.osgroup.repos.select_related %}
+                <tr class="{% cycle row1,row2 %}">
+                    <td><a href="{{ repo.get_absolute_url }}">{{ repo }}</a></td>
+                    <td><a href="{{ repo.url }}">{{ repo.url }}</a></td>
+                    <td>{{ repo.packages.count }}</td>
+                </tr>
+{% endfor %}
+</table>
 </div>
 
 {% endblock %}

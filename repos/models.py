@@ -34,3 +34,11 @@ class Repository(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return ('repo_detail', [self.id])
+
+    def update(self):
+        if self.repotype == Repository.DEB:
+            self.update_deb_repo()
+        elif repo.repotype == Repository.RPM:
+            update_rpm_repo(repo)
+        else:
+            print 'Error: unknown repo type for repo %s: %s' % (self.id, self.repotype)

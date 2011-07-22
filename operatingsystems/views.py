@@ -8,6 +8,7 @@ from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.core.urlresolvers import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q, Count
+from django.contrib import messages
 
 from andsome.util.filterspecs import Filter, FilterBar
 from datetime import datetime, date, time
@@ -54,14 +55,14 @@ def os_list(request):
 def os_detail(request, os_id):
 
     os = get_object_or_404(OS, id=os_id)
-    form = LinkOSGroupForm()
 
     if request.method == 'POST':
-        data = request.POST.copy()
-        osgroup_id = data['osgroup']
-        osgroup = OSGroup.objects.get(id=osgroup_id)
-        os.osgroup = osgroup
-        os.save()
+        form = LinkOSGroupForm(request.POST, instance=os)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect(os.get_absolute_url())
+
+    form = LinkOSGroupForm(instance=os)
 
     return render_to_response('operatingsystems/os_detail.html', {'os': os, 'form': form }, context_instance=RequestContext(request))
 
@@ -107,6 +108,7 @@ def osgroup_detail(request, osgroup_id):
         form = AddReposToOSGroupForm(request.POST, instance=osgroup)
         if form.is_valid():
             form.save()
+            messages.info(request, "Modified Repositories")
             return HttpResponseRedirect(osgroup.get_absolute_url())
 
     form = AddReposToOSGroupForm(instance=osgroup)
