@@ -14,7 +14,8 @@ from andsome.util.filterspecs import Filter, FilterBar
 from datetime import datetime, date, time
 import socket
 
-from patchman.operatingsystems.models import OS, OSGroup, LinkOSGroupForm, AddReposToOSGroupForm
+from patchman.operatingsystems.models import OS, OSGroup
+from patchman.operatingsystems.forms import LinkOSGroupForm, AddReposToOSGroupForm
 from patchman.repos.models import Repository
 
 @login_required

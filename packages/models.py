@@ -93,6 +93,9 @@ class Package(models.Model):
             vs = Version(self._version_string_deb())
             vo = Version(other._version_string_deb())
             return version_compare(vs, vo)
+
+    def get_absolute_url(self):
+        return self.name.get_absolute_url()
         
 class PackageString(models.Model):
 
