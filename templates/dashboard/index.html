@@ -74,6 +74,17 @@
         </td></tr></table>
   </div>
   {% endif %}
+  {% if stale_repos.count > 0 %}
+  <div class="module">
+    <h2>Repositories that have not been updated in 2 weeks:</h2>
+        <table><tr><td>
+        {% for repo in stale_repos %}
+        <div style="border-radius: 4px; margin: 2px 2px; padding:4px 4px; display:block; height:15px; float:left; {% cycle background:#bfdddd,background:#deeeee %}">
+        <a style="color:#222222" href="{{ repo.get_absolute_url }}">{{ repo }}</a></div>
+        {% endfor %}
+        </td></tr></table>
+  </div>
+  {% endif %}
   {% if failed_repos.count > 0 %}
   <div class="module">
     <h2>Repositories that are failing:</h2>
@@ -92,6 +103,16 @@
         {% for repo in unused_repos %}
         <div style="border-radius: 4px; margin: 2px 2px; padding:4px 4px; display:block; height:15px; float:left; {% cycle background:#bfdddd,background:#deeeee %}">
         <a style="color:#222222" href="{{ repo.get_absolute_url }}">{{ repo }}</a></div>
+        {% endfor %}
+        </td></tr></table>
+  {% endif %}
+  {% if norepo_packages.count > 0 %}
+  <div class="module">
+    <h2>Packages installed on a host that are not from any repo:</h2>
+        <table><tr><td>
+        {% for package in norepo_packages %}
+        <div style="border-radius: 4px; margin: 2px 2px; padding:4px 4px; display:block; height:15px; float:left; {% cycle background:#bfdddd,background:#deeeee %}">
+        <a style="color:#222222" href="{{ package.get_absolute_url }}">{{ package }}</a></div>
         {% endfor %}
         </td></tr></table>
   {% endif %}
