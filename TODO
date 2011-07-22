@@ -12,4 +12,3 @@ add descriptions?
 fix pakiti2-import script
 fix patchman-tool spacing for -p -v
 packages not in any repo on a host
-/hosts does not work when there are no hosts:

@@ -36,13 +36,12 @@ class OS(models.Model):
 
 class LinkOSGroupForm(ModelForm):
 
-#    osgroup = forms.ModelChoiceField(queryset=OSGroup.objects.all())
     class Meta:
         model = OS
+        fields = ('osgroup',)
 
 class AddReposToOSGroupForm(ModelForm):
 
     class Meta:
         model = OSGroup
         fields = ('repos',)
-#    repos = forms.ModelMultipleChoiceField(queryset=Repository.objects.all(), required=False)

@@ -74,9 +74,27 @@
         </td></tr></table>
   </div>
   {% endif %}
+  {% if failed_repos.count > 0 %}
+  <div class="module">
+    <h2>Repositories that are failing:</h2>
+        <table><tr><td>
+        {% for repo in failed_repos %}
+        <div style="border-radius: 4px; margin: 2px 2px; padding:4px 4px; display:block; height:15px; float:left; {% cycle background:#bfdddd,background:#deeeee %}">
+        <a style="color:#222222" href="{{ repo.get_absolute_url }}">{{ repo }}</a></div>
+        {% endfor %}
+        </td></tr></table>
+  </div>
+  {% endif %}
+  {% if unused_repos.count > 0 %}
   <div class="module">
     <h2>Unused repositories:</h2>
+        <table><tr><td>
+        {% for repo in unused_repos %}
+        <div style="border-radius: 4px; margin: 2px 2px; padding:4px 4px; display:block; height:15px; float:left; {% cycle background:#bfdddd,background:#deeeee %}">
+        <a style="color:#222222" href="{{ repo.get_absolute_url }}">{{ repo }}</a></div>
+        {% endfor %}
+        </td></tr></table>
+  {% endif %}
   </div>
-
 </div>
 {% endblock %}

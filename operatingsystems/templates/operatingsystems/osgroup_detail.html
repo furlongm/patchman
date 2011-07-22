@@ -16,6 +16,21 @@
     </table>
 </div>
 <div class="module">
+    <h2>Operating Systems linked to OS Group {{ osgroup }}</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>OS Name</th>
+        </tr>
+        </thead>
+        {% for repo in osgroup.os_set.select_related %}
+        <tr class="{% cycle row1,row2 %}">
+            <td><a href="{{ repo.get_absolute_url }}">{{ repo }}</a></td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+<div class="module">
     {% if osgroup.repos.count == 0 %}
     <h2>{{ osgroup }} has no Repositories</h2>
 {% else %}
@@ -35,21 +50,6 @@
         {% endfor %}
     </table>
 {% endif %}
-</div>
-<div class="module">
-    <h2>Operating Systems linked to OS Group {{ osgroup }}</h2>
-    <table>
-        <thead>
-        <tr>
-            <th>OS Name</th>
-        </tr>
-        </thead>
-        {% for repo in osgroup.os_set.select_related %}
-        <tr class="{% cycle row1,row2 %}">
-            <td><a href="{{ repo.get_absolute_url }}">{{ repo }}</a></td>
-        </tr>
-        {% endfor %}
-    </table>
 </div>
 <div class="module">
     <h2>Modify {{ osgroup }} repos</h2>

@@ -113,7 +113,7 @@ def unpack_debpackages(data, packages):
     lenpackages = len(package_re.findall(extracted))
 
     if lenpackages > 0:
-        if verbose == True:
+        if verbose:
             pbar = progress_bar('Extracting packages: ', lenpackages)
             i = 0
 
@@ -128,7 +128,7 @@ def unpack_debpackages(data, packages):
             release = fullversion._BaseVersion__debian_revision
             if release == None:
                 release = ''
-            if verbose == True:
+            if verbose:
                 pbar.update(i+1)
                 i += 1
             package = PackageString(name=name, epoch=epoch, version=version, release=release, arch=arch, packagetype='D')
@@ -173,12 +173,12 @@ def unpack_primary(data, packages):
 
     if numpackages > 0:
 
-        if verbose == True:
+        if verbose:
             pbar = progress_bar('Extracting packages: ', numpackages)
             i = 0
 
         for event, elem in context:
-            if verbose == True:
+            if verbose:
                 pbar.update(i+1)
                 i += 1
             name = elem.xpath('//ns:name', namespaces = {'ns': ns})[0].text.lower()
@@ -202,7 +202,7 @@ def unpack_primary(data, packages):
         del data
 
     else:
-        if verbose == True:
+        if verbose:
             print 'No packages in found in repo.'
 
 def get_repo_url(url):
@@ -233,12 +233,12 @@ def update_packages(repo, packages):
     reposize = len(repopackages)
 
     if reposize > 0:
-        if verbose == True:
+        if verbose:
             pbar = progress_bar('Obtaining stored packages: ', reposize)
             i = 0
 
         for package in repopackages:
-            if verbose == True:
+            if verbose:
                 pbar.update(i+1)
                 i += 1
             name=str(package.name)
@@ -256,13 +256,13 @@ def update_packages(repo, packages):
     removedlen = len(removed)
 
     if removedlen > 0:
-        if verbose == True:
+        if verbose:
             ptext = 'Removing %s obsolete packages:' % removedlen
             pbar = progress_bar(ptext, removedlen)
             i = 0
 
         for package in removed:
-            if verbose == True:
+            if verbose:
                 pbar.update(i+1)
                 i += 1
             package_id = PackageName.objects.get(name=package.name)
@@ -277,13 +277,13 @@ def update_packages(repo, packages):
         removed.clear()
 
     if newlen > 0:
-        if verbose == True:
+        if verbose:
             ptext = 'Adding %s new packages:' % newlen
             pbar = progress_bar(ptext, newlen)
             i = 0
 
         for package in new:
-            if verbose == True:
+            if verbose:
                 pbar.update(i+1)
                 i += 1
             package_id, c = PackageName.objects.get_or_create(name=package.name)
@@ -333,23 +333,28 @@ def download_url(res):
         return data 
     else:
         return res.read()
-        
+
+def check_response(res):
+
+    if type(res) == int:
+        if verbose:
+            print 'No usable repo found.'
+        return False
+    else:
+        return True
 
 def update_deb_repo(repo):
 
     formats = [ 'Packages.bz2', 'Packages.gz', 'Packages']
     repo_url, res = find_repo_url(repo.url, formats)
+    repo.last_access_ok = check_response(res)
 
-    if type(res) == int:
-        repo.last_access_ok = False
-        if verbose == True:
-            print 'No usable repo found.'
-    else:
-        if verbose == True:
+    if repo.last_access_ok:
+        if verbose:
             print 'Found deb-style repo at: %s' % repo_url
         data = download_url(res)
         sha1 = get_sha1(data)
-        if repo.file_checksum == sha1 and verbose == True:
+        if repo.file_checksum == sha1 and verbose:
             print 'Repo checksum has not changed, not updating packages'
         else:
             packages = set()
@@ -366,32 +371,31 @@ def update_rpm_repo(repo):
 
     formats = [ 'repomd.xml.gz', 'repomd.xml' ]
     repo_url, res = find_repo_url(repo.url, formats)
+    repo.last_access_ok = check_response(res)
 
-    if type(res) == int:
-        repo.last_access_ok = False
-        if verbose == True:
-            print 'No usable repo found.'
-    else:
-        if verbose == True:
+    if repo.last_access_ok:
+        if verbose:
             print 'Found rpm-style repo at: %s' % repo_url
         primary, checksum = get_primary_url(res)
         res = get_repo_url(primary)
-        data = res.read()
-        sha1 = get_sha1(data)
-        if sha1 != checksum:
-            print 'SHA1 checksum failed for repo %s, not updating packages' % repo.id
-            repo.last_access_ok = False
-        elif repo.file_checksum == sha1 and verbose == True:
-            print 'Repo checksum has not changed, not updating packages'
-        else:
-            packages = set()
-            unpack_primary(data, packages)
-            repo.timestamp = datetime.datetime.now()
-            repo.last_access_ok = True
-            update_packages(repo, packages)
-            repo.file_checksum = sha1
-            packages.clear()
-            del packages
+        repo.last_access_ok = check_response(res)
+        if repo.last_access_ok:
+            data = res.read()
+            sha1 = get_sha1(data)
+            if sha1 != checksum:
+                print 'SHA1 checksum failed for repo %s, not updating packages' % repo.id
+                repo.last_access_ok = False
+            elif repo.file_checksum == sha1 and verbose:
+                print 'Repo checksum has not changed, not updating packages'
+            else:
+                packages = set()
+                unpack_primary(data, packages)
+                repo.timestamp = datetime.datetime.now()
+                repo.last_access_ok = True
+                update_packages(repo, packages)
+                repo.file_checksum = sha1
+                packages.clear()
+                del packages
     repo.save()
 
 def update_repo(repo):
@@ -420,7 +424,7 @@ def update_repos(single_repo):
         print message
 
     for repo in update_repos:
-        if force == True:
+        if force:
             repo.file_checksum = ''
             repo.save()
         if verbose:    
@@ -453,38 +457,38 @@ def remove_orphaned_packages():
     allusedpackages = set()
     orphanedpackages = set()
 
-    if verbose == True:
+    if verbose:
         print '\nPruning orphaned packages'
         pbar = progress_bar('Obtaining all stored packages:', packagelen)
         i = 0
 
     for p in allpackages:
         allpackagestrings.add(PackageString(name=p.name, epoch=p.epoch, version=p.version, release=p.release, arch=p.arch, packagetype=p.packagetype))
-        if verbose == True:
+        if verbose:
             pbar.update(i+1)
             i += 1
 
     if repolen > 0:
-        if verbose == True:
+        if verbose:
             pbar = progress_bar('Obtaining repo packages:', repolen)
             i = 0
 
         for r in allrepos:
             for p in r.packages.all():
                 allusedpackages.add(PackageString(name=p.name, epoch=p.epoch, version=p.version, release=p.release, arch=p.arch, packagetype=p.packagetype))
-            if verbose == True:
+            if verbose:
                 pbar.update(i+1)
                 i += 1
 
     if hostlen > 0:
-        if verbose == True:
+        if verbose:
             pbar = progress_bar('Obtaining host packages:', hostlen)
             i = 0
 
         for h in allhosts:
             for p in h.packages.all():
                 allusedpackages.add(PackageString(name=p.name, epoch=p.epoch, version=p.version, release=p.release, arch=p.arch, packagetype=p.packagetype))
-            if verbose == True:
+            if verbose:
                 pbar.update(i+1)
                 i += 1
 
@@ -492,7 +496,7 @@ def remove_orphaned_packages():
     orphanedlen = len(orphanedpackages)
 
     if orphanedlen > 0:
-        if verbose == True:
+        if verbose:
             ptext = 'Removing %s orphaned packages:' % orphanedlen
             pbar = progress_bar(ptext, orphanedlen)
             i = 0
@@ -504,11 +508,11 @@ def remove_orphaned_packages():
                 print "Please re-run this tool with the duplicate-removing option first."
                 exit
             p.delete()
-            if verbose == True:
+            if verbose:
                 pbar.update(i+1)
                 i += 1
     else:
-        if verbose == True:
+        if verbose:
             print 'No orphaned packages found.'
 
 def remove_unused_package_names():
@@ -518,12 +522,12 @@ def remove_unused_package_names():
     allnameslen = len(allnames)
     p = 0
 
-    if verbose == True:
+    if verbose:
         ptext = 'Removing unused package names:'
         pbar = progress_bar(ptext, allnameslen)
         i = 0
     for packagename in allnames:
-        if verbose == True:
+        if verbose:
             pbar.update(i+1)
             i += 1
         if allpackages.filter(name=packagename):
@@ -532,7 +536,7 @@ def remove_unused_package_names():
             packagename.delete()
             p += 1
             
-    if verbose == True:
+    if verbose:
         print 'Removed %s unused package names.' % p
 
 
@@ -556,13 +560,13 @@ def remove_duplicate_packages():
     allpackageslen = len(allpackages)
     total_removed = 0
 
-    if verbose == True:
+    if verbose:
         ptext = 'Finding duplicate packages:'
         pbar = progress_bar(ptext, allpackageslen)
         i = 0
 
     for package in allpackages:
-        if verbose == True:
+        if verbose:
             pbar.update(i+1)
             i += 1
         query = allpackages.filter(Q(name=package.name)&Q(epoch=package.epoch)&Q(version=package.version)&Q(release=package.release)&Q(arch=package.arch)&Q(packagetype=package.packagetype))
@@ -572,7 +576,7 @@ def remove_duplicate_packages():
                     total_removed += remove_duplicates(package, p)
                     p.delete()
 
-    if verbose == True and total_removed != 0:
+    if verbose and total_removed != 0:
         print "Removed %s duplicate packages." % total_removed
 
 def process_packages(report, host):
@@ -584,7 +588,7 @@ def process_packages(report, host):
         for p in report.packages.splitlines():
             packages.append(p.replace('\'','').split(' '))
             package_count +=1
-        if verbose == True:
+        if verbose:
             ptext = '%s packages' % host.__unicode__().ljust(25)
             pbar = progress_bar(ptext, package_count)
             i = 0
@@ -607,7 +611,7 @@ def process_packages(report, host):
                 package, c = Package.objects.get_or_create(name=p_name, arch=p_arch, epoch=p_epoch, version=p_version, release=p_release, packagetype=report.repotype)
                 host.packages.add(package)
                 del package
-            if verbose == True:
+            if verbose:
                 pbar.update(i+1)
                 i += 1
         host.save()
@@ -628,7 +632,7 @@ def create_or_update_host(report):
                 'lastreport':report.time
             }
         )
-        if verbose == True and c == True:
+        if verbose and c:
             print 'Created host %s' % host
         host.ipaddress=report.report_ip
         host.arch=arch
@@ -650,13 +654,12 @@ def create_or_update_host(report):
 def process_reports():
 
     for report in Report.objects.filter(processed=False).order_by('time'):
-        print report
-        if create_or_update_host(report) == True:
+        if create_or_update_host(report):
             report.processed = True
             report.save()
 
 def print_update(update, signal, *args, **kwargs):
-    if verbose == True:
+    if verbose:
         print update
 
 def find_host_updates(update_host):
@@ -677,7 +680,7 @@ def find_host_updates(update_host):
         print message
 
     for host in update_hosts:
-        if verbose == True:
+        if verbose:
             print '\n%s' % host
         host_update_found.connect(print_update)
         host.find_updates()
@@ -686,7 +689,7 @@ def clean_updates():
 
     for update in PackageUpdate.objects.all():
         if update.host_set.all().count() == 0:
-            if verbose == True:
+            if verbose:
                 print 'Removing %s' % update
             update.delete()
         
@@ -722,20 +725,20 @@ if __name__ == '__main__':
     force = args.force
     verbose = args.verbose
 
-    if args.list == True:
+    if args.list:
         list_repos()
         exit
-    if args.update == True:
+    if args.update:
         update_repos(args.repo)
         exit 
-    if args.orphans == True:
+    if args.orphans:
         remove_orphaned_packages()
         remove_unused_package_names()
-    if args.dups == True:
+    if args.dups:
         remove_duplicate_packages()
-    if args.process_reports == True:
+    if args.process_reports:
         process_reports()
-    if args.find_updates == True:
+    if args.find_updates:
         find_host_updates(args.host)
-    if args.clean_updates == True:
+    if args.clean_updates:
         clean_updates()
