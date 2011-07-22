@@ -13,7 +13,7 @@ from datetime import datetime, date, time, timedelta
 from patchman.hosts.models import Host
 from patchman.operatingsystems.models import OS, OSGroup
 from patchman.repos.models import Repository
-from patchman.packages.models import Package
+from patchman.packages.models import Package, PackageName
 
 @login_required
 def dashboard(request):

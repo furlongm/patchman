@@ -1,4 +1,12 @@
-{% extends "main.html" %}
+{% extends "forms-side.html" %}
+
+{% load forms %}
+
+{% block extrahead %}
+<script type="text/javascript" src="{% url admin:jsi18n %}"></script> 
+<script type="text/javascript" src="{{ MEDIA_URL }}js/core.js"></script>
+{{ form.media }}
+{% endblock %}
 
 {% block title %}OS Group {{ osgroup }} {% endblock %}
 
@@ -56,8 +64,8 @@
         {% if user.is_authenticated %}
             {% if perms.is_admin %}
             <form action="." method="post">{% csrf_token %}
-            {{ form }}
-            <br /><input type="submit" value="Modify" />
+            {% form_as_div form %}
+            <br /><input type="submit" value="Save" /> 
             </form>
             {% endif %}
         {% endif %}

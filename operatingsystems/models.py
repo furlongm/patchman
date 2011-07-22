@@ -1,5 +1,4 @@
 from django.db import models
-from django.forms import ModelForm
 from patchman.repos.models import Repository
 
 class OSGroup(models.Model):
@@ -33,15 +32,3 @@ class OS(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return ('os_detail', [self.id])
-
-class LinkOSGroupForm(ModelForm):
-
-    class Meta:
-        model = OS
-        fields = ('osgroup',)
-
-class AddReposToOSGroupForm(ModelForm):
-
-    class Meta:
-        model = OSGroup
-        fields = ('repos',)
