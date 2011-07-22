@@ -4,7 +4,6 @@ from django.core.management import setup_environ
 
 import os
 import sys
-import MySQLdb
 import string
 import bz2
 import gzip
@@ -14,7 +13,7 @@ import hashlib
 import datetime
 import argparse
 import math
-from xml.dom.minidom import parse, parseString
+from StringIO import StringIO
 from lxml import etree
 from debian.debian_support import Version
 from debian.deb822 import Sources
@@ -53,12 +52,24 @@ def progress_bar(ptext, plength):
     pbar = ProgressBar(widgets=[jtext, Percentage(), Bar(), ETA()], maxval=plength).start()
     return pbar
 
+def create_pbar(ptext, plength):
+
+    if verbose:
+        return progress_bar(ptext, plength)
+    else:
+        return None
+
+def update_pbar(pbar, i):
+
+    if verbose and pbar:
+        pbar.update(i)
+
 def gunzip(contents):
 
     try:
         gzipdata = gzip.GzipFile(fileobj=contents)
         gzipdata = gzipdata.read()
-        contents = StringIO.StringIO(gzipdata)
+        contents = StringIO(gzipdata)
     except IOError, e:
         import warnings
         warnings.filterwarnings('ignore', category=DeprecationWarning)
@@ -76,48 +87,22 @@ def bunzip2(contents):
         if e == 'invalid data stream':
             pass
 
-def find_release(s):
-    r = s.rpartition('-')
-    if r[0] == '':
-        return ''
-    else:
-        return r[2]
+def extract(data):
 
-def find_epoch(s):
-    r = s.partition(':')
-    if r[1] == '':
-        return ''
-    else:
-        return r[0]
-
-def find_version(s, epoch, release):
-    try:
-        es = '%s:' % epoch
-        e = s.index(es) + len(epoch) + 1
-    except ValueError:
-        e = 0
-    try:
-        rs = '-%s' % release
-        r = s.index(rs)
-    except ValueError:
-        r = len(s)
-    return s[e:r]
-
+    extracted = bunzip2(data)
+    if not extracted:
+        extracted = gunzip(StringIO(data))
+    return extracted
 
 def unpack_debpackages(data, packages):
 
-    package_re =  re.compile('^Package: ', re.M)
-    extracted = bunzip2(data)
-    if not extracted:
-        extracted = gunzip(StringIO.StringIO(data))
+    extracted = extract(data)
+    package_re = re.compile('^Package: ', re.M)
     lenpackages = len(package_re.findall(extracted))
 
     if lenpackages > 0:
-        if verbose:
-            pbar = progress_bar('Extracting packages: ', lenpackages)
-            i = 0
-
-        for stanza in Sources.iter_paragraphs(StringIO.StringIO(extracted)):
+        pbar = create_pbar('Extracting packages: ', lenpackages)
+        for i, stanza in enumerate(Sources.iter_paragraphs(StringIO(extracted))):
             fullversion = Version(stanza['version'])
             arch = stanza['architecture']
             name = stanza['package']
@@ -128,59 +113,45 @@ def unpack_debpackages(data, packages):
             release = fullversion._BaseVersion__debian_revision
             if release == None:
                 release = ''
-            if verbose:
-                pbar.update(i+1)
-                i += 1
+            update_pbar(pbar, i+1)
             package = PackageString(name=name, epoch=epoch, version=version, release=release, arch=arch, packagetype='D')
             packages.add(package)
             del package
 
     del data, extracted
 
-def get_primary_url(repomdxml):
+def get_primary_url(repo_url, data):
 
-    # TODO, use lxml
+    extracted = extract(data)
 
-    data = StringIO.StringIO(repomdxml.read())
-    repodom = parseString(gunzip(data))
-    nodes = repodom.getElementsByTagName('data')
-    location = ''
-    checksum = ''
-
-    for node in nodes:
-        if node.getAttribute('type') == 'primary':
-            l = node.getElementsByTagName('location')[0]
-            location = l.getAttribute('href').rsplit('repodata')[1]
-            c = node.getElementsByTagName('checksum')[0]
-            if c.getAttribute('type') == 'sha':
-                checksum = c.firstChild.nodeValue
-
-    primary_url = str(repomdxml.geturl().rsplit('/', 1)[0]) + location
+    ns='http://linux.duke.edu/metadata/repo'
+    context = etree.parse(StringIO(data), etree.XMLParser())
+    location = context.xpath("//ns:data[@type='primary']/ns:location/@href",  namespaces = {'ns': ns})[0]
+    checksum = context.xpath("//ns:data[@type='primary']/ns:checksum",  namespaces = {'ns': ns})[0].text
+    primary_url = str(repo_url.rsplit('/', 2)[0]) + '/' + location
     return primary_url, checksum
 
 def get_sha1(data):
 
     return hashlib.sha1(data).hexdigest()
 
-def unpack_primary(data, packages):
+def unpack_rpmpackages(data, packages):
 
-    extracted = gunzip(StringIO.StringIO(data))
+    extracted = extract(data)
     
     ns='http://linux.duke.edu/metadata/common'
-    context = etree.iterparse(StringIO.StringIO(extracted), tag = '{%s}metadata' % ns)
+    context = etree.iterparse(StringIO(extracted), tag = '{%s}metadata' % ns)
     numpackages = int(context.next()[1].get('packages'))
-    context = etree.iterparse(StringIO.StringIO(extracted), tag = '{%s}package' % ns)
+    context = etree.iterparse(StringIO(extracted), tag = '{%s}package' % ns)
 
     if numpackages > 0:
 
-        if verbose:
-            pbar = progress_bar('Extracting packages: ', numpackages)
-            i = 0
+        pbar = create_pbar('Extracting packages: ', numpackages)
 
-        for event, elem in context:
-            if verbose:
-                pbar.update(i+1)
-                i += 1
+        for i, data in enumerate(context):
+            event = data[0]
+            elem = data[1]
+            update_pbar(pbar, i+1)
             name = elem.xpath('//ns:name', namespaces = {'ns': ns})[0].text.lower()
             arch = elem.xpath('//ns:arch', namespaces = {'ns': ns})[0].text
             fullversion = elem.xpath('//ns:version', namespaces = {'ns': ns})[0]
@@ -233,14 +204,9 @@ def update_packages(repo, packages):
     reposize = len(repopackages)
 
     if reposize > 0:
-        if verbose:
-            pbar = progress_bar('Obtaining stored packages: ', reposize)
-            i = 0
-
-        for package in repopackages:
-            if verbose:
-                pbar.update(i+1)
-                i += 1
+        pbar = create_pbar('Obtaining stored packages: ', reposize)
+        for i, package in enumerate(repopackages):
+            update_pbar(pbar, i+1)
             name=str(package.name)
             arch=str(package.arch)
             strpackage = PackageString(name=name, epoch=package.epoch, version=package.version, release=package.release, arch=arch, packagetype=package.packagetype)
@@ -256,15 +222,9 @@ def update_packages(repo, packages):
     removedlen = len(removed)
 
     if removedlen > 0:
-        if verbose:
-            ptext = 'Removing %s obsolete packages:' % removedlen
-            pbar = progress_bar(ptext, removedlen)
-            i = 0
-
-        for package in removed:
-            if verbose:
-                pbar.update(i+1)
-                i += 1
+        pbar = create_pbar('Removing %s obsolete packages:' % removedlen, removedlen)
+        for i, package in enumerate(removed):
+            update_pbar(pbar, i+1)
             package_id = PackageName.objects.get(name=package.name)
             epoch = package.epoch
             version = package.version
@@ -277,15 +237,9 @@ def update_packages(repo, packages):
         removed.clear()
 
     if newlen > 0:
-        if verbose:
-            ptext = 'Adding %s new packages:' % newlen
-            pbar = progress_bar(ptext, newlen)
-            i = 0
-
+        pbar = create_pbar('Adding %s new packages:' % newlen, newlen)
         for package in new:
-            if verbose:
-                pbar.update(i+1)
-                i += 1
+            update_pbar(pbar, i+1)
             package_id, c = PackageName.objects.get_or_create(name=package.name)
             epoch = package.epoch
             version = package.version
@@ -317,7 +271,7 @@ def download_url(res):
 
     headers = dict(res.headers.items())
     if verbose and 'content-length' in headers:
-        ptext = 'Downloading repository info'
+        ptext = 'Downloading repository info:'
         contentlen = int(headers['content-length'])
         chunk_size = 16384.0
         pbar = progress_bar(ptext, contentlen)
@@ -328,7 +282,7 @@ def download_url(res):
         for x in range(1, chunks + 1):
             chunk = res.read(int(chunk_size)) 
             i += len(chunk)
-            pbar.update(i)
+            update_pbar(pbar, i)
             data += chunk
         return data 
     else:
@@ -369,18 +323,19 @@ def update_deb_repo(repo):
 
 def update_rpm_repo(repo):
 
-    formats = [ 'repomd.xml.gz', 'repomd.xml' ]
+    formats = [ 'repomd.xml.bz2', 'repomd.xml.gz', 'repomd.xml' ]
     repo_url, res = find_repo_url(repo.url, formats)
     repo.last_access_ok = check_response(res)
 
     if repo.last_access_ok:
         if verbose:
             print 'Found rpm-style repo at: %s' % repo_url
-        primary, checksum = get_primary_url(res)
+        data = download_url(res)
+        primary, checksum = get_primary_url(res.geturl(), data)
         res = get_repo_url(primary)
         repo.last_access_ok = check_response(res)
         if repo.last_access_ok:
-            data = res.read()
+            data = download_url(res)
             sha1 = get_sha1(data)
             if sha1 != checksum:
                 print 'SHA1 checksum failed for repo %s, not updating packages' % repo.id
@@ -389,7 +344,7 @@ def update_rpm_repo(repo):
                 print 'Repo checksum has not changed, not updating packages'
             else:
                 packages = set()
-                unpack_primary(data, packages)
+                unpack_rpmpackages(data, packages)
                 repo.timestamp = datetime.datetime.now()
                 repo.last_access_ok = True
                 update_packages(repo, packages)
@@ -415,7 +370,7 @@ def update_repos(single_repo):
             update_repos.append(Repository.objects.get(id=single_repo))
             message = 'Updating repository with id: %s' % single_repo
         except:
-            message = 'repo with id %s does not exist' % single_repo
+            message = 'Repo with id %s does not exist' % single_repo
     else:
         message = 'Updating all repositories'
         update_repos = Repository.objects.all()
@@ -459,48 +414,32 @@ def remove_orphaned_packages():
 
     if verbose:
         print '\nPruning orphaned packages'
-        pbar = progress_bar('Obtaining all stored packages:', packagelen)
-        i = 0
 
-    for p in allpackages:
+    pbar = create_pbar('Obtaining all stored packages:', packagelen)
+    for i, p in enumerate(allpackages):
         allpackagestrings.add(PackageString(name=p.name, epoch=p.epoch, version=p.version, release=p.release, arch=p.arch, packagetype=p.packagetype))
-        if verbose:
-            pbar.update(i+1)
-            i += 1
+        update_pbar(pbar, i+1)
 
     if repolen > 0:
-        if verbose:
-            pbar = progress_bar('Obtaining repo packages:', repolen)
-            i = 0
-
-        for r in allrepos:
+        pbar = create_pbar('Obtaining repo packages:', repolen)
+        for i, r in enumerate(allrepos):
             for p in r.packages.all():
                 allusedpackages.add(PackageString(name=p.name, epoch=p.epoch, version=p.version, release=p.release, arch=p.arch, packagetype=p.packagetype))
-            if verbose:
-                pbar.update(i+1)
-                i += 1
+            update_pbar(pbar, i+1)
 
     if hostlen > 0:
-        if verbose:
-            pbar = progress_bar('Obtaining host packages:', hostlen)
-            i = 0
-
-        for h in allhosts:
+        pbar = create_pbar('Obtaining host packages:', hostlen)
+        for i, h in enumerate(allhosts):
             for p in h.packages.all():
                 allusedpackages.add(PackageString(name=p.name, epoch=p.epoch, version=p.version, release=p.release, arch=p.arch, packagetype=p.packagetype))
-            if verbose:
-                pbar.update(i+1)
-                i += 1
+            update_pbar(pbar, i+1)
 
     orphanedpackages = allpackagestrings.difference(allusedpackages)
     orphanedlen = len(orphanedpackages)
 
     if orphanedlen > 0:
-        if verbose:
-            ptext = 'Removing %s orphaned packages:' % orphanedlen
-            pbar = progress_bar(ptext, orphanedlen)
-            i = 0
-        for o in orphanedpackages:
+        pbar = create_pbar('Removing %s orphaned packages:' % orphanedlen, orphanedlen)
+        for i, o in enumerate(orphanedpackages):
             try:
                 p = Package.objects.get(name=o.name, epoch=o.epoch, version=o.version, release=o.release, arch=o.arch, packagetype=o.packagetype)
             except MultipleObjectsReturned:
@@ -508,9 +447,7 @@ def remove_orphaned_packages():
                 print "Please re-run this tool with the duplicate-removing option first."
                 exit
             p.delete()
-            if verbose:
-                pbar.update(i+1)
-                i += 1
+            update_pbar(pbar, i+1)
     else:
         if verbose:
             print 'No orphaned packages found.'
@@ -522,14 +459,9 @@ def remove_unused_package_names():
     allnameslen = len(allnames)
     p = 0
 
-    if verbose:
-        ptext = 'Removing unused package names:'
-        pbar = progress_bar(ptext, allnameslen)
-        i = 0
-    for packagename in allnames:
-        if verbose:
-            pbar.update(i+1)
-            i += 1
+    pbar = create_pbar('Removing unused package names:', allnameslen)
+    for i, packagename in enumerate(allnames):
+        update_pbar(pbar, i+1)
         if allpackages.filter(name=packagename):
             pass
         else:
@@ -560,15 +492,10 @@ def remove_duplicate_packages():
     allpackageslen = len(allpackages)
     total_removed = 0
 
-    if verbose:
-        ptext = 'Finding duplicate packages:'
-        pbar = progress_bar(ptext, allpackageslen)
-        i = 0
+    pbar = create_pbar('Finding duplicate packages:', allpackageslen)
 
-    for package in allpackages:
-        if verbose:
-            pbar.update(i+1)
-            i += 1
+    for i, package in enumerate(allpackages):
+        update_pbar(pbar, i+1)
         query = allpackages.filter(Q(name=package.name)&Q(epoch=package.epoch)&Q(version=package.version)&Q(release=package.release)&Q(arch=package.arch)&Q(packagetype=package.packagetype))
         if query.count() > 1:
             for p in query.all():
@@ -582,17 +509,12 @@ def remove_duplicate_packages():
 def process_packages(report, host):
 
     packages = []
-    package_count = 0
 
     if report.packages:
-        for p in report.packages.splitlines():
+        for i, p in enumerate(report.packages.splitlines()):
             packages.append(p.replace('\'','').split(' '))
-            package_count +=1
-        if verbose:
-            ptext = '%s packages' % host.__unicode__().ljust(25)
-            pbar = progress_bar(ptext, package_count)
-            i = 0
-        for pkg in packages:
+        pbar = create_pbar('%s packages' % host.__unicode__().ljust(25), i) 
+        for i, pkg in enumerate(packages):
             if report.version == '42': # patchman-style
                 if pkg[4] != '':
                     p_arch, c = PackageArchitecture.objects.get_or_create(name=pkg[4])
@@ -611,9 +533,7 @@ def process_packages(report, host):
                 package, c = Package.objects.get_or_create(name=p_name, arch=p_arch, epoch=p_epoch, version=p_version, release=p_release, packagetype=report.repotype)
                 host.packages.add(package)
                 del package
-            if verbose:
-                pbar.update(i+1)
-                i += 1
+            update_pbar(pbar, i+1)
         host.save()
 
 def create_or_update_host(report):
@@ -692,7 +612,6 @@ def clean_updates():
             if verbose:
                 print 'Removing %s' % update
             update.delete()
-        
         
 if __name__ == '__main__':
 
