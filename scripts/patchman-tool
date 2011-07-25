@@ -513,7 +513,7 @@ def process_packages(report, host):
     if report.packages:
         for i, p in enumerate(report.packages.splitlines()):
             packages.append(p.replace('\'','').split(' '))
-        pbar = create_pbar('%s packages' % host.__unicode__().ljust(25), i) 
+        pbar = create_pbar('%s packages' % host.__unicode__()[0:25], i) 
         for i, pkg in enumerate(packages):
             if report.version == '42': # patchman-style
                 if pkg[4] != '':
@@ -523,6 +523,8 @@ def process_packages(report, host):
                 p_name, c = PackageName.objects.get_or_create(name=pkg[0].lower())
                 if pkg[1]:
                     p_epoch = pkg[1]
+                    if p_epoch == 0:
+                        p_epoch = ''
                 else:
                     p_epoch = ''
                 p_version = pkg[2]
@@ -571,9 +573,22 @@ def create_or_update_host(report):
     else:
         return False
 
-def process_reports():
+def process_reports(report_host):
 
-    for report in Report.objects.filter(processed=False).order_by('time'):
+    if report_host:
+        try:
+            report_hosts = Report.objects.filter(processed=force, host=report_host).order_by('time')
+            message = 'Processing reports for host %s' % report_host
+        except:
+            message = 'No reports exist for host %s' % report_host
+    else:
+        message = 'Processing reports for all hosts'
+        report_hosts = Report.objects.filter(processed=force).order_by('time')
+
+    if verbose:
+        print message
+
+    for report in report_hosts:
         if create_or_update_host(report):
             report.processed = True
             report.save()
@@ -656,7 +671,7 @@ if __name__ == '__main__':
     if args.dups:
         remove_duplicate_packages()
     if args.process_reports:
-        process_reports()
+        process_reports(args.host)
     if args.find_updates:
         find_host_updates(args.host)
     if args.clean_updates:
