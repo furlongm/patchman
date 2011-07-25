@@ -61,7 +61,7 @@ def report_list(request):
         terms = new_data['search'].lower()
         query = Q()
         for term in terms.split(' '):
-            q = Q(name__icontains = term)
+            q = Q(host__icontains = term)
             query = query & q
         reports = reports.filter(query)
     else:
