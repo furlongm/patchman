@@ -54,7 +54,7 @@ def progress_bar(ptext, plength):
 
 def create_pbar(ptext, plength):
 
-    if verbose:
+    if verbose and plength > 0:
         return progress_bar(ptext, plength)
     else:
         return None
@@ -98,10 +98,10 @@ def unpack_debpackages(data, packages):
 
     extracted = extract(data)
     package_re = re.compile('^Package: ', re.M)
-    lenpackages = len(package_re.findall(extracted))
+    numpackages = len(package_re.findall(extracted))
 
-    if lenpackages > 0:
-        pbar = create_pbar('Extracting packages: ', lenpackages)
+    if numpackages > 0:
+        pbar = create_pbar('Extracting packages: ', numpackages)
         for i, stanza in enumerate(Sources.iter_paragraphs(StringIO(extracted))):
             fullversion = Version(stanza['version'])
             arch = stanza['architecture']
@@ -117,6 +117,9 @@ def unpack_debpackages(data, packages):
             package = PackageString(name=name, epoch=epoch, version=version, release=release, arch=arch, packagetype='D')
             packages.add(package)
             del package
+    else:
+        if verbose:
+            print 'No packages in found in repo.'
 
     del data, extracted
 
@@ -168,7 +171,6 @@ def unpack_rpmpackages(data, packages):
                     epoch = ''
                 package = PackageString(name=name, epoch=epoch, version=version, release=release, arch=arch, packagetype='R')
                 packages.add(package)
-                #print name, epoch, version, release, arch
         del context
         del data
 
@@ -203,14 +205,13 @@ def update_packages(repo, packages):
     repopackages = repo.packages.all()
     reposize = len(repopackages)
 
-    if reposize > 0:
-        pbar = create_pbar('Obtaining stored packages: ', reposize)
-        for i, package in enumerate(repopackages):
-            update_pbar(pbar, i+1)
-            name=str(package.name)
-            arch=str(package.arch)
-            strpackage = PackageString(name=name, epoch=package.epoch, version=package.version, release=package.release, arch=arch, packagetype=package.packagetype)
-            old.add(strpackage)
+    pbar = create_pbar('Obtaining stored packages: ', reposize)
+    for i, package in enumerate(repopackages):
+        update_pbar(pbar, i+1)
+        name=str(package.name)
+        arch=str(package.arch)
+        strpackage = PackageString(name=name, epoch=package.epoch, version=package.version, release=package.release, arch=arch, packagetype=package.packagetype)
+        old.add(strpackage)
 
     new = packages.difference(old)
     removed = old.difference(packages)
@@ -221,35 +222,33 @@ def update_packages(repo, packages):
     newlen = len(new)
     removedlen = len(removed)
 
-    if removedlen > 0:
-        pbar = create_pbar('Removing %s obsolete packages:' % removedlen, removedlen)
-        for i, package in enumerate(removed):
-            update_pbar(pbar, i+1)
-            package_id = PackageName.objects.get(name=package.name)
-            epoch = package.epoch
-            version = package.version
-            release = package.release
-            arch = PackageArchitecture.objects.get(name=package.arch)
-            packagetype = package.packagetype
-            p = Package.objects.get(name=package_id, epoch=epoch, version=version, arch=arch, release=release, packagetype=packagetype)
-            repo.packages.remove(p)
-        repo.save()
-        removed.clear()
+    pbar = create_pbar('Removing %s obsolete packages:' % removedlen, removedlen)
+    for i, package in enumerate(removed):
+        update_pbar(pbar, i+1)
+        package_id = PackageName.objects.get(name=package.name)
+        epoch = package.epoch
+        version = package.version
+        release = package.release
+        arch = PackageArchitecture.objects.get(name=package.arch)
+        packagetype = package.packagetype
+        p = Package.objects.get(name=package_id, epoch=epoch, version=version, arch=arch, release=release, packagetype=packagetype)
+        repo.packages.remove(p)
+    repo.save()
+    removed.clear()
 
-    if newlen > 0:
-        pbar = create_pbar('Adding %s new packages:' % newlen, newlen)
-        for i, package in enumerate(new):
-            update_pbar(pbar, i+1)
-            package_id, c = PackageName.objects.get_or_create(name=package.name)
-            epoch = package.epoch
-            version = package.version
-            release = package.release
-            packagetype = package.packagetype
-            arch, c = PackageArchitecture.objects.get_or_create(name=package.arch)
-            p, c = Package.objects.get_or_create(name=package_id, epoch=epoch, version=version, arch=arch, release=release, packagetype=packagetype)
-            repo.packages.add(p)
-        repo.save()
-        new.clear()
+    pbar = create_pbar('Adding %s new packages:' % newlen, newlen)
+    for i, package in enumerate(new):
+        update_pbar(pbar, i+1)
+        package_id, c = PackageName.objects.get_or_create(name=package.name)
+        epoch = package.epoch
+        version = package.version
+        release = package.release
+        packagetype = package.packagetype
+        arch, c = PackageArchitecture.objects.get_or_create(name=package.arch)
+        p, c = Package.objects.get_or_create(name=package_id, epoch=epoch, version=version, arch=arch, release=release, packagetype=packagetype)
+        repo.packages.add(p)
+    repo.save()
+    new.clear()
 
     del new
     del removed
@@ -420,37 +419,34 @@ def remove_orphaned_packages():
         allpackagestrings.add(PackageString(name=p.name, epoch=p.epoch, version=p.version, release=p.release, arch=p.arch, packagetype=p.packagetype))
         update_pbar(pbar, i+1)
 
-    if repolen > 0:
-        pbar = create_pbar('Obtaining repo packages:', repolen)
-        for i, r in enumerate(allrepos):
-            for p in r.packages.all():
-                allusedpackages.add(PackageString(name=p.name, epoch=p.epoch, version=p.version, release=p.release, arch=p.arch, packagetype=p.packagetype))
-            update_pbar(pbar, i+1)
+    pbar = create_pbar('Obtaining repo packages:', repolen)
+    for i, r in enumerate(allrepos):
+        for p in r.packages.all():
+            allusedpackages.add(PackageString(name=p.name, epoch=p.epoch, version=p.version, release=p.release, arch=p.arch, packagetype=p.packagetype))
+        update_pbar(pbar, i+1)
 
-    if hostlen > 0:
-        pbar = create_pbar('Obtaining host packages:', hostlen)
-        for i, h in enumerate(allhosts):
-            for p in h.packages.all():
-                allusedpackages.add(PackageString(name=p.name, epoch=p.epoch, version=p.version, release=p.release, arch=p.arch, packagetype=p.packagetype))
-            update_pbar(pbar, i+1)
+    pbar = create_pbar('Obtaining host packages:', hostlen)
+    for i, h in enumerate(allhosts):
+        for p in h.packages.all():
+            allusedpackages.add(PackageString(name=p.name, epoch=p.epoch, version=p.version, release=p.release, arch=p.arch, packagetype=p.packagetype))
+        update_pbar(pbar, i+1)
 
     orphanedpackages = allpackagestrings.difference(allusedpackages)
     orphanedlen = len(orphanedpackages)
 
-    if orphanedlen > 0:
-        pbar = create_pbar('Removing %s orphaned packages:' % orphanedlen, orphanedlen)
-        for i, o in enumerate(orphanedpackages):
-            try:
-                p = Package.objects.get(name=o.name, epoch=o.epoch, version=o.version, release=o.release, arch=o.arch, packagetype=o.packagetype)
-            except MultipleObjectsReturned:
-                print "You have duplicate packages in your database for %s." % o
-                print "Please re-run this tool with the duplicate-removing option first."
-                exit
-            p.delete()
-            update_pbar(pbar, i+1)
-    else:
-        if verbose:
-            print 'No orphaned packages found.'
+    pbar = create_pbar('Removing %s orphaned packages:' % orphanedlen, orphanedlen)
+    for i, o in enumerate(orphanedpackages):
+        try:
+            p = Package.objects.get(name=o.name, epoch=o.epoch, version=o.version, release=o.release, arch=o.arch, packagetype=o.packagetype)
+        except MultipleObjectsReturned:
+            print "You have duplicate packages in your database for %s." % o
+            print "Please re-run this tool with the duplicate-removing option first."
+            exit
+        p.delete()
+        update_pbar(pbar, i+1)
+
+    if orphanedlen == 0 and verbose:
+        print 'No orphaned packages found.'
 
 def remove_unused_package_names():
 
@@ -523,7 +519,7 @@ def process_packages(report, host):
                 p_name, c = PackageName.objects.get_or_create(name=pkg[0].lower())
                 if pkg[1]:
                     p_epoch = pkg[1]
-                    if p_epoch == 0:
+                    if p_epoch == '0':
                         p_epoch = ''
                 else:
                     p_epoch = ''
@@ -593,6 +589,33 @@ def process_reports(report_host):
             report.processed = True
             report.save()
 
+
+def remove_reports(host):
+
+    reports = Report.objects.filter(host=host).order_by('time')[:3]
+    report_ids = []
+
+    for report in reports:
+        report_ids.append(report.id)
+
+    del_reports = Report.objects.filter(host=host).exclude(id__in = report_ids)
+
+    reportlen = len(del_reports)
+    if verbose:
+        print host
+    pbar = create_pbar('Cleaning %s old reports' % reportlen, reportlen)
+    for i, report in enumerate(del_reports):
+        report.delete()
+        update_pbar(pbar, i+1)
+
+def clean_reports(report_host):
+
+    if report_host:
+        remove_reports(report_host)
+    else:
+        for host in Host.objects.all():
+            remove_reports(host)
+
 def print_update(update, signal, *args, **kwargs):
     if verbose:
         print update
@@ -647,6 +670,8 @@ if __name__ == '__main__':
                 help='find and remove all duplicates packages')
     parser.add_argument('-p', '--process-reports', action='store_true',
                 help='process all pending reports')
+    parser.add_argument('-r', '--clean-reports', action='store_true',
+                help='remove all but the last three reports')
     parser.add_argument('-U', '--find-updates', action='store_true',
                 help='find updates for all hosts')
     parser.add_argument('-H','--host',
@@ -670,6 +695,8 @@ if __name__ == '__main__':
         remove_unused_package_names()
     if args.dups:
         remove_duplicate_packages()
+    if args.clean_reports:
+        clean_reports(args.host)
     if args.process_reports:
         process_reports(args.host)
     if args.find_updates:
