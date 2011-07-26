@@ -59,16 +59,16 @@
     </table>
 {% endif %}
 </div>
-<div class="module">
-    <h2>Modify {{ osgroup }} repos</h2>
-        {% if user.is_authenticated %}
-            {% if perms.is_admin %}
+{% if user.is_authenticated %}
+    {% if perms.is_admin %}
+    <div class="module">
+        <h2>Modify {{ osgroup }} repos</h2>
             <form action="." method="post">{% csrf_token %}
             {% form_as_div form %}
             <br /><input type="submit" value="Save" /> 
             </form>
-            {% endif %}
-        {% endif %}
-</div>
+    </div>
+    {% endif %}
+{% endif %}
 {% endblock %}
 
