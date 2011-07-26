@@ -8,7 +8,7 @@
     {% for repo in object_list %}
                 <tr class="{% cycle row1,row2 %}">
                     <td><a href="{{ repo.get_absolute_url }}">{{ repo }}</a></td>
-                    <td><a href="{{ repo.url }}">{{ repo.url }}</a></td>
+                    <td><a href="{{ repo.url }}">{{ repo.url|slice:":25" }} ... {{ repo.url|slice:"-25:" }}</a></td>
                     <td>{{ repo.packages.count }}</td>
                 </tr>
     {% endfor %}
