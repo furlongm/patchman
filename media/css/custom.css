@@ -70,3 +70,7 @@ a:link.active, a:visited.active { color: #666; text-decoration:none; }
 .graph_key_pink { background-color: pink; }
 
 .barwidth { padding-left: 0px; padding-right: 0px; margin: 0px; width: 100px; background-color: white; }
+
+.resultslink { font-style: bold, font-size: 22px; padding: 4px 4px 4px 4px;}
+.brick { border-radius:4px; margin:2px 2px; padding:4px 4px; display:block; height:15px; float:left; border-style:solid; border-width:thin; }
+.clearbrick {clear:both;}
