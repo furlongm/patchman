@@ -35,7 +35,7 @@ from patchman.hosts.models import Host
 from patchman.operatingsystems.models import OS, OSGroup
 from patchman.domains.models import Domain
 from patchman.packages.models import Package, PackageName, PackageString, PackageUpdate
-from patchman.repos.models import Repository
+from patchman.repos.models import Repository, RepoPackage
 from patchman.arch.models import PackageArchitecture, MachineArchitecture
 from patchman.reports.models import Report
 
@@ -232,7 +232,8 @@ def update_packages(repo, packages):
         arch = PackageArchitecture.objects.get(name=package.arch)
         packagetype = package.packagetype
         p = Package.objects.get(name=package_id, epoch=epoch, version=version, arch=arch, release=release, packagetype=packagetype)
-        repo.packages.remove(p)
+        RepoPackage.objects.get(repo=repo, package=p).delete()
+        del p
     repo.save()
     removed.clear()
 
@@ -246,7 +247,7 @@ def update_packages(repo, packages):
         packagetype = package.packagetype
         arch, c = PackageArchitecture.objects.get_or_create(name=package.arch)
         p, c = Package.objects.get_or_create(name=package_id, epoch=epoch, version=version, arch=arch, release=release, packagetype=packagetype)
-        repo.packages.add(p)
+        RepoPackage.objects.create(repo=repo, package=p)
     repo.save()
     new.clear()
 
@@ -559,10 +560,13 @@ def create_or_update_host(report):
         host.lastreport=report.time
         host.tag=report.tag
         host.kernel=report.kernel
+        host.save()
 # TODO: fix this to use stringpackage sets to remove/add
 # or queryset sets
-        for package in host.packages.all():
-            host.packages.remove(package)
+        host.packages.clear()
+        #for package in host.packages.all():
+        #    host.packages.remove(package)
+        #host.save()
         process_packages(report, host)
         host.save()
         return True

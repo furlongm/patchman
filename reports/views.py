@@ -34,6 +34,7 @@ def upload(request):
                     packages.append(p.replace('\'','').split(' '))
             return render_to_response('reports/report.txt', {'data':data, 'packages':packages}, context_instance=RequestContext(request), mimetype='text/plain')
         else:
+            # Should return HTTP 204
             response.status=302
             return response
     else:

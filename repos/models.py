@@ -23,7 +23,7 @@ class Repository(models.Model):
     last_access_ok = models.BooleanField()
     file_checksum = models.CharField(max_length=255, blank=True, null=True)
     timestamp = models.DateTimeField()
-    packages = models.ManyToManyField(Package)
+    packages = models.ManyToManyField(Package, blank=True, null=True, through='RepoPackage')
 
     class Meta:
         verbose_name_plural = "Repositories"
@@ -42,3 +42,9 @@ class Repository(models.Model):
             update_rpm_repo(repo)
         else:
             print 'Error: unknown repo type for repo %s: %s' % (self.id, self.repotype)
+
+class RepoPackage(models.Model):
+
+    repo = models.ForeignKey(Repository)
+    package = models.ForeignKey(Package)
+    enabled = models.BooleanField(default=True)
