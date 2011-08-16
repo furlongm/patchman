@@ -15,7 +15,7 @@
       <div class="results" id="r1">
         {% for os in lonely_oses %}
         <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-        <a style="color:#222222" href="{{ os.get_absolute_url }}">{{ os }}</a></div>
+        <a class="dark" href="{{ os.get_absolute_url }}">{{ os }}</a></div>
         {% endfor %}
         <div class="clearbrick"></div>
       </div>
@@ -29,7 +29,7 @@
       <div class="results" id="r2">
         {% for osgroup in norepo_osgroups %}
         <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-        <a style="color:#222222" href="{{ osgroup.get_absolute_url }}">{{ osgroup }}</a></div>
+        <a class="dark" href="{{ osgroup.get_absolute_url }}">{{ osgroup }}</a></div>
         {% endfor %}
         <div class="clearbrick"></div>
       </div>
@@ -43,7 +43,7 @@
       <div class="results" id="r3">
         {% for host in stale_hosts %}
         <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-        <a style="color:#222222" href="{{ host.get_absolute_url }}">{{ host }}</a></div>
+        <a class="dark" href="{{ host.get_absolute_url }}">{{ host }}</a></div>
         {% endfor %}
         <div class="clearbrick"></div>
       </div>
@@ -57,7 +57,7 @@
       <div class="results" id="r4">
         {% for host in secupdate_hosts %}
         <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-        <a style="color:#222222" href="{% url host_detail host.hostname %}">{{ host.hostname }} ({{ host.hostname__count }})</a></div>
+        <a class="dark" href="{% url host_detail host.hostname %}">{{ host.hostname }} ({{ host.hostname__count }})</a></div>
         {% endfor %}
         <div class="clearbrick"></div>
       </div>
@@ -71,7 +71,7 @@
       <div class="results" id="r5">
         {% for host in update_hosts %}
         <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-        <a style="color:#222222" href="{% url host_detail host.hostname %}">{{ host.hostname }} ({{ host.hostname__count }})</a></div>
+        <a class="dark" href="{% url host_detail host.hostname %}">{{ host.hostname }} ({{ host.hostname__count }})</a></div>
         {% endfor %}
         <div class="clearbrick"></div>
       </div>
@@ -85,7 +85,7 @@
       <div class="results" id="r6">
         {% for host in norepo_hosts %}
         <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-        <a style="color:#222222" href="{{ host.get_absolute_url }}">{{ host }}</a></div>
+        <a class="dark" href="{{ host.get_absolute_url }}">{{ host }}</a></div>
         {% endfor %}
         <div class="clearbrick"></div>
       </div>
@@ -99,7 +99,7 @@
       <div class="results" id="r7">
         {% for repo in stale_repos %}
         <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-        <a style="color:#222222" href="{{ repo.get_absolute_url }}">{{ repo }}</a></div>
+        <a class="dark" href="{{ repo.get_absolute_url }}">{{ repo }}</a></div>
         {% endfor %}
         <div class="clearbrick"></div>
       </div>
@@ -113,7 +113,7 @@
       <div class="results" id="r8">
         {% for repo in failed_repos %}
         <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-        <a style="color:#222222" href="{{ repo.get_absolute_url }}">{{ repo }}</a></div>
+        <a class="dark" href="{{ repo.get_absolute_url }}">{{ repo }}</a></div>
         {% endfor %}
         <div class="clearbrick"></div>
       </div>
@@ -127,7 +127,7 @@
       <div class="results" id="r9">
         {% for repo in unused_repos %}
         <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-        <a style="color:#222222" href="{{ repo.get_absolute_url }}">{{ repo }}</a></div>
+        <a class="dark" href="{{ repo.get_absolute_url }}">{{ repo }}</a></div>
         {% endfor %}
         <div class="clearbrick"></div>
       </div>
@@ -141,7 +141,7 @@
       <div class="results" id="r10">
         {% for package in norepo_packages %}
         <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-        <a style="color:#222222" href="{{ package.get_absolute_url }}">{{ package }}</a></div>
+        <a class="dark" href="{{ package.get_absolute_url }}">{{ package }}</a></div>
         {% endfor %}
         <div class="clearbrick">&nbsp;</div>
      </div>

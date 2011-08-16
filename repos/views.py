@@ -15,25 +15,35 @@ import socket
 
 from patchman.packages.models import PackageName, Package
 from patchman.repos.models import Repository
+from patchman.operatingsystems.models import OSGroup
+from patchman.arch.models import MachineArchitecture
 
 @login_required
 def repo_list(request):
 
     repos = Repository.objects.select_related().order_by('name')
-    
-    try:
-        page_no = int(request.GET.get('page', 1))
-    except ValueError:
-        page_no = 1
 
+    if request.REQUEST.has_key('repotype'):
+        repos = repos.filter(repotype=request.GET['repotype'])
+
+    if request.REQUEST.has_key('arch'):
+        repos = repos.filter(arch=request.GET['arch'])
+
+    if request.REQUEST.has_key('osgroup'):
+        repos = repos.filter(osgroup=request.GET['osgroup'])
+
+    if request.REQUEST.has_key('security'):
+        security = request.GET['security'] == 'True'
+        repos = repos.filter(security=security)
+
+    if request.REQUEST.has_key('enabled'):
+        enabled = request.GET['enabled'] == 'True'
+        repos = repos.filter(enabled=enabled)
+    
     if request.REQUEST.has_key('package_id'):
         repos = repos.filter(packages=int(request.GET['package_id']))
-    try:
-        page_no = int(request.GET.get('page', 1))
-    except ValueError:
-        page_no = 1
 
-    if request.method == 'POST':
+    if request.REQUEST.has_key('search'):
         new_data = request.POST.copy()
         terms = new_data['search'].lower()
         query = Q()
@@ -44,6 +54,11 @@ def repo_list(request):
     else:
         terms = ""
 
+    try:
+        page_no = int(request.GET.get('page', 1))
+    except ValueError:
+        page_no = 1
+
     p = Paginator(repos, 50)
 
     try:
@@ -52,6 +67,11 @@ def repo_list(request):
         page = p.page(p.num_pages)
 
     filter_list = []
+    filter_list.append(Filter(request, 'repotype', Repository.objects.values_list('repotype', flat=True).distinct()))
+    filter_list.append(Filter(request, 'arch', MachineArchitecture.objects.all()))
+    filter_list.append(Filter(request, 'enabled', Repository.objects.values_list('enabled', flat=True).distinct()))
+    filter_list.append(Filter(request, 'security', Repository.objects.values_list('security', flat=True).distinct()))
+    filter_list.append(Filter(request, 'osgroup', OSGroup.objects.all()))
     filter_bar = FilterBar(request, filter_list)
 
     return render_to_response('repos/repo_list.html', {'page': page, 'filter_bar': filter_bar}, context_instance=RequestContext(request))

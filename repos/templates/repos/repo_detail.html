@@ -12,6 +12,7 @@
 <table>
 <tr><td>Name</td><td> {{ repo.name }} </td></tr>
 <tr><td>Type</td><td> {{ repo.repotype }} </td></tr>
+<tr><td>Architecture</td><td> {{ repo.arch }} </td></tr>
 <tr><td>URL</td><td> <a href="{{ repo.url }}">{{ repo.url }}</a> </td></tr>
 <tr><td>Number of Packages</td><td> {{ repo.packages.count }} </td></tr>
 <tr><td>Security</td><td> {{ repo.security }} </td></tr>
@@ -22,12 +23,13 @@
 </table>
 </div>
 <div class="module">
-<h2>{{repo}} Packages</h2>
-{% for package in repo.packages.select_related %}
-<span style="border-radius: 4px; margin: 2px 2px; padding:4px 4px; display:block; height:15px; float:left; {% cycle background:#bfdddd,background:#deeeee %}">
-<a style="color:#222222" href="{{ package.name.get_absolute_url }}"> {{ package }} </a></span>
-{% endfor %}
+    <div class="resultslink" id="r1"><a href="#">Full list of {{repo}} Packages</a></div>
+        <div class="results" id="r1">
+            {% for package in repo.packages.select_related %}
+            <span class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
+            <a class="dark" href="{{ package.name.get_absolute_url }}"> {{ package }} </a></span>
+            {% endfor %}
+        </div>
 </div>
-
 {% endblock %}
 
