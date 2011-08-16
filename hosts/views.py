@@ -28,59 +28,27 @@ def host_list(request):
     
     if request.REQUEST.has_key('domain'):
         hosts = hosts.filter(domain=int(request.GET['domain']))
-    try:
-        page_no = int(request.GET.get('page', 1))
-    except ValueError:
-        page_no = 1
 
     if request.REQUEST.has_key('package_id'):
         hosts = hosts.filter(packages=int(request.GET['package_id']))
-    try:
-        page_no = int(request.GET.get('page', 1))
-    except ValueError:
-        page_no = 1
 
     if request.REQUEST.has_key('package'):
-         hosts = hosts.filter(packages__name__name=request.GET['package'])
-    try:
-        page_no = int(request.GET.get('page', 1))
-    except ValueError:
-        page_no = 1
+        hosts = hosts.filter(packages__name__name=request.GET['package'])
 
     if request.REQUEST.has_key('repo'):
         hosts = hosts.filter(repos=int(request.GET['repo']))
-    try:
-        page_no = int(request.GET.get('page', 1))
-    except ValueError:
-        page_no = 1
 
     if request.REQUEST.has_key('arch'):
         hosts = hosts.filter(arch=int(request.GET['arch']))
-    try:
-        page_no = int(request.GET.get('page', 1))
-    except ValueError:
-        page_no = 1
 
     if request.REQUEST.has_key('os'):
         hosts = hosts.filter(os=int(request.GET['os']))
-    try:
-        page_no = int(request.GET.get('page', 1))
-    except ValueError:
-        page_no = 1
 
     if request.REQUEST.has_key('osgroup'):
         hosts = hosts.filter(os__osgroup=int(request.GET['osgroup']))
-    try:
-        page_no = int(request.GET.get('page', 1))
-    except ValueError:
-        page_no = 1
-
+        
     if request.REQUEST.has_key('tag'):
-         hosts = hosts.filter(tag=request.GET['tag'])
-    try:
-        page_no = int(request.GET.get('page', 1))
-    except ValueError:
-        page_no = 1
+        hosts = hosts.filter(tag=request.GET['tag'])
 
     if request.REQUEST.has_key('search'):
         new_data = request.POST.copy()
@@ -89,10 +57,14 @@ def host_list(request):
         for term in terms.split(' '):
             q = Q(hostname__icontains = term)
             query = query & q
-
         hosts = hosts.filter(query)
     else:
         terms = ""
+
+    try:
+        page_no = int(request.GET.get('page', 1))
+    except ValueError:
+        page_no = 1
 
     p = Paginator(hosts, 50)
 
@@ -127,3 +99,17 @@ def host_detail(request, hostname):
  
     return render_to_response('hosts/host_detail.html', {'host': host, 'reversedns': reversedns, 'reports': reports }, context_instance=RequestContext(request))
 
+@login_required
+def host_delete(request, hostname):
+
+    host = get_object_or_404(Host, hostname=hostname)
+
+    try:
+        reversedns = str(socket.gethostbyaddr(host.ipaddress)[0])
+    except socket.gaierror:
+        reversedns = 'None'
+
+    reports = Report.objects.all().filter(host=hostname).order_by('-time')[:3]
+    print reports
+
+    return render_to_response('hosts/host_delete.html', {'host': host, 'reversedns': reversedns, 'reports': reports }, context_instance=RequestContext(request))

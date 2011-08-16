@@ -1,0 +1,56 @@
+{% extends "main.html" %}
+
+{% block title %}Host {{ host }} {% endblock %}
+
+{% block content_title %}Host Information{% endblock %}
+
+{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url host_list %}">Hosts</a> &rsaquo; {{ host }} {% endblock %}
+
+{% block content %}
+
+{% if user.is_authenticated %}
+  {% if perms.is_admin %}
+  <div class="module">
+    <h2>Delete Confirmation</h2>
+    <div class="dialog">
+    Are you sure you want to delete this host? 
+<button type="button">Yes, delete.</button>
+<button type="button">No, keep.</button>
+    </div>
+  </div>
+  <div class="module">
+    <h2>{{host}}</h2>
+    <table>
+        <tr><td>Hostname</td><td> {{ host.hostname }} </td></tr>
+        <tr><td>Domain</td><td> <a href="{% url host_list %}?domain={{ host.domain.id }}">{{ host.domain }}</a> </td></tr>
+        <tr><td>Reporting IP Address</td><td> {{ host.ipaddress }} </td></tr>
+        <tr><td>Reverse DNS</td><td> {{ reversedns }} </td></tr>
+        <tr><td>OS</td><td> <a href="{{ host.os.get_absolute_url }}">{{ host.os }}</a> </td></tr>
+        <tr><td>OS Group</td><td> <a href="{{ host.os.osgroup.get_absolute_url }}">{{ host.os.osgroup }}</a> </td></tr>
+        <tr><td>Kernel</td><td> {{ host.kernel }} </td></tr>
+        <tr><td>Architecture</td><td> {{ host.arch }} </td></tr>
+        <tr><td>Tags</td><td> <a href="{% url host_list %}?tag={{ host.tag }}">{{ host.tag }}</a> </td></tr>
+        <tr><td>Last Update</td><td> {{ host.lastreport }} </td></tr>
+        <tr><td>Updates Available</td><td> <a href="#updates">{{ host.updates.count }}</a> </td></tr>
+        <tr><td>Reboot Required</td><td> {{ host.reboot_required }} </td></tr>
+        <tr><td>Packages Installed</td><td> <a href="#installedpackages">{{ host.packages.count}}</a> </td></tr>
+        <tr><td>Last 3 reports</td><td>
+            {% for report in reports %}
+            <span class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
+                <a class="dark" href="{{ report.get_absolute_url}}">{{ report.time }} </a>
+            </span>
+            {% endfor %}
+        </td></tr>
+    </table>
+  </div>
+  {% else %}
+  <div class="module">
+    <h2>Insufficient Permissions</h2>
+    <div class="brick">
+    You do not have sufficient permissions to delete this host.
+    </div>
+  </div>
+  {% endif %}
+{% endif %}
+{% endblock %}
+

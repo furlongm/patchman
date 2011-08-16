@@ -15,17 +15,19 @@ import socket
 
 from patchman.packages.models import PackageName, Package
 from patchman.repos.models import Repository
+from patchman.arch.models import PackageArchitecture
 
 @login_required
 def package_list(request):
 
     packages = PackageName.objects.select_related()
-    
-    try:
-        page_no = int(request.GET.get('page', 1))
-    except ValueError:
-        page_no = 1
+   
+    if request.REQUEST.has_key('arch'):
+        packages = packages.filter(package__arch=int(request.GET['arch'])).distinct()
 
+    if request.REQUEST.has_key('packagetype'):
+        packages = packages.filter(package__packagetype=request.GET['packagetype']).distinct()
+ 
     if request.REQUEST.has_key('search'):
         new_data = request.POST.copy()
         terms = new_data['search'].lower()
@@ -33,10 +35,14 @@ def package_list(request):
         for term in terms.split(' '):
             q = Q(name__icontains = term)
             query = query & q
-
         packages = packages.filter(query)
     else:
         terms = ""
+
+    try:
+        page_no = int(request.GET.get('page', 1))
+    except ValueError:
+        page_no = 1
 
     p = Paginator(packages, 50)
 
@@ -46,6 +52,8 @@ def package_list(request):
         page = p.page(p.num_pages)
 
     filter_list = []
+    filter_list.append(Filter(request, 'arch', PackageArchitecture.objects.all()))
+    filter_list.append(Filter(request, 'packagetype', Package.objects.values_list('packagetype', flat=True).distinct()))
     filter_bar = FilterBar(request, filter_list)
 
     return render_to_response('packages/package_list.html', {'page': page, 'filter_bar': filter_bar}, context_instance=RequestContext(request))

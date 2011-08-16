@@ -16,21 +16,28 @@
         <tr><td>Reverse DNS</td><td> {{ reversedns }} </td></tr>
         <tr><td>OS</td><td> <a href="{{ host.os.get_absolute_url }}">{{ host.os }}</a> </td></tr>
         <tr><td>OS Group</td><td> <a href="{{ host.os.osgroup.get_absolute_url }}">{{ host.os.osgroup }}</a> </td></tr>
-        <tr><td>Kernel</td><td> {{host.kernel }} </td></tr>
+        <tr><td>Kernel</td><td> {{ host.kernel }} </td></tr>
         <tr><td>Architecture</td><td> {{ host.arch }} </td></tr>
         <tr><td>Tags</td><td> <a href="{% url host_list %}?tag={{ host.tag }}">{{ host.tag }}</a> </td></tr>
         <tr><td>Last Update</td><td> {{ host.lastreport }} </td></tr>
         <tr><td>Updates Available</td><td> <a href="#updates">{{ host.updates.count }}</a> </td></tr>
         <tr><td>Reboot Required</td><td> {{ host.reboot_required }} </td></tr>
-        <tr><td>Packages Installed</td><td> <a href="#installedpackages">{{host.packages.count}}</a> </td></tr>
+        <tr><td>Packages Installed</td><td> <a href="#installedpackages">{{ host.packages.count}}</a> </td></tr>
         <tr><td>Last 3 reports</td><td>
             {% for report in reports %}
-            <span style="border-radius: 4px; margin: 2px 2px; padding:4px 4px; display:block; height:15px; float:left; {% cycle background:#bfdddd,background:#deeeee %}">
-                <a href="{{report.get_absolute_url}}">{{ report.time }} </a>
+            <span class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
+                <a class="dark" href="{{ report.get_absolute_url}}">{{ report.time }} </a>
             </span>
             {% endfor %}
         </td></tr>
     </table>
+    <div>
+    {% if user.is_authenticated %}
+        {% if perms.is_admin %}
+        <a href="delete">Delete this host</a>
+        {% endif %}
+    {% endif %}
+    </div>
 </div>
 <div class="module" id="updates">
     <h2>Updates Available</h2>
@@ -41,19 +48,18 @@
         {% for update in host.updates.select_related %}
         <tr>
             <td>
-            <span style="border-radius: 4px; display:block;
             {% if update.security %}
-            background:#ff5555
+            <span class="secupdate">
             {% else %}
-            background:#ff9933
+            <span class="update">
             {% endif %}
-            ">&nbsp;&nbsp;&nbsp;</span>
+            &nbsp;&nbsp;&nbsp;</span>
             </td>
             <td>
-                <a style="color:#222222" href="{{ update.oldpackage.name.get_absolute_url }}"> {{ update.oldpackage }} </a>
+                <a href="{{ update.oldpackage.name.get_absolute_url }}"> {{ update.oldpackage }} </a>
             </td>
             <td>
-                <a style="color:#222222" href="{{ update.newpackage.name.get_absolute_url }}"> {{ update.newpackage }} </a>
+                <a href="{{ update.newpackage.name.get_absolute_url }}"> {{ update.newpackage }} </a>
             </td>
         </tr>
         {% endfor %}
@@ -92,17 +98,13 @@
     </table>
 </div>
 <div class="module" id="installedpackages">
-    <h2>Installed Packages</h2>
-    <table>
-        <tr>
-            <td>
+    <div class="resultslink" id="r1"><a href="#">Show/Hide Installed Packages</a></div>
+        <div class="results" id="r1">
             {% for package in host.packages.select_related %}
-            <span style="border-radius: 4px; margin: 2px 2px; padding:4px 4px; display:block; height:15px; float:left; {% cycle background:#bfdddd,background:#deeeee %}">
-            <a style="color:#222222" href="{{ package.name.get_absolute_url }}"> {{ package }} </a></span>
+            <span class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
+            <a class="dark" href="{{ package.name.get_absolute_url }}"> {{ package }} </a></span>
             {% endfor %}
-            </td>
-        </tr>
-    </table>
+        </div>
 </div>
 {% endblock %}
 
