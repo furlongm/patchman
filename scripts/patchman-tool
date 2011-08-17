@@ -560,13 +560,10 @@ def create_or_update_host(report):
         host.lastreport=report.time
         host.tag=report.tag
         host.kernel=report.kernel
-        host.save()
 # TODO: fix this to use stringpackage sets to remove/add
 # or queryset sets
         host.packages.clear()
-        #for package in host.packages.all():
-        #    host.packages.remove(package)
-        #host.save()
+        host.save()
         process_packages(report, host)
         host.save()
         return True
