@@ -8,6 +8,7 @@ from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.core.urlresolvers import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q, Count
+from django.contrib import messages
 
 from andsome.util.filterspecs import Filter, FilterBar
 from datetime import datetime, date, time
@@ -95,7 +96,6 @@ def host_detail(request, hostname):
         reversedns = 'None'
 
     reports = Report.objects.all().filter(host=hostname).order_by('-time')[:3]
-    print reports
  
     return render_to_response('hosts/host_detail.html', {'host': host, 'reversedns': reversedns, 'reports': reports }, context_instance=RequestContext(request))
 
@@ -104,12 +104,17 @@ def host_delete(request, hostname):
 
     host = get_object_or_404(Host, hostname=hostname)
 
+    if request.method == 'POST':
+        if request.REQUEST.has_key('delete'):
+            host.delete()
+            messages.info(request, "Host %s has been deleted." % hostname)
+            return HttpResponseRedirect(reverse('host_list'))
+        elif request.REQUEST.has_key('cancel'):
+            return HttpResponseRedirect(reverse('host_detail', args=[hostname]))
+
     try:
         reversedns = str(socket.gethostbyaddr(host.ipaddress)[0])
     except socket.gaierror:
         reversedns = 'None'
 
-    reports = Report.objects.all().filter(host=hostname).order_by('-time')[:3]
-    print reports
-
-    return render_to_response('hosts/host_delete.html', {'host': host, 'reversedns': reversedns, 'reports': reports }, context_instance=RequestContext(request))
+    return render_to_response('hosts/host_delete.html', {'host': host, 'reversedns': reversedns}, context_instance=RequestContext(request))
