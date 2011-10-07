@@ -6,10 +6,10 @@
         <div id="user-tools">
         {% if user.is_authenticated %}
         Welcome, <strong>{% if user.get_full_name %} {{ user.get_full_name }} {% else %} {{ user }} {% endif %}</strong>
-        / <a href="{% url logout %}">Log out</a>
+        / <a href="https://patchman.vpac.org/Shibboleth.sso/Logout?return=https://patchman.vpac.org{% url logout %}">Log out</a>
             {% else %}
-            Welcome, <strong>Guest</strong> /
-        <a href="{% url login %}">Log In</a>
+            Welcome, <strong>Guest</strong>
+	{#/ <a href="{% url login %}">Log In</a>#}
             {% endif %}
         </div>
         {% endif %}

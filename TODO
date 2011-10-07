@@ -9,3 +9,4 @@ check database integrity script
 allows repo urls to be added without e.g. binary-amd64
 add descriptions?
 fix pakiti2-import script
+add diff's between reports to view state changes

@@ -3,6 +3,7 @@
   <div class="module">
     <h2>links</h2>
     <ul>
+      <li><h3><a class="{% active request "dashboard/" %}" href="{% url dashboard %}">Dashboard</a></h3></li>
       <li><h3><a class="{% active request "hosts/" %}" href="{% url host_list %}">Hosts</a></h3></li>
       <li><h3><a class="{% active request "packages/" %}" href="{% url package_list %}">Packages</a></h3></li>
       <li><h3><a class="{% active request "repos/" %}" href="{% url repo_list %}">Repos</a></h3></li>
