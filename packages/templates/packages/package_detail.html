@@ -29,7 +29,7 @@
 <tr class="{% cycle row1,row2 %}">
 <td> {{ version.epoch }} </td>
 <td> {{ version.version }} </td><td> {{ version.release }} </td>
-<td> {{ version.arch }} </td><td> {{ version.packagetype }} </td>
+<td> {{ version.arch }} </td><td> {{ version.get_packagetype_display }} </td>
 <td> <a href="{% url repo_list %}?package_id={{ version.id }}">Available from {{ version.repository_set.count }} repositories</a> </td>
 <td> <a href="{% url host_list %}?package_id={{ version.id }}">Installed on {{ version.host_set.count }} hosts</a> </td>
 <td><a href="{{ versions.url }}">{{ version.url }}</a></td><td><a href="">More..</a></td></tr>
