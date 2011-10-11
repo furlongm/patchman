@@ -26,17 +26,19 @@
     </table>
 </div>
 <div class="module">
-{% if os.osgroup == None %}
-    <h2>{{ os.name }} is not linked to any OS Group</h2>
+    <h2>Modify OS Group for {{ os.name }}</h2>
     {% if user.is_authenticated %}
         {% if perms.is_admin %}
+        <div>
         <form action={{ request.path }} method="post">{% csrf_token %}
-        {{ form }}
+        {{ link_form }}
             <input type="submit" value="Link" />
+        {{ create_form }}
+            <input type="submit" value="Create" />
         </form>
+        </div>
         {% endif %}
     {% endif %}
-{% else %}
     <h2>Operating Systems linked to OS Group {{ os.osgroup }}</h2>
         <table>
             <thead>
@@ -50,7 +52,6 @@
             </tr>
             {% endfor %}
         </table>
-{% endif %}
 </div>
 <div class="module">
 <h2>{{ os }} Repositories</h2>

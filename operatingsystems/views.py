@@ -31,7 +31,7 @@ from datetime import datetime, date, time
 import socket
 
 from patchman.operatingsystems.models import OS, OSGroup
-from patchman.operatingsystems.forms import LinkOSGroupForm, AddReposToOSGroupForm
+from patchman.operatingsystems.forms import LinkOSGroupForm, AddReposToOSGroupForm, CreateOSGroupForm
 from patchman.repos.models import Repository
 
 @login_required
@@ -74,14 +74,21 @@ def os_detail(request, os_id):
     os = get_object_or_404(OS, id=os_id)
 
     if request.method == 'POST':
-        form = LinkOSGroupForm(request.POST, instance=os)
-        if form.is_valid():
-            form.save()
+        create_form = CreateOSGroupForm(request.POST, prefix='create')
+        if create_form.is_valid():
+            osgroup = create_form.save()
+            os.osgroup = osgroup
+            os.save()
             return HttpResponseRedirect(os.get_absolute_url())
+        link_form = LinkOSGroupForm(request.POST, instance=os, prefix='link')
+        if link_form.is_valid():
+            link_form.save()
+            return HttpResponseRedirect(os.get_absolute_url())
+    else:
+        link_form = LinkOSGroupForm(instance=os, prefix='link')
+        create_form = CreateOSGroupForm(prefix='create')
 
-    form = LinkOSGroupForm(instance=os)
-
-    return render_to_response('operatingsystems/os_detail.html', {'os': os, 'form': form }, context_instance=RequestContext(request))
+    return render_to_response('operatingsystems/os_detail.html', {'os': os, 'link_form': link_form, 'create_form': create_form }, context_instance=RequestContext(request))
 
 @login_required
 def osgroup_list(request):

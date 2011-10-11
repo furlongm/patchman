@@ -20,6 +20,7 @@ from django.dispatch import Signal
 
 from rpm import labelCompare
 from debian.debian_support import Version, version_compare
+from tagging.fields import TagField
 
 from patchman.packages.models import Package, PackageUpdate
 from patchman.domains.models import Domain
@@ -37,12 +38,12 @@ class Host(models.Model):
     kernel = models.CharField(max_length=255)
     arch = models.ForeignKey(MachineArchitecture)
     domain = models.ForeignKey(Domain)
-    tag = models.CharField(max_length=255, blank=True, null=True)
     lastreport = models.DateTimeField()
     packages = models.ManyToManyField(Package)
     repos = models.ManyToManyField(Repository)
     updates = models.ManyToManyField(PackageUpdate)
     reboot_required = models.BooleanField(default=False)
+    tags = TagField()
 
     class Meta:
         ordering = ('hostname',)

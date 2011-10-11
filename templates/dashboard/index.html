@@ -95,7 +95,7 @@
 {% with stale_repos.count as count %}
   {% if count > 0 %}
   <div class="module">
-    <div class="resultslink" id="r7"><a href="#">{{ count }} Repositories have not updated in 2 weeks</a></div>
+    <div class="resultslink" id="r7"><a href="#">{{ count }} Repositories have not updated for at least 2 weeks</a></div>
       <div class="results" id="r7">
         {% for repo in stale_repos %}
         <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">

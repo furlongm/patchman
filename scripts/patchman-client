@@ -1,0 +1,186 @@
+#!/bin/bash
+
+conf='/etc/patchman/patchman-client.conf'
+protocol=1
+curl_bin=`which curl`
+mktemp_bin=`which mktemp`
+verbose=0
+debug=0
+report=0
+tags="Default"
+
+function usage {
+
+    echo "$0 [-v] [-d]"
+    echo "-v: verbose output"
+    echo "-d: debug output"
+    exit 0
+}
+
+function parseopts {
+
+    while getopts "dv" opt; do
+        case $opt in
+        v)
+            verbose=1
+            ;;
+        d)
+            debug=1
+            verbose=1
+            ;;
+        *)
+            usage
+            ;;
+        esac
+    done
+}
+
+function cleanup {
+
+    if [ ${verbose} -eq 1 ] ; then
+        echo "Deleting ${tmpfile}..."
+    fi
+    rm -fr ${tmpfile}  
+}
+
+function check_conf {
+
+    if [ "${conf}" = "" -o ! -f "${conf}" ] ; then
+        echo "Configuration file '${conf}' not found, exiting."
+        exit 1
+    else
+        . ${conf}
+        if [ -z ${server} -o -z ${port} ] ; then
+            echo "Patchman server and port not set, exiting"
+            exit 1
+        else
+            if [ ${verbose} -eq 1 ] ; then
+                echo "Patchman configuration seems ok:"
+                echo "Patchman Server: ${server}:${port}"
+                echo "Tags: ${tags}"
+                echo "Report: ${report}"
+            fi
+        fi
+    fi
+}
+
+function get_installed_rpms {
+
+    if [ ! -z "`which rpm`" -a -x "`which rpm`" ]; then
+        if [ ${verbose} -eq 1 ] ; then
+            echo 'Finding installed rpms...'
+        fi
+        rpm -qa --queryformat "'%{NAME}' '%{EPOCH}' '%{version}' '%{RELEASE}' '%{ARCH}' 'rpm'\n" 2>/dev/null | sed -e 's/(none)//g' | sed -e 's/\+/%2b/g' >> ${tmpfile}
+    fi
+}
+
+function get_installed_debs {
+
+    if [ ! -z "`which dpkg-query`" -a -x "`which dpkg-query`" ] ; then
+        if [ ${verbose} -eq 1 ] ; then
+            echo 'Finding installed debs...'
+        fi
+        OLDIFS=${IFS}
+        IFS="
+"
+        for i in $(dpkg-query -W --showformat="\${Status}\|\${Package} \${Version} \${Architecture}\n" | grep '^install ok installed' | sed -e 's/^install ok installed|//') ; do
+            fullversion=`echo "${i}" | awk '{print $2}'`
+            release=`echo "${fullversion}" | sed -e "s/.*-\(.*\)/\1/;tx;d;:x"`
+            remaining=`echo "${fullversion}" | sed -e "s/\(.*\)-${release}/\1/"`
+            epoch=`echo "${remaining}" | cut -d ":" -f 1 -s`
+            version=`echo "${remaining}" | sed -e "s/.*:\(.*\)/\1/"`
+            name=`echo "${i}" | awk '{print $1}'`
+            arch=`echo "${i}" | awk '{print $3}'`
+            echo \'${name}\' \'${epoch}\' \'${version}\' \'${release}\' \'${arch}\' \'deb\'>> ${tmpfile}
+        done
+        IFS=${OLDIFS}
+    fi
+}
+
+function get_host_data {
+
+    host_name=`hostname -f`
+    host_kernel=`uname -r | sed -e 's/\+/%2b/g'`
+    host_arch=`uname -m`
+}
+
+function get_os {
+
+    os="unknown"
+    releases="/etc/lsb-release /etc/debian_version /etc/fermi-release /etc/redhat-release /etc/fedora-release /etc/SuSE-release"
+    for i in ${releases} ; do
+        if [ -f $i ] ; then
+            case "${i}" in
+            /etc/lsb-release)
+                tmp_os=`grep DISTRIB_DESCRIPTION ${i}`
+                os=`echo ${tmp_os} | sed -e 's/DISTRIB_DESCRIPTION="\(.*\)"/\1/'`
+                if [ -z "${os}" ] ; then
+                    tmp_os=`grep  DISTRIB_DESC ${i}`
+                    os=`echo ${tmp_os} | sed -e 's/DISTRIB_DESC="\(.*\)"/\1/'`
+                fi
+                ;;
+            /etc/debian_version)
+                os="Debian `cat ${i}`"
+                ;;
+            /etc/fermi-release|/etc/redhat-release|/etc/fedora-release)
+                os=`cat ${i}`
+                ;;
+            /etc/SuSE-release)
+                os=`grep -i suse ${i}`
+                ;;
+            esac
+        fi
+    done
+}
+
+function post_data {
+
+    curl_opts=${curl_options}
+
+    if [ ${verbose} -eq 1 ] ; then
+        curl_opts="${curl_opts} -F verbose=\"1\""
+        echo "Sending data to ${server} with curl..."
+    else
+        curl_opts="${curl_opts} -s";
+    fi
+
+    if [ ${debug} -eq 1 ] ; then
+        curl_opts="${curl_opts} -F debug=\"1\"";
+    fi
+
+    curl_opts="${curl_opts} -F host=\"${host_name}\"";
+    curl_opts="${curl_opts} -F tags=\"${tags}\"";
+    curl_opts="${curl_opts} -F kernel=\"${host_kernel}\"";
+    curl_opts="${curl_opts} -F arch=\"${host_arch}\"";
+    curl_opts="${curl_opts} -F protocol=\"${protocol}\"";
+    curl_opts="${curl_opts} -F os=\"${os}\"";
+    curl_opts="${curl_opts} -F report=\"${report}\"";
+    curl_opts="${curl_opts} -F packages=\<${tmpfile}";
+    post_command="${curl_bin} ${curl_opts} ${server}:${port}/reports/upload/"
+
+    sed -i -e 's/%2b/\+/g' ${tmpfile}
+
+    if [ ${verbose} -eq 1 ] ; then
+        echo "Command is : ${post_command}"
+    fi
+
+    result=`eval "${post_command}"`
+
+    if [ ${report} -eq 1 ] ; then
+        if [ ! -z "${result}" ] ; then
+            echo "${result}"
+        else
+            echo "No output returned."
+        fi
+    fi
+}
+
+tmpfile=`${mktemp_bin}`
+trap cleanup EXIT
+parseopts $1 $2 $3
+check_conf
+get_host_data
+get_installed_rpms
+get_installed_debs
+get_os
+post_data
