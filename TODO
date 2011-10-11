@@ -1,12 +1,13 @@
 fix database race conditions with django transaction support
 use querysets to update/remove packages from repos
-install certs on clients, require tinyca? 
-use django tags for host tags
+install certs on clients
 fix web interface css (content_block in andsome)
 andsome paginator
 refactor to re-use code between scripts and models
 check database integrity script
 allows repo urls to be added without e.g. binary-amd64
-add descriptions?
+add package descriptions and urls?
+use django tags for package tags?
 fix pakiti2-import script
 add diff's between reports to view state changes
+use client to add (disabled) repos

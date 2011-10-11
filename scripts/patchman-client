@@ -66,7 +66,7 @@ function check_conf {
 
 function get_installed_rpms {
 
-    if [ ! -z "`which rpm`" -a -x "`which rpm`" ]; then
+    if [ ! -z "`/usr/bin/which rpm 2>/dev/null`" -a -x "`/usr/bin/which rpm 2>/dev/null`" ]; then
         if [ ${verbose} -eq 1 ] ; then
             echo 'Finding installed rpms...'
         fi
@@ -76,7 +76,7 @@ function get_installed_rpms {
 
 function get_installed_debs {
 
-    if [ ! -z "`which dpkg-query`" -a -x "`which dpkg-query`" ] ; then
+    if [ ! -z "`/usr/bin/which dpkg-query 2>/dev/null`" -a -x "`/usr/bin/which dpkg-query 2>/dev/null`" ] ; then
         if [ ${verbose} -eq 1 ] ; then
             echo 'Finding installed debs...'
         fi
