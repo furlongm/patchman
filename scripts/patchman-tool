@@ -512,7 +512,7 @@ def process_packages(report, host):
             packages.append(p.replace('\'','').split(' '))
         pbar = create_pbar('%s packages' % host.__unicode__()[0:25], i) 
         for i, pkg in enumerate(packages):
-            if report.version == '42': # patchman-style
+            if report.protocol == '1':
                 if pkg[4] != '':
                     p_arch, c = PackageArchitecture.objects.get_or_create(name=pkg[4])
                 else:
@@ -529,7 +529,12 @@ def process_packages(report, host):
                     p_release = pkg[3]
                 else:
                     p_release = ''
-                package, c = Package.objects.get_or_create(name=p_name, arch=p_arch, epoch=p_epoch, version=p_version, release=p_release, packagetype=report.repotype)
+                p_type=Package.UNKNOWN
+                if pkg[4] == 'deb':
+                    p_type=Package.DEB
+                elif pkg[4] == 'rpm':
+                    p_type=Package.RPM
+                package, c = Package.objects.get_or_create(name=p_name, arch=p_arch, epoch=p_epoch, version=p_version, release=p_release, packagetype=p_type)
                 host.packages.add(package)
                 del package
             update_pbar(pbar, i)
@@ -554,12 +559,12 @@ def create_or_update_host(report):
         if verbose and c:
             print 'Created host %s' % host
         host.ipaddress=report.report_ip
+        host.kernel=report.kernel
         host.arch=arch
         host.os=os
         host.domain=domain
         host.lastreport=report.time
-        host.tag=report.tag
-        host.kernel=report.kernel
+        host.tags=report.tags
 # TODO: fix this to use stringpackage sets to remove/add
 # or queryset sets
         host.packages.clear()

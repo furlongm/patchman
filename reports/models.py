@@ -27,24 +27,15 @@ from patchman.repos.models import Repository
 
 class Report(models.Model):
 
-    RPM = 'R'
-    DEB = 'D'
-
-    REPO_TYPES = (
-        (RPM, 'rpm'),
-        (DEB, 'deb'),
-    )
-
     time = models.DateTimeField(auto_now_add=True)
-    repotype = models.CharField(max_length=1, choices=REPO_TYPES, null=True)
     host = models.CharField(max_length=255, null=True)
     domain = models.CharField(max_length=255, null=True)
-    tag = models.CharField(max_length=255, null=True)
+    tags = models.CharField(max_length=255, null=True, default='')
     kernel = models.CharField(max_length=255, null=True)
     arch = models.CharField(max_length=255, null=True)
     os = models.CharField(max_length=255, null=True)
     report_ip = models.IPAddressField(null=True)
-    version = models.CharField(max_length=255, null=True)
+    protocol = models.CharField(max_length=255, null=True)
     useragent = models.CharField(max_length=255, null=True)
     processed = models.BooleanField(default=False)
     packages = models.TextField(null=True, blank=True)
@@ -74,25 +65,14 @@ class Report(models.Model):
         if 'kernel' in data:
             self.kernel=data['kernel']
 
-        if 'type' in data:
-            if data['type'] == 'dpkg' or data['type'] == 'deb':
-                self.repotype=Report.DEB
-            if data['type'] == 'rpm':
-                self.repotype=Report.RPM
+        if 'tags' in data:
+            self.tags=data['tags']
 
-        if 'tag' in data:
-            self.tag=data['tag']
-        else:
-            self.tag=''
+        if 'protocol' in data:
+            self.protocol=data['protocol']
 
-        if 'version' in data:
-            self.version=data['version']
-        else:
-            self.version=''
-# set defaults for all these elses
-
-        if 'pkgs' in data:
-            self.packages = data['pkgs']
+        if 'packages' in data:
+            self.packages = data['packages']
 
         self.save()
 

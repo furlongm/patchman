@@ -25,6 +25,7 @@ from django.core.urlresolvers import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q, Count
 from django.contrib import messages
+from tagging.models import Tag, TaggedItem
 
 from andsome.util.filterspecs import Filter, FilterBar
 from datetime import datetime, date, time
@@ -65,7 +66,8 @@ def host_list(request):
         hosts = hosts.filter(os__osgroup=int(request.GET['osgroup']))
         
     if request.REQUEST.has_key('tag'):
-        hosts = hosts.filter(tag=request.GET['tag'])
+#        hosts = TaggedItem.objects.get_by_model(Host, request.GET['tag'])
+        hosts = hosts.filter(tags=request.GET['tag'])
 
     if request.REQUEST.has_key('search'):
         new_data = request.POST.copy()
@@ -91,7 +93,10 @@ def host_list(request):
         page = p.page(p.num_pages)
 
     filter_list = []
-    filter_list.append(Filter(request, 'tag', Host.objects.values_list('tag', flat=True).distinct()))
+    mytags = {}
+    for tag in Tag.objects.usage_for_model(Host):
+        mytags[tag.name]=tag.name
+    filter_list.append(Filter(request, 'tag', mytags))
     filter_list.append(Filter(request, 'domain', Domain.objects.all()))
     filter_list.append(Filter(request, 'os', OS.objects.all()))
     filter_list.append(Filter(request, 'osgroup', OSGroup.objects.all()))

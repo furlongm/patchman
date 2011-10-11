@@ -42,10 +42,12 @@ class Package(models.Model):
 
     RPM = 'R'
     DEB = 'D'
+    UNKNOWN = 'U'
 
     PACKAGE_TYPES = (
         (RPM, 'rpm'),
         (DEB, 'deb'),
+        (UNKNOWN, 'unknown'),
     )
 
     name = models.ForeignKey(PackageName)

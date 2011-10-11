@@ -21,9 +21,23 @@ from patchman.repos.models import Repository
 
 class LinkOSGroupForm(ModelForm):
 
+    def __init__(self, *args, **kwargs):
+        super(LinkOSGroupForm, self).__init__(*args, **kwargs)
+        self.fields['osgroup'].label = 'Link to an existing OS Group'
+
     class Meta:
         model = OS
         fields = ('osgroup',)
+
+class CreateOSGroupForm(ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super(CreateOSGroupForm, self).__init__(*args, **kwargs)
+        self.fields['name'].label = ' or create a new OS Group'
+
+    class Meta:
+        model = OSGroup
+        fields = ('name',)
 
 class AddReposToOSGroupForm(ModelForm):
 

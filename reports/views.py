@@ -45,8 +45,8 @@ def upload(request):
 
         if 'report' in data and data['report'] == '1':
             packages = []
-            if 'pkgs' in data:
-                for p in data['pkgs'].splitlines():
+            if 'packages' in data:
+                for p in data['packages'].splitlines():
                     packages.append(p.replace('\'','').split(' '))
             return render_to_response('reports/report.txt', {'data':data, 'packages':packages}, context_instance=RequestContext(request), mimetype='text/plain')
         else:

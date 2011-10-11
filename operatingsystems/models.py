@@ -19,7 +19,7 @@ from patchman.repos.models import Repository
 
 class OSGroup(models.Model):
 
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
     repos = models.ManyToManyField(Repository, blank=True, null=True)
 
     class Meta:
