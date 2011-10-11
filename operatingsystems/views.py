@@ -79,10 +79,12 @@ def os_detail(request, os_id):
             osgroup = create_form.save()
             os.osgroup = osgroup
             os.save()
+            messages.info(request, "Created and linked to new OS Group")
             return HttpResponseRedirect(os.get_absolute_url())
         link_form = LinkOSGroupForm(request.POST, instance=os, prefix='link')
         if link_form.is_valid():
             link_form.save()
+            messages.info(request, "Link to OS Group successful")
             return HttpResponseRedirect(os.get_absolute_url())
     else:
         link_form = LinkOSGroupForm(instance=os, prefix='link')
