@@ -118,7 +118,7 @@ INSTALLED_APPS = (
     'debug_toolbar',
     'andsome',
     'south',
-    'tagging'm
+    'tagging',
     'patchman.hosts',
     'patchman.domains',
     'patchman.operatingsystems',
