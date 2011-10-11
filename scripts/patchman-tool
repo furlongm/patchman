@@ -529,11 +529,11 @@ def process_packages(report, host):
                     p_release = pkg[3]
                 else:
                     p_release = ''
-                p_type=Package.UNKNOWN
-                if pkg[4] == 'deb':
-                    p_type=Package.DEB
-                elif pkg[4] == 'rpm':
-                    p_type=Package.RPM
+                p_type = Package.UNKNOWN
+                if pkg[5] == 'deb':
+                    p_type = Package.DEB
+                if pkg[5] == 'rpm':
+                    p_type = Package.RPM
                 package, c = Package.objects.get_or_create(name=p_name, arch=p_arch, epoch=p_epoch, version=p_version, release=p_release, packagetype=p_type)
                 host.packages.add(package)
                 del package
