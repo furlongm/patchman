@@ -31,7 +31,7 @@ class Repository(models.Model):
     )
 
     name = models.CharField(max_length=255, unique=True)
-    url = models.CharField(max_length=255)
+    url = models.CharField(max_length=255, unique=True)
     arch = models.ForeignKey(MachineArchitecture)
     security = models.BooleanField()
     repotype = models.CharField(max_length=1, choices=REPO_TYPES)

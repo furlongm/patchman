@@ -38,9 +38,11 @@ function parseopts {
 function cleanup {
 
     if [ ${verbose} -eq 1 ] ; then
-        echo "Deleting ${tmpfile}..."
+        echo "Deleting ${package_tmpfile}..."
+        echo "Deleting ${repo_tmpfile}..."
     fi
-    rm -fr ${tmpfile}  
+    rm -fr ${package_tmpfile}
+    rm -fr ${repo_tmpfile}
 }
 
 function check_conf {
@@ -70,7 +72,7 @@ function get_installed_rpms {
         if [ ${verbose} -eq 1 ] ; then
             echo 'Finding installed rpms...'
         fi
-        rpm -qa --queryformat "'%{NAME}' '%{EPOCH}' '%{version}' '%{RELEASE}' '%{ARCH}' 'rpm'\n" 2>/dev/null | sed -e 's/(none)//g' | sed -e 's/\+/%2b/g' >> ${tmpfile}
+        rpm -qa --queryformat "'%{NAME}' '%{EPOCH}' '%{version}' '%{RELEASE}' '%{ARCH}' 'rpm'\n" 2>/dev/null | sed -e 's/(none)//g' | sed -e 's/\+/%2b/g' >> ${package_tmpfile}
     fi
 }
 
@@ -91,7 +93,7 @@ function get_installed_debs {
             version=`echo "${remaining}" | sed -e "s/.*:\(.*\)/\1/"`
             name=`echo "${i}" | awk '{print $1}'`
             arch=`echo "${i}" | awk '{print $3}'`
-            echo \'${name}\' \'${epoch}\' \'${version}\' \'${release}\' \'${arch}\' \'deb\'>> ${tmpfile}
+            echo \'${name}\' \'${epoch}\' \'${version}\' \'${release}\' \'${arch}\' \'deb\'>> ${package_tmpfile}
         done
         IFS=${OLDIFS}
     fi
@@ -143,7 +145,7 @@ function get_repos {
         if [ ${verbose} -eq 1 ] ; then
             echo 'Finding yum repos...'
         fi
-        yum repolist enabled --noplugins --verbose -C  | grep Repo-baseurl |  sed -e "s/Repo-baseurl : //" >> /tmp/repos
+        yum repolist enabled --noplugins --verbose -C  | grep Repo-baseurl |  sed -e "s/Repo-baseurl : //" >> ${repo_tmpfile}
     fi
 
     # Debian
@@ -151,7 +153,7 @@ function get_repos {
         if [ ${verbose} -eq 1 ] ; then
             echo 'Finding apt repos...'
         fi
-    apt-get update --print-uris | grep Packages | cut -d "'" -f 2 >> /tmp/repos
+    apt-get update --print-uris | grep Packages | cut -d "'" -f 2 >> ${repo_tmpfile}
     fi
 
     # SUSE
@@ -159,7 +161,7 @@ function get_repos {
         if [ ${verbose} -eq 1 ] ; then
             echo 'Finding zypper repos...'
         fi
-        zypper lr -u | tail +3 | cut -d "|" -f 6 | sed -e "s/^ //" >> /tmp/repos
+        zypper lr -u | tail +3 | cut -d "|" -f 6 | sed -e "s/^ //" >> ${repo_tmpfile}
     fi
 }
 
@@ -185,10 +187,11 @@ function post_data {
     curl_opts="${curl_opts} -F protocol=\"${protocol}\"";
     curl_opts="${curl_opts} -F os=\"${os}\"";
     curl_opts="${curl_opts} -F report=\"${report}\"";
-    curl_opts="${curl_opts} -F packages=\<${tmpfile}";
+    curl_opts="${curl_opts} -F packages=\<${package_tmpfile}";
+    curl_opts="${curl_opts} -F repos=\<${repo_tmpfile}";
     post_command="${curl_bin} ${curl_opts} ${server}:${port}/reports/upload/"
 
-    sed -i -e 's/%2b/\+/g' ${tmpfile}
+    sed -i -e 's/%2b/\+/g' ${package_tmpfile}
 
     if [ ${verbose} -eq 1 ] ; then
         echo "Command is : ${post_command}"
@@ -205,7 +208,13 @@ function post_data {
     fi
 }
 
-tmpfile=`${mktemp_bin}`
+if [ -z "$mktemp_bin" -o -z "$curl_bin" ] ; then
+    echo "Either mktemp or curl was not found, cannot continue."
+    usage
+fi
+package_tmpfile=`${mktemp_bin}`
+repo_tmpfile=`${mktemp_bin}`
+
 trap cleanup EXIT
 parseopts $1 $2 $3
 check_conf

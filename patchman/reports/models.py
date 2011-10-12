@@ -39,6 +39,7 @@ class Report(models.Model):
     useragent = models.CharField(max_length=255, null=True)
     processed = models.BooleanField(default=False)
     packages = models.TextField(null=True, blank=True)
+    repos = models.TextField(null=True, blank=True)
 
     class Meta:
         ordering = ('-time',)
@@ -46,7 +47,7 @@ class Report(models.Model):
     def __unicode__(self):
         return '%s %s' % (self.host, self.time)
 
-    def parse (self, data, meta):
+    def parse(self, data, meta):
 
         self.report_ip = meta['REMOTE_ADDR']
         self.useragent = meta['HTTP_USER_AGENT']
@@ -73,6 +74,9 @@ class Report(models.Model):
 
         if 'packages' in data:
             self.packages = data['packages']
+
+        if 'repos' in data:
+            self.repos = data['repos']
 
         self.save()
 

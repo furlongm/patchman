@@ -503,6 +503,17 @@ def remove_duplicate_packages():
     if verbose and total_removed != 0:
         print "Removed %s duplicate packages." % total_removed
 
+def process_repos(report, host):
+
+    if report.repos:
+        pbar = create_pbar('%s repos' % host.__unicode__()[0:25], i)
+        for i, r in enumerate(report.repos.splitlines()):
+            reponame = "%s %s" % (report.os, report.arch)
+            repo, c = Repository.objects.get_or_create(url=r)
+            repo.name = reponame
+            repo.save()
+            update_pbar(pbar, i)
+
 def process_packages(report, host):
 
     packages = []
@@ -570,6 +581,7 @@ def create_or_update_host(report):
         host.packages.clear()
         host.save()
         process_packages(report, host)
+        process_repos(report, host)
         host.save()
         return True
     else:
