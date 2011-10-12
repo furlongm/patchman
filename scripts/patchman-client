@@ -97,14 +97,17 @@ function get_installed_debs {
     fi
 }
 
+function get_packages {
+
+    get_installed_rpms
+    get_installed_debs
+}
+
 function get_host_data {
 
     host_name=`hostname -f`
     host_kernel=`uname -r | sed -e 's/\+/%2b/g'`
     host_arch=`uname -m`
-}
-
-function get_os {
 
     os="unknown"
     releases="/etc/lsb-release /etc/debian_version /etc/fermi-release /etc/redhat-release /etc/fedora-release /etc/SuSE-release"
@@ -131,6 +134,33 @@ function get_os {
             esac
         fi
     done
+}
+
+function get_repos {
+
+    # Red Hat / CentOS
+    if [ ! -z "`/usr/bin/which yum 2>/dev/null`" -a -x "`/usr/bin/which yum 2>/dev/null`" ] ; then
+        if [ ${verbose} -eq 1 ] ; then
+            echo 'Finding yum repos...'
+        fi
+        yum repolist enabled --noplugins --verbose -C  | grep Repo-baseurl |  sed -e "s/Repo-baseurl : //" >> /tmp/repos
+    fi
+
+    # Debian
+    if [ ! -z "`/usr/bin/which apt-get 2>/dev/null`" -a -x "`/usr/bin/which apt-get 2>/dev/null`" ] ; then
+        if [ ${verbose} -eq 1 ] ; then
+            echo 'Finding apt repos...'
+        fi
+    apt-get update --print-uris | grep Packages | cut -d "'" -f 2 >> /tmp/repos
+    fi
+
+    # SUSE
+    if [ ! -z "`/usr/bin/which zypper 2>/dev/null`" -a -x "`/usr/bin/which zypper 2>/dev/null`" ] ; then
+        if [ ${verbose} -eq 1 ] ; then
+            echo 'Finding zypper repos...'
+        fi
+        zypper lr -u | tail +3 | cut -d "|" -f 6 | sed -e "s/^ //" >> /tmp/repos
+    fi
 }
 
 function post_data {
@@ -180,7 +210,6 @@ trap cleanup EXIT
 parseopts $1 $2 $3
 check_conf
 get_host_data
-get_installed_rpms
-get_installed_debs
-get_os
+get_packages
+get_repos
 post_data
