@@ -19,9 +19,10 @@
     <table>
         <tr><td>
         {% for host in os.host_set.select_related %}
-            <div style="border-radius: 4px; margin: 2px 2px; padding:4px 4px; display:block; height:15px; float:left; {% cycle background:#bfdddd,background:#deeeee %}">
+            <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
             <a style="color:#222222" href="{{ host.get_absolute_url }}">{{ host }}</a></div>
         {% endfor %}
+        <div class="clearbrick" />
         </td></tr>
     </table>
 </div>

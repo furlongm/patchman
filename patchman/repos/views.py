@@ -24,6 +24,7 @@ from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.core.urlresolvers import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q, Count
+from django.contrib import messages
 
 from andsome.util.filterspecs import Filter, FilterBar
 from datetime import datetime, date, time
@@ -100,3 +101,17 @@ def repo_detail(request, repo):
 
     return render_to_response('repos/repo_detail.html', {'repo': repo }, context_instance=RequestContext(request))
 
+@login_required
+def repo_delete(request, repo):
+
+    repo = get_object_or_404(Repository, id=repo)
+
+    if request.method == 'POST':
+        if request.REQUEST.has_key('delete'):
+            repo.delete()
+            messages.info(request, "Repository %s has been deleted." % repo)
+            return HttpResponseRedirect(reverse('repo_list'))
+        elif request.REQUEST.has_key('cancel'):
+            return HttpResponseRedirect(reverse('repo_detail', args=[repo]))
+
+    return render_to_response('repos/repo_delete.html', {'repo': repo }, context_instance=RequestContext(request))

@@ -18,7 +18,6 @@
         {% csrf_token %}
         <input name="delete" type="submit" value="Delete" />
         <input name="cancel" type="submit" value="Cancel" />
-        <!-- <input type="submit" value="Cancel" /> -->
       </form>
     </div>
   </div>
@@ -33,7 +32,13 @@
         <tr><td>OS Group</td><td> <a href="{{ host.os.osgroup.get_absolute_url }}">{{ host.os.osgroup }}</a> </td></tr>
         <tr><td>Kernel</td><td> {{ host.kernel }} </td></tr>
         <tr><td>Architecture</td><td> {{ host.arch }} </td></tr>
-        <tr><td>Tags</td><td> <a href="{% url host_list %}?tag={{ host.tag }}">{{ host.tag }}</a> </td></tr>
+        <tr><td>Tags</td><td>
+            {% load tagging_tags %}
+            {% tags_for_object host as tags %}
+            {% for tag in tags %}
+                <a href="{% url host_list %}?tag={{ tag }}">{{ tag }}</a>
+            {% endfor %}
+        </td></tr>
         <tr><td>Last Update</td><td> {{ host.lastreport }} </td></tr>
     </table>
   </div>
