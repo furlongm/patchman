@@ -19,7 +19,7 @@ from debian.debian_support import Version
 from debian.deb822 import Sources
 from urllib2 import Request, urlopen
 
-sys.path.append('/usr/local/src')
+sys.path.append('/usr/local/src/patchman')
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'patchman.settings'
 

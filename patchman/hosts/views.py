@@ -66,7 +66,6 @@ def host_list(request):
         hosts = hosts.filter(os__osgroup=int(request.GET['osgroup']))
         
     if request.REQUEST.has_key('tag'):
-#        hosts = TaggedItem.objects.get_by_model(Host, request.GET['tag'])
         hosts = hosts.filter(tags=request.GET['tag'])
 
     if request.REQUEST.has_key('search'):
