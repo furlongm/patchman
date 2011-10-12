@@ -18,6 +18,7 @@ from lxml import etree
 from debian.debian_support import Version
 from debian.deb822 import Sources
 from urllib2 import Request, urlopen
+from urlparse import urlparse
 
 sys.path.append('/usr/local/src/patchman')
 
@@ -505,12 +506,24 @@ def remove_duplicate_packages():
 
 def process_repos(report, host):
 
+    repos = []
+
     if report.repos:
-        pbar = create_pbar('%s repos' % host.__unicode__()[0:25], i)
         for i, r in enumerate(report.repos.splitlines()):
-            reponame = "%s %s" % (report.os, report.arch)
-            repo, c = Repository.objects.get_or_create(url=r)
-            repo.name = reponame
+            repos.append(r.split(' '))
+        pbar = create_pbar('%s repos' % host.__unicode__()[0:25], i)
+        for i, repo in enumerate(repos):
+            r_host = urlparse(repo[1]).netloc
+            r_name = "%s %s %s" % (report.os, report.arch, r_host)
+            r_arch, c = MachineArchitecture.objects.get_or_create(name=report.arch)
+            if repo[0] == 'deb':
+                r_type = Repository.DEB
+            if repo[0] == 'rpm':
+                r_type = Repository.RPM
+            repo, c = Repository.objects.get_or_create(url=repo[1], arch=r_arch, repotype=r_type)
+            if c:
+                repo.enabled=False
+            repo.name = r_name
             repo.save()
             update_pbar(pbar, i)
 
