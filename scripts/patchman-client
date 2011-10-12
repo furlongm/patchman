@@ -145,7 +145,9 @@ function get_repos {
         if [ ${verbose} -eq 1 ] ; then
             echo 'Finding yum repos...'
         fi
-        yum repolist enabled --noplugins --verbose -C  | grep Repo-baseurl |  sed -e "s/Repo-baseurl : //" >> ${repo_tmpfile}
+        for i in $(yum repolist enabled --noplugins --verbose -C  | grep Repo-baseurl |  sed -e "s/Repo-baseurl : //") ; do
+            echo rpm ${i} >> ${repo_tmpfile}
+        done
     fi
 
     # Debian
@@ -153,7 +155,9 @@ function get_repos {
         if [ ${verbose} -eq 1 ] ; then
             echo 'Finding apt repos...'
         fi
-    apt-get update --print-uris | grep Packages | cut -d "'" -f 2 >> ${repo_tmpfile}
+        for i in $(apt-get update --print-uris | grep Packages | cut -d "'" -f 2 | sed -e "s/Packages\.bz2//") ; do
+            echo deb ${i} >> ${repo_tmpfile}
+        done
     fi
 
     # SUSE
@@ -161,7 +165,9 @@ function get_repos {
         if [ ${verbose} -eq 1 ] ; then
             echo 'Finding zypper repos...'
         fi
-        zypper lr -u | tail +3 | cut -d "|" -f 6 | sed -e "s/^ //" >> ${repo_tmpfile}
+        for i in $(zypper lr -u | tail +3 | cut -d "|" -f 6 | sed -e "s/^ //") ; do
+            echo rpm ${i} >> ${repo_tmpfile}
+        done
     fi
 }
 

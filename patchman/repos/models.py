@@ -38,7 +38,7 @@ class Repository(models.Model):
     enabled = models.BooleanField()
     last_access_ok = models.BooleanField()
     file_checksum = models.CharField(max_length=255, blank=True, null=True)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
     packages = models.ManyToManyField(Package, blank=True, null=True, through='RepoPackage')
 
     class Meta:
