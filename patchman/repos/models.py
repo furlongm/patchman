@@ -35,10 +35,10 @@ class Repository(models.Model):
     arch = models.ForeignKey(MachineArchitecture)
     security = models.BooleanField()
     repotype = models.CharField(max_length=1, choices=REPO_TYPES)
-    enabled = models.BooleanField()
+    enabled = models.BooleanField(default=False)
     last_access_ok = models.BooleanField()
     file_checksum = models.CharField(max_length=255, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
     packages = models.ManyToManyField(Package, blank=True, null=True, through='RepoPackage')
 
     class Meta:
