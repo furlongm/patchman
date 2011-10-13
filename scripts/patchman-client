@@ -144,13 +144,17 @@ function get_host_data {
 
 function get_repos {
 
+    OLDIFS=${IFS}
+    IFS="
+"
+
     # Red Hat / CentOS
     if [ ! -z "`/usr/bin/which yum 2>/dev/null`" -a -x "`/usr/bin/which yum 2>/dev/null`" ] ; then
         if [ ${verbose} -eq 1 ] ; then
             echo 'Finding yum repos...'
         fi
-        for i in $(yum repolist enabled --noplugins --verbose -C  | grep Repo-baseurl |  sed -e "s/Repo-baseurl : //") ; do
-            echo rpm ${i} >> ${repo_tmpfile}
+        for i in $(yum repolist enabled --noplugins --verbose -C  | egrep "Repo-name|Repo-baseurl" | sed -e ':a;N;$!ba;s/\nRepo-baseurl//g' -e "s/Repo-name    : /'/g" -e "s/ : /' '/g" | sed -e "s/\/*$/'/g") ; do
+            echo \'rpm\' ${i} >> ${repo_tmpfile}
         done
     fi
 
@@ -159,8 +163,8 @@ function get_repos {
         if [ ${verbose} -eq 1 ] ; then
             echo 'Finding apt repos...'
         fi
-        for i in $(apt-get update --print-uris | grep Packages | cut -d "'" -f 2 | sed -e "s/Packages\.bz2//") ; do
-            echo deb ${i} >> ${repo_tmpfile}
+        for i in $(apt-get update --print-uris | grep Packages | cut -d "'" -f 2 | sed -e "s/\/Packages\.bz2//") ; do
+            echo \'deb\' \'${os} repo at ${i}\' \'${i}\' >> ${repo_tmpfile}
         done
     fi
 
@@ -169,10 +173,11 @@ function get_repos {
         if [ ${verbose} -eq 1 ] ; then
             echo 'Finding zypper repos...'
         fi
-        for i in $(zypper lr -u | tail +3 | cut -d "|" -f 6 | sed -e "s/^ //") ; do
-            echo rpm ${i} >> ${repo_tmpfile}
+        for i in $(zypper lr -u | tail +3 | cut -d "|" -f 3,6 | sed -e "s/^ /'/g" -e "s/[ ]*| /' '/g" -e "s/\/*[ ]*$/'/g") ; do
+            echo \'rpm\' ${i} >> ${repo_tmpfile}
         done
     fi
+    IFS=${OLDIFS}
 }
 
 function post_data {
