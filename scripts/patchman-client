@@ -164,7 +164,7 @@ function get_repos {
             echo 'Finding apt repos...'
         fi
         for i in $(apt-get update --print-uris | grep Packages | cut -d "'" -f 2 | sed -e "s/\/Packages\.bz2//") ; do
-            echo \'deb\' \'${os} repo at ${i}\' \'${i}\' >> ${repo_tmpfile}
+            echo \'deb\' \'${os} ${arch} repo at ${i}\' \'${i}\' >> ${repo_tmpfile}
         done
     fi
 
