@@ -510,21 +510,19 @@ def process_repos(report, host):
 
     if report.repos:
         for i, r in enumerate(report.repos.splitlines()):
-            repos.append(r.split(' '))
+            repodata = re.findall('\'.*?\'', r)
+            for j, rs in enumerate(repodata):
+                repodata[j] = rs.replace('\'','')
+            repos.append(repodata)
         pbar = create_pbar('%s repos' % host.__unicode__()[0:25], i)
         for i, repo in enumerate(repos):
-            r_host = urlparse(repo[1]).netloc
-            r_name = "%s %s %s" % (report.os, report.arch, r_host)
-            r_arch, c = MachineArchitecture.objects.get_or_create(name=report.arch)
             if repo[0] == 'deb':
                 r_type = Repository.DEB
-            if repo[0] == 'rpm':
+            elif repo[0] == 'rpm':
                 r_type = Repository.RPM
-            repo, c = Repository.objects.get_or_create(url=repo[1], arch=r_arch, repotype=r_type)
-            if c:
-                repo.enabled=False
-            repo.name = r_name
-            repo.save()
+            r_name = repo[1]
+            r_arch, c = MachineArchitecture.objects.get_or_create(name=report.arch)
+            repo, c = Repository.objects.get_or_create(url=repo[2], arch=r_arch, repotype=r_type, defaults={'name': r_name})
             update_pbar(pbar, i)
 
 def process_packages(report, host):
