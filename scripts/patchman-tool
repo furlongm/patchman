@@ -324,7 +324,7 @@ def update_deb_repo(repo):
 
 def update_rpm_repo(repo):
 
-    formats = [ 'repomd.xml.bz2', 'repomd.xml.gz', 'repomd.xml' ]
+    formats = [ 'repodata/repomd.xml.bz2', 'repodata/repomd.xml.gz', 'repodata/repomd.xml' ]
     repo_url, res = find_repo_url(repo.url, formats)
     repo.last_access_ok = check_response(res)
 
