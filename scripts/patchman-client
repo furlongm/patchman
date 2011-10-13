@@ -153,7 +153,7 @@ function get_repos {
         if [ ${verbose} -eq 1 ] ; then
             echo 'Finding yum repos...'
         fi
-        for i in $(yum repolist enabled --noplugins --verbose -C  | egrep "Repo-name|Repo-baseurl" | sed -e ':a;N;$!ba;s/\nRepo-baseurl//g' -e "s/Repo-name    : /'/g" -e "s/ : / ${host_arch}' '/g" | sed -e "s/\/*$/'/g") ; do
+        for i in $(yum repolist enabled --noplugins --verbose -C  | egrep "Repo-name|Repo-baseurl" | sed -e ':a;N;$!ba;s/\nRepo-baseurl//g' -e "s/Repo-name[ ]*: /'/g" -e "s/[ ]*: / ${host_arch}' '/g" | sed -e "s/\/*$/'/g") ; do
             echo \'rpm\' ${i} >> ${repo_tmpfile}
         done
     fi
