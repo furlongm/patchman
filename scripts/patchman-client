@@ -123,15 +123,19 @@ function get_host_data {
                     tmp_os=`grep  DISTRIB_DESC ${i}`
                     os=`echo ${tmp_os} | sed -e 's/DISTRIB_DESC="\(.*\)"/\1/'`
                 fi
+                break
                 ;;
             /etc/debian_version)
                 os="Debian `cat ${i}`"
+                break
                 ;;
             /etc/fermi-release|/etc/redhat-release|/etc/fedora-release)
                 os=`cat ${i}`
+                break
                 ;;
             /etc/SuSE-release)
                 os=`grep -i suse ${i}`
+                break
                 ;;
             esac
         fi
