@@ -9,26 +9,27 @@
 {% block content %}
 
 <div class="module">
-<h2>{{repo}} Details</h2>
-<table>
-<tr><td>Name</td><td> {{ repo.name }} </td></tr>
-<tr><td>Type</td><td> {{ repo.get_repotype_display }} </td></tr>
-<tr><td>Architecture</td><td> {{ repo.arch }} </td></tr>
-<tr><td>URL</td><td> <a href="{{ repo.url }}">{{ repo.url }}</a> </td></tr>
-<tr><td>Number of Packages</td><td> {{ repo.packages.count }} </td></tr>
-<tr><td>Security</td><td> {{ repo.security }} </td></tr>
-<tr><td>Enabled</td><td> {{ repo.enabled }} </td></tr>
-<tr><td>Last Access Successful</td><td> {{ repo.last_access_ok }} </td></tr>
-<tr><td>Last Access Time</td><td> {{ repo.timestamp }} </td></tr>
-<tr><td>Checksum</td><td> {{ repo.file_checksum }} </td></tr>
-</table>
-    <div>
+    <h2>{{repo}} Details</h2>
+    <table>
+        <tr><td>Name</td><td> {{ repo.name }} </td></tr>
+        <tr><td>Type</td><td> {{ repo.get_repotype_display }} </td></tr>
+        <tr><td>Architecture</td><td> {{ repo.arch }} </td></tr>
+        <tr><td>URL</td><td> <a href="{{ repo.url }}">{{ repo.url }}</a> </td></tr>
+        <tr><td>Number of Packages</td><td> {{ repo.packages.count }} </td></tr>
+        <tr><td>Security</td><td> {{ repo.security }} </td></tr>
+        <tr><td>Enabled</td><td> {{ repo.enabled }} </td></tr>
+        <tr><td>Last Access Successful</td><td> {{ repo.last_access_ok }} </td></tr>
+        <tr><td>Last Access Time</td><td> {{ repo.timestamp }} </td></tr>
+        <tr><td>Checksum</td><td> {{ repo.file_checksum }} </td></tr>
+    </table>
+</div>
+<div class="module">
     {% if user.is_authenticated %}
         {% if perms.is_admin %}
-        <a href="delete">Delete this repository</a>
+        <a class="brick" href="delete">Delete this repository</a>
         {% endif %}
     {% endif %}
-    </div>
+    <div class="clearbrick"></div>
 </div>
 <div class="module">
     <div class="resultslink" id="r1"><a href="#">Full list of {{repo}} Packages</a></div>

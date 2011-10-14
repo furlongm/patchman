@@ -37,13 +37,14 @@
             {% endfor %}
         </td></tr>
     </table>
-    <div>
+</div>
+<div class="module">
     {% if user.is_authenticated %}
         {% if perms.is_admin %}
-        <a href="delete">Delete this host</a>
+        <a class="brick" href="delete">Delete this host</a>
         {% endif %}
     {% endif %}
-    </div>
+    <div class="clearbrick"></div>
 </div>
 <div class="module" id="updates">
     <h2>Updates Available</h2>

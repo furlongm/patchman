@@ -132,12 +132,17 @@ def get_primary_url(repo_url, data):
     context = etree.parse(StringIO(data), etree.XMLParser())
     location = context.xpath("//ns:data[@type='primary']/ns:location/@href",  namespaces = {'ns': ns})[0]
     checksum = context.xpath("//ns:data[@type='primary']/ns:checksum",  namespaces = {'ns': ns})[0].text
+    checksum_type = context.xpath("//ns:data[@type='primary']/ns:checksum/@type",  namespaces = {'ns': ns})[0]
     primary_url = str(repo_url.rsplit('/', 2)[0]) + '/' + location
-    return primary_url, checksum
+    return primary_url, checksum, checksum_type
 
 def get_sha1(data):
 
     return hashlib.sha1(data).hexdigest()
+
+def get_sha256(data):
+
+    return hashlib.sha256(data).hexdigest()
 
 def unpack_rpmpackages(data, packages):
 
@@ -190,8 +195,7 @@ def get_repo_url(url):
             return -1
         elif hasattr(e, 'code'):
             if verbose:
-                print url
-                print '%s - This may not be fatal, check below.' % e
+                print '%s - %s' % (url, e)
             return e.code 
         else:
             print 'Error: %s' % e
@@ -261,18 +265,22 @@ def find_repo_url(stored_repo_url, formats):
     for fmt in formats:
         repo_url = stored_repo_url
         for f in formats:
-            repo_url = repo_url.rstrip(f)
+            if repo_url.endswith(f):
+                repo_url = repo_url[:-len(f)]
         repo_url  = repo_url.rstrip('/') + '/' + fmt
         res = get_repo_url(repo_url)
         if type(res) != int:
             break
     return repo_url, res
 
-def download_url(res):
+def download_url(res, part):
 
     headers = dict(res.headers.items())
     if verbose and 'content-length' in headers:
-        ptext = 'Downloading repository info:'
+        if part == None:
+            ptext = 'Downloading repo info:'
+        else:
+            ptext = 'Downloading repo info %s:' % part
         contentlen = int(headers['content-length'])
         chunk_size = 16384.0
         pbar = progress_bar(ptext, contentlen)
@@ -306,8 +314,8 @@ def update_deb_repo(repo):
 
     if repo.last_access_ok:
         if verbose:
-            print 'Found deb-style repo at: %s' % repo_url
-        data = download_url(res)
+            print '%s - deb repo found.' % repo_url
+        data = download_url(res, None)
         sha1 = get_sha1(data)
         if repo.file_checksum == sha1 and verbose:
             print 'Repo checksum has not changed, not updating packages'
@@ -324,24 +332,30 @@ def update_deb_repo(repo):
 
 def update_rpm_repo(repo):
 
-    formats = [ 'repodata/repomd.xml.bz2', 'repodata/repomd.xml.gz', 'repodata/repomd.xml' ]
+    formats = [ 'repodata/repomd.xml.bz2', 'repodata/repomd.xml.gz', 'repodata/repomd.xml', 'suse/repodata/repomd.xml.bz2', 'suse/repodata/repomd.xml.gz', 'suse/repodata/repomd.xml' ]
     repo_url, res = find_repo_url(repo.url, formats)
     repo.last_access_ok = check_response(res)
 
     if repo.last_access_ok:
         if verbose:
-            print 'Found rpm-style repo at: %s' % repo_url
-        data = download_url(res)
-        primary, checksum = get_primary_url(res.geturl(), data)
+            print '%s - rpm repo found.' % repo_url
+        data = download_url(res, '(1/2)')
+        primary, checksum, checksum_type = get_primary_url(res.geturl(), data)
         res = get_repo_url(primary)
         repo.last_access_ok = check_response(res)
         if repo.last_access_ok:
-            data = download_url(res)
-            sha1 = get_sha1(data)
-            if sha1 != checksum:
-                print 'SHA1 checksum failed for repo %s, not updating packages' % repo.id
+            data = download_url(res, '(2/2)')
+            sha = None
+            if checksum_type == 'sha1':
+                sha = get_sha1(data)
+            elif checksum_type == 'sha256':
+                sha = get_sha256(data)
+            else:
+                print 'Unknown checksum type: %s' % checksum_type
+            if sha != checksum:
+                print '%s checksum failed for repo %s, not updating packages' % (checksum_type, repo.id)
                 repo.last_access_ok = False
-            elif repo.file_checksum == sha1 and verbose:
+            elif repo.file_checksum == sha and verbose:
                 print 'Repo checksum has not changed, not updating packages'
             else:
                 packages = set()
@@ -349,7 +363,7 @@ def update_rpm_repo(repo):
                 repo.timestamp = datetime.datetime.now()
                 repo.last_access_ok = True
                 update_packages(repo, packages)
-                repo.file_checksum = sha1
+                repo.file_checksum = sha
                 packages.clear()
                 del packages
     repo.save()

@@ -48,10 +48,13 @@ def upload(request):
 
         if 'report' in data and data['report'] == '1':
             packages = []
+            repos = []
             if 'packages' in data:
                 for p in data['packages'].splitlines():
                     packages.append(p.replace('\'','').split(' '))
-            return render_to_response('reports/report.txt', {'data':data, 'packages':packages}, context_instance=RequestContext(request), mimetype='text/plain')
+            if 'repos' in data:
+                repos = data['repos']
+            return render_to_response('reports/report.txt', {'data':data, 'packages':packages, 'repos':repos}, context_instance=RequestContext(request), mimetype='text/plain')
         else:
             # Should return HTTP 204
             response.status=302
