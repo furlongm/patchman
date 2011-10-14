@@ -93,11 +93,12 @@ class Host(models.Model):
 
             if highest != ('', '0', ''):
                 hostrepos = Q(osgroup__os__host=self, arch=self.arch)|Q(host=self)
-                try:
-                    security = highestpackage.repository_set.filter(hostrepos).get().security
-                except:
-                    # for debian packages re-imported into the normal repo, they are still security updates
-                    security = True
+                matchingrepos = highestpackage.repository_set.filter(hostrepos)
+                security = False
+                # If any of the containing repos are security, mark the update as security
+                for repo in matchingrepos:
+                    if repo.security == True:
+                        security = True
                 update, c = PackageUpdate.objects.get_or_create(oldpackage=package,newpackage=highestpackage,security=security)
                 self.updates.add(update)
                 host_update_found.send(sender=self, update=update)
@@ -125,7 +126,12 @@ class Host(models.Model):
                         host_highest = hostkernel
                         host_highest_package = hostpackage
                 if labelCompare(host_highest, repo_highest) == -1:
-                    security = repo_highest_package.repository_set.filter(arch=self.arch).get().security
+                    matchingrepos = repo_highest_package.repository_set.filter(arch=self.arch)
+                    security = False
+                    # If any of the containing repos are security, mark the update as security
+                    for repo in matchingrepos:
+                        if repo.security == True:
+                            security = True
                     update, c = PackageUpdate.objects.get_or_create(oldpackage=host_highest_package, newpackage=repo_highest_package, security=security)
                     self.updates.add(update)
                     host_update_found.send(sender=self, update=update)

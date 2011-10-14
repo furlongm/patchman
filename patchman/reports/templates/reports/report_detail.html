@@ -22,6 +22,15 @@
     <tr><td>Has Been Processed?</td><td> {{ report.processed }} </td></tr>
     </table>
 </div>
+  <h2>Repositories</h2>
+  <table>
+  {% for repo in report.repos.splitlines %}
+    <tr class="{% cycle row1,row2 %}">
+      <td> {{ repo }} </td>
+    </tr>
+  {% endfor %}
+  </table>
+</div>
 <div class="module">
   <h2>Packages</h2>
   <table>
@@ -32,6 +41,5 @@
   {% endfor %}
   </table>
 </div>
-
 {% endblock %}
 

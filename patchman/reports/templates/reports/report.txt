@@ -5,6 +5,10 @@ kernel:   {{ data.kernel }}
 report:   {{ data.report }}
 tags:     {{ data.tags }}
 protocol: {{ data.protocol }}
+repos:
+{% for r in repos.splitlines %}
+{{ r }}
+{% endfor %}
 packages:
 {% for p in packages %}{% for info in p %} {{ info }} |{% endfor %}
 {% endfor %}

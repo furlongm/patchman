@@ -11,15 +11,21 @@ tags="Default"
 
 function usage {
 
-    echo "$0 [-v] [-d]"
-    echo "-v: verbose output"
+    echo "$0 [-v] [-d] [-n] [-r] [-s SERVER] [-c FILE]"
+    echo "-v: verbose output (default is silent)"
     echo "-d: debug output"
+    echo "-n: no repo check (required when used as an apt or yum plugin)"
+    echo "-r: request a report from the server (default is no report)"
+    echo "-s SERVER: web server address, e.g. https://patchman.example.com"
+    echo "-c FILE: config file location (default is /etc/patchman/patchman-client.conf)"
+    echo
+    echo "Command line options override config file options."
     exit 0
 }
 
 function parseopts {
 
-    while getopts "dv" opt; do
+    while getopts "dvns:r" opt; do
         case $opt in
         v)
             verbose=1
@@ -27,6 +33,18 @@ function parseopts {
         d)
             debug=1
             verbose=1
+            ;;
+        n)
+            no_repo_check=1
+            ;;
+        r)
+            cli_report=1
+            ;;
+        s)
+            cli_server=$OPTARG
+            ;;
+        c)
+            cli_conf=$OPTARG
             ;;
         *)
             usage
@@ -37,31 +55,49 @@ function parseopts {
 
 function cleanup {
 
-    if [ ${verbose} -eq 1 ] ; then
+    
+    if [ ${verbose} -eq 1 -a ${debug} -eq 1 ] ; then
+        echo "Debug: not deleting ${package_tmpfile}..."
+        echo "Debug: not deleting ${repo_tmpfile}..."
+    elif [ ${verbose} -eq 1 -a ${debug} -eq 0 ] ; then
         echo "Deleting ${package_tmpfile}..."
         echo "Deleting ${repo_tmpfile}..."
     fi
-    rm -fr ${package_tmpfile}
-    rm -fr ${repo_tmpfile}
+    if [ ${debug} -ne 1 ] ; then
+        rm -fr ${package_tmpfile}
+        rm -fr ${repo_tmpfile}
+    fi
 }
 
 function check_conf {
 
+    if [ ! -z "${cli_conf}" ] ; then
+        conf=${cli_conf}
+    fi
+
     if [ "${conf}" = "" -o ! -f "${conf}" ] ; then
-        echo "Configuration file '${conf}' not found, exiting."
-        exit 1
+        if [ ${verbose} -eq 1 ] ; then
+            echo "Warning: config file '${conf}' not found."
+        fi
     else
         . ${conf}
-        if [ -z ${server} -o -z ${port} ] ; then
-            echo "Patchman server and port not set, exiting"
-            exit 1
-        else
-            if [ ${verbose} -eq 1 ] ; then
-                echo "Patchman configuration seems ok:"
-                echo "Patchman Server: ${server}:${port}"
-                echo "Tags: ${tags}"
-                echo "Report: ${report}"
-            fi
+    fi
+
+    if [ -z "${server}" -a -z "${cli_server}" ] ; then
+        echo "Patchman server not set, exiting."
+        exit 1
+    else
+        if [ ! -z "${cli_server}" ] ; then
+            server=${cli_server}
+        fi
+        if [ ! -z "${cli_report}" ] ; then
+            report=${cli_report}
+        fi
+        if [ ${verbose} -eq 1 ] ; then
+            echo "Patchman configuration seems ok:"
+            echo "Patchman Server: ${server}"
+            echo "Tags: ${tags}"
+            echo "Report: ${report}"
         fi
     fi
 }
@@ -73,6 +109,9 @@ function get_installed_rpms {
             echo 'Finding installed rpms...'
         fi
         rpm -qa --queryformat "'%{NAME}' '%{EPOCH}' '%{version}' '%{RELEASE}' '%{ARCH}' 'rpm'\n" 2>/dev/null | sed -e 's/(none)//g' | sed -e 's/\+/%2b/g' >> ${package_tmpfile}
+        if [ ${debug} -eq 1 ] ; then
+            cat ${package_tmpfile}
+        fi
     fi
 }
 
@@ -94,6 +133,9 @@ function get_installed_debs {
             name=`echo "${i}" | awk '{print $1}'`
             arch=`echo "${i}" | awk '{print $3}'`
             echo \'${name}\' \'${epoch}\' \'${version}\' \'${release}\' \'${arch}\' \'deb\'>> ${package_tmpfile}
+            if [ ${debug} -eq 1 ] ; then
+                echo \'${name}\' \'${epoch}\' \'${version}\' \'${release}\' \'${arch}\' \'deb\'
+            fi
         done
         IFS=${OLDIFS}
     fi
@@ -140,6 +182,12 @@ function get_host_data {
             esac
         fi
     done
+    if [ ${debug} -eq 1 ] ; then
+        echo "Host:   ${host_name}"
+        echo "Kernel: ${host_kernel}"
+        echo "Arch:   ${host_arch}"
+        echo "OS:     ${os}"
+    fi
 }
 
 function get_repos {
@@ -173,11 +221,22 @@ function get_repos {
         if [ ${verbose} -eq 1 ] ; then
             echo 'Finding zypper repos...'
         fi
+        enabled_repos=$(zypper lr | tail +3 | cut -d "|" -f 1,4 | grep "Yes" | cut -d "|" -f 1 | sed -e "s/ //")
+        for i in $enabled_repos ; do
+            enabled[i]="true"
+        done
+        let r=0
         for i in $(zypper lr -u | tail +3 | cut -d "|" -f 3,6 | sed -e "s/^ /'/g" -e "s/[ ]*| / ${host_arch}' '/g" -e "s/\/*[ ]*$/'/g") ; do
-            echo \'rpm\' ${i} >> ${repo_tmpfile}
+            let r=$r+1
+            if [ "${enabled[${r}]}" == "true" ] ; then
+                echo \'rpm\' ${i} >> ${repo_tmpfile}
+            fi
         done
     fi
     IFS=${OLDIFS}
+    if [ ${debug} -eq 1 ] ; then
+        cat ${repo_tmpfile}
+    fi
 }
 
 function post_data {
@@ -204,7 +263,7 @@ function post_data {
     curl_opts="${curl_opts} -F report=\"${report}\"";
     curl_opts="${curl_opts} -F packages=\<${package_tmpfile}";
     curl_opts="${curl_opts} -F repos=\<${repo_tmpfile}";
-    post_command="${curl_bin} ${curl_opts} ${server}:${port}/reports/upload/"
+    post_command="${curl_bin} ${curl_opts} ${server}/reports/upload/"
 
     sed -i -e 's/%2b/\+/g' ${package_tmpfile}
 
@@ -224,16 +283,18 @@ function post_data {
 }
 
 if [ -z "$mktemp_bin" -o -z "$curl_bin" ] ; then
-    echo "Either mktemp or curl was not found, cannot continue."
-    usage
+    echo "Either mktemp or curl was not found, exiting."
+    exit 1 
 fi
 package_tmpfile=`${mktemp_bin}`
 repo_tmpfile=`${mktemp_bin}`
 
 trap cleanup EXIT
-parseopts $1 $2 $3
+parseopts $@
 check_conf
 get_host_data
 get_packages
-get_repos
+if [ "${no_repo_check}" != "1" ] ; then
+    get_repos
+fi
 post_data
