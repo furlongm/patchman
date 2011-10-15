@@ -125,13 +125,13 @@ function get_installed_debs {
         IFS="
 "
         for i in $(dpkg-query -W --showformat="\${Status}\|\${Package} \${Version} \${Architecture}\n" | grep '^install ok installed' | sed -e 's/^install ok installed|//') ; do
-            fullversion=`echo "${i}" | awk '{print $2}'`
+            fullversion=`echo "${i}" | cut -d " " -f 2`
             release=`echo "${fullversion}" | sed -e "s/.*-\(.*\)/\1/;tx;d;:x"`
             remaining=`echo "${fullversion}" | sed -e "s/\(.*\)-${release}/\1/"`
             epoch=`echo "${remaining}" | cut -d ":" -f 1 -s`
             version=`echo "${remaining}" | sed -e "s/.*:\(.*\)/\1/"`
-            name=`echo "${i}" | awk '{print $1}'`
-            arch=`echo "${i}" | awk '{print $3}'`
+            name=`echo "${i}" | cut -d " " -f 1`
+            arch=`echo "${i}" | cut -d " " -f 3`
             echo \'${name}\' \'${epoch}\' \'${version}\' \'${release}\' \'${arch}\' \'deb\'>> ${package_tmpfile}
             if [ ${debug} -eq 1 ] ; then
                 echo \'${name}\' \'${epoch}\' \'${version}\' \'${release}\' \'${arch}\' \'deb\'

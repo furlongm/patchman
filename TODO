@@ -13,3 +13,4 @@ add diff's between reports to view state changes
 use client to add (disabled) repos
 support for backports
 support for multiarch repos
+speed up deb discovery 

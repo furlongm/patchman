@@ -346,7 +346,7 @@ def update_rpm_repo(repo):
         if repo.last_access_ok:
             data = download_url(res, '(2/2)')
             sha = None
-            if checksum_type == 'sha1':
+            if checksum_type == 'sha':
                 sha = get_sha1(data)
             elif checksum_type == 'sha256':
                 sha = get_sha256(data)
