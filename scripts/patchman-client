@@ -208,13 +208,18 @@ function get_repos {
         if [ ${verbose} -eq 1 ] ; then
             echo 'Finding apt repos...'
         fi
-        tmpdir=`${mktemp_bin} -d`
-        cp -a `find /var/lib/apt/lists -name "*.gpg"` ${tmpdir}
+        gpgs=`find /var/lib/apt/lists -name "*.gpg"`
+        if [ "${gpgs}" != "" ] ; then
+            tmpdir=`${mktemp_bin} -d`
+            cp -a ${gpgs} ${tmpdir}
+        fi
         for i in $(apt-get update --print-uris | grep Packages | cut -d "'" -f 2 | sed -e "s/\/Packages\.bz2//") ; do
             echo \'deb\' \'${os} ${host_arch} repo at ${i}\' \'${i}\' >> ${repo_tmpfile}
         done
-        cp -a ${tmpdir}/*.gpg /var/lib/apt/lists
-        rm -fr ${tmpdir}
+        if [ "${gpgs}" != "" ] ; then
+            cp -a ${tmpdir}/*.gpg /var/lib/apt/lists
+            rm -fr ${tmpdir}
+        fi
     fi
 
     # SUSE

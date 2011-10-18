@@ -584,14 +584,26 @@ def find_host_updates(host=None):
             print '\n%s' % host
         host_update_found.connect(print_update)
         host.find_updates()
-        #host_update_found.disconnect()
+        host_update_found.disconnect()
+
+#TODO: need to make these generic, and figure out how to avoid global pbar
 
 def repo_pbar(host, numrepos, **kwargs):
+    global pbar
     pbar = create_pbar('%s repos' % host.__unicode__()[0:25], numrepos)
 
 def update_repo_pbar(index, **kwargs):
-    update_pbar(pbar, index)
-    print index
+    global pbar
+    update_pbar(pbar, index+1)
+
+def pkg_pbar(host, numpackages, **kwargs):
+    global pbar
+    pbar = create_pbar('%s packages' % host.__unicode__()[0:25], numpackages)
+
+def update_pkg_pbar(index, **kwargs):
+    global pbar
+    update_pbar(pbar, index+1)
+
 
 def process_reports(host=None, verbose=False, force=False):
     """ Process all pending reports, Specify host to process only a single host
@@ -612,12 +624,16 @@ def process_reports(host=None, verbose=False, force=False):
 
     for report in report_hosts:
         if verbose:
-            #numpackages.connect()
+            global pbar
+            numpackages.connect(pkg_pbar)
             numrepos.connect(repo_pbar)
+            package_processed.connect(update_pkg_pbar)
             repo_processed.connect(update_repo_pbar)
         report.process()
-        #numpackages.disconnect()
-        #numrepos.disconnect()
+        numpackages.disconnect()
+        numrepos.disconnect()
+        package_processed.disconnect()
+        repo_processed.disconnect()
             
 def clean_updates():
 
