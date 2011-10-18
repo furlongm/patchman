@@ -624,7 +624,7 @@ if __name__ == '__main__':
     if args.clean_reports:
         clean_reports(args.host)
     if args.process_reports:
-        process_reports(args.host)
+        process_reports(args.host, verbose, force)
     if args.find_updates:
         find_host_updates(args.host)
     if args.clean_updates:
