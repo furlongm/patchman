@@ -120,3 +120,6 @@ class Report(models.Model):
         self.processed = True
         self.save()
         report_processed.send(sender=self, report=self)
+        from patchman.hosts.utils import find_host_updates
+        find_host_updates(self.host)
+        
