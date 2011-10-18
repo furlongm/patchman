@@ -6,7 +6,7 @@ from patchman.repos.models import Repository
 from patchman.packages.models import Package, PackageName
 from patchman.reports.models import Report
 
-def process_reports(host=None, verbose=0):
+def process_reports(host=None, verbose=False, force=False):
     """ Process all pending reports, Specify host to process only a single host
     """
     report_hosts = []
@@ -106,5 +106,3 @@ def process_package(report, pkg):
         package, c = Package.objects.get_or_create(name=p_name, arch=p_arch, epoch=p_epoch, version=p_version, release=p_release, packagetype=p_type)
         return package
 
-
-    
