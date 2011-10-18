@@ -35,7 +35,6 @@ from patchman.packages.models import Package, PackageName, PackageString, Packag
 from patchman.repos.models import Repository, RepoPackage
 from patchman.arch.models import PackageArchitecture, MachineArchitecture
 from patchman.reports.models import Report
-from patchman.reports.utils import process_reports
 
 from patchman.hosts.signals import host_update_found
 
