@@ -20,13 +20,11 @@ def process_packages(report, host, verbose=0):
 
     if report.packages:
         packages = parse_packages(report.packages)
-        if verbose:
-            pbar = create_pbar('%s packages' % host.__unicode__()[0:25], len(packages)) 
+        numpackages.send(sender=report, host=host, numpackages=len(packages))
         for i, pkg in enumerate(packages):
             package = process_package(report, pkg)
             host.packages.add(package)
-            if verbose:
-                update_pbar(pbar, i)
+            package_processed.send(sender=report, index=i)
 
 
 def parse_repos(repos_string):
