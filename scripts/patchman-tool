@@ -35,6 +35,7 @@ from patchman.packages.models import Package, PackageName, PackageString, Packag
 from patchman.repos.models import Repository, RepoPackage
 from patchman.arch.models import PackageArchitecture, MachineArchitecture
 from patchman.reports.models import Report
+from patchman.reports.utils import process_reports
 
 from patchman.hosts.signals import host_update_found
 
@@ -533,119 +534,6 @@ def remove_duplicate_packages():
     if verbose and total_removed != 0:
         print "Removed %s duplicate packages." % total_removed
 
-def process_repos(report, host):
-
-    repos = []
-
-    if report.repos:
-        for i, r in enumerate(report.repos.splitlines()):
-            repodata = re.findall('\'.*?\'', r)
-            for j, rs in enumerate(repodata):
-                repodata[j] = rs.replace('\'','')
-            repos.append(repodata)
-        pbar = create_pbar('%s repos' % host.__unicode__()[0:25], i)
-        for i, repo in enumerate(repos):
-            if repo[0] == 'deb':
-                r_type = Repository.DEB
-            elif repo[0] == 'rpm':
-                r_type = Repository.RPM
-            r_name = repo[1]
-            r_arch, c = MachineArchitecture.objects.get_or_create(name=report.arch)
-            repo, c = Repository.objects.get_or_create(url=repo[2], arch=r_arch, repotype=r_type, defaults={'name': r_name})
-            update_pbar(pbar, i)
-
-def process_packages(report, host):
-
-    packages = []
-
-    if report.packages:
-        for i, p in enumerate(report.packages.splitlines()):
-            packages.append(p.replace('\'','').split(' '))
-        pbar = create_pbar('%s packages' % host.__unicode__()[0:25], i) 
-        for i, pkg in enumerate(packages):
-            if report.protocol == '1':
-                if pkg[4] != '':
-                    p_arch, c = PackageArchitecture.objects.get_or_create(name=pkg[4])
-                else:
-                    p_arch, c = PackageArchitecture.objects.get_or_create(name='unknown')
-                p_name, c = PackageName.objects.get_or_create(name=pkg[0].lower())
-                if pkg[1]:
-                    p_epoch = pkg[1]
-                    if p_epoch == '0':
-                        p_epoch = ''
-                else:
-                    p_epoch = ''
-                p_version = pkg[2]
-                if pkg[3]:
-                    p_release = pkg[3]
-                else:
-                    p_release = ''
-                p_type = Package.UNKNOWN
-                if pkg[5] == 'deb':
-                    p_type = Package.DEB
-                if pkg[5] == 'rpm':
-                    p_type = Package.RPM
-                package, c = Package.objects.get_or_create(name=p_name, arch=p_arch, epoch=p_epoch, version=p_version, release=p_release, packagetype=p_type)
-                host.packages.add(package)
-                del package
-            update_pbar(pbar, i)
-        host.save()
-
-def create_or_update_host(report):
-
-    if report.host and report.os and report.kernel and report.domain and report.arch:
-        os, c = OS.objects.get_or_create(name=report.os)
-        domain, c = Domain.objects.get_or_create(name=report.domain)
-        arch, c = MachineArchitecture.objects.get_or_create(name=report.arch)
-        host, c = Host.objects.get_or_create(
-            hostname=report.host,
-            defaults={
-                'ipaddress':report.report_ip,
-                'arch':arch,
-                'os':os,
-                'domain':domain,
-                'lastreport':report.time
-            }
-        )
-        if verbose and c:
-            print 'Created host %s' % host
-        host.ipaddress=report.report_ip
-        host.kernel=report.kernel
-        host.arch=arch
-        host.os=os
-        host.domain=domain
-        host.lastreport=report.time
-        host.tags=report.tags
-# TODO: fix this to use stringpackage sets to remove/add
-# or queryset sets
-        host.packages.clear()
-        host.save()
-        process_packages(report, host)
-        process_repos(report, host)
-        host.save()
-        return True
-    else:
-        return False
-
-def process_reports(report_host):
-
-    if report_host:
-        try:
-            report_hosts = Report.objects.filter(processed=force, host=report_host).order_by('time')
-            message = 'Processing reports for host %s' % report_host
-        except:
-            message = 'No reports exist for host %s' % report_host
-    else:
-        message = 'Processing reports for all hosts'
-        report_hosts = Report.objects.filter(processed=force).order_by('time')
-
-    if verbose:
-        print message
-
-    for report in report_hosts:
-        if create_or_update_host(report):
-            report.processed = True
-            report.save()
 
 
 def remove_reports(host):
@@ -674,33 +562,13 @@ def clean_reports(report_host):
         for host in Host.objects.all():
             remove_reports(host)
 
+            
 def print_update(update, signal, *args, **kwargs):
     if verbose:
         print update
 
-def find_host_updates(update_host):
 
-    update_hosts = []
-
-    if update_host:
-        try:
-            update_hosts.append(Host.objects.get(hostname=update_host))
-            message = 'Finding updates for host %s' % update_host
-        except:
-            message = 'Host %s does not exist' % update_host
-    else:
-        message = 'Finding updates for all hosts'
-        update_hosts = Host.objects.all()
-
-    if verbose:
-        print message
-
-    for host in update_hosts:
-        if verbose:
-            print '\n%s' % host
-        host_update_found.connect(print_update)
-        host.find_updates()
-
+            
 def clean_updates():
 
     for update in PackageUpdate.objects.all():

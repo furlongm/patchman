@@ -24,6 +24,7 @@ from patchman.operatingsystems.models import OS
 from patchman.domains.models import Domain
 from patchman.packages.models import Package, PackageName
 from patchman.repos.models import Repository
+from patchman.reports.signals import report_processed
 
 class Report(models.Model):
 
@@ -47,6 +48,11 @@ class Report(models.Model):
     def __unicode__(self):
         return '%s %s' % (self.host, self.time)
 
+    @models.permalink
+    def get_absolute_url(self):
+        return ('report_detail', [self.id])
+
+        
     def parse(self, data, meta):
 
         self.report_ip = meta['REMOTE_ADDR']
@@ -80,7 +86,37 @@ class Report(models.Model):
 
         self.save()
 
-    @models.permalink
-    def get_absolute_url(self):
-        return ('report_detail', [self.id])
+    def process(self):
+        if self.host and self.os and self.kernel and self.domain and self.arch:
+            os, c = OS.objects.get_or_create(name=self.os)
+            domain, c = Domain.objects.get_or_create(name=self.domain)
+            arch, c = MachineArchitecture.objects.get_or_create(name=self.arch)
+            host, c = Host.objects.get_or_create(
+                hostname=self.host,
+                defaults={
+                    'ipaddress': self.report_ip,
+                    'arch':arch,
+                    'os':os,
+                    'domain':domain,
+                    'lastreport':self.time
+                }
+            )
+        host.ipaddress=self.report_ip
+        host.kernel=self.kernel
+        host.arch=arch
+        host.os=os
+        host.domain=domain
+        host.lastreport=self.time
+        host.tags=self.tags
+# TODO: fix this to use stringpackage sets to remove/add
+# or queryset sets
+        host.packages.clear()
+        host.save()
+        from patchman.reports.utils import process_packages, process_repos
 
+        process_packages(report=self, host=host)
+        process_repos(report=self, host=host)
+        host.save()
+        self.processed = True
+        self.save()
+        report_processed.send(sender=self, report=self)

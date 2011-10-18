@@ -29,7 +29,7 @@ from andsome.util.filterspecs import Filter, FilterBar
 from datetime import datetime, date, time
 
 from patchman.reports.models import Report
-from patchman.reports.tasks import process_reports, find_host_updates
+from patchman.reports.tasks import process_report
 
 @csrf_exempt
 def upload(request):
@@ -43,9 +43,9 @@ def upload(request):
 
         report = Report.objects.create()
         report.parse(data, meta)
-        process_reports.delay(report.host)
-        find_host_updates.delay(report.host)
+        process_report.delay(report)
 
+        
         if 'report' in data and data['report'] == '1':
             packages = []
             repos = []
