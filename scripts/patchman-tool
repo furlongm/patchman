@@ -37,12 +37,13 @@ from patchman.arch.models import PackageArchitecture, MachineArchitecture
 from patchman.reports.models import Report
 
 from patchman.hosts.signals import host_update_found
-from patchman.reports.signals import numrepos, numpackages
+from patchman.reports.signals import numrepos, numpackages, repo_processed, package_processed 
 
 from progressbar import Bar, ETA, Percentage, ProgressBar
 
 force = False
 verbose = False
+pbar = None
 
 def progress_bar(ptext, plength):
 
@@ -587,10 +588,10 @@ def find_host_updates(host=None):
 
 def repo_pbar(host, numrepos, **kwargs):
     pbar = create_pbar('%s repos' % host.__unicode__()[0:25], numrepos)
-    return pbar
 
 def update_repo_pbar(index, **kwargs):
-    return index
+    update_pbar(pbar, index)
+    print index
 
 def process_reports(host=None, verbose=False, force=False):
     """ Process all pending reports, Specify host to process only a single host
@@ -610,11 +611,10 @@ def process_reports(host=None, verbose=False, force=False):
         print message
 
     for report in report_hosts:
-        #numpackages.connect()
         if verbose:
-            pbar = numrepos.connect(repo_pbar)
-            index = repo_processed.connect(update_repo_pbar)
-            update_pbar(pbar, index)) 
+            #numpackages.connect()
+            numrepos.connect(repo_pbar)
+            repo_processed.connect(update_repo_pbar)
         report.process()
         #numpackages.disconnect()
         #numrepos.disconnect()
