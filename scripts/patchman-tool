@@ -586,10 +586,11 @@ def find_host_updates(host=None):
         #host_update_found.disconnect()
 
 def repo_pbar(host, numrepos, **kwargs):
-    if verbose:
-        pbar = create_pbar('%s repos' % host.__unicode__()[0:25], len(repos))
-    print host, numrepos
+    pbar = create_pbar('%s repos' % host.__unicode__()[0:25], numrepos)
+    return pbar
 
+def update_repo_pbar(index, **kwargs):
+    return index
 
 def process_reports(host=None, verbose=False, force=False):
     """ Process all pending reports, Specify host to process only a single host
@@ -610,7 +611,10 @@ def process_reports(host=None, verbose=False, force=False):
 
     for report in report_hosts:
         #numpackages.connect()
-        numrepos.connect(repo_pbar)
+        if verbose:
+            pbar = numrepos.connect(repo_pbar)
+            index = repo_processed.connect(update_repo_pbar)
+            update_pbar(pbar, index)) 
         report.process()
         #numpackages.disconnect()
         #numrepos.disconnect()
