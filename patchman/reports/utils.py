@@ -6,26 +6,6 @@ from patchman.repos.models import Repository
 from patchman.packages.models import Package, PackageName
 from patchman.reports.models import Report
 
-def process_reports(host=None, verbose=False, force=False):
-    """ Process all pending reports, Specify host to process only a single host
-    """
-    report_hosts = []
-    if host:
-        try:
-            report_hosts = Report.objects.filter(processed=force, host=host).order_by('time')
-            message = 'Processing reports for host %s' % host
-        except:
-            message = 'No reports exist for host %s' % host
-    else:
-        message = 'Processing reports for all hosts'
-        report_hosts = Report.objects.filter(processed=force).order_by('time')
-
-    if verbose:
-        print message
-
-    for report in report_hosts:
-        report.process()
-
 def process_repos(report, host, verbose=0):
 
     if report.repos:

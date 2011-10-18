@@ -420,7 +420,6 @@ def list_repos(single_repo):
     for repo in list_repos:
         print_repo_info(repo)
 
-
 def print_repo_info(repo):
 
     print '%s : %s' % (repo.id, repo)
@@ -499,7 +498,6 @@ def remove_unused_package_names():
     if verbose:
         print 'Removed %s unused package names.' % p
 
-
 def remove_duplicates(keep, remove):
 
     allhosts = Host.objects.all()
@@ -512,7 +510,6 @@ def remove_duplicates(keep, remove):
             removed += 1
             host.save()
     return removed
-
 
 def remove_duplicate_packages():
 
@@ -533,8 +530,6 @@ def remove_duplicate_packages():
 
     if verbose and total_removed != 0:
         print "Removed %s duplicate packages." % total_removed
-
-
 
 def remove_reports(host):
 
@@ -561,13 +556,53 @@ def clean_reports(report_host):
     else:
         for host in Host.objects.all():
             remove_reports(host)
-
             
 def print_update(update, signal, *args, **kwargs):
     if verbose:
         print update
 
+def find_host_updates(host=None):
 
+    update_hosts = []
+
+    if host:
+        try:
+            update_hosts.append(Host.objects.get(hostname=host))
+            message = 'Finding updates for host %s' % host
+        except:
+            message = 'Host %s does not exist' % host
+    else:
+        message = 'Finding updates for all hosts'
+        update_hosts = Host.objects.all()
+
+    if verbose:
+        print message
+
+    for host in update_hosts:
+        if verbose:
+            print '\n%s' % host
+        host_update_found.connect(print_update)
+        host.find_updates()
+
+def process_reports(host=None, verbose=False, force=False):
+    """ Process all pending reports, Specify host to process only a single host
+    """
+    report_hosts = []
+    if host:
+        try:
+            report_hosts = Report.objects.filter(processed=force, host=host).order_by('time')
+            message = 'Processing reports for host %s' % host
+        except:
+            message = 'No reports exist for host %s' % host
+    else:
+        message = 'Processing reports for all hosts'
+        report_hosts = Report.objects.filter(processed=force).order_by('time')
+
+    if verbose:
+        print message
+
+    for report in report_hosts:
+        report.process()
             
 def clean_updates():
 
