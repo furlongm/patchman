@@ -24,7 +24,7 @@ from patchman.operatingsystems.models import OS
 from patchman.domains.models import Domain
 from patchman.packages.models import Package, PackageName
 from patchman.repos.models import Repository
-from patchman.reports.signals import report_processed
+from patchman.reports.signals import report_processed, numrepos, numpackages
 
 class Report(models.Model):
 
