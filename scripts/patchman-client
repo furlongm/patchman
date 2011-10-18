@@ -135,7 +135,6 @@ function get_installed_debs {
                 echo \'${name}\' \'${epoch}\' \'${version}\' \'${release}\' \'${arch}\' \'deb\'
             fi
         done
-        exit
     fi
 }
 
