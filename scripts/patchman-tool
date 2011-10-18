@@ -704,7 +704,7 @@ def find_host_updates(update_host):
 def clean_updates():
 
     for update in PackageUpdate.objects.all():
-        if update.host_set.all().count() == 0:
+        if update.host_set.count() == 0:
             if verbose:
                 print 'Removing %s' % update
             update.delete()
