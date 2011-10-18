@@ -610,7 +610,7 @@ def process_reports(host=None, verbose=False, force=False):
 
     for report in report_hosts:
         #numpackages.connect()
-        numrepos.connect()
+        numrepos.connect(repo_pbar)
         report.process()
         #numpackages.disconnect()
         #numrepos.disconnect()
