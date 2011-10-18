@@ -16,23 +16,25 @@
 
 from django.db import models
 
-class MachineArchitecture(models.Model):
+class Architecture(models.Model):
 
     name = models.CharField(unique=True, max_length=255)
-
+    
     class Meta:
+        abstract = True
+
+    def __unicode__(self):
+        return self.name  
+
+class MachineArchitecture(Architecture):
+
+    class Meta(Architecture.Meta):
         verbose_name = 'Machine Architecture'
 
-    def __unicode__(self):
-        return self.name
 
-class PackageArchitecture(models.Model):
+class PackageArchitecture(Architecture):
 
-    name = models.CharField(unique=True, max_length=255)
-
-    class Meta:
+    class Meta(Architecture.Meta):
         verbose_name = 'Package Architecture'
 
-    def __unicode__(self):
-        return self.name
 
