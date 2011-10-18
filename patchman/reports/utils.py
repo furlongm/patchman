@@ -1,0 +1,110 @@
+import re
+
+from patchman.reports.models import Report
+from patchman.arch.models import MachineArchitecture, PackageArchitecture
+from patchman.repos.models import Repository
+from patchman.packages.models import Package, PackageName
+from patchman.reports.models import Report
+
+def process_reports(host=None, verbose=0):
+    """ Process all pending reports, Specify host to process only a single host
+    """
+    report_hosts = []
+    if host:
+        try:
+            report_hosts = Report.objects.filter(processed=force, host=host).order_by('time')
+            message = 'Processing reports for host %s' % host
+        except:
+            message = 'No reports exist for host %s' % host
+    else:
+        message = 'Processing reports for all hosts'
+        report_hosts = Report.objects.filter(processed=force).order_by('time')
+
+    if verbose:
+        print message
+
+    for report in report_hosts:
+        report.process()
+
+def process_repos(report, host, verbose=0):
+
+    if report.repos:
+        repos = parse_repos(report.repos)
+        if verbose:
+            pbar = create_pbar('%s repos' % host.__unicode__()[0:25], len(repos))
+        for i, repo in enumerate(repos):
+            process_repo(report, repo)
+            if verbose:
+                update_pbar(pbar, i)
+
+
+def process_packages(report, host, verbose=0):
+
+    if report.packages:
+        packages = parse_packages(report.packages)
+        if verbose:
+            pbar = create_pbar('%s packages' % host.__unicode__()[0:25], len(packages)) 
+        for i, pkg in enumerate(packages):
+            package = process_package(report, pkg)
+            host.packages.add(package)
+            if verbose:
+                update_pbar(pbar, i)
+
+
+def parse_repos(repos_string):
+    """Parses repo string in a report"""
+    repos = []
+    for i, r in enumerate(repos_string.splitlines()):
+        repodata = re.findall('\'.*?\'', r)
+        for j, rs in enumerate(repodata):
+            repodata[j] = rs.replace('\'','')
+        repos.append(repodata)
+    return repos
+
+    
+def process_repo(report, repo):
+    if repo[0] == 'deb':
+        r_type = Repository.DEB
+    elif repo[0] == 'rpm':
+        r_type = Repository.RPM
+    r_name = repo[1]
+    r_arch, c = MachineArchitecture.objects.get_or_create(name=report.arch)
+    repo, c = Repository.objects.get_or_create(url=repo[2], arch=r_arch, repotype=r_type, defaults={'name': r_name})
+           
+    
+def parse_packages(packages_string):
+    """Parses packages string in a report"""
+    packages = []
+    for p in packages_string.splitlines():
+        packages.append(p.replace('\'','').split(' '))
+    return packages
+
+    
+def process_package(report, pkg):
+    if report.protocol == '1':
+        if pkg[4] != '':
+            p_arch, c = PackageArchitecture.objects.get_or_create(name=pkg[4])
+        else:
+            p_arch, c = PackageArchitecture.objects.get_or_create(name='unknown')
+        p_name, c = PackageName.objects.get_or_create(name=pkg[0].lower())
+        if pkg[1]:
+            p_epoch = pkg[1]
+            if p_epoch == '0':
+                p_epoch = ''
+        else:
+            p_epoch = ''
+        p_version = pkg[2]
+        if pkg[3]:
+            p_release = pkg[3]
+        else:
+            p_release = ''
+        p_type = Package.UNKNOWN
+        if pkg[5] == 'deb':
+            p_type = Package.DEB
+        if pkg[5] == 'rpm':
+            p_type = Package.RPM
+        package, c = Package.objects.get_or_create(name=p_name, arch=p_arch, epoch=p_epoch, version=p_version, release=p_release, packagetype=p_type)
+        return package
+
+
+    
