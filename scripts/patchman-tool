@@ -20,10 +20,6 @@ from debian.deb822 import Sources
 from urllib2 import Request, urlopen
 from urlparse import urlparse
 
-sys.path.append('/usr/local/src/patchman')
-
-os.environ['DJANGO_SETTINGS_MODULE'] = 'patchman.settings'
-
 from patchman import settings
 setup_environ(settings)
 
