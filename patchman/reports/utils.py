@@ -12,7 +12,7 @@ def process_repos(report, host):
 
     if report.repos:
         repos, i = parse_repos(report.repos)
-        numrepos.send(report, host, len(repos))
+        numrepos.send(sender=report, host=host, numrepos=len(repos))
         #if verbose:
         #    pbar = create_pbar('%s repos' % host.__unicode__()[0:25], len(repos))
         for i, repo in enumerate(repos):
