@@ -5,21 +5,16 @@ from patchman.arch.models import MachineArchitecture, PackageArchitecture
 from patchman.repos.models import Repository
 from patchman.packages.models import Package, PackageName
 from patchman.reports.models import Report
-from patchman.reports.signals import numrepos
-from patchman.reports.signals import numpackages
+from patchman.reports.signals import numrepos, numpackages, repo_processed, package_processed
 
 def process_repos(report, host):
 
     if report.repos:
-        repos, i = parse_repos(report.repos)
+        repos = parse_repos(report.repos)
         numrepos.send(sender=report, host=host, numrepos=len(repos))
-        #if verbose:
-        #    pbar = create_pbar('%s repos' % host.__unicode__()[0:25], len(repos))
         for i, repo in enumerate(repos):
-            process_repo(report, repo)
-        #    if verbose:
-        #        update_pbar(pbar, i)
-
+            process_repo(report, repo)           
+            repo_processed.send(sender=report, index=i)
 
 def process_packages(report, host, verbose=0):
 
@@ -37,12 +32,12 @@ def process_packages(report, host, verbose=0):
 def parse_repos(repos_string):
     """Parses repo string in a report"""
     repos = []
-    for i, r in enumerate(repos_string.splitlines()):
+    for r in repos_string.splitlines():
         repodata = re.findall('\'.*?\'', r)
-        for j, rs in enumerate(repodata):
-            repodata[j] = rs.replace('\'','')
+        for i, rs in enumerate(repodata):
+            repodata[i] = rs.replace('\'','')
         repos.append(repodata)
-    return repos, i
+    return repos
 
     
 def process_repo(report, repo):
