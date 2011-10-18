@@ -10,7 +10,5 @@ add package descriptions and urls?
 use django tags for package tags?
 fix pakiti2-import script
 add diff's between reports to view state changes
-use client to add (disabled) repos
 support for backports
 support for multiarch repos
-speed up deb discovery 

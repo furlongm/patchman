@@ -402,16 +402,35 @@ def update_repos(single_repo):
         update_repo(repo)
     del message, update_repos
 
-def list_repos():
+def list_repos(single_repo):
 
-    print 'Defined repositories:'
-    print 'id : name\n'
-    for repo in Repository.objects.all():
-        print '%s : %s' % (repo.id, repo)
-        if verbose:
-            print '%s' % repo.url
-            print 'arch: %s    checksum: %s' % (repo.arch, repo.file_checksum)
-            print 'security: %s  last_updated: %s\n' % (repo.security, repo.timestamp)
+    list_repos = []
+
+    if single_repo:
+        try:
+            list_repos.append(Repository.objects.get(id=single_repo))
+            message = 'Repository %s info:' % single_repo
+        except:
+            message = 'Repo with id %s does not exist' % single_repo
+    else:
+        message = 'Repository information:'
+        print 'id : name\n'
+        list_repos = Repository.objects.all()
+
+    if verbose:
+        print message
+
+    for repo in list_repos:
+        print_repo_info(repo)
+
+
+def print_repo_info(repo):
+
+    print '%s : %s' % (repo.id, repo)
+    if verbose:
+        print '%s' % repo.url
+        print 'arch: %s    checksum: %s' % (repo.arch, repo.file_checksum)
+        print 'security: %s  last_updated: %s\n' % (repo.security, repo.timestamp)
 
 def remove_orphaned_packages():
 
@@ -728,7 +747,7 @@ if __name__ == '__main__':
     verbose = args.verbose
 
     if args.list:
-        list_repos()
+        list_repos(args.repo)
         exit
     if args.update:
         update_repos(args.repo)
