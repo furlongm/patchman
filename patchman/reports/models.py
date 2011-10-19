@@ -24,7 +24,7 @@ from patchman.operatingsystems.models import OS
 from patchman.domains.models import Domain
 from patchman.packages.models import Package, PackageName
 from patchman.repos.models import Repository
-from patchman.reports.signals import report_processed, numrepos, numpackages
+from patchman.reports.signals import progress_info, progress_update
 
 class Report(models.Model):
 
@@ -119,6 +119,5 @@ class Report(models.Model):
         host.save()
         self.processed = True
         self.save()
-        report_processed.send(sender=self, report=self)
         host.find_updates()
 

@@ -44,7 +44,6 @@ def upload(request):
         report = Report.objects.create()
         report.parse(data, meta)
         process_report.delay(report)
-
         
         if 'report' in data and data['report'] == '1':
             packages = []

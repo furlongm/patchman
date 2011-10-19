@@ -3,6 +3,9 @@ Patchman is a django-based linux patch status monitoring tool.
 The current dependencies are:
 
 python-django-tagging
+python-django-south
+python-django-extensions
+python-django-andsome
 python-debian
 python-rpm
 python-progressbar
