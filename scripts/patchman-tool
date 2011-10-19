@@ -37,7 +37,7 @@ from patchman.arch.models import PackageArchitecture, MachineArchitecture
 from patchman.reports.models import Report
 
 from patchman.hosts.signals import host_update_found
-from patchman.reports.signals import progress_info, progress_update
+from patchman.signals import progress_info, progress_update
 
 from progressbar import Bar, ETA, Percentage, ProgressBar
 
@@ -94,13 +94,12 @@ def extract(data):
 
 def unpack_debpackages(data, packages):
 
-    global pbar
     extracted = extract(data)
     package_re = re.compile('^Package: ', re.M)
     numpackages = len(package_re.findall(extracted))
 
     if numpackages > 0:
-        pbar = create_pbar('Extracting packages: ', numpackages)
+        create_pbar('Extracting packages: ', numpackages)
         for i, stanza in enumerate(Sources.iter_paragraphs(StringIO(extracted))):
             fullversion = Version(stanza['version'])
             arch = stanza['architecture']
@@ -112,7 +111,7 @@ def unpack_debpackages(data, packages):
             release = fullversion._BaseVersion__debian_revision
             if release == None:
                 release = ''
-            update_pbar(pbar, i+1)
+            update_pbar(i+1)
             package = PackageString(name=name, epoch=epoch, version=version, release=release, arch=arch, packagetype='D')
             packages.add(package)
             del package
@@ -153,12 +152,12 @@ def unpack_rpmpackages(data, packages):
 
     if numpackages > 0:
 
-        pbar = create_pbar('Extracting packages: ', numpackages)
+        create_pbar('Extracting packages: ', numpackages)
 
         for i, data in enumerate(context):
             event = data[0]
             elem = data[1]
-            update_pbar(pbar, i+1)
+            update_pbar(i+1)
             name = elem.xpath('//ns:name', namespaces = {'ns': ns})[0].text.lower()
             arch = elem.xpath('//ns:arch', namespaces = {'ns': ns})[0].text
             fullversion = elem.xpath('//ns:version', namespaces = {'ns': ns})[0]
@@ -208,9 +207,9 @@ def update_packages(repo, packages):
     repopackages = repo.packages.all()
     reposize = len(repopackages)
 
-    pbar = create_pbar('Obtaining stored packages: ', reposize)
+    create_pbar('Obtaining stored packages: ', reposize)
     for i, package in enumerate(repopackages):
-        update_pbar(pbar, i+1)
+        update_pbar(i+1)
         name=str(package.name)
         arch=str(package.arch)
         strpackage = PackageString(name=name, epoch=package.epoch, version=package.version, release=package.release, arch=arch, packagetype=package.packagetype)
@@ -225,9 +224,9 @@ def update_packages(repo, packages):
     newlen = len(new)
     removedlen = len(removed)
 
-    pbar = create_pbar('Removing %s obsolete packages:' % removedlen, removedlen)
+    create_pbar('Removing %s obsolete packages:' % removedlen, removedlen)
     for i, package in enumerate(removed):
-        update_pbar(pbar, i+1)
+        update_pbar(i+1)
         package_id = PackageName.objects.get(name=package.name)
         epoch = package.epoch
         version = package.version
@@ -240,9 +239,9 @@ def update_packages(repo, packages):
     repo.save()
     removed.clear()
 
-    pbar = create_pbar('Adding %s new packages:' % newlen, newlen)
+    create_pbar('Adding %s new packages:' % newlen, newlen)
     for i, package in enumerate(new):
-        update_pbar(pbar, i+1)
+        update_pbar(i+1)
         package_id, c = PackageName.objects.get_or_create(name=package.name)
         epoch = package.epoch
         version = package.version
@@ -273,8 +272,6 @@ def find_repo_url(stored_repo_url, formats):
 
 def download_url(res, part):
 
-    global pbar
-
     headers = dict(res.headers.items())
     if verbose and 'content-length' in headers:
         if part == None:
@@ -283,7 +280,7 @@ def download_url(res, part):
             ptext = 'Downloading repo info %s:' % part
         contentlen = int(headers['content-length'])
         chunk_size = 16384.0
-        pbar = create_pbar(ptext, contentlen)
+        create_pbar(ptext, contentlen)
         i = 0
         chunks = int(math.ceil(contentlen / chunk_size))
         data = ''
@@ -448,27 +445,27 @@ def remove_orphaned_packages():
     if verbose:
         print '\nPruning orphaned packages'
 
-    pbar = create_pbar('Obtaining all stored packages:', packagelen)
+    create_pbar('Obtaining all stored packages:', packagelen)
     for i, p in enumerate(allpackages):
         allpackagestrings.add(PackageString(name=p.name, epoch=p.epoch, version=p.version, release=p.release, arch=p.arch, packagetype=p.packagetype))
-        update_pbar(pbar, i+1)
+        update_pbar(i+1)
 
-    pbar = create_pbar('Obtaining repo packages:', repolen)
+    create_pbar('Obtaining repo packages:', repolen)
     for i, r in enumerate(allrepos):
         for p in r.packages.all():
             allusedpackages.add(PackageString(name=p.name, epoch=p.epoch, version=p.version, release=p.release, arch=p.arch, packagetype=p.packagetype))
-        update_pbar(pbar, i+1)
+        update_pbar(i+1)
 
-    pbar = create_pbar('Obtaining host packages:', hostlen)
+    create_pbar('Obtaining host packages:', hostlen)
     for i, h in enumerate(allhosts):
         for p in h.packages.all():
             allusedpackages.add(PackageString(name=p.name, epoch=p.epoch, version=p.version, release=p.release, arch=p.arch, packagetype=p.packagetype))
-        update_pbar(pbar, i+1)
+        update_pbar(i+1)
 
     orphanedpackages = allpackagestrings.difference(allusedpackages)
     orphanedlen = len(orphanedpackages)
 
-    pbar = create_pbar('Removing %s orphaned packages:' % orphanedlen, orphanedlen)
+    create_pbar('Removing %s orphaned packages:' % orphanedlen, orphanedlen)
     for i, o in enumerate(orphanedpackages):
         try:
             p = Package.objects.get(name=o.name, epoch=o.epoch, version=o.version, release=o.release, arch=o.arch, packagetype=o.packagetype)
@@ -477,7 +474,7 @@ def remove_orphaned_packages():
             print "Please re-run this tool with the duplicate-removing option first."
             exit
         p.delete()
-        update_pbar(pbar, i+1)
+        update_pbar(i+1)
 
     if orphanedlen == 0 and verbose:
         print 'No orphaned packages found.'
@@ -489,9 +486,9 @@ def remove_unused_package_names():
     allnameslen = len(allnames)
     p = 0
 
-    pbar = create_pbar('Removing unused package names:', allnameslen)
+    create_pbar('Removing unused package names:', allnameslen)
     for i, packagename in enumerate(allnames):
-        update_pbar(pbar, i+1)
+        update_pbar(i+1)
         if allpackages.filter(name=packagename):
             pass
         else:
@@ -520,10 +517,10 @@ def remove_duplicate_packages():
     allpackageslen = len(allpackages)
     total_removed = 0
 
-    pbar = create_pbar('Finding duplicate packages:', allpackageslen)
+    create_pbar('Finding duplicate packages:', allpackageslen)
 
     for i, package in enumerate(allpackages):
-        update_pbar(pbar, i+1)
+        update_pbar(i+1)
         query = allpackages.filter(Q(name=package.name)&Q(epoch=package.epoch)&Q(version=package.version)&Q(release=package.release)&Q(arch=package.arch)&Q(packagetype=package.packagetype))
         if query.count() > 1:
             for p in query.all():
@@ -547,10 +544,10 @@ def remove_reports(host):
     reportlen = len(del_reports)
     if verbose:
         print host
-    pbar = create_pbar('Cleaning %s old reports' % reportlen, reportlen)
+    create_pbar('Cleaning %s old reports' % reportlen, reportlen)
     for i, report in enumerate(del_reports):
         report.delete()
-        update_pbar(pbar, i+1)
+        update_pbar(i+1)
 
 def clean_reports(report_host):
 
@@ -588,10 +585,10 @@ def find_host_updates(host=None):
         host.find_updates()
         host_update_found.disconnect()
 
-def process_reports(host=None, verbose=False, force=False):
+def process_reports(host=None):
     """ Process all pending reports, Specify host to process only a single host
     """
-    global pbar
+
     report_hosts = []
     if host:
         try:
@@ -669,8 +666,9 @@ if __name__ == '__main__':
     if args.clean_reports:
         clean_reports(args.host)
     if args.process_reports:
-        process_reports(args.host, verbose, force)
+        process_reports(args.host)
     if args.find_updates:
         find_host_updates(args.host)
     if args.clean_updates:
         clean_updates()
+
