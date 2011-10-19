@@ -11,7 +11,7 @@ def process_repos(report, host):
 
     if report.repos:
         repos = parse_repos(report.repos)
-        progress_info.send(sender=report, ptext=host+' repos', plength=len(repos))
+        progress_info.send(sender=report, ptext='%s repos' % host.__unicode__()[0:25], plength=len(repos))
         for i, repo in enumerate(repos):
             process_repo(report, repo)           
             progress_update.send(sender=report, index=i+1)
@@ -20,7 +20,7 @@ def process_packages(report, host, verbose=0):
 
     if report.packages:
         packages = parse_packages(report.packages)
-        numpackages.send(sender=report, ptext=host+' packages', plength=len(packages))
+        progress_info.send(sender=report, ptext='%s packages' % host.__unicode__()[0:25], plength=len(packages))
         for i, pkg in enumerate(packages):
             package = process_package(report, pkg)
             host.packages.add(package)

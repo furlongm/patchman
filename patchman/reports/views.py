@@ -43,7 +43,10 @@ def upload(request):
 
         report = Report.objects.create()
         report.parse(data, meta)
-        process_report.delay(report)
+        try:
+            process_report.delay(report)
+        except AttributeError:
+            pass
         
         if 'report' in data and data['report'] == '1':
             packages = []
