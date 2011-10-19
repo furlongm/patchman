@@ -1,4 +1,23 @@
-Patchman is a django-based linux patch status monitoring tool.
+Patchman is a django-based patch status monitoring tool for linux systems.
+
+Patchman clients send a list of installed packages and enabled repositories to
+the patchman server. The patchman server (CLI or web) updates it's package list 
+for each repository and tells the user which hosts require updates, whether
+those updates are normal or security updates, and shows installed packages that
+are not part of any repository. Hosts, packages, repositories and operating
+systems can all be filtered (using features or arbitrary tags). For example, you
+can find out which hosts have a certain version of a package installed, and
+which repository it comes from.
+
+Patchman does not (yet!) have the ability to update packages on hosts, although
+it is possible to use a yum or apt plugin to send a report to the patchman
+server every time changes are made to packages installed on a system. There are
+plans for a module for patchman<->puppet integration to allow remote
+installation of packages.
+
+The current code is available through gitorious:
+
+https://code.vpac.org/gitorious/patchman
 
 The current dependencies are:
 
