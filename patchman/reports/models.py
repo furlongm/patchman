@@ -24,7 +24,7 @@ from patchman.operatingsystems.models import OS
 from patchman.domains.models import Domain
 from patchman.packages.models import Package, PackageName
 from patchman.repos.models import Repository
-from patchman.reports.signals import progress_info, progress_update
+from patchman.signals import progress_info, progress_update
 
 class Report(models.Model):
 
@@ -111,9 +111,6 @@ class Report(models.Model):
 # TODO: fix this to use stringpackage sets to remove/add
 # or queryset sets
         host.packages.clear()
-        host.save()
-        from patchman.reports.utils import process_packages, process_repos
-
         process_packages(report=self, host=host)
         process_repos(report=self, host=host)
         host.save()

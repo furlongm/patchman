@@ -5,7 +5,7 @@ from patchman.arch.models import MachineArchitecture, PackageArchitecture
 from patchman.repos.models import Repository
 from patchman.packages.models import Package, PackageName
 from patchman.reports.models import Report
-from patchman.reports.signals import progress_info, progress_update
+from patchman.signals import progress_info, progress_update
 
 def process_repos(report, host):
 
