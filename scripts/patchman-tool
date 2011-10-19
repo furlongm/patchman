@@ -37,7 +37,7 @@ from patchman.arch.models import PackageArchitecture, MachineArchitecture
 from patchman.reports.models import Report
 
 from patchman.hosts.signals import host_update_found
-from patchman.reports.signals import numrepos, numpackages, repo_processed, package_processed 
+from patchman.reports.signals import progress_info, progress_update
 
 from progressbar import Bar, ETA, Percentage, ProgressBar
 
@@ -45,23 +45,22 @@ force = False
 verbose = False
 pbar = None
 
-def progress_bar(ptext, plength):
+def create_pbar(ptext, plength, **kwargs):
 
-    jtext = string.ljust(ptext, 35)
-    pbar = ProgressBar(widgets=[jtext, Percentage(), Bar(), ETA()], maxval=plength).start()
-    return pbar
-
-def create_pbar(ptext, plength):
-
+    global pbar
     if verbose and plength > 0:
-        return progress_bar(ptext, plength)
-    else:
-        return None
+        jtext = string.ljust(ptext, 35)
+        pbar = ProgressBar(widgets=[jtext, Percentage(), Bar(), ETA()], maxval=plength).start()
+        return pbar
 
-def update_pbar(pbar, i):
+def update_pbar(index, **kwargs):
 
+    global pbar
     if verbose and pbar:
-        pbar.update(i)
+        pbar.update(index)
+        if index == pbar.maxval:
+            pbar.finish()
+            pbar = None
 
 def gunzip(contents):
 
@@ -95,6 +94,7 @@ def extract(data):
 
 def unpack_debpackages(data, packages):
 
+    global pbar
     extracted = extract(data)
     package_re = re.compile('^Package: ', re.M)
     numpackages = len(package_re.findall(extracted))
@@ -273,6 +273,8 @@ def find_repo_url(stored_repo_url, formats):
 
 def download_url(res, part):
 
+    global pbar
+
     headers = dict(res.headers.items())
     if verbose and 'content-length' in headers:
         if part == None:
@@ -281,7 +283,7 @@ def download_url(res, part):
             ptext = 'Downloading repo info %s:' % part
         contentlen = int(headers['content-length'])
         chunk_size = 16384.0
-        pbar = progress_bar(ptext, contentlen)
+        pbar = create_pbar(ptext, contentlen)
         i = 0
         chunks = int(math.ceil(contentlen / chunk_size))
         data = ''
@@ -289,7 +291,7 @@ def download_url(res, part):
         for x in range(1, chunks + 1):
             chunk = res.read(int(chunk_size)) 
             i += len(chunk)
-            update_pbar(pbar, i)
+            update_pbar(i)
             data += chunk
         return data 
     else:
@@ -586,28 +588,10 @@ def find_host_updates(host=None):
         host.find_updates()
         host_update_found.disconnect()
 
-#TODO: need to make these generic, and figure out how to avoid global pbar
-
-def repo_pbar(host, numrepos, **kwargs):
-    global pbar
-    pbar = create_pbar('%s repos' % host.__unicode__()[0:25], numrepos)
-
-def update_repo_pbar(index, **kwargs):
-    global pbar
-    update_pbar(pbar, index+1)
-
-def pkg_pbar(host, numpackages, **kwargs):
-    global pbar
-    pbar = create_pbar('%s packages' % host.__unicode__()[0:25], numpackages)
-
-def update_pkg_pbar(index, **kwargs):
-    global pbar
-    update_pbar(pbar, index+1)
-
-
 def process_reports(host=None, verbose=False, force=False):
     """ Process all pending reports, Specify host to process only a single host
     """
+    global pbar
     report_hosts = []
     if host:
         try:
@@ -624,16 +608,11 @@ def process_reports(host=None, verbose=False, force=False):
 
     for report in report_hosts:
         if verbose:
-            global pbar
-            numpackages.connect(pkg_pbar)
-            numrepos.connect(repo_pbar)
-            package_processed.connect(update_pkg_pbar)
-            repo_processed.connect(update_repo_pbar)
+            progress_info.connect(create_pbar)
+            progress_update.connect(update_pbar)
         report.process()
-        numpackages.disconnect()
-        numrepos.disconnect()
-        package_processed.disconnect()
-        repo_processed.disconnect()
+        progress_info.disconnect()
+        progress_update.disconnect()
             
 def clean_updates():
 

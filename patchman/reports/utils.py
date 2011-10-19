@@ -5,26 +5,26 @@ from patchman.arch.models import MachineArchitecture, PackageArchitecture
 from patchman.repos.models import Repository
 from patchman.packages.models import Package, PackageName
 from patchman.reports.models import Report
-from patchman.reports.signals import numrepos, numpackages, repo_processed, package_processed
+from patchman.reports.signals import progress_info, progress_update
 
 def process_repos(report, host):
 
     if report.repos:
         repos = parse_repos(report.repos)
-        numrepos.send(sender=report, host=host, numrepos=len(repos))
+        progress_info.send(sender=report, ptext=host+' repos', plength=len(repos))
         for i, repo in enumerate(repos):
             process_repo(report, repo)           
-            repo_processed.send(sender=report, index=i)
+            progress_update.send(sender=report, index=i+1)
 
 def process_packages(report, host, verbose=0):
 
     if report.packages:
         packages = parse_packages(report.packages)
-        numpackages.send(sender=report, host=host, numpackages=len(packages))
+        numpackages.send(sender=report, ptext=host+' packages', plength=len(packages))
         for i, pkg in enumerate(packages):
             package = process_package(report, pkg)
             host.packages.add(package)
-            package_processed.send(sender=report, index=i)
+            progress_update.send(sender=report, index=i+1)
 
 
 def parse_repos(repos_string):
