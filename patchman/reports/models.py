@@ -24,7 +24,7 @@ from patchman.operatingsystems.models import OS
 from patchman.domains.models import Domain
 from patchman.packages.models import Package, PackageName
 from patchman.repos.models import Repository
-from patchhman.reports.utils import process_packages, process_repos
+from patchman.reports.utils import process_packages, process_repos
 from patchman.signals import progress_info, progress_update
 
 class Report(models.Model):
