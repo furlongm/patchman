@@ -36,7 +36,7 @@ from patchman.arch.models import PackageArchitecture, MachineArchitecture
 from patchman.reports.models import Report
 
 from patchman.hosts.signals import host_update_found
-from patchman.signals import progress_info, progress_update
+from patchman.signals import progress_info, progress_update, cli_message
 
 from progressbar import Bar, ETA, Percentage, ProgressBar
 
