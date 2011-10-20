@@ -69,8 +69,7 @@ def host_list(request):
         hosts = hosts.filter(tags=request.GET['tag'])
 
     if request.REQUEST.has_key('search'):
-        new_data = request.POST.copy()
-        terms = new_data['search'].lower()
+        terms = request.REQUEST['search'].lower()
         query = Q()
         for term in terms.split(' '):
             q = Q(hostname__icontains = term)

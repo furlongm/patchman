@@ -45,8 +45,7 @@ def package_list(request):
         packages = packages.filter(package__packagetype=request.GET['packagetype']).distinct()
  
     if request.REQUEST.has_key('search'):
-        new_data = request.POST.copy()
-        terms = new_data['search'].lower()
+        terms = request.REQUEST['search'].lower()
         query = Q()
         for term in terms.split(' '):
             q = Q(name__icontains = term)
