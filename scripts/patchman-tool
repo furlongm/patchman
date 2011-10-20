@@ -45,7 +45,7 @@ verbose = False
 pbar = None
 
 def cli_message(text, **kwargs):
-    print text
+    print text,
     sys.stdout.softspace = False
 
 def create_pbar(ptext, plength, **kwargs):
