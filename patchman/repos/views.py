@@ -61,8 +61,7 @@ def repo_list(request):
         repos = repos.filter(packages=int(request.GET['package_id']))
 
     if request.REQUEST.has_key('search'):
-        new_data = request.POST.copy()
-        terms = new_data['search'].lower()
+        terms = request.REQUEST['search'].lower()
         query = Q()
         for term in terms.split(' '):
             q = Q(name__icontains = term)

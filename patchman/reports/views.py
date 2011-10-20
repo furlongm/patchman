@@ -46,6 +46,7 @@ def upload(request):
         try:
             process_report.delay(report)
         except AttributeError:
+        # celery not installed
             pass
         
         if 'report' in data and data['report'] == '1':
@@ -81,9 +82,8 @@ def report_list(request):
     except ValueError:
         page_no = 1
 
-    if request.method == 'POST':
-        new_data = request.POST.copy()
-        terms = new_data['search'].lower()
+    if request.REQUEST.has_key('search'):
+        terms = request.REQUEST['search'].lower()
         query = Q()
         for term in terms.split(' '):
             q = Q(host__icontains = term)
