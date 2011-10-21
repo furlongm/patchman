@@ -44,6 +44,7 @@ def dashboard(request):
     norepo_hosts = Host.objects.filter(repos__isnull = True, os__osgroup__repos__isnull = True)
     norepo_osgroups = OSGroup.objects.filter(repos__isnull = True)
     norepo_packages = Package.objects.filter(repository__isnull = True)
+    orphaned_packages = Package.objects.filter(repository__isnull = True, host__isnull = True)
     lonely_oses = OS.objects.filter(osgroup__isnull = True)
     failed_repos = Repository.objects.filter(last_access_ok = False)
     secupdate_hosts = Host.objects.filter(updates__security = True, updates__isnull = False).values('hostname').annotate(Count('hostname'))
@@ -56,6 +57,6 @@ def dashboard(request):
         'site' : site, 'norepo_packages' : norepo_packages, 
         'secupdate_hosts' : secupdate_hosts, 'update_hosts' : update_hosts,
         'norepo_osgroups' : norepo_osgroups, 'unused_repos': unused_repos,
-        'failed_repos' : failed_repos},
+        'failed_repos' : failed_repos, 'orphaned_packages' : orphaned_packages },
         context_instance=RequestContext(request))
 
