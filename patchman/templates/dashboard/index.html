@@ -145,12 +145,13 @@
         {% endfor %}
         <div class="clearbrick">&nbsp;</div>
      </div>
+  </div>
   {% endif %}
 {% endwith %}
 {% with orphaned_packages.count as count %}
   {% if count > 0 %}
   <div class="module">
-    <div class="resultslink" id="r11"><a href="#">{{ count }} Installed Packages are not from any repository</a></div>
+    <div class="resultslink" id="r11"><a href="#">{{ count }} Packages are orphaned. (Not from any repo, not installed anywhere).</a></div>
       <div class="results" id="r11">
         {% for package in orphaned_packages %}
         <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
@@ -158,8 +159,8 @@
         {% endfor %}
         <div class="clearbrick">&nbsp;</div>
      </div>
+  </div>
   {% endif %}
 {% endwith %}
-  </div>
 </div>
 {% endblock %}

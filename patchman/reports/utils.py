@@ -23,7 +23,7 @@ def process_packages(report, host, verbose=0):
         progress_info.send(sender=report, ptext='%s packages' % host.__unicode__()[0:25], plength=len(packages))
         for i, pkg in enumerate(packages):
             package = process_package(report, pkg)
-            if package != None:
+            if package:
                 host.packages.add(package)
             progress_update.send(sender=report, index=i+1)
 
