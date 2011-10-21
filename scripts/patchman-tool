@@ -320,7 +320,7 @@ def check_response(res):
 def update_deb_repo(repo):
 
     formats = [ 'Packages.bz2', 'Packages.gz', 'Packages']
-    repo_url, res = find_repo_url(repo.url, formats)
+    repo_url, res, unused = find_repo_url(repo.url, formats)
     repo.last_access_ok = check_response(res)
 
     if repo.last_access_ok:
