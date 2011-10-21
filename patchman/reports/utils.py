@@ -61,7 +61,7 @@ def process_package(report, pkg):
     if report.protocol == '1':
         if pkg[0] != 'gpg-pubkey':
             p_name, c = PackageName.objects.get_or_create(name=pkg[0].lower())
-        else
+        else:
             return None
         if pkg[4] != '':
             p_arch, c = PackageArchitecture.objects.get_or_create(name=pkg[4])
