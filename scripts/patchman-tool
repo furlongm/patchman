@@ -142,7 +142,7 @@ def get_sha256(data):
 
     return sha256(data).hexdigest()
 
-def unpack_rpmpackages(data, packages):
+def unpack_yumpackages(data, packages):
 
     extracted = extract(data)
     
@@ -164,7 +164,6 @@ def unpack_rpmpackages(data, packages):
             epoch = fullversion.get('epoch')
             version = fullversion.get('ver')
             release = fullversion.get('rel')
-
             elem.clear()
             while elem.getprevious() is not None:
                 del elem.getparent()[0]
@@ -177,6 +176,25 @@ def unpack_rpmpackages(data, packages):
         del context
         del data
 
+    else:
+        if verbose:
+            print 'No packages in found in repo.'
+
+def unpack_yastpackages(data, packages):
+
+    extracted = extract(data)
+    pkgs = re.findall('=Pkg: (.*)', extracted)
+    numpackages = len(pkgs)
+
+    if numpackages > 0:
+
+        create_pbar('Extracting packages: ', numpackages)
+
+        for i, pkg in enumerate(pkgs):
+            update_pbar(i+1)
+            name, version, release, arch = pkg.split()
+            package = PackageString(name=name.lower(), epoch='0', version=version, release=release, arch=arch, packagetype='R')
+            packages.add(package)
     else:
         if verbose:
             print 'No packages in found in repo.'
@@ -235,7 +253,7 @@ def update_packages(repo, packages):
         packagetype = package.packagetype
         p = Package.objects.get(name=package_id, epoch=epoch, version=version, arch=arch, release=release, packagetype=packagetype)
         RepoPackage.objects.get(repo=repo, package=p).delete()
-        del p
+        
     repo.save()
     removed.clear()
 
@@ -249,6 +267,10 @@ def update_packages(repo, packages):
         packagetype = package.packagetype
         arch, c = PackageArchitecture.objects.get_or_create(name=package.arch)
         p, c = Package.objects.get_or_create(name=package_id, epoch=epoch, version=version, arch=arch, release=release, packagetype=packagetype)
+        # This fixes a subtle bug where a stored package name with uppercase letters
+        # will not match until it is lowercased.
+        package_id.name = package.name
+        package_id.save()
         RepoPackage.objects.create(repo=repo, package=p)
     repo.save()
     new.clear()
@@ -259,6 +281,7 @@ def update_packages(repo, packages):
 
 def find_repo_url(stored_repo_url, formats):
 
+    yast = False
     for fmt in formats:
         repo_url = stored_repo_url
         for f in formats:
@@ -268,9 +291,11 @@ def find_repo_url(stored_repo_url, formats):
         res = get_repo_url(repo_url)
         if type(res) != int:
             break
-    return repo_url, res
+    if fmt == 'content':
+        yast = True
+    return repo_url, res, yast
 
-def download_url(res, part):
+def download_url(res, part=''):
 
     headers = dict(res.headers.items())
     if verbose and 'content-length' in headers:
@@ -312,7 +337,7 @@ def update_deb_repo(repo):
     if repo.last_access_ok:
         if verbose:
             print '%s - deb repo found.' % repo_url
-        data = download_url(res, None)
+        data = download_url(res)
         sha1 = get_sha1(data)
         if repo.file_checksum == sha1 and verbose:
             print 'Repo checksum has not changed, not updating packages'
@@ -329,40 +354,60 @@ def update_deb_repo(repo):
 
 def update_rpm_repo(repo):
 
-    formats = [ 'repodata/repomd.xml.bz2', 'repodata/repomd.xml.gz', 'repodata/repomd.xml', 'suse/repodata/repomd.xml.bz2', 'suse/repodata/repomd.xml.gz', 'suse/repodata/repomd.xml' ]
-    repo_url, res = find_repo_url(repo.url, formats)
+    formats = [ 'repodata/repomd.xml.bz2', 'repodata/repomd.xml.gz', 'repodata/repomd.xml', 'suse/repodata/repomd.xml.bz2', 'suse/repodata/repomd.xml.gz', 'suse/repodata/repomd.xml', 'content' ]
+    repo_url, res, yast = find_repo_url(repo.url, formats)
     repo.last_access_ok = check_response(res)
 
     if repo.last_access_ok:
-        if verbose:
-            print '%s - rpm repo found.' % repo_url
-        data = download_url(res, '(1/2)')
-        primary, checksum, checksum_type = get_primary_url(res.geturl(), data)
-        res = get_repo_url(primary)
-        repo.last_access_ok = check_response(res)
-        if repo.last_access_ok:
-            data = download_url(res, '(2/2)')
-            sha = None
-            if checksum_type == 'sha':
-                sha = get_sha1(data)
-            elif checksum_type == 'sha256':
-                sha = get_sha256(data)
-            else:
-                print 'Unknown checksum type: %s' % checksum_type
-            if sha != checksum:
-                print '%s checksum failed for repo %s, not updating packages' % (checksum_type, repo.id)
-                repo.last_access_ok = False
-            elif repo.file_checksum == sha and verbose:
-                print 'Repo checksum has not changed, not updating packages'
-            else:
-                packages = set()
-                unpack_rpmpackages(data, packages)
-                repo.timestamp = datetime.datetime.now()
-                repo.last_access_ok = True
-                update_packages(repo, packages)
-                repo.file_checksum = sha
-                packages.clear()
-                del packages
+        packages = set()
+        update = False
+        if not yast:
+            if verbose:
+                print '%s - yum rpm repo found.' % repo_url
+            data = download_url(res, '(1/2)')
+            primary, checksum, checksum_type = get_primary_url(res.geturl(), data)
+            res = get_repo_url(primary)
+            repo.last_access_ok = check_response(res)
+            if repo.last_access_ok:
+                data = download_url(res, '(2/2)')
+                sha = None
+                if checksum_type == 'sha':
+                    sha = get_sha1(data)
+                elif checksum_type == 'sha256':
+                    sha = get_sha256(data)
+                else:
+                    print 'Unknown checksum type: %s' % checksum_type
+                if sha != checksum:
+                    print '%s checksum failed for repo %s, not updating packages' % (checksum_type, repo.id)
+                    repo.last_access_ok = False
+                elif repo.file_checksum == sha and verbose:
+                    print 'Repo checksum has not changed, not updating packages'
+                else:
+                    unpack_yumpackages(data, packages)
+                    repo.file_checksum = sha
+                    update = True
+        elif yast:
+            if verbose:
+                print '%s - yast rpm repo found' % repo_url
+            data = download_url(res, '(1/2)')
+            rpm_dir = re.findall('DATADIR.*', data)[0].split()[1]
+            rpm_url = '%s/%s' % (repo.url, rpm_dir)
+            package_dir = re.findall('DESCRDIR *(.*)', data)[0]
+            package_url = '%s/%s/packages.gz' % (repo.url, package_dir)
+            res = get_repo_url(package_url)
+            repo.last_access_ok = check_response(res)
+            if repo.last_access_ok:
+                data = download_url(res, '(2/2)')
+                unpack_yastpackages(data, packages)
+                repo.file_checksum = 'yast'
+                update = True
+        repo.timestamp = datetime.datetime.now()
+        repo.last_access_ok = True
+        if update:
+            update_packages(repo, packages)
+        packages.clear()
+        del packages
+
     repo.save()
 
 def update_repo(repo):
