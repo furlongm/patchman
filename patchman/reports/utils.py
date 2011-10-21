@@ -23,7 +23,8 @@ def process_packages(report, host, verbose=0):
         progress_info.send(sender=report, ptext='%s packages' % host.__unicode__()[0:25], plength=len(packages))
         for i, pkg in enumerate(packages):
             package = process_package(report, pkg)
-            host.packages.add(package)
+            if package != None:
+                host.packages.add(package)
             progress_update.send(sender=report, index=i+1)
 
 
@@ -58,11 +59,14 @@ def parse_packages(packages_string):
     
 def process_package(report, pkg):
     if report.protocol == '1':
+        if pkg[0] != 'gpg-pubkey':
+            p_name, c = PackageName.objects.get_or_create(name=pkg[0].lower())
+        else
+            return None
         if pkg[4] != '':
             p_arch, c = PackageArchitecture.objects.get_or_create(name=pkg[4])
         else:
             p_arch, c = PackageArchitecture.objects.get_or_create(name='unknown')
-        p_name, c = PackageName.objects.get_or_create(name=pkg[0].lower())
         if pkg[1]:
             p_epoch = pkg[1]
             if p_epoch == '0':
