@@ -117,12 +117,9 @@ def unpack_debpackages(data, packages):
             update_pbar(i+1)
             package = PackageString(name=name, epoch=epoch, version=version, release=release, arch=arch, packagetype='D')
             packages.add(package)
-            del package
     else:
         if verbose:
             print 'No packages in found in repo.'
-
-    del data, extracted
 
 def get_primary_url(repo_url, data):
 
@@ -173,9 +170,6 @@ def unpack_yumpackages(data, packages):
                     epoch = ''
                 package = PackageString(name=name, epoch=epoch, version=version, release=release, arch=arch, packagetype='R')
                 packages.add(package)
-        del context
-        del data
-
     else:
         if verbose:
             print 'No packages in found in repo.'
@@ -193,7 +187,7 @@ def unpack_yastpackages(data, packages):
         for i, pkg in enumerate(pkgs):
             update_pbar(i+1)
             name, version, release, arch = pkg.split()
-            package = PackageString(name=name.lower(), epoch='0', version=version, release=release, arch=arch, packagetype='R')
+            package = PackageString(name=name.lower(), epoch='', version=version, release=release, arch=arch, packagetype='R')
             packages.add(package)
     else:
         if verbose:
@@ -237,7 +231,6 @@ def update_packages(repo, packages):
     removed = old.difference(packages)
 
     old.clear()
-    del old
 
     newlen = len(new)
     removedlen = len(removed)
@@ -253,7 +246,6 @@ def update_packages(repo, packages):
         packagetype = package.packagetype
         p = Package.objects.get(name=package_id, epoch=epoch, version=version, arch=arch, release=release, packagetype=packagetype)
         RepoPackage.objects.get(repo=repo, package=p).delete()
-        
     repo.save()
     removed.clear()
 
@@ -269,15 +261,12 @@ def update_packages(repo, packages):
         p, c = Package.objects.get_or_create(name=package_id, epoch=epoch, version=version, arch=arch, release=release, packagetype=packagetype)
         # This fixes a subtle bug where a stored package name with uppercase letters
         # will not match until it is lowercased.
-        package_id.name = package.name
-        package_id.save()
+        if package_id.name != package.name:
+            package_id.name = package.name
+            package_id.save()
         RepoPackage.objects.create(repo=repo, package=p)
     repo.save()
     new.clear()
-
-    del new
-    del removed
-    del repopackages
 
 def find_repo_url(stored_repo_url, formats):
 
@@ -349,7 +338,6 @@ def update_deb_repo(repo):
             update_packages(repo, packages)
             repo.file_checksum = sha1
             packages.clear()
-            del packages
     repo.save()
 
 def update_rpm_repo(repo):
@@ -406,7 +394,6 @@ def update_rpm_repo(repo):
         if update:
             update_packages(repo, packages)
         packages.clear()
-        del packages
 
     repo.save()
 
@@ -443,8 +430,6 @@ def update_repos(single_repo):
             print '\n%s' % repo
         update_repo(repo)
 
-    del message, repos
-
 def list_repos(single_repo):
 
     repos = []
@@ -465,8 +450,6 @@ def list_repos(single_repo):
 
     for repo in repos:
         print_repo_info(repo)
-
-    del message, repos
 
 def print_repo_info(repo):
 
