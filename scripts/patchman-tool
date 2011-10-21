@@ -461,39 +461,7 @@ def print_repo_info(repo):
 
 def remove_orphaned_packages():
 
-    allpackages = Package.objects.all()
-    allhosts = Host.objects.all()
-    allrepos = Repository.objects.all()
-
-    packagelen = len(allpackages)
-    repolen = len(allrepos)
-    hostlen = len(allhosts)
-
-    allpackagestrings = set()
-    allusedpackages = set()
-    orphanedpackages = set()
-
-    if verbose:
-        print '\nPruning orphaned packages'
-
-    create_pbar('Obtaining all stored packages:', packagelen)
-    for i, p in enumerate(allpackages):
-        allpackagestrings.add(PackageString(name=p.name, epoch=p.epoch, version=p.version, release=p.release, arch=p.arch, packagetype=p.packagetype))
-        update_pbar(i+1)
-
-    create_pbar('Obtaining repo packages:', repolen)
-    for i, r in enumerate(allrepos):
-        for p in r.packages.all():
-            allusedpackages.add(PackageString(name=p.name, epoch=p.epoch, version=p.version, release=p.release, arch=p.arch, packagetype=p.packagetype))
-        update_pbar(i+1)
-
-    create_pbar('Obtaining host packages:', hostlen)
-    for i, h in enumerate(allhosts):
-        for p in h.packages.all():
-            allusedpackages.add(PackageString(name=p.name, epoch=p.epoch, version=p.version, release=p.release, arch=p.arch, packagetype=p.packagetype))
-        update_pbar(i+1)
-
-    orphanedpackages = allpackagestrings.difference(allusedpackages)
+    orphanedpackages = Package.objects.filter(repository__isnull = True, host__isnull = True)
     orphanedlen = len(orphanedpackages)
 
     create_pbar('Removing %s orphaned packages:' % orphanedlen, orphanedlen)
