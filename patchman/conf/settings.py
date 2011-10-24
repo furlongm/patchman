@@ -1,7 +1,7 @@
 # Django settings for patchman project.
 
-from os import path as os_path
-PROJECT_DIR = os_path.abspath(os_path.split(__file__)[0])
+#from os import path as os_path
+#PROJECT_DIR = os_path.abspath(os_path.split(__file__)[0])
 
 
 DEBUG = False
@@ -37,7 +37,7 @@ USE_L10N = True
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
 MEDIA_URL = '/patchman_media/'
 
-MEDIA_ROOT = os_path.join(PROJECT_DIR, 'media')
+MEDIA_ROOT = '/usr/share/patchman/media'
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -71,7 +71,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 )
 
 TEMPLATE_DIRS = (
-    os_path.join(PROJECT_DIR, 'templates'),
+    '/usr/share/patchman/templates'
 )
 
 INSTALLED_APPS = (
