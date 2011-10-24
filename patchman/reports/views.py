@@ -24,6 +24,7 @@ from django.http import HttpResponseRedirect
 from django.http import Http404
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.db.models import Q, Count
+from django.conf import settings
 
 from andsome.util.filterspecs import Filter, FilterBar
 from datetime import datetime, date, time
@@ -43,11 +44,8 @@ def upload(request):
 
         report = Report.objects.create()
         report.parse(data, meta)
-        try:
+        if settings.USE_ASYNC_PROCESSING:
             process_report.delay(report)
-        except AttributeError:
-        # celery not installed
-            pass
         
         if 'report' in data and data['report'] == '1':
             packages = []
