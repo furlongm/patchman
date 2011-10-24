@@ -22,7 +22,7 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
 
-    url(r'^dashboard/$', 'patchman.views.dashboard', name='dashboard'),
+    url(r'^$', 'patchman.views.dashboard', name='dashboard'),
     url(r'^reports/', include('patchman.reports.urls')),
     url(r'^hosts/', include('patchman.hosts.urls')),
     url(r'^packages/', include('patchman.packages.urls')),
@@ -39,5 +39,5 @@ urlpatterns = patterns('',
 
 if settings.DEBUG:
     urlpatterns += patterns('',
-        (r'^media/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.MEDIA_ROOT}),
+        (r'^patchman_media/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.MEDIA_ROOT}),
     )
