@@ -6,6 +6,7 @@
                    <th>Packages</th>
                    <th>Last access OK</th>
                    <th>Timestamp</th>
+                   <th>Checksum</th>
                 </tr>
         </thead>
     <tbody>
@@ -15,6 +16,7 @@
                     <td>{{ mirror.packages.count }}</td>
                     <td>{% yes_no_img mirror.last_access_ok %}</td>
                     <td>{{ mirror.timestamp }}</td>
+                    <td>{{ mirror.checksum }}
                 </tr>
     {% endfor %}
     </tbody>
