@@ -15,7 +15,7 @@ class Migration(DataMigration):
                 file_checksum = r.file_checksum,
                 timestamp = r.timestamp,
             )
-            for p in r.packages.all():
+            for p in orm.RepoPackages.objects.filter(repo=r):
                 orm.MirrorPackage.objects.create(
                     mirror = mirror,
                     package = p.package,
