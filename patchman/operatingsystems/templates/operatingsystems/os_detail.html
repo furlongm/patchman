@@ -1,5 +1,6 @@
-{% extends "main.html" %}
 
+{% extends "main.html" %}
+{% load common %}
 {% block title %}Operating System {{ os }} {% endblock %}
 
 {% block content_title %}OS Information{% endblock %}
@@ -56,20 +57,7 @@
 </div>
 <div class="module">
 <h2>{{ os }} Repositories</h2>
-<table>
-        <thead>
-                <tr>
-                    <th>Repo Name</th><th>URL</th><th>Packages</th>
-                </tr>
-        </thead>
-{% for repo in os.osgroup.repos.select_related %}
-                <tr class="{% cycle row1,row2 %}">
-                    <td><a href="{{ repo.get_absolute_url }}">{{ repo }}</a></td>
-                    <td><a href="{{ repo.url }}">{{ repo.url }}</a></td>
-                    <td>{{ repo.packages.count }}</td>
-                </tr>
-{% endfor %}
-</table>
+{% gen_table os.osgroup.repos.select_related %}
 </div>
 
 {% endblock %}
