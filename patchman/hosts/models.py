@@ -1,3 +1,4 @@
+
 # Copyright 2011 VPAC <furlongm@vpac.org>
 #
 # This file is part of Patchman.
@@ -62,7 +63,7 @@ class Host(models.Model):
         return self.updates.filter(security=False).count()
 
     def get_host_repo_packages(self):
-        hostrepos = Q(repository__osgroup__os__host=self, repository__arch=self.arch)|Q(repository__in=self.repos.all())
+        hostrepos = Q(mirror__repo__osgroup__os__host=self, mirror__repo__arch=self.arch)|Q(mirror__repo__in=self.repos.all())
         return Package.objects.select_related().filter(hostrepos)
 
     def find_updates(self):
@@ -79,25 +80,28 @@ class Host(models.Model):
             highestpackage = None
             matchingpackages = repopackages.filter(name=package.name, arch=package.arch, packagetype=package.packagetype)
             for repopackage in matchingpackages:
-                if  package.compare_version(repopackage) == -1:
+                if package.compare_version(repopackage) == -1:
                     if package.packagetype == 'R':
                         if labelCompare(highest, repopackage._version_string_rpm()) == -1:
                             highest = repopackage._version_string_rpm()
                             highestpackage = repopackage
                     elif package.packagetype == 'D':
                         vr = Version(repopackage._version_string_deb())
-                        vh = Version('%s:%s-%s' % (str(highest[0]), str(highest[1]), str(highest[2])))
+                        if highest == ('', '0', ''):
+                            vh = Version('0')
+                        else:
+                            vh = Version('%s:%s-%s' % (str(highest[0]), str(highest[1]), str(highest[2])))
                         if version_compare(vh, vr) == -1:
                             highest = repopackage._version_string_deb()
                             highestpackage = repopackage
 
             if highest != ('', '0', ''):
-                hostrepos = Q(osgroup__os__host=self, arch=self.arch)|Q(host=self)
-                matchingrepos = highestpackage.repository_set.filter(hostrepos)
+                hostrepos = Q(repo__osgroup__os__host=self, repo__arch=self.arch)|Q(repo__host=self)
+                matchingrepos = highestpackage.mirror_set.filter(hostrepos)
                 security = False
                 # If any of the containing repos are security, mark the update as security
-                for repo in matchingrepos:
-                    if repo.security == True:
+                for mirror in matchingrepos:
+                    if mirror.repo.security == True:
                         security = True
                 update, c = PackageUpdate.objects.get_or_create(oldpackage=package,newpackage=highestpackage,security=security)
                 self.updates.add(update)
@@ -126,11 +130,11 @@ class Host(models.Model):
                         host_highest = hostkernel
                         host_highest_package = hostpackage
                 if labelCompare(host_highest, repo_highest) == -1:
-                    matchingrepos = repo_highest_package.repository_set.filter(arch=self.arch)
+                    matchingrepos = repo_highest_package.mirror_set.filter(repo__arch=self.arch)
                     security = False
                     # If any of the containing repos are security, mark the update as security
-                    for repo in matchingrepos:
-                        if repo.security == True:
+                    for mirror in matchingrepos:
+                        if mirror.repo.security == True:
                             security = True
                     update, c = PackageUpdate.objects.get_or_create(oldpackage=host_highest_package, newpackage=repo_highest_package, security=security)
                     self.updates.add(update)
