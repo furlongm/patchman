@@ -31,17 +31,10 @@ class Repository(models.Model):
     )
 
     name = models.CharField(max_length=255, unique=True)
-    url = models.CharField(max_length=255, unique=True)
     arch = models.ForeignKey(MachineArchitecture)
     security = models.BooleanField()
     repotype = models.CharField(max_length=1, choices=REPO_TYPES)
     enabled = models.BooleanField(default=False)
-    last_access_ok = models.BooleanField()
-    file_checksum = models.CharField(max_length=255, blank=True, null=True)
-    timestamp = models.DateTimeField(auto_now_add=True)
-#    priority = models.PositiveSmallIntegerField(blank=True, null=True)
-#    vendor = models.CharField(max_length=255, blank=True, null=True)
-    packages = models.ManyToManyField(Package, blank=True, null=True, through='RepoPackage')
 
     class Meta:
         verbose_name_plural = "Repositories"
@@ -61,8 +54,22 @@ class Repository(models.Model):
         else:
             print 'Error: unknown repo type for repo %s: %s' % (self.id, self.repotype)
 
-class RepoPackage(models.Model):
 
+class Mirror(models.Model):
     repo = models.ForeignKey(Repository)
+    url = models.CharField(max_length=255, unique=True)
+    last_access_ok = models.BooleanField()
+    file_checksum = models.CharField(max_length=255, blank=True, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    packages = models.ManyToManyField(Package, blank=True, null=True, through='MirrorPackage')
+
+    def __unicode__(self):
+        return self.url
+
+             
+class MirrorPackage(models.Model):
+    mirror = models.ForeignKey(Mirror)
     package = models.ForeignKey(Package)
     enabled = models.BooleanField(default=True)
+   
+            

@@ -1,15 +1,17 @@
+{% load common %}
 <table cellspacing="0">
         <thead>
                 <tr>
-                   <th>Repo Name</th><th>URL</th><th>Packages</th>
+                   <th>Repo Name</th><th>Mirrors</th><th>Enabled</th><th>Security</th>
                 </tr>
         </thead>
     <tbody>
     {% for repo in object_list %}
                 <tr class="{% cycle row1,row2 %}">
                     <td><a href="{{ repo.get_absolute_url }}">{{ repo }}</a></td>
-                    <td><a href="{{ repo.url }}">{{ repo.url|slice:":25" }} ... {{ repo.url|slice:"-25:" }}</a></td>
-                    <td>{{ repo.packages.count }}</td>
+                    <td>{{ repo.mirror_set.count }}</td>
+                    <td>{% yes_no_img repo.enabled %}</td>
+                    <td>{% yes_no_img repo.security %}</td>                      
                 </tr>
     {% endfor %}
     </tbody>

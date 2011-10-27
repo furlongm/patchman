@@ -75,6 +75,9 @@ class Package(models.Model):
             rel = ''
         return '%s-%s%s%s-%s' % (self.name, epo, self.version, rel, self.arch)
 
+    def get_absolute_url(self):
+        return self.name.get_absolute_url()
+        
     def __key(self):
         return (self.name, self.epoch, self.version, self.release, self.arch, self.packagetype)
 
@@ -96,11 +99,11 @@ class Package(models.Model):
         epoch = ''
         version = ''
         release = ''
-        if self.epoch is not None:
+        if self.epoch != "":
             epoch=str(self.epoch)+':'
-        if self.version is not None:
+        if self.version != "":
             version=str(self.version)
-        if self.release is not None:
+        if self.release != "":
             release='-'+str(self.release)
         return (epoch+version+release)
 
@@ -112,8 +115,9 @@ class Package(models.Model):
             vo = Version(other._version_string_deb())
             return version_compare(vs, vo)
 
-    def get_absolute_url(self):
-        return self.name.get_absolute_url()
+    def repo_count(self):
+        from patchman.repos.models import Repository
+        return Repository.objects.filter(mirror__packages=self).distinct().count()
         
 class PackageString(models.Model):
 

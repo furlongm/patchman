@@ -1,0 +1,21 @@
+{% load common %}
+<table cellspacing="0">
+        <thead>
+                <tr>
+                   <th>URL</th>
+                   <th>Packages</th>
+                   <th>Last access OK</th>
+                   <th>Timestamp</th>
+                </tr>
+        </thead>
+    <tbody>
+    {% for mirror in object_list %}
+                <tr class="{% cycle row1,row2 %}">
+                    <td><a href="{{ mirror.url }}">{{ mirror.url }}</a></td>
+                    <td>{{ mirror.packages.count }}</td>
+                    <td>{% yes_no_img mirror.last_access_ok %}</td>
+                    <td>{{ mirror.timestamp }}</td>
+                </tr>
+    {% endfor %}
+    </tbody>
+</table>

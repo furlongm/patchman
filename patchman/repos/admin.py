@@ -15,9 +15,10 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from django.contrib import admin
-from patchman.repos.models import Repository
+from patchman.repos.models import Repository, Mirror
 
-class RepoAdmin(admin.ModelAdmin):
+class MirrorAdmin(admin.ModelAdmin):
     readonly_fields = ('packages',)
 
-admin.site.register(Repository, RepoAdmin)
+admin.site.register(Repository)
+admin.site.register(Mirror, MirrorAdmin)

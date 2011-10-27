@@ -58,7 +58,7 @@ def repo_list(request):
         repos = repos.filter(enabled=enabled)
     
     if request.REQUEST.has_key('package_id'):
-        repos = repos.filter(packages=int(request.GET['package_id']))
+        repos = repos.filter(mirror__packages=int(request.GET['package_id']))
 
     if request.REQUEST.has_key('search'):
         terms = request.REQUEST['search'].lower()
@@ -69,7 +69,7 @@ def repo_list(request):
         repos = repos.filter(query)
     else:
         terms = ""
-
+    repos = repos.distinct()
     try:
         page_no = int(request.GET.get('page', 1))
     except ValueError:

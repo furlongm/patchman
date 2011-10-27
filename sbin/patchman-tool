@@ -31,7 +31,7 @@ from patchman.hosts.models import Host
 from patchman.operatingsystems.models import OS, OSGroup
 from patchman.domains.models import Domain
 from patchman.packages.models import Package, PackageName, PackageString, PackageUpdate
-from patchman.repos.models import Repository, RepoPackage
+from patchman.repos.models import Repository, MirrorPackage
 from patchman.arch.models import PackageArchitecture, MachineArchitecture
 from patchman.reports.models import Report
 
@@ -210,13 +210,13 @@ def get_repo_url(url):
             print 'Error: %s' % e
             return -1
 
-def update_packages(repo, packages):
+def update_packages(mirror, packages):
 
     new = set()
     old = set()
     removed = set()
 
-    repopackages = repo.packages.all()
+    repopackages = mirror.packages.all()
     reposize = len(repopackages)
 
     create_pbar('Obtaining stored packages: ', reposize)
@@ -245,8 +245,8 @@ def update_packages(repo, packages):
         arch = PackageArchitecture.objects.get(name=package.arch)
         packagetype = package.packagetype
         p = Package.objects.get(name=package_id, epoch=epoch, version=version, arch=arch, release=release, packagetype=packagetype)
-        RepoPackage.objects.get(repo=repo, package=p).delete()
-    repo.save()
+        MirrorPackage.objects.get(mirror=mirror, package=p).delete()
+    mirror.save()
     removed.clear()
 
     create_pbar('Adding %s new packages:' % newlen, newlen)
@@ -264,8 +264,8 @@ def update_packages(repo, packages):
         if package_id.name != package.name:
             package_id.name = package.name
             package_id.save()
-        RepoPackage.objects.create(repo=repo, package=p)
-    repo.save()
+        MirrorPackage.objects.create(mirror=mirror, package=p)
+    mirror.save()
     new.clear()
 
 def find_repo_url(stored_repo_url, formats):
@@ -318,84 +318,89 @@ def check_response(res):
         return True
 
 def update_deb_repo(repo):
-
+    
     formats = [ 'Packages.bz2', 'Packages.gz', 'Packages']
-    repo_url, res, unused = find_repo_url(repo.url, formats)
-    repo.last_access_ok = check_response(res)
 
-    if repo.last_access_ok:
-        if verbose:
-            print '%s - deb repo found.' % repo_url
-        data = download_url(res)
-        sha1 = get_sha1(data)
-        if repo.file_checksum == sha1 and verbose:
-            print 'Repo checksum has not changed, not updating packages'
-        else:
-            packages = set()
-            unpack_debpackages(data, packages)
-            repo.last_access_ok = True
-            repo.timestamp = datetime.datetime.now()
-            update_packages(repo, packages)
-            repo.file_checksum = sha1
-            packages.clear()
-    repo.save()
+    for mirror in repo.mirror_set.all():
+    
+        repo_url, res, unused = find_repo_url(mirror.url, formats)
+        mirror.last_access_ok = check_response(res)
+
+        if mirror.last_access_ok:
+            if verbose:
+                print '%s - deb repo found.' % repo_url
+            data = download_url(res)
+            sha1 = get_sha1(data)
+            if mirror.file_checksum == sha1 and verbose:
+                print 'Repo checksum has not changed, not updating packages'
+            else:
+                packages = set()
+                unpack_debpackages(data, packages)
+                mirror.last_access_ok = True
+                mirror.timestamp = datetime.datetime.now()
+                update_packages(mirror, packages)
+                mirror.file_checksum = sha1
+                packages.clear()
+        mirror.save()
 
 def update_rpm_repo(repo):
 
     formats = [ 'repodata/repomd.xml.bz2', 'repodata/repomd.xml.gz', 'repodata/repomd.xml', 'suse/repodata/repomd.xml.bz2', 'suse/repodata/repomd.xml.gz', 'suse/repodata/repomd.xml', 'content' ]
-    repo_url, res, yast = find_repo_url(repo.url, formats)
-    repo.last_access_ok = check_response(res)
 
-    if repo.last_access_ok:
-        packages = set()
-        update = False
-        if not yast:
-            if verbose:
-                print '%s - yum rpm repo found.' % repo_url
-            data = download_url(res, '(1/2)')
-            primary, checksum, checksum_type = get_primary_url(res.geturl(), data)
-            res = get_repo_url(primary)
-            repo.last_access_ok = check_response(res)
-            if repo.last_access_ok:
-                data = download_url(res, '(2/2)')
-                sha = None
-                if checksum_type == 'sha':
-                    sha = get_sha1(data)
-                elif checksum_type == 'sha256':
-                    sha = get_sha256(data)
-                else:
-                    print 'Unknown checksum type: %s' % checksum_type
-                if sha != checksum:
-                    print '%s checksum failed for repo %s, not updating packages' % (checksum_type, repo.id)
-                    repo.last_access_ok = False
-                elif repo.file_checksum == sha and verbose:
-                    print 'Repo checksum has not changed, not updating packages'
-                else:
-                    unpack_yumpackages(data, packages)
-                    repo.file_checksum = sha
+    for mirror in repo.mirror_set.all():
+        repo_url, res, yast = find_repo_url(mirror.url, formats)
+        mirror.last_access_ok = check_response(res)
+
+        if mirror.last_access_ok:
+            packages = set()
+            update = False
+            if not yast:
+                if verbose:
+                    print '%s - yum rpm repo found.' % repo_url
+                data = download_url(res, '(1/2)')
+                primary, checksum, checksum_type = get_primary_url(res.geturl(), data)
+                res = get_repo_url(primary)
+                mirror.last_access_ok = check_response(res)
+                if mirror.last_access_ok:
+                    data = download_url(res, '(2/2)')
+                    sha = None
+                    if checksum_type == 'sha':
+                        sha = get_sha1(data)
+                    elif checksum_type == 'sha256':
+                        sha = get_sha256(data)
+                    else:
+                        print 'Unknown checksum type: %s' % checksum_type
+                    if sha != checksum:
+                        print '%s checksum failed for mirror %s, not updating packages' % (checksum_type, mirror.id)
+                        mirror.last_access_ok = False
+                    elif mirror.file_checksum == sha and verbose:
+                        print 'Repo checksum has not changed, not updating packages'
+                    else:
+                        unpack_yumpackages(data, packages)
+                        mirror.file_checksum = sha
+                        update = True
+            elif yast:
+                if verbose:
+                    print '%s - yast rpm repo found' % repo_url
+                data = download_url(res, '(1/2)')
+                rpm_dir = re.findall('DATADIR.*', data)[0].split()[1]
+                rpm_url = '%s/%s' % (mirror.url, rpm_dir)
+                package_dir = re.findall('DESCRDIR *(.*)', data)[0]
+                package_url = '%s/%s/packages.gz' % (mirror.url, package_dir)
+                res = get_repo_url(package_url)
+                mirror.last_access_ok = check_response(res)
+                if mirror.last_access_ok:
+                    data = download_url(res, '(2/2)')
+                    unpack_yastpackages(data, packages)
+                    mirror.file_checksum = 'yast'
                     update = True
-        elif yast:
-            if verbose:
-                print '%s - yast rpm repo found' % repo_url
-            data = download_url(res, '(1/2)')
-            rpm_dir = re.findall('DATADIR.*', data)[0].split()[1]
-            rpm_url = '%s/%s' % (repo.url, rpm_dir)
-            package_dir = re.findall('DESCRDIR *(.*)', data)[0]
-            package_url = '%s/%s/packages.gz' % (repo.url, package_dir)
-            res = get_repo_url(package_url)
-            repo.last_access_ok = check_response(res)
-            if repo.last_access_ok:
-                data = download_url(res, '(2/2)')
-                unpack_yastpackages(data, packages)
-                repo.file_checksum = 'yast'
-                update = True
-        repo.timestamp = datetime.datetime.now()
-        repo.last_access_ok = True
-        if update:
-            update_packages(repo, packages)
-        packages.clear()
+            mirror.timestamp = datetime.datetime.now()
+            mirror.last_access_ok = True
+            if update:
+                update_packages(repo, packages)
+            packages.clear()
 
-    repo.save()
+        mirror.save()
 
 def update_repo(repo):
     if repo.repotype == Repository.DEB:
@@ -455,9 +460,11 @@ def print_repo_info(repo):
 
     print '%s : %s' % (repo.id, repo)
     if verbose:
-        print '%s' % repo.url
-        print 'arch: %s    checksum: %s' % (repo.arch, repo.file_checksum)
-        print 'security: %s  last_updated: %s\n' % (repo.security, repo.timestamp)
+        print 'security: %s  arch: %s' % (repo.security, repo.arch)
+        print "Mirrors:"
+        for mirror in repo.mirror_set.all():
+            print mirror.url
+            print 'last updated: %s    checksum: %s\n' % (mirror.timestamp, mirror.file_checksum)
 
 def remove_orphaned_packages():
 
@@ -560,6 +567,7 @@ def print_update(update, **kwargs):
     if verbose:
         print update
 
+# Not needed anymore as updates are processed after each report
 def find_host_updates(host=None):
 
     update_hosts = []

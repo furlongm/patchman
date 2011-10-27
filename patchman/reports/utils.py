@@ -2,7 +2,7 @@ import re
 
 from patchman.reports.models import Report
 from patchman.arch.models import MachineArchitecture, PackageArchitecture
-from patchman.repos.models import Repository
+from patchman.repos.models import Repository, Mirror
 from patchman.packages.models import Package, PackageName
 from patchman.reports.models import Report
 from patchman.signals import progress_info, progress_update
@@ -46,7 +46,14 @@ def process_repo(report, repo):
         r_type = Repository.RPM
     r_name = repo[1]
     r_arch, c = MachineArchitecture.objects.get_or_create(name=report.arch)
-    repo, c = Repository.objects.get_or_create(url=repo[2], arch=r_arch, repotype=r_type, defaults={'name': r_name})
+    try:
+        mirror = Mirror.objects.get(url=repo[2])
+    except Mirror.DoesNotExist:
+        repository = Repository.objects.create(name=r_name, arch=r_arch, repotype=r_type)
+        mirror = Mirror.objects.create(
+            repo=repository,
+            url=repo[2],
+        )
            
     
 def parse_packages(packages_string):
