@@ -397,7 +397,7 @@ def update_rpm_repo(repo):
             mirror.timestamp = datetime.datetime.now()
             mirror.last_access_ok = True
             if update:
-                update_packages(repo, packages)
+                update_packages(mirror, packages)
             packages.clear()
 
         mirror.save()
