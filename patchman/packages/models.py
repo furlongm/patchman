@@ -63,7 +63,8 @@ class Package(models.Model):
 
     class Meta:
         ordering = ('name', 'epoch', 'version', 'release', 'arch')
-
+        unique_together = ('name', 'epoch', 'version', 'release', 'arch', 'packagetype',)
+        
     def __unicode__(self):
         if self.epoch:
             epo = '%s:' % self.epoch
