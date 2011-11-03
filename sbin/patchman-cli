@@ -19,7 +19,7 @@ from debian.deb822 import Sources
 from urllib2 import Request, urlopen
 from urlparse import urlparse
 
-from patchman import settings
+from patchman.conf import settings
 setup_environ(settings)
 
 from django.db.utils import IntegrityError
@@ -468,7 +468,7 @@ def print_repo_info(repo):
 
 def remove_orphaned_packages():
 
-    orphanedpackages = Package.objects.filter(repository__isnull = True, host__isnull = True)
+    orphanedpackages = Package.objects.filter(mirror__isnull = True, host__isnull = True)
     orphanedlen = len(orphanedpackages)
 
     create_pbar('Removing %s orphaned packages:' % orphanedlen, orphanedlen)
