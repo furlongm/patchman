@@ -485,25 +485,52 @@ def remove_orphaned_packages():
     if orphanedlen == 0 and verbose:
         print 'No orphaned packages found.'
 
+def remove_orphaned_arches():
+
+    orphanedarches = PackageArchitecture.objects.filter(package__isnull = True)
+    orphanedlen = len(orphanedarches)
+
+    create_pbar('Removing %s orphaned p arches:' % orphanedlen, orphanedlen)
+    for i, o in enumerate(orphanedarches):
+        try:
+            a = PackageArchitecture.objects.get(name=o.name)
+        except MultipleObjectsReturned:
+            print "You have duplicate arches in your database for %s." % o
+            print "Please re-run this tool with the duplicate-removing option first."
+            exit
+        a.delete()
+        update_pbar(i+1)
+
+    if orphanedlen == 0 and verbose:
+        print 'No orphaned p arches found.'
+
+    orphanedarches = MachineArchitecture.objects.filter(host__isnull = True, repository__isnull = True)
+    orphanedlen = len(orphanedarches)
+
+    create_pbar('Removing %s orphaned m arches:' % orphanedlen, orphanedlen)
+    for i, o in enumerate(orphanedarches):
+        try:
+            a = MachineArchitecture.objects.get(name=o.name)
+        except MultipleObjectsReturned:
+            print "You have duplicate arches in your database for %s." % o
+            print "Please re-run this tool with the duplicate-removing option first."
+            exit
+        a.delete()
+        update_pbar(i+1)
+
+    if orphanedlen == 0 and verbose:
+        print 'No orphaned m arches found.'
+
 def remove_unused_package_names():
 
-    allnames = PackageName.objects.all()
-    allpackages = Package.objects.all()
-    allnameslen = len(allnames)
-    p = 0
+    unusednames = PackageName.objects.filter(package__isnull = True)
+    unusednameslen = len(unusednames)
 
-    create_pbar('Removing unused package names:', allnameslen)
-    for i, packagename in enumerate(allnames):
+    create_pbar('Removing %s unused package names:', unusednameslen)
+    for i, packagename in enumerate(unusednames):
+        packagename.delete()
         update_pbar(i+1)
-        if allpackages.filter(name=packagename):
-            pass
-        else:
-            packagename.delete()
-            p += 1
             
-    if verbose:
-        print 'Removed %s unused package names.' % p
-
 def remove_duplicates(keep, remove):
 
     allhosts = Host.objects.all()
@@ -567,7 +594,6 @@ def print_update(update, **kwargs):
     if verbose:
         print update
 
-# Not needed anymore as updates are processed after each report
 def find_host_updates(host=None):
 
     update_hosts = []
@@ -639,10 +665,8 @@ if __name__ == '__main__':
                 help='list all available repositories')
     parser.add_argument('-v', '--verbose', action='store_true',
                 help='verbose output (default is to be silent, for cronjobs)')
-    parser.add_argument('-o', '--orphans', action='store_true',
-                help='find and remove all orphaned packages')
-    parser.add_argument('-d', '--dups', action='store_true',
-                help='find and remove all duplicates packages')
+    parser.add_argument('-d', '--dbcheck', action='store_true',
+                help='perform some sanity checks and clean unused entries')
     parser.add_argument('-p', '--process-reports', action='store_true',
                 help='process all pending reports')
     parser.add_argument('-r', '--clean-reports', action='store_true',
@@ -665,11 +689,11 @@ if __name__ == '__main__':
     if args.update:
         update_repos(args.repo)
         exit 
-    if args.orphans:
+    if args.dbcheck:
+#        remove_duplicate_packages()
         remove_orphaned_packages()
         remove_unused_package_names()
-    if args.dups:
-        remove_duplicate_packages()
+        remove_orphaned_arches()
     if args.clean_reports:
         clean_reports(args.host)
     if args.process_reports:
