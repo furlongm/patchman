@@ -473,12 +473,7 @@ def remove_orphaned_packages():
 
     create_pbar('Removing %s orphaned packages:' % orphanedlen, orphanedlen)
     for i, o in enumerate(orphanedpackages):
-        try:
-            p = Package.objects.get(name=o.name, epoch=o.epoch, version=o.version, release=o.release, arch=o.arch, packagetype=o.packagetype)
-        except MultipleObjectsReturned:
-            print "You have duplicate packages in your database for %s." % o
-            print "Please re-run this tool with the duplicate-removing option first."
-            exit
+        p = Package.objects.get(name=o.name, epoch=o.epoch, version=o.version, release=o.release, arch=o.arch, packagetype=o.packagetype)
         p.delete()
         update_pbar(i+1)
 
@@ -492,12 +487,7 @@ def remove_orphaned_arches():
 
     create_pbar('Removing %s orphaned p arches:' % orphanedlen, orphanedlen)
     for i, o in enumerate(orphanedarches):
-        try:
-            a = PackageArchitecture.objects.get(name=o.name)
-        except MultipleObjectsReturned:
-            print "You have duplicate arches in your database for %s." % o
-            print "Please re-run this tool with the duplicate-removing option first."
-            exit
+        a = PackageArchitecture.objects.get(name=o.name)
         a.delete()
         update_pbar(i+1)
 
@@ -509,12 +499,7 @@ def remove_orphaned_arches():
 
     create_pbar('Removing %s orphaned m arches:' % orphanedlen, orphanedlen)
     for i, o in enumerate(orphanedarches):
-        try:
-            a = MachineArchitecture.objects.get(name=o.name)
-        except MultipleObjectsReturned:
-            print "You have duplicate arches in your database for %s." % o
-            print "Please re-run this tool with the duplicate-removing option first."
-            exit
+        a = MachineArchitecture.objects.get(name=o.name)
         a.delete()
         update_pbar(i+1)
 
@@ -531,39 +516,6 @@ def remove_unused_package_names():
         packagename.delete()
         update_pbar(i+1)
             
-def remove_duplicates(keep, remove):
-
-    allhosts = Host.objects.all()
-    removed = 0
-
-    for host in allhosts:
-        if remove in host.packages.all():
-            host.packages.remove(remove)
-            host.packages.add(keep)
-            removed += 1
-            host.save()
-    return removed
-
-def remove_duplicate_packages():
-
-    allpackages = Package.objects.all()
-    allpackageslen = len(allpackages)
-    total_removed = 0
-
-    create_pbar('Finding duplicate packages:', allpackageslen)
-
-    for i, package in enumerate(allpackages):
-        update_pbar(i+1)
-        query = allpackages.filter(Q(name=package.name)&Q(epoch=package.epoch)&Q(version=package.version)&Q(release=package.release)&Q(arch=package.arch)&Q(packagetype=package.packagetype))
-        if query.count() > 1:
-            for p in query.all():
-                if package.id != p.id:
-                    total_removed += remove_duplicates(package, p)
-                    p.delete()
-
-    if verbose and total_removed != 0:
-        print "Removed %s duplicate packages." % total_removed
-
 def remove_reports(host):
 
     reports = Report.objects.filter(host=host).order_by('time')[:3]
@@ -690,7 +642,6 @@ if __name__ == '__main__':
         update_repos(args.repo)
         exit 
     if args.dbcheck:
-#        remove_duplicate_packages()
         remove_orphaned_packages()
         remove_unused_package_names()
         remove_orphaned_arches()
