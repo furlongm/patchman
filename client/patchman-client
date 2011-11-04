@@ -213,7 +213,7 @@ function get_repos {
             tmpdir=`${mktemp_bin} -d`
             cp -a ${gpgs} ${tmpdir}
         fi
-        for i in $(apt-get update --print-uris | grep Packages | cut -d "'" -f 2 | sed -e "s/\/Packages\.[bz2|gz]//") ; do
+        for i in $(apt-get update --print-uris | grep Packages | cut -d "'" -f 2 | sed -e "s/\/Packages\.[bz2|gz]*//") ; do
             echo \'deb\' \'${os} ${host_arch} repo at ${i}\' \'${i}\' >> ${repo_tmpfile}
         done
         if [ "${gpgs}" != "" ] ; then
