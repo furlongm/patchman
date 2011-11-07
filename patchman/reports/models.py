@@ -41,6 +41,7 @@ class Report(models.Model):
     processed = models.BooleanField(default=False)
     packages = models.TextField(null=True, blank=True)
     repos = models.TextField(null=True, blank=True)
+    #reboot = models.TextField(null=True, blank=True)
 
     class Meta:
         ordering = ('-time',)
@@ -92,28 +93,30 @@ class Report(models.Model):
             domain, c = Domain.objects.get_or_create(name=self.domain)
             arch, c = MachineArchitecture.objects.get_or_create(name=self.arch)
             host, c = Host.objects.get_or_create(
-                hostname=self.host,
-                defaults={
+                hostname = self.host,
+                defaults = {
                     'ipaddress': self.report_ip,
-                    'arch':arch,
-                    'os':os,
-                    'domain':domain,
-                    'lastreport':self.time
+                    'arch': arch,
+                    'os': os,
+                    'domain': domain,
+                    'lastreport': self.time
                 }
             )
-        host.ipaddress=self.report_ip
-        host.kernel=self.kernel
-        host.arch=arch
-        host.os=os
-        host.domain=domain
-        host.lastreport=self.time
-        host.tags=self.tags
-# TODO: fix this to use stringpackage sets to remove/add
-# or queryset sets
+        host.ipaddress = self.report_ip
+        host.kernel = self.kernel
+        host.arch = arch
+        host.os = os
+        host.domain = domain
+        host.lastreport = self.time
+        host.tags = self.tags
+# TODO: fix this to record the history of installed 
+# packages on a host.
         host.packages.clear()
         from patchman.reports.utils import process_packages, process_repos
         process_packages(report=self, host=host)
         process_repos(report=self, host=host)
+#        if self.reboot == 'yes':
+#            host.reboot_required == True
         host.save()
         self.processed = True
         self.save()

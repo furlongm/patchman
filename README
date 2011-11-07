@@ -29,3 +29,9 @@ python-debian
 python-rpm
 python-progressbar
 python-lxml
+
+On the clients, rpm based OS's can tell if a reboot is required to install a
+new kernel by looking at uname -r and comparing it to the highest installed
+kernel version. However debian-based OS's do not often change the kernel
+version, so these clients will need update-notifier-common installed for this
+functionality to work.
