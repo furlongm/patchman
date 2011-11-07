@@ -46,14 +46,16 @@ def process_repo(report, repo):
         r_type = Repository.RPM
     r_name = repo[1]
     r_arch, c = MachineArchitecture.objects.get_or_create(name=report.arch)
-    try:
-        mirror = Mirror.objects.get(url=repo[2])
-    except Mirror.DoesNotExist:
-        repository, c = Repository.objects.get_or_create(name=r_name, arch=r_arch, repotype=r_type)
-        mirror = Mirror.objects.create(
-            repo=repository,
-            url=repo[2],
-        )
+    for m in enumerate(len(repo)-2):
+        i = m+1
+        try:
+            mirror = Mirror.objects.get(url=repo[i])
+        except Mirror.DoesNotExist:
+            repository, c = Repository.objects.get_or_create(name=r_name, arch=r_arch, repotype=r_type)
+            mirror = Mirror.objects.create(
+                repo=repository,
+                url=repo[i],
+            )
            
     
 def parse_packages(packages_string):
