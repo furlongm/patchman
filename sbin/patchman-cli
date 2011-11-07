@@ -511,7 +511,7 @@ def remove_unused_package_names():
     unusednames = PackageName.objects.filter(package__isnull = True)
     unusednameslen = len(unusednames)
 
-    create_pbar('Removing %s unused package names:', unusednameslen)
+    create_pbar('Removing %s unused package names:' % unusednameslen)
     for i, packagename in enumerate(unusednames):
         packagename.delete()
         update_pbar(i+1)
