@@ -49,7 +49,7 @@ def process_repo(report, repo):
     try:
         mirror = Mirror.objects.get(url=repo[2])
     except Mirror.DoesNotExist:
-        repository = Repository.objects.create(name=r_name, arch=r_arch, repotype=r_type)
+        repository, c = Repository.objects.get_or_create(name=r_name, arch=r_arch, repotype=r_type)
         mirror = Mirror.objects.create(
             repo=repository,
             url=repo[2],
