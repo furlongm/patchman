@@ -245,6 +245,17 @@ function get_repos {
     fi
 }
 
+function reboot_required {
+
+    # On debian-based clients, the update-notifier-common
+    # package needs to be installed for this to work.
+    if [ -e /var/run/reboot_required ] ; then
+        reboot=yes
+    else
+        reboot=servercheck
+    fi
+}
+
 function post_data {
 
     curl_opts=${curl_options}
@@ -257,18 +268,19 @@ function post_data {
     fi
 
     if [ ${debug} -eq 1 ] ; then
-        curl_opts="${curl_opts} -F debug=\"1\"";
+        curl_opts="${curl_opts} -F debug=\"1\""
     fi
 
-    curl_opts="${curl_opts} -F host=\"${host_name}\"";
-    curl_opts="${curl_opts} -F tags=\"${tags}\"";
-    curl_opts="${curl_opts} -F kernel=\"${host_kernel}\"";
-    curl_opts="${curl_opts} -F arch=\"${host_arch}\"";
-    curl_opts="${curl_opts} -F protocol=\"${protocol}\"";
-    curl_opts="${curl_opts} -F os=\"${os}\"";
-    curl_opts="${curl_opts} -F report=\"${report}\"";
-    curl_opts="${curl_opts} -F packages=\<${package_tmpfile}";
-    curl_opts="${curl_opts} -F repos=\<${repo_tmpfile}";
+    curl_opts="${curl_opts} -F host=\"${host_name}\""
+    curl_opts="${curl_opts} -F tags=\"${tags}\""
+    curl_opts="${curl_opts} -F kernel=\"${host_kernel}\""
+    curl_opts="${curl_opts} -F arch=\"${host_arch}\""
+    curl_opts="${curl_opts} -F protocol=\"${protocol}\""
+    curl_opts="${curl_opts} -F os=\"${os}\""
+    curl_opts="${curl_opts} -F report=\"${report}\""
+    curl_opts="${curl_opts} -F packages=\<${package_tmpfile}"
+    curl_opts="${curl_opts} -F repos=\<${repo_tmpfile}"
+    curl_opts="${curl_opts} -F reboot=\"${reboot}\""
     post_command="${curl_bin} ${curl_opts} ${server}/reports/upload/"
 
     sed -i -e 's/%2b/\+/g' ${package_tmpfile}
@@ -303,4 +315,5 @@ get_packages
 if [ "${no_repo_check}" != "1" ] ; then
     get_repos
 fi
+reboot_required
 post_data

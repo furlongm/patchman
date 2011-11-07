@@ -68,6 +68,9 @@ def host_list(request):
     if request.REQUEST.has_key('tag'):
         hosts = hosts.filter(tags=request.GET['tag'])
 
+    if request.REQUEST.has_key('reboot_required'):
+        hosts = hosts.filter(reboot_required=request.GET['reboot_required'])
+
     if request.REQUEST.has_key('search'):
         terms = request.REQUEST['search'].lower()
         query = Q()
@@ -99,6 +102,7 @@ def host_list(request):
     filter_list.append(Filter(request, 'os', OS.objects.all()))
     filter_list.append(Filter(request, 'osgroup', OSGroup.objects.all()))
     filter_list.append(Filter(request, 'arch', MachineArchitecture.objects.all()))
+    filter_list.append(Filter(request, 'reboot_required', Host.objects.values_list('reboot_required', flat=True).distinct()))
     filter_bar = FilterBar(request, filter_list)
 
     return render_to_response('hosts/host_list.html', {'page': page, 'filter_bar': filter_bar}, context_instance=RequestContext(request))

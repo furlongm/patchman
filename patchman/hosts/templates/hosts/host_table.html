@@ -1,7 +1,8 @@
+{% load common %}
 <table cellspacing="0">
         <thead>
                 <tr>
-                   <th>Hostname</th><th colspan="2">Updates</th><th>Running Kernel</th><th>OS</th><th>Last Report</th>
+                   <th>Hostname</th><th colspan="2">Updates</th><th>Running Kernel</th><th>OS</th><th>Last Report</th><th>Reboot Status</th>
                 </tr>
         </thead>
     <tbody>
@@ -13,7 +14,7 @@
                     <td>{{ host.kernel }}</td>
                     <td><a href="{{ host.os.get_absolute_url }}">{{ host.os }}</a></td>
                     <td>{{ host.lastreport }}</td>
-                    
+                    <td>{% yes_no_img host.reboot_required %}</td>
                 </tr>
     {% endfor %}
     </tbody>
