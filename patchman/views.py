@@ -29,7 +29,7 @@ from datetime import datetime, date, time, timedelta
 from patchman.hosts.models import Host
 from patchman.operatingsystems.models import OS, OSGroup
 from patchman.repos.models import Repository
-from patchman.packages.models import Package, PackageName
+from patchman.packages.models import Package, PackageName, PackageUpdate
 
 @login_required
 def dashboard(request):
@@ -43,7 +43,7 @@ def dashboard(request):
     stale_repos = Repository.objects.filter(mirror__timestamp__lt = (datetime.now() + timedelta(-14)))
     norepo_hosts = Host.objects.filter(repos__isnull = True, os__osgroup__repos__isnull = True)
     norepo_osgroups = OSGroup.objects.filter(repos__isnull = True)
-    norepo_packages = Package.objects.filter(mirror__isnull = True)
+    norepo_packages = Package.objects.filter(mirror__isnull = True, oldpackage__isnull = True)
     orphaned_packages = Package.objects.filter(mirror__isnull = True, host__isnull = True)
     lonely_oses = OS.objects.filter(osgroup__isnull = True)
     failed_repos = Repository.objects.filter(mirror__last_access_ok = False)

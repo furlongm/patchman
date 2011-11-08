@@ -10,6 +10,7 @@
                     <td><a href="{{ report.get_absolute_url }}"> {{ report.host }} </a></td>
                     <td> {{ report.time }} </td>
                     <td> {{ report.report_ip }} </td>
+                    <td> {% yes_no_img report.processed %}</td>
                 </tr>
     {% endfor %}
     </tbody>

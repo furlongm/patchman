@@ -80,7 +80,7 @@
     {% if hostrepos or osrepos %}
         <thead>
             <tr>
-                <th>Name</th><th>URL</th>
+                <th>Name</th><th>Enabled</th><th>Security</th>
             </tr>
         </thead>
     {% else %}
@@ -89,14 +89,18 @@
     {% for hostrepo in hostrepos %}
         {% if hostrepo.arch == host.arch %}
             <tr class="{% cycle row1,row2 %}">
-                <td> <a href="{{hostrepo.get_absolut_url}}">{{ hostrepo.name }}</a> </td><td> {{ hostrepo.url }} </td>
+                <td> <a href="{{hostrepo.get_absolut_url}}">{{ hostrepo.name }}</a> </td>
+                <td> {% yes_no_img hostrepo.enabled %} </td>
+                <td> {% yes_no_img hostrepo.security %} </td>
             </tr>
         {% endif %}
     {% endfor %}
     {% for osrepo in osrepos %}
         {% if osrepo.arch == host.arch %}
             <tr class="{% cycle row1,row2 %}">
-                <td> <a href="{{osrepo.get_absolute_url}}">{{ osrepo.name }}</a> </td><td> {{ osrepo.url }} </td>
+                <td> <a href="{{osrepo.get_absolute_url}}">{{ osrepo.name }}</a> </td>
+                <td> {% yes_no_img osrepo.enabled %} </td>
+                <td> {% yes_no_img osrepo.security %} </td>
             </tr>
         {% endif %}
     {% endfor %}
