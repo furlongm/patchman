@@ -518,7 +518,7 @@ def remove_unused_package_names():
             
 def remove_reports(host):
 
-    reports = Report.objects.filter(host=host).order_by('time')[:3]
+    reports = Report.objects.filter(host=host).order_by('-time')[:3]
     report_ids = []
 
     for report in reports:

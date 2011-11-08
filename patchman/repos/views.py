@@ -85,8 +85,8 @@ def repo_list(request):
     filter_list = []
     filter_list.append(Filter(request, 'repotype', Repository.objects.values_list('repotype', flat=True).distinct()))
     filter_list.append(Filter(request, 'arch', MachineArchitecture.objects.all()))
-    filter_list.append(Filter(request, 'enabled', Repository.objects.values_list('enabled', flat=True).distinct()))
-    filter_list.append(Filter(request, 'security', Repository.objects.values_list('security', flat=True).distinct()))
+    filter_list.append(Filter(request, 'enabled', {False: 'No', True: 'Yes'}))
+    filter_list.append(Filter(request, 'security', {False: 'No', True: 'Yes'}))
     filter_list.append(Filter(request, 'osgroup', OSGroup.objects.all()))
     filter_bar = FilterBar(request, filter_list)
 
