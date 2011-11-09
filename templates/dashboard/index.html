@@ -165,11 +165,25 @@
 {% with orphaned_packages.count as count %}
   {% if count > 0 %}
   <div class="module">
-    <div class="resultslink" id="r12"><a href="#">{{ count }} Packages are orphaned (not from any repo, not installed anywhere).</a></div>
+    <div class="resultslink" id="r12"><a href="#">{{ count }} Packages are orphaned (not from any repo, not installed anywhere)</a></div>
       <div class="results" id="r12">
         {% for package in orphaned_packages %}
         <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
         <a class="dark" href="{{ package.get_absolute_url }}">{{ package }}</a></div>
+        {% endfor %}
+        <div class="clearbrick">&nbsp;</div>
+     </div>
+  </div>
+  {% endif %}
+{% endwith %}
+{% with unprocessed_reports.count as count %}
+  {% if count > 0 %}
+  <div class="module">
+    <div class="resultslink" id="r13"><a href="#">{{ count }} Reports have not yet been processed.</a></div>
+      <div class="results" id="r13">
+        {% for reports in unprocessed_reports %}
+        <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
+        <a class="dark" href="{{ report.get_absolute_url }}">{{ report }}</a></div>
         {% endfor %}
         <div class="clearbrick">&nbsp;</div>
      </div>
