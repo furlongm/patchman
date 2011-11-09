@@ -430,8 +430,8 @@ def update_repos(single_repo):
     for repo in repos:
         for mirror in repo.mirror_set.all():
             if force:
-                repo.file_checksum = ''
-                repo.save()
+                mirror.file_checksum = ''
+                mirror.save()
         if verbose:    
             print '\n%s' % repo
         update_repo(repo)
