@@ -73,7 +73,7 @@ def report_list(request):
 
     if request.REQUEST.has_key('processed'):
         processed = request.GET['processed'] == 'True'
-        repos = repos.filter(processed=processed)
+        reports = reports.filter(processed=processed)
 
     if request.REQUEST.has_key('search'):
         terms = request.REQUEST['search'].lower()
