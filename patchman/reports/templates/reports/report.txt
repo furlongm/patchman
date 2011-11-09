@@ -5,6 +5,7 @@ kernel:   {{ data.kernel }}
 report:   {{ data.report }}
 tags:     {{ data.tags }}
 protocol: {{ data.protocol }}
+reboot:   {{ data.reboot }}
 repos:
 {% for r in repos.splitlines %}
 {{ r }}
