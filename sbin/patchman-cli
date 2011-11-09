@@ -428,9 +428,10 @@ def update_repos(single_repo):
         print message
 
     for repo in repos:
-        if force:
-            repo.file_checksum = ''
-            repo.save()
+        for mirror in repo.mirror_set.all():
+            if force:
+                repo.file_checksum = ''
+                repo.save()
         if verbose:    
             print '\n%s' % repo
         update_repo(repo)
