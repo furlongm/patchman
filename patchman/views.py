@@ -30,6 +30,7 @@ from patchman.hosts.models import Host
 from patchman.operatingsystems.models import OS, OSGroup
 from patchman.repos.models import Repository
 from patchman.packages.models import Package, PackageName, PackageUpdate
+from patchman.reports.models import Report
 
 @login_required
 def dashboard(request):
@@ -51,6 +52,7 @@ def dashboard(request):
     secupdate_hosts = Host.objects.filter(updates__security = True, updates__isnull = False).values('hostname').annotate(Count('hostname'))
     update_hosts = Host.objects.filter(updates__security = False, updates__isnull = False).values('hostname').annotate(Count('hostname'))
     unused_repos = Repository.objects.filter(host__isnull = True, osgroup__isnull = True)
+    unprocessed_reports = Reports.objects.filter(processed = False)
 
     return render_to_response('dashboard/index.html',
         {'lonely_oses': lonely_oses, 'norepo_hosts': norepo_hosts,
@@ -59,6 +61,6 @@ def dashboard(request):
         'secupdate_hosts' : secupdate_hosts, 'update_hosts' : update_hosts,
         'norepo_osgroups' : norepo_osgroups, 'unused_repos': unused_repos,
         'failed_repos' : failed_repos, 'orphaned_packages' : orphaned_packages,
-        'reboot_hosts' : reboot_hosts },
+        'reboot_hosts' : reboot_hosts, 'unprocessed_reports': unprocessed_reports },
         context_instance=RequestContext(request))
 
