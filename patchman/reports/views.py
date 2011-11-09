@@ -68,17 +68,12 @@ def report_list(request):
 
     reports = Report.objects.select_related()
 
-    try:
-        page_no = int(request.GET.get('page', 1))
-    except ValueError:
-        page_no = 1
-
     if request.REQUEST.has_key('host_id'):
         reports = reports.filter(hostname=int(request.GET['host_id']))
-    try:
-        page_no = int(request.GET.get('page', 1))
-    except ValueError:
-        page_no = 1
+
+    if request.REQUEST.has_key('processed'):
+        processed = request.GET['processed'] == 'True'
+        repos = repos.filter(processed=processed)
 
     if request.REQUEST.has_key('search'):
         terms = request.REQUEST['search'].lower()
@@ -90,6 +85,11 @@ def report_list(request):
     else:
         terms = ""
 
+    try:
+        page_no = int(request.GET.get('page', 1))
+    except ValueError:
+        page_no = 1
+
     p = Paginator(reports, 50)
 
     try:
@@ -98,6 +98,7 @@ def report_list(request):
         page = p.page(p.num_pages)
 
     filter_list = []
+    filter_list.append(Filter(request, 'processed', {False: 'No', True: 'Yes'}))
     filter_bar = FilterBar(request, filter_list)
 
     return render_to_response('reports/report_list.html', {'page': page, 'filter_bar': filter_bar}, context_instance=RequestContext(request))
