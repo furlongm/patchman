@@ -118,7 +118,7 @@ class Report(models.Model):
             from patchman.reports.utils import process_packages, process_repos
             process_packages(report=self, host=host)
             process_repos(report=self, host=host)
-            if self.reboot == 'yes':
+            if self.reboot == 'True':
                 host.reboot_required == True
             host.save()
             self.processed = True
