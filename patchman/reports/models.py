@@ -41,7 +41,7 @@ class Report(models.Model):
     processed = models.BooleanField(default=False)
     packages = models.TextField(null=True, blank=True)
     repos = models.TextField(null=True, blank=True)
-    #reboot = models.TextField(null=True, blank=True)
+    reboot = models.TextField(null=True, blank=True)
 
     class Meta:
         ordering = ('-time',)
@@ -85,6 +85,9 @@ class Report(models.Model):
         if 'repos' in data:
             self.repos = data['repos']
 
+        if 'reboot' in data:
+            self.reboot = data['reboot']
+
         self.save()
 
     def process(self):
@@ -102,23 +105,23 @@ class Report(models.Model):
                     'lastreport': self.time
                 }
             )
-        host.ipaddress = self.report_ip
-        host.kernel = self.kernel
-        host.arch = arch
-        host.os = os
-        host.domain = domain
-        host.lastreport = self.time
-        host.tags = self.tags
+            host.ipaddress = self.report_ip
+            host.kernel = self.kernel
+            host.arch = arch
+            host.os = os
+            host.domain = domain
+            host.lastreport = self.time
+            host.tags = self.tags
 # TODO: fix this to record the history of installed 
 # packages on a host.
-        host.packages.clear()
-        from patchman.reports.utils import process_packages, process_repos
-        process_packages(report=self, host=host)
-        process_repos(report=self, host=host)
-#        if self.reboot == 'yes':
-#            host.reboot_required == True
-        host.save()
-        self.processed = True
-        self.save()
-        host.find_updates()
+            host.packages.clear()
+            from patchman.reports.utils import process_packages, process_repos
+            process_packages(report=self, host=host)
+            process_repos(report=self, host=host)
+            if self.reboot == 'yes':
+                host.reboot_required == True
+            host.save()
+            self.processed = True
+            self.save()
+            host.find_updates()
 
