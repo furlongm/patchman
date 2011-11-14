@@ -21,4 +21,5 @@ urlpatterns = patterns('patchman.reports.views',
     url(r'^$', 'report_list', name='report_list' ),
     url(r'^upload/$', 'upload'),
     url(r'^(?P<report>[-.\w]+)/$', 'report_detail', name='report_detail' ),
+    url(r'^(?P<report>[-.\w]+)/delete/$', 'report_delete', name='report_delete' ),
 )
