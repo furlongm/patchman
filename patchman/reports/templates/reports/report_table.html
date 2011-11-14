@@ -9,7 +9,8 @@
     <tbody>
     {% for report in object_list %}
                 <tr class="{% cycle row1,row2 %}">
-                    <td><a href="{{ report.get_absolute_url }}"> {{ report.host }} </a></td>
+                    <td><a href="{{ report.get_absolute_url }}"> {{ report.id }} </a></td>
+                    <td> {{ report.host }} </td>
                     <td> {{ report.time }} </td>
                     <td> {{ report.report_ip }} </td>
                     <td> {% yes_no_img report.processed %}</td>
