@@ -24,6 +24,14 @@
     </table>
 </div>
 <div class="module">
+    {% if user.is_authenticated %}
+        {% if perms.is_admin %}
+        <a class="brick" href="delete">Delete this report</a>
+        {% endif %}
+    {% endif %}
+    <div class="clearbrick"></div>
+</div>
+<div class="module">
   <h2>Repositories</h2>
   <table>
   {% for repo in report.repos.splitlines %}
