@@ -111,3 +111,17 @@ def report_detail(request, report):
 
     return render_to_response('reports/report_detail.html', {'report': report }, context_instance=RequestContext(request))
 
+@login_required
+def report_delete(request, report):
+
+    report = get_object_or_404(Repository, id=report)
+
+    if request.method == 'POST':
+        if request.REQUEST.has_key('delete'):
+            report.delete()
+            messages.info(request, "Report %s has been deleted." % report)
+            return HttpResponseRedirect(reverse('report_list'))
+        elif request.REQUEST.has_key('cancel'):
+            return HttpResponseRedirect(reverse('report_detail', args=[report]))
+
+    return render_to_response('reports/report_delete.html', {'report': report }, context_instance=RequestContext(request))

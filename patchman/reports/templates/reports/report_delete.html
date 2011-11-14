@@ -1,0 +1,50 @@
+{% extends "main.html" %}
+
+{% block title %}Reports {{ repo }} {% endblock %}
+
+{% block content_title %}Report Information{% endblock %}
+
+{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url repo_list %}">Reports</a> &rsaquo; {{ report }} {% endblock %}
+
+{% block content %}
+
+{% if user.is_authenticated %}
+  {% if perms.is_admin %}
+  <div class="module">
+    <h2>Delete Confirmation</h2>
+    <div class="dialog">
+      Are you sure you want to delete this repository?
+      <form action="." method="POST">
+        {% csrf_token %}
+        <input name="delete" type="submit" value="Delete" />
+        <input name="cancel" type="submit" value="Cancel" />
+      </form>
+    </div>
+  </div>
+  <div class="module">
+  <h2>{{report}}</h2>
+  <table>
+    <tr><td>Host</td><td> {{ report.host }} </td></tr>
+    <tr><td>Reporting IP Address</td><td> {{ report.report_ip }} </td></tr>
+    <tr><td>Domain</td><td> {{ report.domain }} </td></tr>
+    <tr><td>Running Kernel</td><td> {{ report.kernel }} </td></tr>
+    <tr><td>Reboot Required?</td><td> {{ report.reboot }} </td></tr>
+    <tr><td>OS</td><td> {{ report.os }} </td></tr>
+    <tr><td>Arch</td><td> {{ report.arch }} </td></tr>
+    <tr><td>Tags</td><td> {{ report.tags }} </td></tr>
+    <tr><td>Client Protocol</td><td> {{ report.protocol }} </td></tr>
+    <tr><td>User Agent</td><td> {{ report.useragent }} </td></tr>
+    <tr><td>Has Been Processed?</td><td> {{ report.processed }} </td></tr>
+    </table>
+  </div>
+  {% else %}
+  <div class="module">
+    <h2>Insufficient Permissions</h2>
+    <div class="brick">
+    You do not have sufficient permissions to delete this report.
+    </div>
+  </div>
+  {% endif %}
+{% endif %}
+{% endblock %}
+
