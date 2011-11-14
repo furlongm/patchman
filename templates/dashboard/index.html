@@ -183,7 +183,7 @@
       <div class="results" id="r13">
         {% for reports in unprocessed_reports %}
         <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-        <a class="dark" href="{{ report.get_absolute_url }}"> {{count}} : {{ report }} </a></div>
+        <a class="dark" href="{{ report.get_absolute_url }}"> {{ report.id }} </a></div>
         {% endfor %}
         <div class="clearbrick">&nbsp;</div>
      </div>
