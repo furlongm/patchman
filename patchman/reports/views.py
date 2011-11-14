@@ -114,7 +114,7 @@ def report_detail(request, report):
 @login_required
 def report_delete(request, report):
 
-    report = get_object_or_404(Repository, id=report)
+    report = get_object_or_404(Report, id=report)
 
     if request.method == 'POST':
         if request.REQUEST.has_key('delete'):
