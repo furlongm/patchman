@@ -305,12 +305,14 @@ if [ -z "$mktemp_bin" -o -z "$curl_bin" ] ; then
     echo "Either mktemp or curl was not found, exiting."
     exit 1 
 fi
+
+parseopts $@
+check_conf
+
+trap cleanup EXIT
 package_tmpfile=`${mktemp_bin}`
 repo_tmpfile=`${mktemp_bin}`
 
-trap cleanup EXIT
-parseopts $@
-check_conf
 get_host_data
 get_packages
 if [ "${no_repo_check}" != "1" ] ; then
