@@ -46,13 +46,25 @@ def process_repo(report, repo):
         r_type = Repository.RPM
     r_name = repo[1]
     r_arch, c = MachineArchitecture.objects.get_or_create(name=report.arch)
-    repository, c = Repository.objects.get_or_create(name=r_name, arch=r_arch, repotype=r_type)
+    repository = None
+    unknown = []
     while len(repo) > 2:
         r_url = repo.pop()
-        mirror, c = Mirror.objects.get_or_create(url=r_url, repo=repository)
-        mirror.save()
-           
-    
+        try:
+            mirror = Mirror.objects.get(url=r_url)
+        except Mirror.DoesNotExist:
+            if repository:
+                Mirror.objects.create(repo=repository, url=r_url)
+            else:
+                unknown.append(r_url)
+        else:
+            repository = mirror.repo
+    if not repository:
+        repository, c = Repository.objects.get_or_create(name=r_name, arch=r_arch, repotype=r_type)
+    for url in unknown:
+        Mirror.objects.create(repo=repository, url=url)
+
+
 def parse_packages(packages_string):
     """Parses packages string in a report"""
     packages = []
