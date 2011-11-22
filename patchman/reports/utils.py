@@ -48,8 +48,7 @@ def process_repo(report, repo):
     r_arch, c = MachineArchitecture.objects.get_or_create(name=report.arch)
     repository = None
     unknown = []
-    while len(repo) > 2:
-        r_url = repo.pop()
+    for r_url in repo[2:]:
         try:
             mirror = Mirror.objects.get(url=r_url)
         except Mirror.DoesNotExist:
