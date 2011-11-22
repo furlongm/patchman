@@ -535,6 +535,17 @@ def remove_reports(host):
         report.delete()
         update_pbar(i+1)
 
+
+def remove_empty_repos():
+
+    repos = Report.objects.filter(mirror__is_null=True)
+    reposlen = len(repos)
+
+    create_pbar('Removing %s empty repos:' % reposlen, reposlen)
+    for i, repo in enumerate(repos):
+        repo.delete()
+        update_pbar(i+1)
+
 def clean_reports(report_host):
 
     if report_host:
@@ -646,6 +657,7 @@ if __name__ == '__main__':
         remove_orphaned_packages()
         remove_unused_package_names()
         remove_orphaned_arches()
+        remove_empty_repos()
     if args.clean_reports:
         clean_reports(args.host)
     if args.process_reports:
