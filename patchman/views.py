@@ -44,7 +44,7 @@ def dashboard(request):
     norepo_packages = Package.objects.filter(mirror__isnull=True, oldpackage__isnull=True)
     orphaned_packages = Package.objects.filter(mirror__isnull=True, host__isnull=True)
     lonely_oses = OS.objects.filter(osgroup__isnull=True)
-    failed_repos = Repository.objects.filter(mirror__last_access_ok=False)
+    failed_repos = Repository.objects.filter(mirror__last_access_ok=False).distinct()
     reboot_hosts = Host.objects.filter(reboot_required=True)
     secupdate_hosts = Host.objects.filter(updates__security=True, updates__isnull=False).values('hostname').annotate(Count('hostname'))
     update_hosts = Host.objects.filter(updates__security=False, updates__isnull=False).values('hostname').annotate(Count('hostname'))
