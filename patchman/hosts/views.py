@@ -14,72 +14,67 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.utils.datastructures import MultiValueDictKeyError
-from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
 from django.http import HttpResponseRedirect
-from django.contrib.auth.decorators import permission_required, login_required
+from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.core.urlresolvers import reverse
-from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Q, Count
+from django.db.models import Q
 from django.contrib import messages
-from tagging.models import Tag, TaggedItem
+from tagging.models import Tag
 
 from andsome.util.filterspecs import Filter, FilterBar
-from datetime import datetime, date, time
 import socket
 
 from patchman.hosts.models import Host
 from patchman.domains.models import Domain
-from patchman.packages.models import Package, PackageName
 from patchman.arch.models import MachineArchitecture
-from patchman.repos.models import Repository
 from patchman.operatingsystems.models import OS, OSGroup
 from patchman.reports.models import Report
+
 
 @login_required
 def host_list(request):
 
     hosts = Host.objects.select_related()
     
-    if request.REQUEST.has_key('domain'):
+    if 'domain' in request.REQUEST:
         hosts = hosts.filter(domain=int(request.GET['domain']))
 
-    if request.REQUEST.has_key('package_id'):
+    if 'package_id' in request.REQUEST:
         hosts = hosts.filter(packages=int(request.GET['package_id']))
 
-    if request.REQUEST.has_key('package'):
+    if 'package' in request.REQUEST:
         hosts = hosts.filter(packages__name__name=request.GET['package'])
 
-    if request.REQUEST.has_key('repo'):
+    if 'repo' in request.REQUEST:
         hosts = hosts.filter(repos=int(request.GET['repo']))
 
-    if request.REQUEST.has_key('arch'):
+    if 'arch' in request.REQUEST:
         hosts = hosts.filter(arch=int(request.GET['arch']))
 
-    if request.REQUEST.has_key('os'):
+    if 'os' in request.REQUEST:
         hosts = hosts.filter(os=int(request.GET['os']))
 
-    if request.REQUEST.has_key('osgroup'):
+    if 'osgroup' in request.REQUEST:
         hosts = hosts.filter(os__osgroup=int(request.GET['osgroup']))
         
-    if request.REQUEST.has_key('tag'):
+    if 'tag' in request.REQUEST:
         hosts = hosts.filter(tags=request.GET['tag'])
 
-    if request.REQUEST.has_key('reboot_required'):
+    if 'reboot_required' in request.REQUEST:
         hosts = hosts.filter(reboot_required=request.GET['reboot_required'])
 
-    if request.REQUEST.has_key('search'):
+    if 'search' in request.REQUEST:
         terms = request.REQUEST['search'].lower()
         query = Q()
         for term in terms.split(' '):
-            q = Q(hostname__icontains = term)
+            q = Q(hostname__icontains=term)
             query = query & q
         hosts = hosts.filter(query)
     else:
-        terms = ""
+        terms = ''
 
     try:
         page_no = int(request.GET.get('page', 1))
@@ -96,7 +91,7 @@ def host_list(request):
     filter_list = []
     mytags = {}
     for tag in Tag.objects.usage_for_model(Host):
-        mytags[tag.name]=tag.name
+        mytags[tag.name] = tag.name
     filter_list.append(Filter(request, 'tag', mytags))
     filter_list.append(Filter(request, 'domain', Domain.objects.all()))
     filter_list.append(Filter(request, 'os', OS.objects.all()))
@@ -120,7 +115,8 @@ def host_detail(request, hostname):
 
     reports = Report.objects.all().filter(host=hostname).order_by('-time')[:3]
  
-    return render_to_response('hosts/host_detail.html', {'host': host, 'reversedns': reversedns, 'reports': reports }, context_instance=RequestContext(request))
+    return render_to_response('hosts/host_detail.html', {'host': host, 'reversedns': reversedns, 'reports': reports}, context_instance=RequestContext(request))
+
 
 @login_required
 def host_delete(request, hostname):
@@ -128,11 +124,11 @@ def host_delete(request, hostname):
     host = get_object_or_404(Host, hostname=hostname)
 
     if request.method == 'POST':
-        if request.REQUEST.has_key('delete'):
+        if 'delete' in request.REQUEST:
             host.delete()
-            messages.info(request, "Host %s has been deleted." % hostname)
+            messages.info(request, 'Host %s has been deleted' % hostname)
             return HttpResponseRedirect(reverse('host_list'))
-        elif request.REQUEST.has_key('cancel'):
+        elif 'cancel' in request.REQUEST:
             return HttpResponseRedirect(reverse('host_detail', args=[hostname]))
 
     try:

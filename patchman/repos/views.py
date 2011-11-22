@@ -14,61 +14,56 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.utils.datastructures import MultiValueDictKeyError
-from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
 from django.http import HttpResponseRedirect
-from django.contrib.auth.decorators import permission_required, login_required
+from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.core.urlresolvers import reverse
-from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Q, Count
+from django.db.models import Q
 from django.contrib import messages
 
 from andsome.util.filterspecs import Filter, FilterBar
-from datetime import datetime, date, time
-import socket
 
-from patchman.packages.models import PackageName, Package
 from patchman.repos.models import Repository
 from patchman.operatingsystems.models import OSGroup
 from patchman.arch.models import MachineArchitecture
+
 
 @login_required
 def repo_list(request):
 
     repos = Repository.objects.select_related().order_by('name')
 
-    if request.REQUEST.has_key('repotype'):
+    if 'repotype' in request.REQUEST:
         repos = repos.filter(repotype=request.GET['repotype'])
 
-    if request.REQUEST.has_key('arch'):
+    if 'arch' in request.REQUEST:
         repos = repos.filter(arch=request.GET['arch'])
 
-    if request.REQUEST.has_key('osgroup'):
+    if 'osgroup' in request.REQUEST:
         repos = repos.filter(osgroup=request.GET['osgroup'])
 
-    if request.REQUEST.has_key('security'):
+    if 'security' in request.REQUEST:
         security = request.GET['security'] == 'True'
         repos = repos.filter(security=security)
 
-    if request.REQUEST.has_key('enabled'):
+    if 'enabled' in request.REQUEST:
         enabled = request.GET['enabled'] == 'True'
         repos = repos.filter(enabled=enabled)
     
-    if request.REQUEST.has_key('package_id'):
+    if 'package_id' in request.REQUEST:
         repos = repos.filter(mirror__packages=int(request.GET['package_id']))
 
-    if request.REQUEST.has_key('search'):
+    if 'search' in request.REQUEST:
         terms = request.REQUEST['search'].lower()
         query = Q()
         for term in terms.split(' '):
-            q = Q(name__icontains = term)
+            q = Q(name__icontains=term)
             query = query & q
         repos = repos.filter(query)
     else:
-        terms = ""
+        terms = ''
     repos = repos.distinct()
     try:
         page_no = int(request.GET.get('page', 1))
@@ -98,7 +93,8 @@ def repo_detail(request, repo):
 
     repo = get_object_or_404(Repository, id=repo)
 
-    return render_to_response('repos/repo_detail.html', {'repo': repo }, context_instance=RequestContext(request))
+    return render_to_response('repos/repo_detail.html', {'repo': repo}, context_instance=RequestContext(request))
+
 
 @login_required
 def repo_delete(request, repo):
@@ -106,11 +102,11 @@ def repo_delete(request, repo):
     repo = get_object_or_404(Repository, id=repo)
 
     if request.method == 'POST':
-        if request.REQUEST.has_key('delete'):
+        if 'delete' in request.REQUEST:
             repo.delete()
-            messages.info(request, "Repository %s has been deleted." % repo)
+            messages.info(request, 'Repository %s has been deleted.' % repo)
             return HttpResponseRedirect(reverse('repo_list'))
-        elif request.REQUEST.has_key('cancel'):
+        elif 'cancel' in request.REQUEST:
             return HttpResponseRedirect(reverse('repo_detail', args=[repo]))
 
-    return render_to_response('repos/repo_delete.html', {'repo': repo }, context_instance=RequestContext(request))
+    return render_to_response('repos/repo_delete.html', {'repo': repo}, context_instance=RequestContext(request))

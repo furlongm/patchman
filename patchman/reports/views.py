@@ -14,24 +14,23 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.utils.datastructures import MultiValueDictKeyError
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import get_object_or_404, render_to_response
-from django.contrib.auth.decorators import permission_required, login_required
+from django.contrib.auth.decorators import login_required
 from django.template import RequestContext
 from django.http import HttpResponseRedirect
 from django.http import Http404
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.core.urlresolvers import reverse
-from django.db.models import Q, Count
+from django.db.models import Q
 from django.conf import settings
 from django.contrib import messages
 
 from andsome.util.filterspecs import Filter, FilterBar
-from datetime import datetime, date, time
 
 from patchman.reports.models import Report
+
 
 @csrf_exempt
 def upload(request):
@@ -54,38 +53,39 @@ def upload(request):
             repos = []
             if 'packages' in data:
                 for p in data['packages'].splitlines():
-                    packages.append(p.replace('\'','').split(' '))
+                    packages.append(p.replace('\'', '').split(' '))
             if 'repos' in data:
                 repos = data['repos']
-            return render_to_response('reports/report.txt', {'data':data, 'packages':packages, 'repos':repos}, context_instance=RequestContext(request), mimetype='text/plain')
+            return render_to_response('reports/report.txt', {'data': data, 'packages': packages, 'repos': repos}, context_instance=RequestContext(request), mimetype='text/plain')
         else:
             # Should return HTTP 204
-            response.status=302
+            response.status = 302
             return response
     else:
         raise Http404
+
 
 @login_required
 def report_list(request):
 
     reports = Report.objects.select_related()
 
-    if request.REQUEST.has_key('host_id'):
+    if 'host_id' in request.REQUEST:
         reports = reports.filter(hostname=int(request.GET['host_id']))
 
-    if request.REQUEST.has_key('processed'):
+    if 'processed' in request.REQUEST:
         processed = request.GET['processed'] == 'True'
         reports = reports.filter(processed=processed)
 
-    if request.REQUEST.has_key('search'):
+    if 'search' in request.REQUEST:
         terms = request.REQUEST['search'].lower()
         query = Q()
         for term in terms.split(' '):
-            q = Q(host__icontains = term)
+            q = Q(host__icontains=term)
             query = query & q
         reports = reports.filter(query)
     else:
-        terms = ""
+        terms = ''
 
     try:
         page_no = int(request.GET.get('page', 1))
@@ -111,7 +111,8 @@ def report_detail(request, report):
 
     report = get_object_or_404(Report, id=report)
 
-    return render_to_response('reports/report_detail.html', {'report': report }, context_instance=RequestContext(request))
+    return render_to_response('reports/report_detail.html', {'report': report}, context_instance=RequestContext(request))
+
 
 @login_required
 def report_delete(request, report):
@@ -119,11 +120,11 @@ def report_delete(request, report):
     report = get_object_or_404(Report, id=report)
 
     if request.method == 'POST':
-        if request.REQUEST.has_key('delete'):
+        if 'delete' in request.REQUEST:
             report.delete()
-            messages.info(request, "Report %s has been deleted." % report)
+            messages.info(request, 'Report %s has been deleted' % report)
             return HttpResponseRedirect(reverse('report_list'))
-        elif request.REQUEST.has_key('cancel'):
+        elif 'cancel' in request.REQUEST:
             return HttpResponseRedirect(reverse('report_detail', args=[report]))
 
-    return render_to_response('reports/report_delete.html', {'report': report }, context_instance=RequestContext(request))
+    return render_to_response('reports/report_delete.html', {'report': report}, context_instance=RequestContext(request))

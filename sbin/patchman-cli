@@ -462,7 +462,7 @@ def print_repo_info(repo):
     print '%s : %s' % (repo.id, repo)
     if verbose:
         print 'security: %s  arch: %s' % (repo.security, repo.arch)
-        print "Mirrors:"
+        print 'Mirrors:'
         for mirror in repo.mirror_set.all():
             print mirror.url
             print 'last updated: %s    checksum: %s\n' % (mirror.timestamp, mirror.file_checksum)
