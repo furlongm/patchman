@@ -49,8 +49,7 @@ def process_repo(report, repo):
     repository, c = Repository.objects.get_or_create(name=r_name, arch=r_arch, repotype=r_type)
     while len(repo) > 2:
         r_url = repo.pop()
-        mirror, c = Mirror.objects.get_or_create(url=r_url)
-        mirror.repo = repository
+        mirror, c = Mirror.objects.get_or_create(url=r_url, repo=repository)
         mirror.save()
            
     
