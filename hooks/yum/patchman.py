@@ -1,11 +1,10 @@
 import os
-from glob import fnmatch
 
-import yum
-from yum.plugins import PluginYumExit, TYPE_CORE
+from yum.plugins import TYPE_CORE
 
 requires_api_version = '2.1'
 plugin_type = (TYPE_CORE,)
+
 
 def posttrans_hook(conduit):
     conduit.info(2, 'patchman: sending data')

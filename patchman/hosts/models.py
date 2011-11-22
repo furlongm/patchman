@@ -17,7 +17,6 @@
 
 from django.db import models
 from django.db.models import Q, Count
-from django.dispatch import Signal
 
 from rpm import labelCompare
 from debian.debian_support import Version, version_compare
@@ -28,8 +27,8 @@ from patchman.domains.models import Domain
 from patchman.repos.models import Repository
 from patchman.operatingsystems.models import OS
 from patchman.arch.models import MachineArchitecture
-from patchman.hosts.managers import HostManager
 from patchman.hosts.signals import host_update_found
+
 
 class Host(models.Model):
 
@@ -63,14 +62,14 @@ class Host(models.Model):
         return self.updates.filter(security=False).count()
 
     def get_host_repo_packages(self):
-        hostrepos = Q(mirror__repo__osgroup__os__host=self, mirror__repo__arch=self.arch)|Q(mirror__repo__in=self.repos.all())
+        hostrepos = Q(mirror__repo__osgroup__os__host=self, mirror__repo__arch=self.arch) | Q(mirror__repo__in=self.repos.all())
         return Package.objects.select_related().filter(hostrepos)
 
     def find_updates(self):
         
         self.updates.clear()
 
-        kernels = Q(name__name='kernel')|Q(name__name='kernel-xen')|Q(name__name='kernel-pae')|Q(name__name='kernel-devel')|Q(name__name='kernel-pae-devel')|Q(name__name='kernel-xen-devel')|Q(name__name='kernel-headers')
+        kernels = Q(name__name='kernel') | Q(name__name='kernel-xen') | Q(name__name='kernel-pae') | Q(name__name='kernel-devel') | Q(name__name='kernel-pae-devel') | Q(name__name='kernel-xen-devel') | Q(name__name='kernel-headers')
         kernelpackages = Package.objects.select_related().filter(host=self).filter(kernels).values('name__name').annotate(Count('name'))
 
         repopackages = self.get_host_repo_packages()
@@ -96,14 +95,14 @@ class Host(models.Model):
                             highestpackage = repopackage
 
             if highest != ('', '0', ''):
-                hostrepos = Q(repo__osgroup__os__host=self, repo__arch=self.arch)|Q(repo__host=self)
+                hostrepos = Q(repo__osgroup__os__host=self, repo__arch=self.arch) | Q(repo__host=self)
                 matchingrepos = highestpackage.mirror_set.filter(hostrepos)
                 security = False
                 # If any of the containing repos are security, mark the update as security
                 for mirror in matchingrepos:
                     if mirror.repo.security == True:
                         security = True
-                update, c = PackageUpdate.objects.get_or_create(oldpackage=package,newpackage=highestpackage,security=security)
+                update, c = PackageUpdate.objects.get_or_create(oldpackage=package, newpackage=highestpackage, security=security)
                 self.updates.add(update)
                 host_update_found.send(sender=self, update=update)
 
@@ -115,8 +114,8 @@ class Host(models.Model):
             for package in kernelpackages:
                 host_highest = ('', '', '')
                 repo_highest = ('', '', '')
-                host_highestpackage = None
-                repo_highestpackage = None
+                host_highest_package = None
+                repo_highest_package = None
                 matchingpackages = repopackages.filter(Q(name__name=package['name__name']))
                 for repopackage in matchingpackages:
                     repokernel = repopackage._version_string_rpm()
@@ -143,6 +142,6 @@ class Host(models.Model):
                     self.reboot_required = True
                 else:
                     self.reboot_required = False
-        except ValueError: #debian kernel
+        except ValueError:  # debian kernel
             pass
         self.save()

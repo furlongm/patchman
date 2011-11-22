@@ -18,7 +18,7 @@ from django.db import models
 
 from patchman.arch.models import MachineArchitecture
 from patchman.packages.models import Package
-from patchman.repos.managers import RepositoryManager
+
 
 class Repository(models.Model):
 
@@ -37,7 +37,7 @@ class Repository(models.Model):
     enabled = models.BooleanField(default=False)
 
     class Meta:
-        verbose_name_plural = "Repositories"
+        verbose_name_plural = 'Repositories'
 
     def __unicode__(self):
         return self.name
@@ -49,10 +49,8 @@ class Repository(models.Model):
     def update(self):
         if self.repotype == Repository.DEB:
             self.update_deb_repo()
-        elif repo.repotype == Repository.RPM:
-            update_rpm_repo(repo)
-        else:
-            print 'Error: unknown repo type for repo %s: %s' % (self.id, self.repotype)
+        elif self.repotype == Repository.RPM:
+            self.update_rpm_repo()
 
 
 class Mirror(models.Model):
@@ -71,5 +69,3 @@ class MirrorPackage(models.Model):
     mirror = models.ForeignKey(Mirror)
     package = models.ForeignKey(Package)
     enabled = models.BooleanField(default=True)
-   
-            

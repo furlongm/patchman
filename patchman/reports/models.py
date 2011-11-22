@@ -16,15 +16,11 @@
 
 from django.db import models
 
-from datetime import datetime, date, time
-
 from patchman.hosts.models import Host
-from patchman.arch.models import MachineArchitecture, PackageArchitecture
+from patchman.arch.models import MachineArchitecture
 from patchman.operatingsystems.models import OS
 from patchman.domains.models import Domain
-from patchman.packages.models import Package, PackageName
-from patchman.repos.models import Repository
-from patchman.signals import progress_info, progress_update
+
 
 class Report(models.Model):
 
@@ -53,31 +49,30 @@ class Report(models.Model):
     def get_absolute_url(self):
         return ('report_detail', [self.id])
 
-        
     def parse(self, data, meta):
 
         self.report_ip = meta['REMOTE_ADDR']
         self.useragent = meta['HTTP_USER_AGENT']
 
         if 'arch' in data:
-            self.arch=data['arch']
+            self.arch = data['arch']
 
         if 'host' in data:
-            self.host=data['host']
-            fqdn=self.host.split('.',1)
+            self.host = data['host']
+            fqdn = self.host.split('.', 1)
             self.domain = fqdn.pop()
 
         if 'os' in data:
-            self.os=data['os']
+            self.os = data['os']
 
         if 'kernel' in data:
-            self.kernel=data['kernel']
+            self.kernel = data['kernel']
 
         if 'tags' in data:
-            self.tags=data['tags']
+            self.tags = data['tags']
 
         if 'protocol' in data:
-            self.protocol=data['protocol']
+            self.protocol = data['protocol']
 
         if 'packages' in data:
             self.packages = data['packages']
@@ -96,8 +91,8 @@ class Report(models.Model):
             domain, c = Domain.objects.get_or_create(name=self.domain)
             arch, c = MachineArchitecture.objects.get_or_create(name=self.arch)
             host, c = Host.objects.get_or_create(
-                hostname = self.host,
-                defaults = {
+                hostname=self.host,
+                defaults={
                     'ipaddress': self.report_ip,
                     'arch': arch,
                     'os': os,
@@ -112,7 +107,7 @@ class Report(models.Model):
             host.domain = domain
             host.lastreport = self.time
             host.tags = self.tags
-# TODO: fix this to record the history of installed 
+# TODO: fix this to record the history of installed
 # packages on a host.
             host.packages.clear()
             from patchman.reports.utils import process_packages, process_repos
@@ -126,4 +121,3 @@ class Report(models.Model):
             self.processed = True
             self.save()
             host.find_updates()
-
