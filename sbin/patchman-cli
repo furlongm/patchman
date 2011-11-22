@@ -532,6 +532,9 @@ def remove_unused_package_names():
         packagename.delete()
         update_pbar(i + 1)
 
+    if unusednameslen == 0 and verbose:
+        print 'No unused package names found.'
+
 
 def remove_reports(host):
 
@@ -561,6 +564,9 @@ def remove_empty_repos():
     for i, repo in enumerate(repos):
         repo.delete()
         update_pbar(i + 1)
+
+    if reposlen == 0 and verbose:
+        print 'No empty repos found.'
 
 
 def clean_reports(report_host):
