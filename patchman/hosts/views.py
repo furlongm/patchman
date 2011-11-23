@@ -38,7 +38,7 @@ from patchman.reports.models import Report
 def host_list(request):
 
     hosts = Host.objects.select_related()
-    
+
     if 'domain' in request.REQUEST:
         hosts = hosts.filter(domain=int(request.GET['domain']))
 
@@ -59,7 +59,7 @@ def host_list(request):
 
     if 'osgroup' in request.REQUEST:
         hosts = hosts.filter(os__osgroup=int(request.GET['osgroup']))
-        
+
     if 'tag' in request.REQUEST:
         hosts = hosts.filter(tags=request.GET['tag'])
 
@@ -114,7 +114,7 @@ def host_detail(request, hostname):
         reversedns = 'None'
 
     reports = Report.objects.all().filter(host=hostname).order_by('-time')[:3]
- 
+
     return render_to_response('hosts/host_detail.html', {'host': host, 'reversedns': reversedns, 'reports': reports}, context_instance=RequestContext(request))
 
 

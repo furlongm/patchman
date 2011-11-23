@@ -17,9 +17,9 @@
 from django.contrib import admin
 from patchman.operatingsystems.models import OS, OSGroup
 
+
 class OSGroupAdmin(admin.ModelAdmin):
     filter_horizontal = ('repos',)
 
 admin.site.register(OS)
 admin.site.register(OSGroup, OSGroupAdmin)
-

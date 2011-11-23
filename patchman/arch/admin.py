@@ -15,7 +15,7 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from django.contrib import admin
-from patchman.arch.models import PackageArchitecture,MachineArchitecture
+from patchman.arch.models import PackageArchitecture, MachineArchitecture
 
 admin.site.register(PackageArchitecture)
 admin.site.register(MachineArchitecture)

@@ -19,6 +19,7 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 from patchman.operatingsystems.models import OS, OSGroup
 from patchman.repos.models import Repository
 
+
 class LinkOSGroupForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
@@ -28,6 +29,7 @@ class LinkOSGroupForm(ModelForm):
     class Meta:
         model = OS
         fields = ('osgroup',)
+
 
 class CreateOSGroupForm(ModelForm):
 
@@ -39,6 +41,7 @@ class CreateOSGroupForm(ModelForm):
         model = OSGroup
         fields = ('name',)
 
+
 class AddReposToOSGroupForm(ModelForm):
 
     repos = ModelMultipleChoiceField(queryset=Repository.objects.select_related(), required=False, label=None, widget=FilteredSelectMultiple('Repos', False))
@@ -46,4 +49,3 @@ class AddReposToOSGroupForm(ModelForm):
     class Meta:
         model = OSGroup
         fields = ('repos',)
-

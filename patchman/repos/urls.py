@@ -14,11 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.conf.urls.defaults import *
+from django.conf.urls.defaults import patterns, url
 
 urlpatterns = patterns('patchman.repos.views',
 
-    url(r'^$', 'repo_list', name='repo_list' ),
-    url(r'^(?P<repo>[-.\w]+)/$', 'repo_detail', name='repo_detail' ),
-    url(r'^(?P<repo>[-.\w]+)/delete/$', 'repo_delete', name='repo_delete' ),
+    url(r'^$', 'repo_list', name='repo_list'),
+    url(r'^(?P<repo>[-.\w]+)/$', 'repo_detail', name='repo_detail'),
+    url(r'^(?P<repo>[-.\w]+)/delete/$', 'repo_delete', name='repo_delete'),
 )

@@ -1,3 +1,19 @@
+# Copyright 2011 VPAC <furlongm@vpac.org>
+#
+# This file is part of Patchman.
+#
+# Patchman is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 3 only.
+#
+# Patchman is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Patchman. If not, see <http://www.gnu.org/licenses/>
+
 import re
 
 from patchman.arch.models import MachineArchitecture, PackageArchitecture
@@ -38,7 +54,7 @@ def parse_repos(repos_string):
         repos.append(repodata)
     return repos
 
-    
+
 def process_repo(report, repo):
     if repo[0] == 'deb':
         r_type = Repository.DEB
@@ -71,7 +87,7 @@ def parse_packages(packages_string):
         packages.append(p.replace('\'', '').split(' '))
     return packages
 
-    
+
 def process_package(report, pkg):
     if report.protocol == '1':
         if pkg[0] != 'gpg-pubkey':

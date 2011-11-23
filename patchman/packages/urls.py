@@ -14,11 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.conf.urls.defaults import *
+from django.conf.urls.defaults import patterns, url
 
 urlpatterns = patterns('patchman.packages.views',
 
-    url(r'^$', 'package_list', name='package_list' ),
-    url(r'^(?P<packagename>[-.\w]+)/$', 'package_detail', name='package_detail' ),
+    url(r'^$', 'package_list', name='package_list'),
+    url(r'^(?P<packagename>[-.\w]+)/$', 'package_detail', name='package_detail'),
 
 )

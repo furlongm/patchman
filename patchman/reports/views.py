@@ -36,9 +36,9 @@ from patchman.reports.models import Report
 def upload(request):
 
     response = HttpResponse()
-    
+
     if request.method == 'POST':
-        
+
         data = request.POST.copy()
         meta = request.META.copy()
 
@@ -47,7 +47,7 @@ def upload(request):
         if settings.USE_ASYNC_PROCESSING:
             from patchman.reports.tasks import process_report
             process_report.delay(report)
-        
+
         if 'report' in data and data['report'] == '1':
             packages = []
             repos = []

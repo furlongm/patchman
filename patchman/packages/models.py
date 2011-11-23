@@ -65,7 +65,7 @@ class Package(models.Model):
     class Meta:
         ordering = ('name', 'epoch', 'version', 'release', 'arch')
         unique_together = ('name', 'epoch', 'version', 'release', 'arch', 'packagetype',)
-        
+
     def __unicode__(self):
         if self.epoch:
             epo = '%s:' % self.epoch
@@ -79,7 +79,7 @@ class Package(models.Model):
 
     def get_absolute_url(self):
         return self.name.get_absolute_url()
-        
+
     def __key(self):
         return (self.name, self.epoch, self.version, self.release, self.arch, self.packagetype)
 
@@ -121,7 +121,7 @@ class Package(models.Model):
         from patchman.repos.models import Repository
         return Repository.objects.filter(mirror__packages=self).distinct().count()
 
-        
+
 class PackageString(models.Model):
 
     class Meta:

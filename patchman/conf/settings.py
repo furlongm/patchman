@@ -111,7 +111,6 @@ else:
     USE_ASYNC_PROCESSING = True
     djcelery.setup_loader()
 
-    
 execfile("/etc/patchman/settings.py")
 
 MANAGERS = ADMINS

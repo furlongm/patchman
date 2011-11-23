@@ -64,7 +64,7 @@ class Mirror(models.Model):
     def __unicode__(self):
         return self.url
 
-             
+
 class MirrorPackage(models.Model):
     mirror = models.ForeignKey(Mirror)
     package = models.ForeignKey(Package)

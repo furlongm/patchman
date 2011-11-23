@@ -66,7 +66,7 @@ class Host(models.Model):
         return Package.objects.select_related().filter(hostrepos)
 
     def find_updates(self):
-        
+
         self.updates.clear()
 
         kernels = Q(name__name='kernel') | Q(name__name='kernel-xen') | Q(name__name='kernel-pae') | Q(name__name='kernel-devel') | Q(name__name='kernel-pae-devel') | Q(name__name='kernel-xen-devel') | Q(name__name='kernel-headers')
