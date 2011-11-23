@@ -71,7 +71,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 )
 
 TEMPLATE_DIRS = (
-    '/usr/share/patchman/templates'
+    '/usr/share/patchman/templates',
 )
 
 INSTALLED_APPS = (
