@@ -1,4 +1,3 @@
- 
 # Copyright 2011 VPAC <furlongm@vpac.org>
 #
 # This file is part of Patchman.
@@ -17,5 +16,4 @@
 
 #!/bin/bash
 
-cd ..
-./manage.py graph_models -g -o patchman.png hosts operatingsystems packages arch repos domains reports
+../patchman/manage.py graph_models -g -o patchman.png hosts operatingsystems packages arch repos domains reports
