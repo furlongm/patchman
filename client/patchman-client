@@ -215,7 +215,8 @@ function get_repos {
             cp -a ${gpgs} ${tmpdir}
         fi
         for i in $(apt-get update --print-uris | grep Packages | cut -d "'" -f 2 | sed -e "s/\/Packages\.[bz2|gz]*//") ; do
-            echo \'deb\' \'${os} ${host_arch} repo at ${i}\' \'${i}\' >> ${repo_tmpfile}
+            read osname shortversion <<<$(echo "${os}" | awk {'print $1,$2'} | cut -d . -f 1,2)
+            echo \'deb\' \'${osname} ${shortversion} ${host_arch} repo at ${i}\' \'${i}\' >> ${repo_tmpfile}
         done
         if [ "${gpgs}" != "" ] ; then
             cp -a ${tmpdir}/*.gpg /var/lib/apt/lists 2>/dev/null
