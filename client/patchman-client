@@ -218,7 +218,7 @@ function get_repos {
             echo \'deb\' \'${os} ${host_arch} repo at ${i}\' \'${i}\' >> ${repo_tmpfile}
         done
         if [ "${gpgs}" != "" ] ; then
-            cp -a ${tmpdir}/*.gpg /var/lib/apt/lists
+            cp -a ${tmpdir}/*.gpg /var/lib/apt/lists 2>/dev/null
             rm -fr ${tmpdir}
         fi
     fi
