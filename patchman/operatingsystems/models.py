@@ -17,6 +17,7 @@
 from django.db import models
 from patchman.repos.models import Repository
 
+
 class OSGroup(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
@@ -31,6 +32,7 @@ class OSGroup(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return ('osgroup_detail', [self.id])
+
 
 class OS(models.Model):
 

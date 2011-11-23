@@ -51,7 +51,7 @@ def repo_list(request):
     if 'enabled' in request.REQUEST:
         enabled = request.GET['enabled'] == 'True'
         repos = repos.filter(enabled=enabled)
-    
+
     if 'package_id' in request.REQUEST:
         repos = repos.filter(mirror__packages=int(request.GET['package_id']))
 

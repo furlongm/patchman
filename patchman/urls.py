@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.conf.urls.defaults import *
+from django.conf.urls.defaults import patterns, url, include
 from django.conf import settings
 from django.contrib import admin
 
@@ -29,7 +29,7 @@ urlpatterns = patterns('',
     url(r'^repos/', include('patchman.repos.urls')),
     url(r'^os/', include('patchman.operatingsystems.urls')),
     url(r'^reports/', include('patchman.reports.urls')),
-    url(r'^accounts/login/$', 'django.contrib.auth.views.login', name='login'),     
+    url(r'^accounts/login/$', 'django.contrib.auth.views.login', name='login'),
     url(r'^accounts/logout/$', 'django.contrib.auth.views.logout', name='logout'),
     # Uncomment the admin/doc line below to enable admin documentation:
     #(r'^admin/doc/', include('django.contrib.admindocs.urls')),

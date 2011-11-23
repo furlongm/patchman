@@ -30,13 +30,13 @@ from patchman.arch.models import PackageArchitecture
 def package_list(request):
 
     packages = PackageName.objects.select_related()
-   
+
     if 'arch' in request.REQUEST:
         packages = packages.filter(package__arch=int(request.GET['arch'])).distinct()
 
     if 'packagetype' in request.REQUEST:
         packages = packages.filter(package__packagetype=request.GET['packagetype']).distinct()
- 
+
     if 'search' in request.REQUEST:
         terms = request.REQUEST['search'].lower()
         query = Q()

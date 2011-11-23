@@ -17,6 +17,7 @@
 from django.contrib import admin
 from patchman.repos.models import Repository, Mirror
 
+
 class MirrorAdmin(admin.ModelAdmin):
     readonly_fields = ('packages',)
 

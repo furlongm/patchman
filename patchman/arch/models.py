@@ -16,15 +16,17 @@
 
 from django.db import models
 
+
 class Architecture(models.Model):
 
     name = models.CharField(unique=True, max_length=255)
-    
+
     class Meta:
         abstract = True
 
     def __unicode__(self):
-        return self.name  
+        return self.name
+
 
 class MachineArchitecture(Architecture):
 
@@ -36,5 +38,3 @@ class PackageArchitecture(Architecture):
 
     class Meta(Architecture.Meta):
         verbose_name = 'Package Architecture'
-
-

@@ -32,7 +32,7 @@ from patchman.operatingsystems.forms import LinkOSGroupForm, AddReposToOSGroupFo
 def os_list(request):
 
     oses = OS.objects.select_related()
-    
+
     try:
         page_no = int(request.GET.get('page', 1))
     except ValueError:

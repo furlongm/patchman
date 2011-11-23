@@ -23,6 +23,7 @@ from lxml import etree
 #from debian.deb822 import Sources
 #from urllib2 import Request, urlopen
 
+
 def gunzip(contents):
 
     try:
@@ -37,6 +38,7 @@ def gunzip(contents):
 
     return contents.getvalue()
 
+
 def bunzip2(contents):
 
     try:
@@ -46,6 +48,7 @@ def bunzip2(contents):
         if e == 'invalid data stream':
             pass
 
+
 def extract(data):
 
     extracted = bunzip2(data)
@@ -53,22 +56,23 @@ def extract(data):
         extracted = gunzip(StringIO(data))
     return extracted
 
+
 def get_primary_url(repo_url, data):
 
     ns = 'http://linux.duke.edu/metadata/repo'
     context = etree.parse(StringIO(data), etree.XMLParser())
-    location = context.xpath("//ns:data[@type='primary']/ns:location/@href",  namespaces = {'ns': ns})[0]
-    checksum = context.xpath("//ns:data[@type='primary']/ns:checksum",  namespaces = {'ns': ns})[0].text
-    checksum_type = context.xpath("//ns:data[@type='primary']/ns:checksum/@type",  namespaces = {'ns': ns})[0]
+    location = context.xpath("//ns:data[@type='primary']/ns:location/@href", namespaces={'ns': ns})[0]
+    checksum = context.xpath("//ns:data[@type='primary']/ns:checksum", namespaces={'ns': ns})[0].text
+    checksum_type = context.xpath("//ns:data[@type='primary']/ns:checksum/@type", namespaces={'ns': ns})[0]
     primary_url = str(repo_url.rsplit('/', 2)[0]) + '/' + location
     return primary_url, checksum, checksum_type
+
 
 def get_sha1(data):
 
     return sha1(data).hexdigest()
 
+
 def get_sha256(data):
 
     return sha256(data).hexdigest()
-
-
