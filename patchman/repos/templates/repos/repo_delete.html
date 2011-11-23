@@ -32,15 +32,6 @@
       </form>
     </div>
   </div>
-  <div class="module">
-    <div class="resultslink" id="r1"><a href="#">Full list of {{repo}} Packages</a></div>
-        <div class="results" id="r1">
-            {% for package in repo.packages.select_related %}
-            <span class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-            <a class="dark" href="{{ package.name.get_absolute_url }}"> {{ package }} </a></span>
-            {% endfor %}
-        </div>
-  </div>
   {% else %}
   <div class="module">
     <h2>Insufficient Permissions</h2>
@@ -49,7 +40,9 @@
     </div>
   </div>
   {% endif %}
-{% endif %}
-
+<div class="module">
+  <h2>Mirrors</h2>
+  {% gen_table repo.mirror_set.all %}
+</div>
 {% endblock %}
 
