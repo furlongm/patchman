@@ -97,7 +97,7 @@ class Report(models.Model):
                     'arch': arch,
                     'os': os,
                     'domain': domain,
-                    'lastreport': self.time
+                    'lastreport': self.time,
                 }
             )
             host.ipaddress = self.report_ip
