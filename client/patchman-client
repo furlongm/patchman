@@ -212,10 +212,10 @@ function get_repos {
         gpgs=`find /var/lib/apt/lists -name "*.gpg"`
         if [ "${gpgs}" != "" ] ; then
             tmpdir=`${mktemp_bin} -d`
-            cp -a ${gpgs} ${tmpdir}
+            cp -a ${gpgs} ${tmpdir} 2>/dev/null
         fi
         for i in $(apt-get update --print-uris | grep Packages | cut -d "'" -f 2 | sed -e "s/\/Packages\.[bz2|gz]*//") ; do
-            read osname shortversion <<<$(echo "${os}" | awk {'print $1,$2'} | cut -d . -f 1,2)
+            read osname shortversion <<<$(echo "${os}" | awk '{print $1,$2}' | cut -d . -f 1,2)
             echo \'deb\' \'${osname} ${shortversion} ${host_arch} repo at ${i}\' \'${i}\' >> ${repo_tmpfile}
         done
         if [ "${gpgs}" != "" ] ; then
