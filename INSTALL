@@ -1,0 +1,46 @@
+# Installation from current git on debian squeeze
+# -----------------------------------------------
+
+# 1. Install dependencies
+apt-get install python-django-tagging python-django-south \
+python-django-extensions python-django-andsome python-debian python-rpm \
+python-progressbar python-lxml apache2 libapache2-mod-wsgi
+
+# 2. Check out current git to e.g. /srv/patchman
+cd /srv
+git clone https://git.code.vpac.org/gitorious/patchman/patchman.git
+
+# 3. Copy server settings example file to /etc/patchman
+mkdir /etc/patchman && cp /srv/patchman/etc/settings.py.sample /etc/patchman/settings.py
+
+# 4. Modify settings file to match local admin and database settings
+vi /etc/patchman/settings.py
+
+# 5. Create links for media and templates
+ln -sf /srv/patchman /usr/share/patchman
+# Only the media/templates are required so you can link just those if needed.
+# Alternatively change the directories in the wsgi file.
+
+# 6. Enable mod-wsgi and link to the apache conf file
+a2enmod wsgi
+ln -sf /srv/patchman/etc/patchman-apache.conf /etc/apache2/conf.d/patchman.conf
+
+# 7. Edit the networks allowed to report to apache
+vi /etc/apache2/conf.d/patchman.conf
+
+# 8. Initialise the patchman database
+cd /srv/patchman/patchman
+./manage.py syncdb
+./manage.py migrate
+
+# 9. Deploy the client and/or yum/apt plugins via e.g. puppet, and add a daily 
+# cronjob, e.g.
+# 0 7 * * * /bin/sleep $((RANDOM\%600)); PATH=/bin:/sbin:/usr/bin:/usr/sbin /usr/local/sbin/patchman-client
+
+# 10. Optionally install celeryd/rabbitmq for realtime processing of reports.
+# Alternatively, set up a cronjob to run all the daily tasks, e.g.
+# 30 8 * * * http_proxy=http://myproxy.example.com:3128 /srv/patchman/sbin/patchman-cli -u -d -U -c -r -p
+
+# The /srv/patchman/sbin/patchman-cli can be run with the verbose (-v) option
+# to view if there any errors from the above command. Run with -h for further
+# options. 
