@@ -36,3 +36,21 @@ new kernel by looking at uname -r and comparing it to the highest installed
 kernel version. However debian-based OS's do not often change the kernel
 version, so these clients will need update-notifier-common installed for this
 functionality to work.
+
+In terms of functionality of the web interface, most things are self-
+explanatory, though two things might need further explaining.
+
+An OSGroup differs from an OS, in that an OSGroup is a collection of OS's.
+For example, a "Debian 6" OSGroup could be comprised of machines with the
+following OS's -> "Debian 6.0.1", "Debian 6.0.2", "Debian squeeze/sid".
+The OS names are obtained from the client hosts, so these may differ
+depending on patch-level version, even though they are the same operating
+system. Likewise, a "CentOS 5" OSGroup could cover "CentOS 5.4",
+"CentOS 5.7", etc. Once OVAL support is added this will allow you to see
+which CVE affects given machines in an OSGroup, as the CVE's will apply
+to OSGroup. Repositories can be linked to an OSGroup, or to a host itself.
+
+Repostiories and mirrors are a similar concept. Each repository URL is
+counted as a separate mirror, unless the repositories are linked together.
+For Red Hat based hosts, this occurs automatically. Currently, for Debian-
+based hosts, you need to manually link which mirrors form each repository.
