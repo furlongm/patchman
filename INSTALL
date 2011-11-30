@@ -16,8 +16,9 @@ mkdir /etc/patchman && cp /srv/patchman/etc/settings.py.sample /etc/patchman/set
 # 4. Modify settings file to match local admin and database settings
 vi /etc/patchman/settings.py
 
-# 5. Create links for media and templates
+# 5. Create links for media and templates, and add python to PYTHON_PATH
 ln -sf /srv/patchman /usr/share/patchman
+ln -sf /srv/patchman /usr/local/lib/python2.6/dist-packages
 # Only the media/templates are required so you can link just those if needed.
 # Alternatively change the directories in the wsgi file.
 
