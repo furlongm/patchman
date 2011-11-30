@@ -6,6 +6,9 @@ from django.db import models
 
 class Migration(DataMigration):
 
+    if db.backend_name == 'mysql':
+        db.execute('SET storage_engine=INNODB')
+
     def forwards(self, orm):
         for r in orm.Repository.objects.all():
             mirror = orm.Mirror.objects.create(
