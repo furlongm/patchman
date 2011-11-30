@@ -6,6 +6,9 @@ from django.db import models
 
 class Migration(SchemaMigration):
 
+    if db.backend_name == 'mysql':
+        db.execute('SET storage_engine=INNODB')
+
     def forwards(self, orm):
         
         # Deleting model 'RepoPackage'
