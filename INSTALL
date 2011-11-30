@@ -45,4 +45,8 @@ cd /srv/patchman/patchman
 
 # The /srv/patchman/sbin/patchman-cli can be run with the verbose (-v) option
 # to view if there any errors from the above command. Run with -h for further
-# options. 
+# options.
+
+# If the patchman server is not be run under slash (e.g. if you have
+# http://example.com/patchman then you need
+# login_url="/patchman/accounts/login/" in your settings.py
