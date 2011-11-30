@@ -3,7 +3,7 @@
 
 # 1. Install dependencies
 apt-get install python-django-tagging python-django-south \
-python-django-extensions python-django-andsome python-debian python-rpm \
+python-django-extensions django-andsome python-debian python-rpm \
 python-progressbar python-lxml apache2 libapache2-mod-wsgi
 
 # 2. Check out current git to e.g. /srv/patchman
