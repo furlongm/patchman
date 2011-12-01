@@ -373,7 +373,7 @@ def update_rpm_repo(repo):
     formats = ['repodata/repomd.xml.bz2', 'repodata/repomd.xml.gz', 'repodata/repomd.xml', 'suse/repodata/repomd.xml.bz2', 'suse/repodata/repomd.xml.gz', 'suse/repodata/repomd.xml', 'content']
 
     # check if any of the mirrors are actually mirrorlists
-    for mirror in repo.mirror_set.all():
+    for mirror in repo.mirror_set.filter(mirrorlist=False):
         mirrors = mirrorlist_check(mirror.url)
         if mirrors != None:
             mirror.mirrorlist=True
@@ -381,7 +381,7 @@ def update_rpm_repo(repo):
             if verbose:
                 print '%s - mirrorlist found.' % mirror.url
             for m in mirrors:
-                newmirror, c = Mirror.objects.get_or_create(repo=repo, url=m)
+                newmirror, c = Mirror.objects.get_or_create(repo=repo, url=m.replace('$ARCH', repo.arch))
                 if c and verbose:
                     print 'Added %s as mirror.' % m
 
