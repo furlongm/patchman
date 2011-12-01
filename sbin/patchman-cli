@@ -203,7 +203,8 @@ def get_url(url):
 
     try:
         req = Request(url)
-        return urlopen(req)
+        res = urlopen(req)
+        return res
     except IOError, e:
         if hasattr(e, 'reason'):
             print '%s - %s' % (url, e.reason)
@@ -301,7 +302,7 @@ def mirrorlist_check(mirror_url):
         headers = dict(res.headers.items())
         if 'content-type' in headers and re.match('text/plain', headers['content-type']) != None:
             data = download_url(res, '')
-            mirror_urls = re.findall('http://.*|ftp://.*', data)
+            mirror_urls = re.findall('^http://.*$|^ftp://.*$', data, re.MULTILINE)
             if len(mirror_urls) > 0:
                 return mirror_urls
     return None
@@ -381,7 +382,6 @@ def update_rpm_repo(repo):
             if verbose:
                 print '%s - mirrorlist found.' % mirror.url
             for m in mirrors:
-                print repo.arch
                 newmirror, c = Mirror.objects.get_or_create(repo=repo, url=m.replace('$ARCH', repo.arch.name))
                 if c and verbose:
                     print 'Added %s as mirror.' % m
