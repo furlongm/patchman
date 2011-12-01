@@ -22,7 +22,7 @@ setup_environ(settings)
 
 from patchman.hosts.models import Host
 from patchman.packages.models import Package, PackageName, PackageString, PackageUpdate
-from patchman.repos.models import Repository, MirrorPackage
+from patchman.repos.models import Repository, Mirror, MirrorPackage
 from patchman.arch.models import PackageArchitecture, MachineArchitecture
 from patchman.reports.models import Report
 
@@ -196,7 +196,7 @@ def unpack_yastpackages(data, packages):
             print 'No packages in found in repo.'
 
 
-def get_repo_url(url):
+def get_url(url):
 
     try:
         req = Request(url)
@@ -273,21 +273,35 @@ def update_packages(mirror, packages):
     new.clear()
 
 
-def find_repo_url(stored_repo_url, formats):
+def find_mirror_url(stored_mirror_url, formats):
 
     yast = False
+
     for fmt in formats:
-        repo_url = stored_repo_url
+        mirror_url = stored_mirror_url
         for f in formats:
-            if repo_url.endswith(f):
-                repo_url = repo_url[:-len(f)]
-        repo_url = repo_url.rstrip('/') + '/' + fmt
-        res = get_repo_url(repo_url)
+            if mirror_url.endswith(f):
+                mirror_url = mirror_url[:-len(f)]
+        mirror_url = mirror_url.rstrip('/') + '/' + fmt
+        res = get_url(mirror_url)
         if type(res) != int:
             break
     if fmt == 'content':
         yast = True
-    return repo_url, res, yast
+    return mirror_url, res, yast
+
+
+def mirrorlist_check(mirror_url):
+
+    res = get_url(mirror_url)
+    if type(res) != int:
+        data = download_url(res, '')
+        if re.match('# repo ', data) != None:
+            mirror_urls = re.findall('http://.*', data)
+            if len(mirror_urls) > 0:
+                return mirror_urls
+    else:
+        return None
 
 
 def download_url(res, part=''):
@@ -330,7 +344,7 @@ def update_deb_repo(repo):
     formats = ['Packages.bz2', 'Packages.gz', 'Packages']
 
     for mirror in repo.mirror_set.all():
-        repo_url, res, unused = find_repo_url(mirror.url, formats)
+        repo_url, res, unused = find_mirror_url(mirror.url, formats)
         mirror.last_access_ok = check_response(res)
 
         if mirror.last_access_ok:
@@ -355,8 +369,21 @@ def update_rpm_repo(repo):
 
     formats = ['repodata/repomd.xml.bz2', 'repodata/repomd.xml.gz', 'repodata/repomd.xml', 'suse/repodata/repomd.xml.bz2', 'suse/repodata/repomd.xml.gz', 'suse/repodata/repomd.xml', 'content']
 
+    # check if any of the mirrors are actually mirrorlists
     for mirror in repo.mirror_set.all():
-        repo_url, res, yast = find_repo_url(mirror.url, formats)
+        mirrors = mirrorlist_check(mirror.url)
+        if mirrors != None:
+            mirror.mirrorlist=True
+            mirror.save()
+            if verbose:
+                print '%s - mirrorlist found.' % mirror.url
+            for m in mirrors:
+                newmirror, c = Mirror.objects.get_or_create(repo=repo, url=m)
+                if c and verbose:
+                    print 'Added %s as mirror.' % m
+
+    for mirror in repo.mirror_set.filter(mirrorlist=False):
+        repo_url, res, yast = find_mirror_url(mirror.url, formats)
         mirror.last_access_ok = check_response(res)
 
         if mirror.last_access_ok:
@@ -367,7 +394,7 @@ def update_rpm_repo(repo):
                     print '%s - yum rpm repo found.' % repo_url
                 data = download_url(res, '(1/2)')
                 primary, checksum, checksum_type = get_primary_url(res.geturl(), data)
-                res = get_repo_url(primary)
+                res = get_url(primary)
                 mirror.last_access_ok = check_response(res)
                 if mirror.last_access_ok:
                     data = download_url(res, '(2/2)')
@@ -395,7 +422,7 @@ def update_rpm_repo(repo):
                 #rpm_url = '%s/%s' % (mirror.url, rpm_dir)
                 package_dir = re.findall('DESCRDIR *(.*)', data)[0]
                 package_url = '%s/%s/packages.gz' % (mirror.url, package_dir)
-                res = get_repo_url(package_url)
+                res = get_url(package_url)
                 mirror.last_access_ok = check_response(res)
                 if mirror.last_access_ok:
                     data = download_url(res, '(2/2)')
