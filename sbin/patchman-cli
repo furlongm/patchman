@@ -297,14 +297,14 @@ def find_mirror_url(stored_mirror_url, formats):
 def mirrorlist_check(mirror_url):
 
     res = get_url(mirror_url)
-    headers = dict(res.headers.items())
-    if type(res) != int and 'content-type' in headers and re.match('text/plain', headers['content-type']) != None:
-        data = download_url(res, '')
-        mirror_urls = re.findall('http://.*|ftp://.*', data)
-        if len(mirror_urls) > 0:
-            return mirror_urls
-    else:
-        return None
+    if type(res) != int:
+        headers = dict(res.headers.items())
+        if 'content-type' in headers and re.match('text/plain', headers['content-type']) != None:
+            data = download_url(res, '')
+            mirror_urls = re.findall('http://.*|ftp://.*', data)
+            if len(mirror_urls) > 0:
+                return mirror_urls
+    return None
 
 
 def download_url(res, part=''):
