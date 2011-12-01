@@ -60,6 +60,7 @@ class Mirror(models.Model):
     file_checksum = models.CharField(max_length=255, blank=True, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
     packages = models.ManyToManyField(Package, blank=True, null=True, through='MirrorPackage')
+    mirrorlist = models.BooleanField(default=False)
 
     def __unicode__(self):
         return self.url
