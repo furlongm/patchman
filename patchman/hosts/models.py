@@ -62,7 +62,7 @@ class Host(models.Model):
         return self.updates.filter(security=False).count()
 
     def get_host_repo_packages(self):
-        hostrepos = Q(mirror__repo__osgroup__os__host=self, mirror__repo__arch=self.arch, mirror__enabled=True) | Q(mirror__repo__in=self.repos.all(), mirror__enabled=True)
+        hostrepos = Q(mirror__repo__osgroup__os__host=self, mirror__repo__arch=self.arch, mirror__repo__enabled=True) | Q(mirror__repo__in=self.repos.all(), mirror__repo__enabled=True)
         return Package.objects.select_related().filter(hostrepos)
 
     def find_updates(self):
