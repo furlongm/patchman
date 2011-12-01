@@ -122,13 +122,16 @@ def unpack_debpackages(data, packages):
 
 def get_primary_url(repo_url, data):
 
-    ns = 'http://linux.duke.edu/metadata/repo'
-    context = etree.parse(StringIO(data), etree.XMLParser())
-    location = context.xpath("//ns:data[@type='primary']/ns:location/@href",  namespaces={'ns': ns})[0]
-    checksum = context.xpath("//ns:data[@type='primary']/ns:checksum",  namespaces={'ns': ns})[0].text
-    checksum_type = context.xpath("//ns:data[@type='primary']/ns:checksum/@type",  namespaces={'ns': ns})[0]
-    primary_url = str(repo_url.rsplit('/', 2)[0]) + '/' + location
-    return primary_url, checksum, checksum_type
+    try:
+        ns = 'http://linux.duke.edu/metadata/repo'
+        context = etree.parse(StringIO(data), etree.XMLParser())
+        location = context.xpath("//ns:data[@type='primary']/ns:location/@href",  namespaces={'ns': ns})[0]
+        checksum = context.xpath("//ns:data[@type='primary']/ns:checksum",  namespaces={'ns': ns})[0].text
+        checksum_type = context.xpath("//ns:data[@type='primary']/ns:checksum/@type",  namespaces={'ns': ns})[0]
+        primary_url = str(repo_url.rsplit('/', 2)[0]) + '/' + location
+        return primary_url, checksum, checksum_type
+    except etree.XMLSyntaxError, e:
+        return None, None, None
 
 
 def get_sha1(data):
@@ -203,14 +206,14 @@ def get_url(url):
         return urlopen(req)
     except IOError, e:
         if hasattr(e, 'reason'):
-            print 'Failed to reach the server: %s' % e.reason
+            print '%s - %s' % (url, e.reason)
             return -1
         elif hasattr(e, 'code'):
             if verbose:
                 print '%s - %s' % (url, e)
             return e.code
         else:
-            print 'Error: %s' % e
+            print 'Unknown error: %s - %e' % (url, e)
             return -1
 
 
@@ -294,12 +297,12 @@ def find_mirror_url(stored_mirror_url, formats):
 def mirrorlist_check(mirror_url):
 
     res = get_url(mirror_url)
-    if type(res) != int:
+    headers = dict(res.headers.items())
+    if type(res) != int and 'content-type' in headers and re.match('text/plain', headers['content-type']) != None:
         data = download_url(res, '')
-        if re.match('# repo ', data) != None:
-            mirror_urls = re.findall('http://.*', data)
-            if len(mirror_urls) > 0:
-                return mirror_urls
+        mirror_urls = re.findall('http://.*|ftp://.*', data)
+        if len(mirror_urls) > 0:
+            return mirror_urls
     else:
         return None
 
@@ -382,7 +385,7 @@ def update_rpm_repo(repo):
                 if c and verbose:
                     print 'Added %s as mirror.' % m
 
-    for mirror in repo.mirror_set.filter(mirrorlist=False):
+    for mirror in repo.mirror_set.filter(mirrorlist=False, enabled=True):
         repo_url, res, yast = find_mirror_url(mirror.url, formats)
         mirror.last_access_ok = check_response(res)
 
@@ -394,6 +397,11 @@ def update_rpm_repo(repo):
                     print '%s - yum rpm repo found.' % repo_url
                 data = download_url(res, '(1/2)')
                 primary, checksum, checksum_type = get_primary_url(res.geturl(), data)
+                if primary == None:
+                    print 'Error obtaining primary url from %s, disabling.' % repo_url
+                    mirror.last_access_ok = False
+                    mirror.enabled = False
+                    continue
                 res = get_url(primary)
                 mirror.last_access_ok = check_response(res)
                 if mirror.last_access_ok:
@@ -418,8 +426,6 @@ def update_rpm_repo(repo):
                 if verbose:
                     print '%s - yast rpm repo found' % repo_url
                 data = download_url(res, '(1/2)')
-                #rpm_dir = re.findall('DATADIR.*', data)[0].split()[1]
-                #rpm_url = '%s/%s' % (mirror.url, rpm_dir)
                 package_dir = re.findall('DESCRDIR *(.*)', data)[0]
                 package_url = '%s/%s/packages.gz' % (mirror.url, package_dir)
                 res = get_url(package_url)
