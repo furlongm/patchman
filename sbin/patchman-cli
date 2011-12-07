@@ -378,6 +378,7 @@ def update_rpm_repo(repo):
         mirrors = mirrorlist_check(mirror.url)
         if mirrors != None:
             mirror.mirrorlist=True
+            mirror.last_access_ok=True
             mirror.save()
             if verbose:
                 print '%s - mirrorlist found.' % mirror.url
