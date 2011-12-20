@@ -64,7 +64,8 @@ def host_list(request):
         hosts = hosts.filter(tags=request.GET['tag'])
 
     if 'reboot_required' in request.REQUEST:
-        hosts = hosts.filter(reboot_required=request.GET['reboot_required'])
+        reboot_required = request.GET['reboot_required'] == 'True'
+        hosts = hosts.filter(reboot_required=reboot_required)
 
     if 'search' in request.REQUEST:
         terms = request.REQUEST['search'].lower()
