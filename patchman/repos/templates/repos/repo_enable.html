@@ -1,5 +1,6 @@
 {% extends "main.html" %}
 {% load common %}
+
 {% block title %}Repositories {{ repo }} {% endblock %}
 
 {% block content_title %}Repository Information{% endblock %}
@@ -7,6 +8,7 @@
 {% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url repo_list %}">Repositories</a> &rsaquo; {{ repo }} {% endblock %}
 
 {% block content %}
+
 
 <div class="module">
     <h2>{{repo}} Details</h2>
@@ -18,27 +20,31 @@
         <tr><td>Enabled</td><td> {{ repo.enabled }} </td></tr>
     </table>
 </div>
+{% if user.is_authenticated %}
+  {% if perms.is_admin %}
+  <div class="module">
+    <h2>Delete Confirmation</h2>
+    <div class="dialog">
+      Are you sure you want to enable this repository?
+      <form action="." method="POST">
+        {% csrf_token %}
+        <input name="enable" type="submit" value="Enable" />
+        <input name="cancel" type="submit" value="Cancel" />
+      </form>
+    </div>
+  </div>
+  {% else %}
+  <div class="module">
+    <h2>Insufficient Permissions</h2>
+    <div class="brick">
+    You do not have sufficient permissions to enable this repository.
+    </div>
+  </div>
+  {% endif %}
+{% endif %}
 <div class="module">
   <h2>Mirrors</h2>
   {% gen_table repo.mirror_set.all %}
-</div>
-<div class="module">
-    {% if user.is_authenticated %}
-        {% if perms.is_admin %}
-        <a class="brick" href="delete">Delete this repository</a>
-        <a class="brick" href="enable">Enable this repository</a>
-        {% endif %}
-    {% endif %}
-    <div class="clearbrick"></div>
-</div>
-<div class="module">
-    <div class="resultslink" id="r1"><a href="#">Full list of {{repo}} Packages</a></div>
-        <div class="results" id="r1">
-            {% for package in repo.packages.select_related %}
-            <span class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-            <a class="dark" href="{{ package.name.get_absolute_url }}"> {{ package }} </a></span>
-            {% endfor %}
-        </div>
 </div>
 {% endblock %}
 

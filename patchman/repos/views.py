@@ -110,3 +110,20 @@ def repo_delete(request, repo):
             return HttpResponseRedirect(reverse('repo_detail', args=[repo]))
 
     return render_to_response('repos/repo_delete.html', {'repo': repo}, context_instance=RequestContext(request))
+
+
+@login_required
+def repo_enable(request, repo):
+
+    repo = get_object_or_404(Repository, id=repo)
+
+    if request.method == 'POST':
+        if 'enable' in request.REQUEST:
+            repo.enabled = True
+            repo.save()
+            messages.info(request, 'Repository %s has been enabled.' % repo)
+            return HttpResponseRedirect(reverse('repo_list'))
+        elif 'cancel' in request.REQUEST:
+            return HttpResponseRedirect(reverse('repo_detail', args=[repo]))
+
+    return render_to_response('repos/repo_enable.html', {'repo': repo}, context_instance=RequestContext(request))
