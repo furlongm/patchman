@@ -28,11 +28,13 @@ def process_repos(report, host):
         repos = parse_repos(report.repos)
         progress_info.send(sender=report, ptext='%s repos' % host.__unicode__()[0:25], plength=len(repos))
         for i, repo in enumerate(repos):
-            process_repo(report, repo)
+            repository = process_repo(report, repo)
+            if repository:
+                host.repos.add(repository)
             progress_update.send(sender=report, index=i + 1)
 
 
-def process_packages(report, host, verbose=0):
+def process_packages(report, host):
 
     if report.packages:
         packages = parse_packages(report.packages)
@@ -78,6 +80,7 @@ def process_repo(report, repo):
         repository, c = Repository.objects.get_or_create(name=r_name, arch=r_arch, repotype=r_type)
     for url in unknown:
         Mirror.objects.create(repo=repository, url=url)
+    return repository
 
 
 def parse_packages(packages_string):
