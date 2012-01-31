@@ -387,7 +387,7 @@ def update_rpm_repo(repo):
                 if c and verbose:
                     print 'Added %s as mirror.' % m
 
-    for mirror in repo.mirror_set.filter(mirrorlist=False, enabled=True):
+    for mirror in repo.mirror_set.filter(mirrorlist=False, refresh=True):
         repo_url, res, yast = find_mirror_url(mirror.url, formats)
         mirror.last_access_ok = check_response(res)
 
@@ -400,9 +400,9 @@ def update_rpm_repo(repo):
                 data = download_url(res, '(1/2)')
                 primary, checksum, checksum_type = get_primary_url(res.geturl(), data)
                 if primary == None:
-                    print 'Error obtaining primary url from %s, disabling.' % repo_url
+                    print 'Error obtaining primary url from %s, disabling refresh.' % repo_url
                     mirror.last_access_ok = False
-                    mirror.enabled = False
+                    mirror.refresh = False
                     continue
                 res = get_url(primary)
                 mirror.last_access_ok = check_response(res)

@@ -27,7 +27,7 @@ from tagging.models import Tag
 from andsome.util.filterspecs import Filter, FilterBar
 import socket
 
-from patchman.hosts.models import Host
+from patchman.hosts.models import Host, HostRepo
 from patchman.domains.models import Domain
 from patchman.arch.models import MachineArchitecture
 from patchman.operatingsystems.models import OS, OSGroup
@@ -116,7 +116,9 @@ def host_detail(request, hostname):
 
     reports = Report.objects.all().filter(host=hostname).order_by('-time')[:3]
 
-    return render_to_response('hosts/host_detail.html', {'host': host, 'reversedns': reversedns, 'reports': reports}, context_instance=RequestContext(request))
+    hostrepos = HostRepo.objects.filter(host=host)
+
+    return render_to_response('hosts/host_detail.html', {'host': host, 'reversedns': reversedns, 'reports': reports, 'hostrepos': hostrepos}, context_instance=RequestContext(request))
 
 
 @login_required
