@@ -40,7 +40,7 @@ class Host(models.Model):
     domain = models.ForeignKey(Domain)
     lastreport = models.DateTimeField()
     packages = models.ManyToManyField(Package)
-    repos = models.ManyToManyField(Repository)
+    repos = models.ManyToManyField(Repository, through='HostRepo')
     updates = models.ManyToManyField(PackageUpdate)
     reboot_required = models.BooleanField(default=False)
     tags = TagField()
@@ -145,3 +145,9 @@ class Host(models.Model):
         except ValueError:  # debian kernel
             pass
         self.save()
+
+
+class HostRepo(models.Model):
+    host = models.ForeignKey(Host)
+    repo = models.ForeignKey(Repository)
+    enabled = models.BooleanField(default=True)
