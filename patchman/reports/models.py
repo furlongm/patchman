@@ -109,6 +109,7 @@ class Report(models.Model):
 # TODO: fix this to record the history of installed
 # packages on a host.
             host.packages.clear()
+            host.repos.clear()
             from patchman.reports.utils import process_packages, process_repos
             process_packages(report=self, host=host)
             process_repos(report=self, host=host)

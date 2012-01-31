@@ -16,6 +16,7 @@
 
 import re
 
+from patchman.hosts.models import HostRepo
 from patchman.arch.models import MachineArchitecture, PackageArchitecture
 from patchman.repos.models import Repository, Mirror
 from patchman.packages.models import Package, PackageName
@@ -30,7 +31,8 @@ def process_repos(report, host):
         for i, repo in enumerate(repos):
             repository = process_repo(report, repo)
             if repository:
-                host.repos.add(repository)
+                hostrepo = HostRepo.objects.create(host=host, repo=repository, enabled=True)
+                hostrepo.save()
             progress_update.send(sender=report, index=i + 1)
 
 

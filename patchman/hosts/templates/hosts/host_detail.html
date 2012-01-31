@@ -77,36 +77,34 @@
 <div class="module">
     <h2>Repositories</h2>
     <table>
-    {% with host.repos.select_related as hostrepos %}
     {% with host.os.osgroup.repos.select_related as osrepos %}
     {% if hostrepos or osrepos %}
         <thead>
             <tr>
-                <th>Name</th><th>Enabled</th><th>Security</th>
+                <th>Name</th><th>Type</th><th>Enabled</th><th>Security</th>
             </tr>
         </thead>
     {% else %}
         <p>No repositories associated with this host yet.</p>
     {% endif %}
     {% for hostrepo in hostrepos %}
-        {% if hostrepo.arch == host.arch %}
-            <tr class="{% cycle row1,row2 %}">
-                <td> <a href="{{hostrepo.get_absolut_url}}">{{ hostrepo.name }}</a> </td>
-                <td> {% yes_no_img hostrepo.enabled %} </td>
-                <td> {% yes_no_img hostrepo.security %} </td>
-            </tr>
-        {% endif %}
+        <tr class="{% cycle row1,row2 %}">
+            <td> <a href="{{ hostrepo.repo.get_absolut_url }}">{{ hostrepo.repo.name }}</a> </td>
+            <td>Host</td>
+            <td> {% yes_no_img hostrepo.enabled %} </td>
+            <td> {% yes_no_img hostrepo.repo.security %} </td>
+        </tr>
     {% endfor %}
     {% for osrepo in osrepos %}
         {% if osrepo.arch == host.arch %}
             <tr class="{% cycle row1,row2 %}">
-                <td> <a href="{{osrepo.get_absolute_url}}">{{ osrepo.name }}</a> </td>
+                <td> <a href="{{ osrepo.get_absolute_url }}">{{ osrepo.name }}</a> </td>
+                <td>OS Group</td>
                 <td> {% yes_no_img osrepo.enabled %} </td>
                 <td> {% yes_no_img osrepo.security %} </td>
             </tr>
         {% endif %}
     {% endfor %}
-    {% endwith %}
     {% endwith %}
     </table>
 </div>
