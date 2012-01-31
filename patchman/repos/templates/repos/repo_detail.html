@@ -1,5 +1,7 @@
 {% extends "main.html" %}
+
 {% load common %}
+
 {% block title %}Repositories {{ repo }} {% endblock %}
 
 {% block content_title %}Repository Information{% endblock %}
@@ -14,27 +16,36 @@
         <tr><td>Name</td><td> {{ repo.name }} </td></tr>
         <tr><td>Type</td><td> {{ repo.get_repotype_display }} </td></tr>
         <tr><td>Architecture</td><td> {{ repo.arch }} </td></tr>
-        <tr><td>Security</td><td> {{ repo.security }} </td></tr>
-        <tr><td>Enabled</td><td> {{ repo.enabled }} </td></tr>
+        <tr><td>Security</td><td> {% yes_no_img repo.security %} </td></tr>
+        <tr><td>Enabled</td><td> {% yes_no_img repo.enabled %} </td></tr>
+        <tr><td>Mirrors</td><td> {{ repo.mirror_set.count }} </td></tr>
     </table>
 </div>
+
+{% if user.is_authenticated %}
+    {% if perms.is_admin %}
+    <div class="module">
+        <h2>Actions</h2>
+        <a class="brick" href="delete">Delete this repository</a>
+        <a class="brick" href="enable">Enable this repository</a>
+        <div class="clearbrick"></div>
+    </div>
+    {% endif %}
+{% endif %}
 <div class="module">
   <h2>Mirrors</h2>
   {% gen_table repo.mirror_set.all %}
 </div>
 <div class="module">
-    {% if user.is_authenticated %}
-        {% if perms.is_admin %}
-        <a class="brick" href="delete">Delete this repository</a>
-        <a class="brick" href="enable">Enable this repository</a>
-        {% endif %}
-    {% endif %}
-    <div class="clearbrick"></div>
+  <h2>Hosts with this repo</h2>
+  {% gen_table repo.host_set.all %}
 </div>
 <div class="module">
-    <div class="resultslink" id="r1"><a href="#">Full list of {{repo}} Packages</a></div>
+    <h2>Packages</h2>
+    <div class="resultslink" id="r1"><a href="#">Show/Hide Package List</a></div>
         <div class="results" id="r1">
-            {% for package in repo.packages.select_related %}
+            <!-- FIXME: this is now repo.mirror_set.packages or similar -->
+            {% for package in repo.packages.all %}
             <span class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
             <a class="dark" href="{{ package.name.get_absolute_url }}"> {{ package }} </a></span>
             {% endfor %}

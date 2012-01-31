@@ -207,7 +207,8 @@ def get_url(url):
         return res
     except IOError, e:
         if hasattr(e, 'reason'):
-            print '%s - %s' % (url, e.reason)
+            if verbose:
+                print '%s - %s' % (url, e.reason)
             return -1
         elif hasattr(e, 'code'):
             if verbose:
@@ -337,7 +338,7 @@ def check_response(res):
 
     if type(res) == int:
         if verbose:
-            print 'No usable repo found.'
+            print 'No usable mirror URL found.'
         return False
     else:
         return True

@@ -9,6 +9,7 @@
 {% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url host_list %}">Hosts</a> &rsaquo; {{ host }} {% endblock %}
 
 {% block content %}
+
 <div class="module">
     <h2>{{host}}</h2>
     <table>
@@ -40,14 +41,16 @@
         </td></tr>
     </table>
 </div>
-<div class="module">
-    {% if user.is_authenticated %}
-        {% if perms.is_admin %}
+{% if user.is_authenticated %}
+    {% if perms.is_admin %}
+    <div class="module">
+        <h2>Actions</h2>
         <a class="brick" href="delete">Delete this host</a>
-        {% endif %}
+        <a class="brick" href="delete">Delete this host</a>
+        <div class="clearbrick"></div>
+    </div>
     {% endif %}
-    <div class="clearbrick"></div>
-</div>
+{% endif %}
 <div class="module" id="updates">
     <h2>Updates Available</h2>
     <table>
@@ -109,6 +112,7 @@
     </table>
 </div>
 <div class="module" id="installedpackages">
+    <h2>Packages</h2>
     <div class="resultslink" id="r1"><a href="#">Show/Hide Installed Packages</a></div>
         <div class="results" id="r1">
             {% for package in host.packages.select_related %}
