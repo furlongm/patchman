@@ -65,9 +65,9 @@ class Host(models.Model):
     def get_host_repo_packages(self):
         # FIXME: add support for host repos being enabled/disabled via the 'through' field
         if self.host_repos_only:
-            hostrepos = Q(mirror__repo__in=self.repos.all(), mirror__enabled=True, mirror__repo_enabled=True)
+            hostrepos = Q(mirror__repo__in=self.repos.all(), mirror__enabled=True, mirror__repo__enabled=True)
         else:
-            hostrepos = Q(mirror__repo__osgroup__os__host=self, mirror__repo__arch=self.arch, mirror__enabled=True, mirror__repo_enabled=True) | Q(mirror__repo__in=self.repos.all(), mirror__enabled=True, mirror__repo__enabled=True)
+            hostrepos = Q(mirror__repo__osgroup__os__host=self, mirror__repo__arch=self.arch, mirror__enabled=True, mirror__repo__enabled=True) | Q(mirror__repo__in=self.repos.all(), mirror__enabled=True, mirror__repo__enabled=True)
         return Package.objects.select_related().filter(hostrepos)
 
     def find_updates(self):
