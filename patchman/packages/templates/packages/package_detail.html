@@ -11,8 +11,6 @@
 <h2>{{package}}</h2>
 <table>
 <tr><td>Package</td><td> {{ package.name }} </td></tr>
-<tr><td>Descriptions</td><td> {{ allversions.all.description }} </td></tr>
-<tr><td>URLs</td><td> <a href="{{ allversions.0.url }}">{{ allversions.0.url }}</a> </td></tr>
 </table>
 </div>
 <div class="module">
@@ -21,7 +19,7 @@
 {% if allversions %}
 <tr><th>&nbsp;Epoch&nbsp;</th><th>&nbsp;Version&nbsp;</th><th>&nbsp;Release&nbsp;</th>
 <th>&nbsp;Arch&nbsp;</th><th>&nbsp;Type&nbsp;</th><th>&nbsp;Repositories&nbsp;</th>
-<th>&nbsp;Hosts&nbsp;</th><th>URL</td><th>Description</th></tr>
+<th>&nbsp;Hosts&nbsp;</th></tr>
 {% else %}
 <p>No versions of this package exist.</p>
 {% endif %}
@@ -32,7 +30,6 @@
 <td> {{ version.arch }} </td><td> {{ version.get_packagetype_display }} </td>
 <td> <a href="{% url repo_list %}?package_id={{ version.id }}">Available from {{ version.repo_count }} repositories</a> </td>
 <td> <a href="{% url host_list %}?package_id={{ version.id }}">Installed on {{ version.host_set.count }} hosts</a> </td>
-<td><a href="{{ versions.url }}">{{ version.url }}</a></td><td><a href="">More..</a></td></tr>
 {% endfor %}
 </table>
 </div>
