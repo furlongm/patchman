@@ -16,8 +16,9 @@
         <tr><td>Name</td><td> {{ repo.name }} </td></tr>
         <tr><td>Type</td><td> {{ repo.get_repotype_display }} </td></tr>
         <tr><td>Architecture</td><td> {{ repo.arch }} </td></tr>
-        <tr><td>Security</td><td> {{ repo.security }} </td></tr>
-        <tr><td>Enabled</td><td> {{ repo.enabled }} </td></tr>
+        <tr><td>Security</td><td> {% yes_no_img repo.security %} </td></tr>
+        <tr><td>Enabled</td><td> {% yes_no_img repo.enabled %} </td></tr>
+        <tr><td>Mirrors</td><td> {{ repo.mirror_set.count }} </td></tr>
     </table>
 </div>
 {% if user.is_authenticated %}
@@ -25,10 +26,20 @@
   <div class="module">
     <h2>Delete Confirmation</h2>
     <div class="dialog">
-      Are you sure you want to enable this repository?
+    Are you sure you want to
+    {% if enable %}
+      enable
+    {% else %}
+      disable
+    {% endif %}
+    this repository?
       <form action="." method="POST">
         {% csrf_token %}
-        <input name="enable" type="submit" value="Enable" />
+        {% if enable %}
+          <input name="enable" type="submit" value="Enable" />
+        {% else %}
+          <input name="disable" type="submit" value="Disable" />
+        {% endif %}
         <input name="cancel" type="submit" value="Cancel" />
       </form>
     </div>
@@ -46,5 +57,10 @@
   <h2>Mirrors</h2>
   {% gen_table repo.mirror_set.all %}
 </div>
+<div class="module">
+  <h2>Hosts with this Repository</h2>
+  {% gen_table repo.host_set.all %}
+</div>
+
 {% endblock %}
 

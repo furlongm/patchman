@@ -1,4 +1,5 @@
 {% load common %}
+{% load patchman %}
 <table cellspacing="0">
         <thead>
                 <tr>
@@ -10,7 +11,7 @@
                 <tr class="{% cycle row1,row2 %}">
                     <td><a href="{{ repo.get_absolute_url }}">{{ repo }}</a></td>
                     <td>{{ repo.mirror_set.count }}</td>
-                    <td>{% yes_no_img repo.enabled %}</td>
+                    <td>{% yes_no_button_repo_en repo %}</td>
                     <td>{% yes_no_img repo.security %}</td>                      
                 </tr>
     {% endfor %}

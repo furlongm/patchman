@@ -95,6 +95,7 @@ INSTALLED_APPS = (
     'patchman.repos',
     'patchman.arch',
     'patchman.reports',
+    'patchman',
 )
 
 BROKER_HOST = "localhost"

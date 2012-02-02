@@ -89,17 +89,17 @@ def repo_list(request):
 
 
 @login_required
-def repo_detail(request, repo):
+def repo_detail(request, repo_id):
 
-    repo = get_object_or_404(Repository, id=repo)
+    repo = get_object_or_404(Repository, id=repo_id)
 
     return render_to_response('repos/repo_detail.html', {'repo': repo}, context_instance=RequestContext(request))
 
 
 @login_required
-def repo_delete(request, repo):
+def repo_delete(request, repo_id):
 
-    repo = get_object_or_404(Repository, id=repo)
+    repo = get_object_or_404(Repository, id=repo_id)
 
     if request.method == 'POST':
         if 'delete' in request.REQUEST:
@@ -107,15 +107,15 @@ def repo_delete(request, repo):
             messages.info(request, 'Repository %s has been deleted.' % repo)
             return HttpResponseRedirect(reverse('repo_list'))
         elif 'cancel' in request.REQUEST:
-            return HttpResponseRedirect(reverse('repo_detail', args=[repo]))
+            return HttpResponseRedirect(reverse('repo_detail', args=[repo_id]))
 
     return render_to_response('repos/repo_delete.html', {'repo': repo}, context_instance=RequestContext(request))
 
 
 @login_required
-def repo_enable(request, repo):
+def repo_enable(request, repo_id):
 
-    repo = get_object_or_404(Repository, id=repo)
+    repo = get_object_or_404(Repository, id=repo_id)
 
     if request.method == 'POST':
         if 'enable' in request.REQUEST:
@@ -124,6 +124,23 @@ def repo_enable(request, repo):
             messages.info(request, 'Repository %s has been enabled.' % repo)
             return HttpResponseRedirect(reverse('repo_list'))
         elif 'cancel' in request.REQUEST:
-            return HttpResponseRedirect(reverse('repo_detail', args=[repo]))
+            return HttpResponseRedirect(reverse('repo_detail', args=[repo_id]))
 
-    return render_to_response('repos/repo_enable.html', {'repo': repo}, context_instance=RequestContext(request))
+    return render_to_response('repos/repo_endisable.html', {'repo': repo, 'enable': True}, context_instance=RequestContext(request))
+
+
+@login_required
+def repo_disable(request, repo_id):
+
+    repo = get_object_or_404(Repository, id=repo_id)
+
+    if request.method == 'POST':
+        if 'disable' in request.REQUEST:
+            repo.enabled = False
+            repo.save()
+            messages.info(request, 'Repository %s has been disabled.' % repo)
+            return HttpResponseRedirect(reverse('repo_list'))
+        elif 'cancel' in request.REQUEST:
+            return HttpResponseRedirect(reverse('repo_detail', args=[repo_id]))
+
+    return render_to_response('repos/repo_endisable.html', {'repo': repo, 'enable': False}, context_instance=RequestContext(request))
