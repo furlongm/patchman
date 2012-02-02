@@ -27,7 +27,11 @@
     <div class="module">
         <h2>Actions</h2>
         <a class="brick" href="delete">Delete this repository</a>
-        <a class="brick" href="enable">Enable this repository</a>
+        {% if repo.enabled %}
+          <a class="brick" href="disable">Disable this repository</a>
+        {% else %}
+          <a class="brick" href="enable">Enable this repository</a>
+        {% endif %}
         <div class="clearbrick"></div>
     </div>
     {% endif %}
@@ -37,19 +41,8 @@
   {% gen_table repo.mirror_set.all %}
 </div>
 <div class="module">
-  <h2>Hosts with this repo</h2>
+  <h2>Hosts with this Repository</h2>
   {% gen_table repo.host_set.all %}
-</div>
-<div class="module">
-    <h2>Packages</h2>
-    <div class="resultslink" id="r1"><a href="#">Show/Hide Package List</a></div>
-        <div class="results" id="r1">
-            <!-- FIXME: this is now repo.mirror_set.packages or similar -->
-            {% for package in repo.packages.all %}
-            <span class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-            <a class="dark" href="{{ package.name.get_absolute_url }}"> {{ package }} </a></span>
-            {% endfor %}
-        </div>
 </div>
 {% endblock %}
 
