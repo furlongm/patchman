@@ -15,6 +15,7 @@
 {% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url osgroup_list %}">OS Groups</a> &rsaquo; {{ osgroup }} {% endblock %}
 
 {% block content %}
+
 <div class="module">
     <h2>{{ osgroup }} Details</h2>
     <table>
@@ -23,6 +24,7 @@
         </tr>
     </table>
 </div>
+
 <div class="module">
     <h2>Operating Systems linked to OS Group {{ osgroup }}</h2>
     <table>
@@ -38,25 +40,27 @@
         {% endfor %}
     </table>
 </div>
+
 <div class="module">
     {% if osgroup.repos.count == 0 %}
     <h2>{{ osgroup }} has no Repositories</h2>
 {% else %}
     <h2>{{ osgroup }} Repositories</h2>
-    
     {% gen_table osgroup.repos.select_related %}
 {% endif %}
 </div>
+
 {% if user.is_authenticated %}
     {% if perms.is_admin %}
     <div class="module">
         <h2>Modify {{ osgroup }} repos</h2>
-            <form action="." method="post">{% csrf_token %}
+            <form action={{ request.path }} method="post">{% csrf_token %}
             {% form_as_div form %}
             <br /><input type="submit" value="Save" /> 
             </form>
     </div>
     {% endif %}
 {% endif %}
+
 {% endblock %}
 

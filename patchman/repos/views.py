@@ -28,6 +28,7 @@ from andsome.util.filterspecs import Filter, FilterBar
 from patchman.repos.models import Repository
 from patchman.operatingsystems.models import OSGroup
 from patchman.arch.models import MachineArchitecture
+from patchman.repos.forms import RepositoryForm
 
 
 @login_required
@@ -94,6 +95,24 @@ def repo_detail(request, repo_id):
     repo = get_object_or_404(Repository, id=repo_id)
 
     return render_to_response('repos/repo_detail.html', {'repo': repo}, context_instance=RequestContext(request))
+
+
+@login_required
+def repo_edit(request, repo_id):
+
+    repo = get_object_or_404(Repository, id=repo_id)
+
+    if request.method == 'POST':
+        edit_form = RepositoryForm(request.POST, instance=repo)
+        if edit_form.is_valid():
+            repo = edit_form.save()
+            repo.save()
+            messages.info(request, 'Saved changes to Repository %s' % repo)
+            return HttpResponseRedirect(repo.get_absolute_url())
+    else:
+        edit_form = RepositoryForm(instance=repo)
+
+    return render_to_response('repos/repo_edit.html', {'repo': repo, 'edit_form': edit_form}, context_instance=RequestContext(request))
 
 
 @login_required

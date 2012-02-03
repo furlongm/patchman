@@ -25,4 +25,5 @@ urlpatterns = patterns('patchman.repos.views',
     url(r'^(?P<repo_id>[-.\w]+)/disable/$', 'repo_disable', name='repo_disable'),
     url(r'^(?P<repo_id>[-.\w]+)/enablesec/$', 'repo_enablesec', name='repo_enablesec'),
     url(r'^(?P<repo_id>[-.\w]+)/disablesec/$', 'repo_disablesec', name='repo_disablesec'),
+    url(r'^(?P<repo_id>[-.\w]+)/edit/$', 'repo_edit', name='repo_edit'),
 )
