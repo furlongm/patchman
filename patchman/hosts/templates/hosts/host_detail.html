@@ -89,7 +89,7 @@
       <tbody>
       {% for hostrepo in hostrepos %}
         <tr class="{% cycle row1,row2 %}">
-          <td> <a href="{{ hostrepo.repo.get_absolut_url }}">{{ hostrepo.repo.name }}</a> </td>
+          <td> <a href="{{ hostrepo.repo.get_absolute_url }}">{{ hostrepo.repo.name }}</a> </td>
           <td>Host</td>
           <td class="centered"> {% yes_no_img hostrepo.enabled %} </td>
           <td class="centered"> {% yes_no_img hostrepo.repo.security %} </td>
