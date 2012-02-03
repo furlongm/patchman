@@ -1,4 +1,4 @@
-# Copyright 2011 VPAC <furlongm@vpac.org>
+# Copyright 2012 VPAC, http://www.vpac.org
 #
 # This file is part of Patchman.
 #
