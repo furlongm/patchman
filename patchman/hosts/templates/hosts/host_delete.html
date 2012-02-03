@@ -8,19 +8,6 @@
 
 {% block content %}
 
-{% if user.is_authenticated %}
-  {% if perms.is_admin %}
-  <div class="module">
-    <h2>Delete Confirmation</h2>
-    <div class="dialog">
-      Are you sure you want to delete this host?
-      <form action="." method="POST">
-        {% csrf_token %}
-        <input name="delete" type="submit" value="Delete" />
-        <input name="cancel" type="submit" value="Cancel" />
-      </form>
-    </div>
-  </div>
   <div class="module">
     <h2>{{host}}</h2>
     <table>
@@ -40,7 +27,30 @@
             {% endfor %}
         </td></tr>
         <tr><td>Last Update</td><td> {{ host.lastreport }} </td></tr>
+        <tr><td>Updates Available</td><td> <a href="#updates">{{ host.updates.count }}</a> </td></tr>
+        <tr><td>Reboot Required</td><td> {{ host.reboot_required }} </td></tr>
+        <tr><td>Packages Installed</td><td> <a href="#installedpackages">{{ host.packages.count}}</a> </td></tr>
+        <tr><td>Last 3 reports</td><td>
+            {% for report in reports %}
+            <span class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
+                <a class="dark" href="{{ report.get_absolute_url}}">{{ report.time }} </a>
+            </span>
+            {% endfor %}
+        </td></tr>
     </table>
+  </div>
+{% if user.is_authenticated %}
+  {% if perms.is_admin %}
+  <div class="module">
+    <h2>Delete Confirmation</h2>
+    <div class="dialog">
+      Are you sure you want to delete this host?
+      <form action="." method="POST">
+        {% csrf_token %}
+        <input name="delete" type="submit" value="Delete" />
+        <input name="cancel" type="submit" value="Cancel" />
+      </form>
+    </div>
   </div>
   {% else %}
   <div class="module">

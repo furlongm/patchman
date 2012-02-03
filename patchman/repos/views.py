@@ -144,3 +144,37 @@ def repo_disable(request, repo_id):
             return HttpResponseRedirect(reverse('repo_detail', args=[repo_id]))
 
     return render_to_response('repos/repo_endisable.html', {'repo': repo, 'enable': False}, context_instance=RequestContext(request))
+
+
+@login_required
+def repo_enablesec(request, repo_id):
+
+    repo = get_object_or_404(Repository, id=repo_id)
+
+    if request.method == 'POST':
+        if 'enablesec' in request.REQUEST:
+            repo.security = True
+            repo.save()
+            messages.info(request, 'Repository %s has been marked as a security repo.' % repo)
+            return HttpResponseRedirect(reverse('repo_list'))
+        elif 'cancel' in request.REQUEST:
+            return HttpResponseRedirect(reverse('repo_detail', args=[repo_id]))
+
+    return render_to_response('repos/repo_endisablesec.html', {'repo': repo, 'enable': True}, context_instance=RequestContext(request))
+
+
+@login_required
+def repo_disablesec(request, repo_id):
+
+    repo = get_object_or_404(Repository, id=repo_id)
+
+    if request.method == 'POST':
+        if 'disablesec' in request.REQUEST:
+            repo.security = False
+            repo.save()
+            messages.info(request, 'Repository %s has been marked as a non-security repo.' % repo)
+            return HttpResponseRedirect(reverse('repo_list'))
+        elif 'cancel' in request.REQUEST:
+            return HttpResponseRedirect(reverse('repo_detail', args=[repo_id]))
+
+    return render_to_response('repos/repo_endisablesec.html', {'repo': repo, 'enable': False}, context_instance=RequestContext(request))

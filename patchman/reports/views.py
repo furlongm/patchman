@@ -125,6 +125,6 @@ def report_delete(request, report):
             messages.info(request, 'Report %s has been deleted' % report)
             return HttpResponseRedirect(reverse('report_list'))
         elif 'cancel' in request.REQUEST:
-            return HttpResponseRedirect(reverse('report_detail', args=[report]))
+            return HttpResponseRedirect(reverse('report_detail', args=[report.id]))
 
     return render_to_response('reports/report_delete.html', {'report': report}, context_instance=RequestContext(request))
