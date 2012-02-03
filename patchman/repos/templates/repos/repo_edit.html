@@ -1,0 +1,40 @@
+{% extends "forms-side.html" %}
+
+{% load forms common %}
+
+{% block title %}Repositories {{ repo }} {% endblock %}
+
+{% block content_title %}Repository Information{% endblock %}
+
+{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url repo_list %}">Repositories</a> &rsaquo; {{ repo }} {% endblock %}
+
+{% block content %}
+
+<div class="module">
+    <h2>{{repo}} Details</h2>
+    <table>
+        <tr><td>Name</td><td> {{ repo.name }} </td></tr>
+        <tr><td>Type</td><td> {{ repo.get_repotype_display }} </td></tr>
+        <tr><td>Architecture</td><td> {{ repo.arch }} </td></tr>
+        <tr><td>Security</td><td> {% yes_no_img repo.security %} </td></tr>
+        <tr><td>Enabled</td><td> {% yes_no_img repo.enabled %} </td></tr>
+        <tr><td>Mirrors</td><td> {{ repo.mirror_set.count }} </td></tr>
+    </table>
+</div>
+
+{% if user.is_authenticated %}
+  {% if perms.is_admin %}
+    <div class="module">
+      <h2>Edit</h2>
+        <form action={{ request.path }} method="post">{% csrf_token %}
+          {% form_as_div edit_form %}
+          <br /><input type="submit" value="Save" />
+        </form>
+    </div>
+  {% else %}
+    <p>No permission to edit this Repository.</p>
+  {% endif %}
+{% endif %}
+
+{% endblock %}
+

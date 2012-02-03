@@ -16,6 +16,7 @@
 
 from django.forms import ModelForm, ModelMultipleChoiceField
 from django.contrib.admin.widgets import FilteredSelectMultiple
+
 from patchman.operatingsystems.models import OS, OSGroup
 from patchman.repos.models import Repository
 
