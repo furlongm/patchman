@@ -78,3 +78,6 @@ a.dark { color:#222222; }
 .secupdate { border-radius: 4px; display:block; background:#ff5555; }
 .update { border-radius: 4px; display:block; background:#ff9933; }
 .dialog { padding: 4px; }
+
+td.centered { text-align: center }
+

@@ -1,5 +1,4 @@
 {% extends "main.html" %}
-
 {% load common %}
 
 {% block title %}Repositories {{ repo }} {% endblock %}
@@ -9,6 +8,7 @@
 {% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url repo_list %}">Repositories</a> &rsaquo; {{ repo }} {% endblock %}
 
 {% block content %}
+
 
 <div class="module">
     <h2>{{repo}} Details</h2>
@@ -21,25 +21,36 @@
         <tr><td>Mirrors</td><td> {{ repo.mirror_set.count }} </td></tr>
     </table>
 </div>
-
 {% if user.is_authenticated %}
-    {% if perms.is_admin %}
-    <div class="module">
-        <h2>Actions</h2>
-        <a class="brick" href="delete">Delete this repository</a>
-        {% if repo.enabled %}
-          <a class="brick" href="disable">Disable this repository</a>
-        {% else %}
-          <a class="brick" href="enable">Enable this repository</a>
-        {% endif %}
-        {% if repo.security %}
-          <a class="brick" href="disablesec">Mark as Non-Security repo</a>
-        {% else %}
-          <a class="brick" href="enablesec">Mark as Security repo</a>
-        {% endif %}
-        <div class="clearbrick"></div>
-    </div>
+  {% if perms.is_admin %}
+  <div class="module">
+    <h2>Delete Confirmation</h2>
+    <div class="dialog">
+    Are you sure you want to mark this repository as
+    {% if enable %}
+      security?
+    {% else %}
+      non-security?
     {% endif %}
+      <form action="." method="POST">
+        {% csrf_token %}
+        {% if enable %}
+          <input name="enablesec" type="submit" value="Yes" />
+        {% else %}
+          <input name="disablesec" type="submit" value="Yes" />
+        {% endif %}
+        <input name="cancel" type="submit" value="Cancel" />
+      </form>
+    </div>
+  </div>
+  {% else %}
+  <div class="module">
+    <h2>Insufficient Permissions</h2>
+    <div class="brick">
+    You do not have sufficient permissions to modify this repository.
+    </div>
+  </div>
+  {% endif %}
 {% endif %}
 <div class="module">
   <h2>Mirrors</h2>
@@ -49,5 +60,6 @@
   <h2>Hosts with this Repository</h2>
   {% gen_table repo.host_set.all %}
 </div>
+
 {% endblock %}
 

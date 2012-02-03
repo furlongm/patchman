@@ -1,19 +1,26 @@
 {% load common %}
 {% load patchman %}
+<form>
 <table cellspacing="0">
-        <thead>
-                <tr>
-                   <th>Repo Name</th><th>Mirrors</th><th>Enabled</th><th>Security</th>
-                </tr>
-        </thead>
-    <tbody>
+  <thead>
+    <tr>
+      <th><input type="checkbox"></input></th>
+      <th>Repo Name</th>
+      <th>Mirrors</th>
+      <th>Enabled</th>
+      <th>Security</th>
+    </tr>
+  </thead>
+  <tbody>
     {% for repo in object_list %}
-                <tr class="{% cycle row1,row2 %}">
-                    <td><a href="{{ repo.get_absolute_url }}">{{ repo }}</a></td>
-                    <td>{{ repo.mirror_set.count }}</td>
-                    <td>{% yes_no_button_repo_en repo %}</td>
-                    <td>{% yes_no_img repo.security %}</td>                      
-                </tr>
+      <tr class="{% cycle row1,row2 %}">
+        <td><input type="checkbox" name="repo" value="{{ repo.id }}"></input></td>
+        <td><a href="{{ repo.get_absolute_url }}">{{ repo }}</a></td>
+        <td class="centered">{{ repo.mirror_set.count }}</td>
+        <td class="centered">{% yes_no_button_repo_en repo %}</td>
+        <td class="centered">{% yes_no_button_repo_sec repo %}</td>                      
+      </tr>
     {% endfor %}
-    </tbody>
+  </tbody>
 </table>
+</form>

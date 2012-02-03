@@ -139,4 +139,6 @@ def host_delete(request, hostname):
     except socket.gaierror:
         reversedns = 'None'
 
-    return render_to_response('hosts/host_delete.html', {'host': host, 'reversedns': reversedns}, context_instance=RequestContext(request))
+    reports = Report.objects.all().filter(host=hostname).order_by('-time')[:3]
+
+    return render_to_response('hosts/host_delete.html', {'host': host, 'reversedns': reversedns, 'reports': reports}, context_instance=RequestContext(request))

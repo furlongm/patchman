@@ -23,14 +23,15 @@
     <tr><td>Has Been Processed?</td><td> {{ report.processed }} </td></tr>
     </table>
 </div>
-<div class="module">
-    {% if user.is_authenticated %}
-        {% if perms.is_admin %}
-        <a class="brick" href="delete">Delete this report</a>
-        {% endif %}
-    {% endif %}
+{% if user.is_authenticated %}
+  {% if perms.is_admin %}
+  <div class="module">
+    <h2>Actions</h2>
+    <a class="brick" href="delete">Delete this report</a>
     <div class="clearbrick"></div>
-</div>
+  </div>
+  {% endif %}
+{% endif %}
 <div class="module">
   <h2>Repositories</h2>
   <table>
