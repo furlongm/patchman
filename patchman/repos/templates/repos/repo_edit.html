@@ -8,6 +8,10 @@
 
 {% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url repo_list %}">Repositories</a> &rsaquo; {{ repo }} {% endblock %}
 
+{% block extrahead %}
+{{ form.media }}
+{% endblock %}
+
 {% block content %}
 
 <div class="module">
