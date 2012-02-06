@@ -251,7 +251,7 @@ function reboot_required {
 
     # On debian-based clients, the update-notifier-common
     # package needs to be installed for this to work.
-    if [ -e /var/run/reboot_required ] ; then
+    if [ -e /var/run/reboot-required ] ; then
         reboot=True
     else
         reboot=ServerCheck
