@@ -51,7 +51,7 @@ def dashboard(request):
     update_hosts = Host.objects.filter(updates__security=False, updates__isnull=False).values('hostname').annotate(Count('hostname'))
     unused_repos = Repository.objects.filter(host__isnull=True, osgroup__isnull=True)
     unprocessed_reports = Report.objects.filter(processed=False)
-    nomirror_repos = Repository.objects.filter(mirror_set__isnull=True)
+    nomirror_repos = Repository.objects.filter(mirror__isnull=True)
 
     return render_to_response('dashboard/index.html',
         {'lonely_oses': lonely_oses, 'norepo_hosts': norepo_hosts,
