@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.forms import ModelForm, ModelMultipleChoiceField
+from django.forms import ModelForm, ModelMultipleChoiceField, TextInput
 from django.contrib.admin.widgets import FilteredSelectMultiple
 
 from patchman.repos.models import Repository, Mirror
@@ -22,10 +22,11 @@ from patchman.repos.models import Repository, Mirror
 
 class RepositoryForm(ModelForm):
 
-    mirrors = ModelMultipleChoiceField(queryset=Mirror.objects.select_related(), required=False, label=None, widget=FilteredSelectMultiple('Mirrors', False))
+    mirrors = ModelMultipleChoiceField(queryset=Mirror.objects.select_related(), required=False, label=None, widget=FilteredSelectMultiple('Mirrors', True))
 
-    #BookFormSet = inlineformset_factory(Repository, Mirror)
-    #formset = BookFormSet(instance=mirrors)
+    def __init__(self, *args, **kwargs):
+        super(RepositoryForm, self).__init__(*args, **kwargs)
+        self.fields['name'].widget = TextInput(attrs={'size': 100})
 
     class Meta:
         model = Repository
