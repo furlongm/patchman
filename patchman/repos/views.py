@@ -113,6 +113,8 @@ def repo_edit(request, repo_id):
                 mirror.save()
             messages.info(request, 'Saved changes to Repository %s' % repo)
             return HttpResponseRedirect(repo.get_absolute_url())
+        else:
+            repo = get_object_or_404(Repository, id=repo_id)
     else:
         edit_form = RepositoryForm(instance=repo)
         edit_form.initial['mirrors'] = repo.mirror_set.all()
