@@ -593,7 +593,7 @@ def remove_reports(host):
 
 def remove_empty_repos():
 
-    repos = Repository.objects.filter(mirror__isnull=True)
+    repos = Repository.objects.filter(mirror_set__isnull=True)
     reposlen = len(repos)
 
     create_pbar('Removing %s empty repos:' % reposlen, reposlen)

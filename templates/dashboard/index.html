@@ -162,11 +162,25 @@
   </div>
   {% endif %}
 {% endwith %}
+{% with nomirror_repos.count as count %}
+  {% if count > 0 %}
+  <div class="module">
+    <div class="resultslink" id="r12"><a href="#">{{ count }} Repositories have no mirrors</a></div>
+      <div class="results" id="r12">
+        {% for repo in unused_repos %}
+        <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
+        <a class="dark" href="{{ repo.get_absolute_url }}">{{ repo }}</a></div>
+        {% endfor %}
+        <div class="clearbrick"></div>
+      </div>
+  </div>
+  {% endif %}
+{% endwith %}
 {% with norepo_packages.count as count %}
   {% if count > 0 %}
   <div class="module">
-    <div class="resultslink" id="r12"><a href="#">{{ count }} Installed Packages are not from any repository</a></div>
-      <div class="results" id="r12">
+    <div class="resultslink" id="r13"><a href="#">{{ count }} Installed Packages are not from any repository</a></div>
+      <div class="results" id="r13">
         {% for package in norepo_packages %}
         <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
         <a class="dark" href="{{ package.get_absolute_url }}">{{ package }}</a></div>
@@ -179,8 +193,8 @@
 {% with orphaned_packages.count as count %}
   {% if count > 0 %}
   <div class="module">
-    <div class="resultslink" id="r13"><a href="#">{{ count }} Packages are orphaned (not from any repo, not installed anywhere)</a></div>
-      <div class="results" id="r13">
+    <div class="resultslink" id="r14"><a href="#">{{ count }} Packages are orphaned (not from any repo, not installed anywhere)</a></div>
+      <div class="results" id="r14">
         {% for package in orphaned_packages %}
         <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
         <a class="dark" href="{{ package.get_absolute_url }}">{{ package }}</a></div>
@@ -193,8 +207,8 @@
 {% with unprocessed_reports.count as count %}
   {% if count > 0 %}
   <div class="module">
-    <div class="resultslink" id="r14"><a href="#">{{ count }} Reports have not yet been processed</a></div>
-      <div class="results" id="r14">
+    <div class="resultslink" id="r15"><a href="#">{{ count }} Reports have not yet been processed</a></div>
+      <div class="results" id="r15">
         {% for report in unprocessed_reports %}
         <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
         <a class="dark" href="{{ report.get_absolute_url }}"> {{ report.id }} </a></div>

@@ -51,6 +51,7 @@ def dashboard(request):
     update_hosts = Host.objects.filter(updates__security=False, updates__isnull=False).values('hostname').annotate(Count('hostname'))
     unused_repos = Repository.objects.filter(host__isnull=True, osgroup__isnull=True)
     unprocessed_reports = Report.objects.filter(processed=False)
+    nomirror_repos = Repository.objects.filter(mirror_set__isnull=True)
 
     return render_to_response('dashboard/index.html',
         {'lonely_oses': lonely_oses, 'norepo_hosts': norepo_hosts,
@@ -59,6 +60,6 @@ def dashboard(request):
         'secupdate_hosts': secupdate_hosts, 'update_hosts': update_hosts,
         'norepo_osgroups': norepo_osgroups, 'unused_repos': unused_repos,
         'failed_mirrors': failed_mirrors, 'orphaned_packages': orphaned_packages,
-        'failed_repos': failed_repos,
+        'failed_repos': failed_repos, 'nomirror_repos': nomirror_repos,
         'reboot_hosts': reboot_hosts, 'unprocessed_reports': unprocessed_reports},
         context_instance=RequestContext(request))
