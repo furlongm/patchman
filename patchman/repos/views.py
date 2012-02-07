@@ -16,7 +16,7 @@
 
 from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.core.urlresolvers import reverse
@@ -107,10 +107,15 @@ def repo_edit(request, repo_id):
         if edit_form.is_valid():
             repo = edit_form.save()
             repo.save()
+            mirrors = edit_form.cleaned_data['mirrors']
+            for mirror in mirrors:
+                mirror.repo = repo
+                mirror.save()
             messages.info(request, 'Saved changes to Repository %s' % repo)
             return HttpResponseRedirect(repo.get_absolute_url())
     else:
         edit_form = RepositoryForm(instance=repo)
+        edit_form.initial['mirrors'] = repo.mirror_set.all()
 
     return render_to_response('repos/repo_edit.html', {'repo': repo, 'edit_form': edit_form}, context_instance=RequestContext(request))
 
@@ -140,8 +145,11 @@ def repo_enable(request, repo_id):
         if 'enable' in request.REQUEST:
             repo.enabled = True
             repo.save()
-            messages.info(request, 'Repository %s has been enabled.' % repo)
-            return HttpResponseRedirect(reverse('repo_list'))
+            if request.is_ajax():
+                return HttpResponse(status=204)
+            else:
+                messages.info(request, 'Repository %s has been enabled.' % repo)
+                return HttpResponseRedirect(reverse('repo_list'))
         elif 'cancel' in request.REQUEST:
             return HttpResponseRedirect(reverse('repo_detail', args=[repo_id]))
 
@@ -157,8 +165,11 @@ def repo_disable(request, repo_id):
         if 'disable' in request.REQUEST:
             repo.enabled = False
             repo.save()
-            messages.info(request, 'Repository %s has been disabled.' % repo)
-            return HttpResponseRedirect(reverse('repo_list'))
+            if request.is_ajax():
+                return HttpResponse(status=204)
+            else:
+                messages.info(request, 'Repository %s has been disabled.' % repo)
+                return HttpResponseRedirect(reverse('repo_list'))
         elif 'cancel' in request.REQUEST:
             return HttpResponseRedirect(reverse('repo_detail', args=[repo_id]))
 
@@ -174,8 +185,11 @@ def repo_enablesec(request, repo_id):
         if 'enablesec' in request.REQUEST:
             repo.security = True
             repo.save()
-            messages.info(request, 'Repository %s has been marked as a security repo.' % repo)
-            return HttpResponseRedirect(reverse('repo_list'))
+            if request.is_ajax():
+                return HttpResponse(status=204)
+            else:
+                messages.info(request, 'Repository %s has been marked as a security repo.' % repo)
+                return HttpResponseRedirect(reverse('repo_list'))
         elif 'cancel' in request.REQUEST:
             return HttpResponseRedirect(reverse('repo_detail', args=[repo_id]))
 
@@ -191,8 +205,11 @@ def repo_disablesec(request, repo_id):
         if 'disablesec' in request.REQUEST:
             repo.security = False
             repo.save()
-            messages.info(request, 'Repository %s has been marked as a non-security repo.' % repo)
-            return HttpResponseRedirect(reverse('repo_list'))
+            if request.is_ajax():
+                return HttpResponse(status=204)
+            else:
+                messages.info(request, 'Repository %s has been marked as a non-security repo.' % repo)
+                return HttpResponseRedirect(reverse('repo_list'))
         elif 'cancel' in request.REQUEST:
             return HttpResponseRedirect(reverse('repo_detail', args=[repo_id]))
 
