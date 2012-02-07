@@ -167,7 +167,7 @@
   <div class="module">
     <div class="resultslink" id="r12"><a href="#">{{ count }} Repositories have no mirrors</a></div>
       <div class="results" id="r12">
-        {% for repo in unused_repos %}
+        {% for repo in nomirror_repos %}
         <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
         <a class="dark" href="{{ repo.get_absolute_url }}">{{ repo }}</a></div>
         {% endfor %}
