@@ -8,6 +8,12 @@
 
 {% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url repo_list %}">Repositories</a> &rsaquo; {{ repo }} {% endblock %}
 
+{% block extrahead %}
+<script type="text/javascript" src="{% url admin:jsi18n %}"></script> 
+<script type="text/javascript" src="{{ MEDIA_URL }}js/core.js"></script>
+{{ edit_form.media }}
+{% endblock %}
+
 {% block content %}
 
 <div class="module">
