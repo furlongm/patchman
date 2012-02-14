@@ -86,7 +86,7 @@ def repo_list(request):
     filter_list.append(Filter(request, 'osgroup', OSGroup.objects.all()))
     filter_bar = FilterBar(request, filter_list)
 
-    return render_to_response('repos/repo_list.html', {'page': page, 'filter_bar': filter_bar}, context_instance=RequestContext(request))
+    return render_to_response('repos/repo_list.html', {'page': page, 'filter_bar': filter_bar, 'terms': terms}, context_instance=RequestContext(request))
 
 
 @login_required

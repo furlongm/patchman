@@ -57,7 +57,7 @@ def os_list(request):
     filter_list = []
     filter_bar = FilterBar(request, filter_list)
 
-    return render_to_response('operatingsystems/os_list.html', {'page': page, 'filter_bar': filter_bar}, context_instance=RequestContext(request))
+    return render_to_response('operatingsystems/os_list.html', {'page': page, 'filter_bar': filter_bar, 'terms': terms}, context_instance=RequestContext(request))
 
 
 @login_required
