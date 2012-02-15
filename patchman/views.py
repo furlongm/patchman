@@ -38,8 +38,6 @@ def dashboard(request):
         site = {'name': '', 'domainname': ''}
 
     stale_hosts = Host.objects.filter(lastreport__lt=(datetime.now() + timedelta(-14)))
-#    stale_mirrors = Mirror.objects.filter(timestamp__lt=(datetime.now() + timedelta(-14))).filter(mirrorlist=False)
-    stale_mirrors = 0
     norepo_hosts = Host.objects.filter(repos__isnull=True, os__osgroup__repos__isnull=True)
     norepo_osgroups = OSGroup.objects.filter(repos__isnull=True)
     norepo_packages = Package.objects.filter(mirror__isnull=True, oldpackage__isnull=True)
@@ -57,7 +55,6 @@ def dashboard(request):
     return render_to_response('dashboard/index.html',
         {'lonely_oses': lonely_oses, 'norepo_hosts': norepo_hosts,
         'stale_hosts': stale_hosts,
-        'stale_mirrors': stale_mirrors,
         'site': site, 'norepo_packages': norepo_packages,
         'secupdate_hosts': secupdate_hosts, 'update_hosts': update_hosts,
         'norepo_osgroups': norepo_osgroups, 'unused_repos': unused_repos,
