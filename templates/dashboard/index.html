@@ -106,20 +106,6 @@
   </div>
   {% endif %}
 {% endwith %}
-{% with stale_mirrors.count as count %}
-  {% if count > 0 %}
-  <div class="module">
-    <div class="resultslink" id="r8"><a href="#">{{ count }} Mirrors have not updated for at least 2 weeks</a></div>
-      <div class="results" id="r8">
-        {% for mirror in stale_mirrors %}
-        <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-        <a class="dark" href="{{ mirror.get_absolute_url }}">{{ mirror }}</a></div>
-        {% endfor %}
-        <div class="clearbrick"></div>
-      </div>
-  </div>
-  {% endif %}
-{% endwith %}
 {% with failed_mirrors.count as count %}
   {% if count > 0 %}
   <div class="module">
