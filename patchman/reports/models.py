@@ -108,11 +108,14 @@ class Report(models.Model):
             host.tags = self.tags
 # TODO: fix this to record the history of installed
 # packages on a host.
-            host.packages.clear()
-            host.repos.clear()
             from patchman.reports.utils import process_packages, process_repos
+            host.packages.clear()
             process_packages(report=self, host=host)
-            process_repos(report=self, host=host)
+            # only clear repos if we have a new list
+            # apt and yum plugins don't send repos
+            if self.repos:
+                host.repos.clear()
+                process_repos(report=self, host=host)
             if self.reboot == 'True':
                 host.reboot_required = True
             else:
