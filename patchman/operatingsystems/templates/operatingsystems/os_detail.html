@@ -17,20 +17,12 @@
 </div>
 <div class="module">
 <h2>Hosts where {{ os }} is installed</h2>
-    <table>
-        <tr><td>
-        {% for host in os.host_set.select_related %}
-            <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-            <a style="color:#222222" href="{{ host.get_absolute_url }}">{{ host }}</a></div>
-        {% endfor %}
-        <div class="clearbrick" />
-        </td></tr>
-    </table>
+    {% gen_table os.host_set.all %}
 </div>
-<div class="module">
-    <h2>Modify OS Group for {{ os.name }}</h2>
-    {% if user.is_authenticated %}
-        {% if perms.is_admin %}
+{% if user.is_authenticated %}
+    {% if perms.is_admin %}
+    <div class="module">
+        <h2>Actions</h2>
         <div>
         <form action={{ request.path }} method="post">{% csrf_token %}
         {{ link_form }}
@@ -39,8 +31,10 @@
             <input type="submit" value="Create" />
         </form>
         </div>
-        {% endif %}
+    </div>
     {% endif %}
+{% endif %}
+<div class="module">
     <h2>Operating Systems linked to OS Group {{ os.osgroup }}</h2>
         <table>
             <thead>
