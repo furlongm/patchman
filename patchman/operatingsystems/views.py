@@ -21,6 +21,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.db.models import Q
 from django.contrib import messages
+from django.core.urlresolvers import reverse
 
 from andsome.util.filterspecs import FilterBar
 
@@ -133,3 +134,19 @@ def osgroup_detail(request, osgroup_id):
     form = AddReposToOSGroupForm(instance=osgroup)
 
     return render_to_response('operatingsystems/osgroup_detail.html', {'osgroup': osgroup, 'form': form}, context_instance=RequestContext(request))
+
+
+@login_required
+def osgroup_delete(request, osgroup_id):
+
+    osgroup = get_object_or_404(OSGroup, id=osgroup_id)
+
+    if request.method == 'POST':
+        if 'delete' in request.REQUEST:
+            osgroup.delete()
+            messages.info(request, 'OS Group %s has been deleted' % osgroup)
+            return HttpResponseRedirect(reverse('os_list'))
+        elif 'cancel' in request.REQUEST:
+            return HttpResponseRedirect(reverse('osgroup_detail', args=[osgroup_id]))
+
+    return render_to_response('operatingsystems/osgroup_delete.html', {'osgroup': osgroup}, context_instance=RequestContext(request))

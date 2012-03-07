@@ -71,7 +71,7 @@ a:link.active, a:visited.active { color: #666; text-decoration:none; }
 
 .barwidth { padding-left: 0px; padding-right: 0px; margin: 0px; width: 100px; background-color: white; }
 
-.resultslink { font-style: bold, font-size: 22px; padding: 4px 4px 4px 4px;}
+.resultslink { font-size: 12px; padding: 4px 4px 4px 4px;}
 .brick { border-radius:4px; margin:2px 2px; padding:4px 4px; display:block; height:15px; float:left; border-style:solid; border-width:thin; }
 .clearbrick { clear:both; }
 a.dark { color:#222222; }
