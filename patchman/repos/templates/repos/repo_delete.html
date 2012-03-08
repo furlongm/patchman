@@ -49,7 +49,7 @@
 </div>
 <div class="module">
   <h2>Hosts with this Repository</h2>
-  {% gen_table repo.host_set.all %}
+  {% gen_table repo.host_set.all.distinct %}
 </div>
 
 {% endblock %}
