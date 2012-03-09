@@ -19,6 +19,7 @@ from django.conf.urls.defaults import patterns, url
 urlpatterns = patterns('patchman.repos.views',
 
     url(r'^$', 'repo_list', name='repo_list'),
+    url(r'^mirrors/$', 'mirror_list', name='mirror_list'),
     url(r'^(?P<repo_id>[-.\w]+)/$', 'repo_detail', name='repo_detail'),
     url(r'^(?P<repo_id>[-.\w]+)/delete/$', 'repo_delete', name='repo_delete'),
     url(r'^(?P<repo_id>[-.\w]+)/enable/$', 'repo_enable', name='repo_enable'),
