@@ -1,0 +1,58 @@
+
+{% extends "main.html" %}
+{% load common %}
+{% block title %}Operating System {{ os }} {% endblock %}
+
+{% block content_title %}OS Information{% endblock %}
+
+{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url os_list %}">Operating Systems</a> &rsaquo; {{ os }} {% endblock %}
+
+{% block content %}
+<div class="module">
+<h2>{{ os }} Details</h2>
+<table>
+<tr><td>Name</td><td> {{ os.name }} </td></tr>
+<tr><td>OS Group</td><td>{% if os.osgroup != None %}<a href="{{ os.osgroup.get_absolute_url }}"> {{ os.osgroup }} </a>{% else %}No OS Group{% endif %}</td></tr>
+</table>
+</div>
+<div class="module">
+<h2>Hosts where {{ os }} is installed</h2>
+    {% gen_table os.host_set.all %}
+</div>
+{% if user.is_authenticated %}
+    {% if perms.is_admin %}
+    <div class="module">
+        <h2>Actions</h2>
+        <div>
+        <form action={{ request.path }} method="post">{% csrf_token %}
+        {{ link_form }}
+            <input type="submit" value="Link" />
+        {{ create_form }}
+            <input type="submit" value="Create" />
+        </form>
+        </div>
+    </div>
+    {% endif %}
+{% endif %}
+<div class="module">
+    <h2>Operating Systems linked to OS Group {{ os.osgroup }}</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>OS Name</th>
+                </tr>
+            </thead>
+            {% for repo in os.osgroup.os_set.select_related %}
+            <tr class="{% cycle row1,row2 %}">
+                 <td><a href="{{ repo.get_absolute_url }}">{{ repo }}</a></td>
+            </tr>
+            {% endfor %}
+        </table>
+</div>
+<div class="module">
+<h2>{{ os }} Repositories</h2>
+{% gen_table os.osgroup.repos.select_related %}
+</div>
+
+{% endblock %}
+
