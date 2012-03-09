@@ -15,9 +15,9 @@ server every time changes are made to packages installed on a system. There are
 plans for a module for patchman<->puppet integration to allow remote
 installation of packages.
 
-The current code is available through gitorious:
+The current code is available on github:
 
-https://code.vpac.org/gitorious/patchman
+https://github.com/VPAC/patchman
 
 The current dependencies are:
 
