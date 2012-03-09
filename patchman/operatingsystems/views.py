@@ -55,10 +55,7 @@ def os_list(request):
     except (EmptyPage, InvalidPage):
         page = p.page(p.num_pages)
 
-    filter_list = []
-    filter_bar = FilterBar(request, filter_list)
-
-    return render_to_response('operatingsystems/os_list.html', {'page': page, 'filter_bar': filter_bar, 'terms': terms}, context_instance=RequestContext(request))
+    return render_to_response('operatingsystems/os_list.html', {'page': page, 'terms': terms}, context_instance=RequestContext(request))
 
 
 @login_required
