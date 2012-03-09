@@ -21,11 +21,12 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.core.urlresolvers import reverse
 from django.db.models import Q
+#from django.db.models import Count
 from django.contrib import messages
 
 from andsome.util.filterspecs import Filter, FilterBar
 
-from patchman.repos.models import Repository
+from patchman.repos.models import Repository, Mirror
 from patchman.operatingsystems.models import OSGroup
 from patchman.arch.models import MachineArchitecture
 from patchman.repos.forms import RepositoryForm
@@ -87,6 +88,44 @@ def repo_list(request):
     filter_bar = FilterBar(request, filter_list)
 
     return render_to_response('repos/repo_list.html', {'page': page, 'filter_bar': filter_bar, 'terms': terms}, context_instance=RequestContext(request))
+
+
+@login_required
+def mirror_list(request):
+
+    mirrors = Mirror.objects.select_related().order_by('file_checksum')
+
+    if 'checksum' in request.REQUEST:
+        mirrors = mirrors.filter(file_checksum=request.GET['checksum'])
+
+    # this is a hack but works, because a host with 0 packages has no packages with package_id > 0
+    mirrors = mirrors.filter(packages__gt=0)
+    # this is the correct way to do it, but the SQL takes way longer
+#    mirrors = mirrors.annotate(num_packages=Count('packages')).filter(num_packages__gt=0)
+
+    if 'search' in request.REQUEST:
+        terms = request.REQUEST['search'].lower()
+        query = Q()
+        for term in terms.split(' '):
+            q = Q(file_checksum__icontains=term)
+            query = query & q
+        mirrors = mirrors.filter(query)
+    else:
+        terms = ''
+    mirrors = mirrors.distinct()
+    try:
+        page_no = int(request.GET.get('page', 1))
+    except ValueError:
+        page_no = 1
+
+    p = Paginator(mirrors, 50)
+
+    try:
+        page = p.page(page_no)
+    except (EmptyPage, InvalidPage):
+        page = p.page(p.num_pages)
+
+    return render_to_response('repos/mirror_list.html', {'page': page, 'terms': terms}, context_instance=RequestContext(request))
 
 
 @login_required
