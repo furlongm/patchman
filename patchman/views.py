@@ -24,7 +24,7 @@ from datetime import datetime, timedelta
 
 from patchman.hosts.models import Host
 from patchman.operatingsystems.models import OS, OSGroup
-from patchman.repos.models import Repository
+from patchman.repos.models import Repository, Mirror
 from patchman.packages.models import Package
 from patchman.reports.models import Report
 
@@ -51,11 +51,31 @@ def dashboard(request):
     unused_repos = Repository.objects.filter(host__isnull=True, osgroup__isnull=True)
     unprocessed_reports = Report.objects.filter(processed=False)
     nomirror_repos = Repository.objects.filter(mirror__isnull=True)
+    nohost_repos = Repository.objects.filter(host__isnull=True)
+
+    checksums = dict()
+    possible_mirrors = dict()
+
+    for csvalue in Mirror.objects.all().values('file_checksum').distinct():
+        checksum = csvalue['file_checksum']
+        if checksum != None:
+            for mirror in Mirror.objects.filter(file_checksum=checksum):
+                if mirror.packages.count() > 0:
+                    if not checksum in checksums:
+                        checksums[checksum] = []
+                    checksums[checksum].append(mirror)
+    
+    for checksum in checksums:
+        first_mirror = checksums[checksum][0]
+        for mirror in checksums[checksum]:
+            if mirror.repo != first_mirror.repo:
+                possible_mirrors[checksum] = checksums[checksum]
+                continue
 
     return render_to_response('dashboard/index.html',
         {'lonely_oses': lonely_oses, 'norepo_hosts': norepo_hosts,
-        'stale_hosts': stale_hosts,
-        'site': site, 'norepo_packages': norepo_packages,
+        'stale_hosts': stale_hosts, 'possible_mirrors': possible_mirrors,
+        'site': site, 'norepo_packages': norepo_packages, 'nohost_repos': nohost_repos,
         'secupdate_hosts': secupdate_hosts, 'update_hosts': update_hosts,
         'norepo_osgroups': norepo_osgroups, 'unused_repos': unused_repos,
         'failed_mirrors': failed_mirrors, 'orphaned_packages': orphaned_packages,

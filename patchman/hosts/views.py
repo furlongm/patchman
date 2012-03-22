@@ -40,31 +40,31 @@ def host_list(request):
     hosts = Host.objects.select_related()
 
     if 'domain' in request.REQUEST:
-        hosts = hosts.filter(domain=int(request.GET['domain']))
+        hosts = hosts.filter(domain=int(request.REQUEST['domain']))
 
     if 'package_id' in request.REQUEST:
-        hosts = hosts.filter(packages=int(request.GET['package_id']))
+        hosts = hosts.filter(packages=int(request.REQUEST['package_id']))
 
     if 'package' in request.REQUEST:
-        hosts = hosts.filter(packages__name__name=request.GET['package'])
+        hosts = hosts.filter(packages__name__name=request.REQUEST['package'])
 
     if 'repo' in request.REQUEST:
-        hosts = hosts.filter(repos=int(request.GET['repo']))
+        hosts = hosts.filter(repos=int(request.REQUEST['repo']))
 
     if 'arch' in request.REQUEST:
-        hosts = hosts.filter(arch=int(request.GET['arch']))
+        hosts = hosts.filter(arch=int(request.REQUEST['arch']))
 
     if 'os' in request.REQUEST:
-        hosts = hosts.filter(os=int(request.GET['os']))
+        hosts = hosts.filter(os=int(request.REQUEST['os']))
 
     if 'osgroup' in request.REQUEST:
-        hosts = hosts.filter(os__osgroup=int(request.GET['osgroup']))
+        hosts = hosts.filter(os__osgroup=int(request.REQUEST['osgroup']))
 
     if 'tag' in request.REQUEST:
-        hosts = hosts.filter(tags=request.GET['tag'])
+        hosts = hosts.filter(tags=request.REQUEST['tag'])
 
     if 'reboot_required' in request.REQUEST:
-        reboot_required = request.GET['reboot_required'] == 'True'
+        reboot_required = request.REQUEST['reboot_required'] == 'True'
         hosts = hosts.filter(reboot_required=reboot_required)
 
     if 'search' in request.REQUEST:

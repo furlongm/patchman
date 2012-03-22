@@ -1,0 +1,37 @@
+{% extends "repos/mirror_list.html" %}
+
+{% load common paginator %}
+
+{% block content %}
+<div class="module  {% if filter_bar %}filtered{% endif %}" id="changelist">
+
+  {% if filter_bar %}
+  <div id="changelist-filter">
+    <h2>Filter</h2>
+    {{ filter_bar|safe }}
+  </div>
+  {% endif %}
+  {% gen_table page.object_list repos/mirror_edit_repo.html %}
+  {% pagination page request %}
+
+{% if user.is_authenticated %}
+    {% if perms.is_admin %}
+    <br /><br />
+    <div class="module">
+        <h2>Actions</h2>
+        <div>
+        <form action={{ request.path }} method="post">{% csrf_token %}
+            <input type="hidden" name="checksum" value="{{ checksum }}" />
+        {{ link_form }}
+            <input type="submit" value="Link" /><br />
+        {{ create_form }}
+            <input type="submit" value="Create" />
+        </form>
+        </div>
+    </div>
+    {% endif %}
+{% endif %}
+
+</div>
+
+{% endblock %}

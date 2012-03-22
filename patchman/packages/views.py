@@ -32,10 +32,10 @@ def package_list(request):
     packages = PackageName.objects.select_related()
 
     if 'arch' in request.REQUEST:
-        packages = packages.filter(package__arch=int(request.GET['arch'])).distinct()
+        packages = packages.filter(package__arch=int(request.REQUEST['arch'])).distinct()
 
     if 'packagetype' in request.REQUEST:
-        packages = packages.filter(package__packagetype=request.GET['packagetype']).distinct()
+        packages = packages.filter(package__packagetype=request.REQUEST['packagetype']).distinct()
 
     if 'search' in request.REQUEST:
         terms = request.REQUEST['search'].lower()

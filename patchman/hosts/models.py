@@ -156,3 +156,6 @@ class HostRepo(models.Model):
     host = models.ForeignKey(Host)
     repo = models.ForeignKey(Repository)
     enabled = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = ('host', 'repo')

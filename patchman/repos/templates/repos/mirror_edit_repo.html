@@ -1,0 +1,32 @@
+{% load common %}
+
+<table cellspacing="0">
+  <thead>
+    <tr>
+      <th>Repo</th>
+      <th>URL</th>
+      <th>Packages</th>
+      <th>Enabled</th>
+      <th>Refresh</th>
+      <th>Mirrorlist</th>
+      <th>Last access OK</th>
+      <th>Timestamp</th>
+      <th>Checksum</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for mirror in object_list %}
+      <tr class="{% cycle row1,row2 %}">
+      <td><a href="{{ mirror.repo.get_absolute_url }}">{{ mirror.repo }}</a></td>
+      <td><a href="{{ mirror.url }}">{{ mirror.url }}</a></td>
+      <td class="centered">{{ mirror.packages.count }}</td>
+      <td class="centered">{% yes_no_img mirror.enabled %}</td>
+      <td class="centered">{% yes_no_img mirror.refresh %}</td>
+      <td class="centered">{% yes_no_img mirror.mirrorlist %}</td>
+      <td class="centered">{% yes_no_img mirror.last_access_ok %}</td>
+      <td>{{ mirror.timestamp }}</td>
+      <td>{{ mirror.file_checksum }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
