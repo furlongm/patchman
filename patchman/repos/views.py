@@ -21,15 +21,16 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.core.urlresolvers import reverse
 from django.db.models import Q
-#from django.db.models import Count
 from django.contrib import messages
+from django.db import IntegrityError
 
 from andsome.util.filterspecs import Filter, FilterBar
 
+from patchman.hosts.models import HostRepo
 from patchman.repos.models import Repository, Mirror
 from patchman.operatingsystems.models import OSGroup
 from patchman.arch.models import MachineArchitecture
-from patchman.repos.forms import RepositoryForm
+from patchman.repos.forms import RepositoryForm, LinkRepoForm, CreateRepoForm
 
 
 @login_required
@@ -38,24 +39,24 @@ def repo_list(request):
     repos = Repository.objects.select_related().order_by('name')
 
     if 'repotype' in request.REQUEST:
-        repos = repos.filter(repotype=request.GET['repotype'])
+        repos = repos.filter(repotype=request.REQUEST['repotype'])
 
     if 'arch' in request.REQUEST:
-        repos = repos.filter(arch=request.GET['arch'])
+        repos = repos.filter(arch=request.REQUEST['arch'])
 
     if 'osgroup' in request.REQUEST:
-        repos = repos.filter(osgroup=request.GET['osgroup'])
+        repos = repos.filter(osgroup=request.REQUEST['osgroup'])
 
     if 'security' in request.REQUEST:
-        security = request.GET['security'] == 'True'
+        security = request.REQUEST['security'] == 'True'
         repos = repos.filter(security=security)
 
     if 'enabled' in request.REQUEST:
-        enabled = request.GET['enabled'] == 'True'
+        enabled = request.REQUEST['enabled'] == 'True'
         repos = repos.filter(enabled=enabled)
 
     if 'package_id' in request.REQUEST:
-        repos = repos.filter(mirror__packages=int(request.GET['package_id']))
+        repos = repos.filter(mirror__packages=int(request.REQUEST['package_id']))
 
     if 'search' in request.REQUEST:
         terms = request.REQUEST['search'].lower()
@@ -96,23 +97,31 @@ def mirror_list(request):
     mirrors = Mirror.objects.select_related().order_by('file_checksum')
 
     if 'checksum' in request.REQUEST:
-        mirrors = mirrors.filter(file_checksum=request.GET['checksum'])
-
-    # this is a hack but works, because a host with 0 packages has no packages with package_id > 0
-    mirrors = mirrors.filter(packages__gt=0)
-    # this is the correct way to do it, but the SQL takes way longer
-#    mirrors = mirrors.annotate(num_packages=Count('packages')).filter(num_packages__gt=0)
-
-    if 'search' in request.REQUEST:
-        terms = request.REQUEST['search'].lower()
-        query = Q()
-        for term in terms.split(' '):
-            q = Q(file_checksum__icontains=term)
-            query = query & q
-        mirrors = mirrors.filter(query)
+        checksum = request.REQUEST['checksum']
+        mirrors = mirrors.filter(file_checksum=checksum)
     else:
-        terms = ''
+        # only show mirrors with more than 0 packages
+        # this is a hack but works, because a host with 0 packages has no packages with package_id > 0
+        mirrors = mirrors.filter(packages__gt=0)
+        # this is the correct way to do it, but the SQL takes way longer
+        #mirrors = mirrors.annotate(num_packages=Count('packages')).filter(num_packages__gt=0)
+
     mirrors = mirrors.distinct()
+
+    def move_mirrors(repo):
+        for mirror in mirrors:
+            oldrepo = mirror.repo
+            for hostrepo in HostRepo.objects.filter(repo=oldrepo):
+                try:
+                    hostrepo.repo = repo
+                    hostrepo.save()
+                except IntegrityError:
+                    hostrepo.delete()
+            mirror.repo = repo
+            mirror.save()
+            if oldrepo.mirror_set.count() == 0:
+                oldrepo.delete()
+
     try:
         page_no = int(request.GET.get('page', 1))
     except ValueError:
@@ -125,7 +134,36 @@ def mirror_list(request):
     except (EmptyPage, InvalidPage):
         page = p.page(p.num_pages)
 
-    return render_to_response('repos/mirror_list.html', {'page': page, 'terms': terms}, context_instance=RequestContext(request))
+    if request.method == 'POST':
+        arch = mirrors[0].repo.arch
+        repotype = mirrors[0].repo.repotype
+        enabled = mirrors[0].repo.enabled
+        security = mirrors[0].repo.security
+        create_form = CreateRepoForm(request.POST, prefix='create', arch=arch, repotype=repotype)
+        if create_form.is_valid():
+            repo = create_form.save(commit=False)
+            repo.arch = create_form.arch
+            repo.repotype = create_form.repotype
+            repo.enabled = enabled
+            repo.security = security
+            repo.save()
+            move_mirrors(repo)
+            messages.info(request, 'Mirrors linked to new Repository %s' % repo)
+            return HttpResponseRedirect(repo.get_absolute_url())
+
+        link_form = LinkRepoForm(request.POST, prefix='link')
+        if link_form.is_valid():
+            repo = link_form.cleaned_data['name']
+            move_mirrors(repo)
+            messages.info(request, 'Mirrors linked to Repository %s' % repo)
+            return HttpResponseRedirect(repo.get_absolute_url())
+    else:
+        if 'checksum' in request.REQUEST:
+            link_form = LinkRepoForm(prefix='link')
+            create_form = CreateRepoForm(prefix='create')
+            return render_to_response('repos/mirror_with_repo_list.html', {'page': page, 'link_form': link_form, 'create_form': create_form, 'checksum': checksum}, context_instance=RequestContext(request))
+
+    return render_to_response('repos/mirror_list.html', {'page': page}, context_instance=RequestContext(request))
 
 
 @login_required
@@ -190,7 +228,7 @@ def repo_enable(request, repo_id):
                 return HttpResponse(status=204)
             else:
                 messages.info(request, 'Repository %s has been enabled.' % repo)
-                return HttpResponseRedirect(reverse('repo_list'))
+                return HttpResponseRedirect(reverse('repo_detail', args=[repo_id]))
         elif 'cancel' in request.REQUEST:
             return HttpResponseRedirect(reverse('repo_detail', args=[repo_id]))
 
@@ -210,7 +248,7 @@ def repo_disable(request, repo_id):
                 return HttpResponse(status=204)
             else:
                 messages.info(request, 'Repository %s has been disabled.' % repo)
-                return HttpResponseRedirect(reverse('repo_list'))
+                return HttpResponseRedirect(reverse('repo_detail', args=[repo_id]))
         elif 'cancel' in request.REQUEST:
             return HttpResponseRedirect(reverse('repo_detail', args=[repo_id]))
 
@@ -230,7 +268,7 @@ def repo_enablesec(request, repo_id):
                 return HttpResponse(status=204)
             else:
                 messages.info(request, 'Repository %s has been marked as a security repo.' % repo)
-                return HttpResponseRedirect(reverse('repo_list'))
+                return HttpResponseRedirect(reverse('repo_detail', args=[repo_id]))
         elif 'cancel' in request.REQUEST:
             return HttpResponseRedirect(reverse('repo_detail', args=[repo_id]))
 
@@ -250,7 +288,7 @@ def repo_disablesec(request, repo_id):
                 return HttpResponse(status=204)
             else:
                 messages.info(request, 'Repository %s has been marked as a non-security repo.' % repo)
-                return HttpResponseRedirect(reverse('repo_list'))
+                return HttpResponseRedirect(reverse('repo_detail', args=[repo_id]))
         elif 'cancel' in request.REQUEST:
             return HttpResponseRedirect(reverse('repo_detail', args=[repo_id]))
 

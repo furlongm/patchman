@@ -109,8 +109,8 @@
 {% with failed_mirrors.count as count %}
   {% if count > 0 %}
   <div class="module">
-    <div class="resultslink" id="r9"><a href="#">{{ count }} Repositories have some mirrors that are failing</a></div>
-      <div class="results" id="r9">
+    <div class="resultslink" id="r8"><a href="#">{{ count }} Repositories have some mirrors that are failing</a></div>
+      <div class="results" id="r8">
         {% for mirror in failed_mirrors %}
         <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
         <a class="dark" href="{{ mirror.get_absolute_url }}">{{ mirror }}</a></div>
@@ -123,8 +123,8 @@
 {% with failed_repos.count as count %}
   {% if count > 0 %}
   <div class="module">
-    <div class="resultslink" id="r10"><a href="#">{{ count }} Repositories where all mirrors are failing</a></div>
-      <div class="results" id="r10">
+    <div class="resultslink" id="r9"><a href="#">{{ count }} Repositories where all mirrors are failing</a></div>
+      <div class="results" id="r9">
         {% for repo in failed_repos %}
         <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
         <a class="dark" href="{{ repo.get_absolute_url }}">{{ repo }}</a></div>
@@ -137,8 +137,8 @@
 {% with unused_repos.count as count %}
   {% if count > 0 %}
   <div class="module">
-    <div class="resultslink" id="r11"><a href="#">{{ count }} Repositories are unused</a></div>
-      <div class="results" id="r11">
+    <div class="resultslink" id="r10"><a href="#">{{ count }} Repositories are unused</a></div>
+      <div class="results" id="r10">
         {% for repo in unused_repos %}
         <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
         <a class="dark" href="{{ repo.get_absolute_url }}">{{ repo }}</a></div>
@@ -151,8 +151,8 @@
 {% with nomirror_repos.count as count %}
   {% if count > 0 %}
   <div class="module">
-    <div class="resultslink" id="r12"><a href="#">{{ count }} Repositories have no mirrors</a></div>
-      <div class="results" id="r12">
+    <div class="resultslink" id="r11"><a href="#">{{ count }} Repositories have no mirrors</a></div>
+      <div class="results" id="r11">
         {% for repo in nomirror_repos %}
         <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
         <a class="dark" href="{{ repo.get_absolute_url }}">{{ repo }}</a></div>
@@ -162,16 +162,44 @@
   </div>
   {% endif %}
 {% endwith %}
+{% with nohost_repos.count as count %}
+  {% if count > 0 %}
+  <div class="module">
+    <div class="resultslink" id="r12"><a href="#">{{ count }} Repositories are not used by any hosts</a></div>
+      <div class="results" id="r12">
+        {% for repo in nohost_repos %}
+        <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
+        <a class="dark" href="{{ repo.get_absolute_url }}">{{ repo }}</a></div>
+        {% endfor %}
+        <div class="clearbrick"></div>
+      </div>
+  </div>
+  {% endif %}
+{% endwith %}
+{% with possible_mirrors|length as count %}
+  {% if count > 0 %}
+  <div class="module">
+    <div class="resultslink" id="r13"><a href="#">{{ count }} Sets of mirrors have the same checksum and are not linked</a></div>
+      <div class="results" id="r13">
+        {% for checksum in possible_mirrors %}
+        <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
+        <a class="dark" href="repos/mirrors/?checksum={{ checksum }}">{{ checksum }}</a></div>
+        {% endfor %}
+        <div class="clearbrick"></div>
+      </div>
+  </div>
+  {% endif %}
+{% endwith %}
 {% with norepo_packages.count as count %}
   {% if count > 0 %}
   <div class="module">
-    <div class="resultslink" id="r13"><a href="#">{{ count }} Installed Packages are not from any repository</a></div>
-      <div class="results" id="r13">
+    <div class="resultslink" id="r14"><a href="#">{{ count }} Installed Packages are not from any repository</a></div>
+      <div class="results" id="r14">
         {% for package in norepo_packages %}
         <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
         <a class="dark" href="{{ package.get_absolute_url }}">{{ package }}</a></div>
         {% endfor %}
-        <div class="clearbrick">&nbsp;</div>
+        <div class="clearbrick"></div>
      </div>
   </div>
   {% endif %}
@@ -179,13 +207,13 @@
 {% with orphaned_packages.count as count %}
   {% if count > 0 %}
   <div class="module">
-    <div class="resultslink" id="r14"><a href="#">{{ count }} Packages are orphaned (not from any repo, not installed anywhere)</a></div>
-      <div class="results" id="r14">
+    <div class="resultslink" id="r15"><a href="#">{{ count }} Packages are orphaned (not from any repo, not installed anywhere)</a></div>
+      <div class="results" id="r15">
         {% for package in orphaned_packages %}
         <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
         <a class="dark" href="{{ package.get_absolute_url }}">{{ package }}</a></div>
         {% endfor %}
-        <div class="clearbrick">&nbsp;</div>
+        <div class="clearbrick"></div>
      </div>
   </div>
   {% endif %}
@@ -193,13 +221,13 @@
 {% with unprocessed_reports.count as count %}
   {% if count > 0 %}
   <div class="module">
-    <div class="resultslink" id="r15"><a href="#">{{ count }} Reports have not yet been processed</a></div>
-      <div class="results" id="r15">
+    <div class="resultslink" id="r16"><a href="#">{{ count }} Reports have not yet been processed</a></div>
+      <div class="results" id="r16">
         {% for report in unprocessed_reports %}
         <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
         <a class="dark" href="{{ report.get_absolute_url }}"> {{ report.id }} </a></div>
         {% endfor %}
-        <div class="clearbrick">&nbsp;</div>
+        <div class="clearbrick"></div>
      </div>
   </div>
   {% endif %}

@@ -32,7 +32,7 @@ class Repository(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
     arch = models.ForeignKey(MachineArchitecture)
-    security = models.BooleanField()
+    security = models.BooleanField(default=False)
     repotype = models.CharField(max_length=1, choices=REPO_TYPES)
     enabled = models.BooleanField(default=False)
 

@@ -71,10 +71,10 @@ def report_list(request):
     reports = Report.objects.select_related()
 
     if 'host_id' in request.REQUEST:
-        reports = reports.filter(hostname=int(request.GET['host_id']))
+        reports = reports.filter(hostname=int(request.REQUEST['host_id']))
 
     if 'processed' in request.REQUEST:
-        processed = request.GET['processed'] == 'True'
+        processed = request.REQUEST['processed'] == 'True'
         reports = reports.filter(processed=processed)
 
     if 'search' in request.REQUEST:
