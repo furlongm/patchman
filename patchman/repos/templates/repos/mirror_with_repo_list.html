@@ -16,19 +16,21 @@
 
 {% if user.is_authenticated %}
     {% if perms.is_admin %}
-    <br /><br />
-    <div class="module">
-        <h2>Actions</h2>
-        <div>
-        <form action={{ request.path }} method="post">{% csrf_token %}
-            <input type="hidden" name="checksum" value="{{ checksum }}" />
-        {{ link_form }}
-            <input type="submit" value="Link" /><br />
-        {{ create_form }}
-            <input type="submit" value="Create" />
-        </form>
+        {% if link_form and create_form %}
+        <br /><br />
+        <div class="module">
+            <h2>Actions</h2>
+                <div>
+                <form action={{ request.path }} method="post">{% csrf_token %}
+                    <input type="hidden" name="checksum" value="{{ checksum }}" />
+                        {{ link_form }}
+                    <input type="submit" value="Link" /><br />
+                        {{ create_form }}
+                    <input type="submit" value="Create" />
+                </form>
+            </div>
         </div>
-    </div>
+        {% endif %}
     {% endif %}
 {% endif %}
 
