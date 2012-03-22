@@ -108,6 +108,16 @@ def mirror_list(request):
 
     mirrors = mirrors.distinct()
 
+    def pre_reqs(arch, repotype):
+        for mirror in mirrors:
+            if mirror.repo.arch != arch:
+                messages.info(request, 'Not all mirror architectures are the same, cannot link to or create repos.')
+                return render_to_response('repos/mirror_with_repo_list.html', {'page': page, 'checksum': checksum}, context_instance=RequestContext(request))
+            if mirror.repo.repotype != repotype:
+                messages.info(request, 'Not all mirror repotypes are the same, cannot link to or create repos.')
+                return render_to_response('repos/mirror_with_repo_list.html', {'page': page, 'checksum': checksum}, context_instance=RequestContext(request))
+        return True
+
     def move_mirrors(repo):
         for mirror in mirrors:
             oldrepo = mirror.repo
@@ -137,8 +147,10 @@ def mirror_list(request):
     if request.method == 'POST':
         arch = mirrors[0].repo.arch
         repotype = mirrors[0].repo.repotype
+
         enabled = mirrors[0].repo.enabled
         security = mirrors[0].repo.security
+
         create_form = CreateRepoForm(request.POST, prefix='create', arch=arch, repotype=repotype)
         if create_form.is_valid():
             repo = create_form.save(commit=False)
@@ -157,11 +169,18 @@ def mirror_list(request):
             move_mirrors(repo)
             messages.info(request, 'Mirrors linked to Repository %s' % repo)
             return HttpResponseRedirect(repo.get_absolute_url())
+
     else:
         if 'checksum' in request.REQUEST:
-            link_form = LinkRepoForm(prefix='link')
-            create_form = CreateRepoForm(prefix='create')
-            return render_to_response('repos/mirror_with_repo_list.html', {'page': page, 'link_form': link_form, 'create_form': create_form, 'checksum': checksum}, context_instance=RequestContext(request))
+            arch = mirrors[0].repo.arch
+            repotype = mirrors[0].repo.repotype
+            prereqs = pre_reqs(arch, repotype)
+            if prereqs != True:
+                return prereqs
+            else:
+                link_form = LinkRepoForm(prefix='link')
+                create_form = CreateRepoForm(prefix='create')
+                return render_to_response('repos/mirror_with_repo_list.html', {'page': page, 'link_form': link_form, 'create_form': create_form, 'checksum': checksum}, context_instance=RequestContext(request))
 
     return render_to_response('repos/mirror_list.html', {'page': page}, context_instance=RequestContext(request))
 

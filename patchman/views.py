@@ -68,7 +68,7 @@ def dashboard(request):
     for checksum in checksums:
         first_mirror = checksums[checksum][0]
         for mirror in checksums[checksum]:
-            if mirror.repo != first_mirror.repo:
+            if mirror.repo != first_mirror.repo and mirror.repo.arch == first_mirror.repo.arch and mirror.repo.repotype == first_mirror.repo.repotype:
                 possible_mirrors[checksum] = checksums[checksum]
                 continue
 
