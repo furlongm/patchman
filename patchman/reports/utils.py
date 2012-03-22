@@ -31,7 +31,7 @@ def process_repos(report, host):
         for i, repo in enumerate(repos):
             repository = process_repo(report, repo)
             if repository:
-                hostrepo = HostRepo.objects.create(host=host, repo=repository, enabled=True)
+                hostrepo, c = HostRepo.objects.get_or_create(host=host, repo=repository, enabled=True)
                 hostrepo.save()
             progress_update.send(sender=report, index=i + 1)
 
