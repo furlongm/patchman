@@ -198,9 +198,18 @@ function get_repos {
         if [ ${verbose} -eq 1 ] ; then
             echo 'Finding yum repos...'
         fi
+        releasever=`rpm -q --qf "%{version}\n" --whatprovides redhat-release`
+        priorities=`sed -n -e "/^name/h; /priority *=/{ G; s/\n/ /; s/ity *= *\(.*\)/ity=\1/ ; s/\\$releasever/${releasever}/ ; s/name=\(.*\)/'\1\'/ ; p }" /etc/yum.repos.d/*.repo`
         # replace this with a dedicated awk or simple python script?
         for i in $(yum repolist enabled --verbose 2>/dev/null | awk '{ if ($1=="Repo-name") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'" ${host_arch}'"' "} if ($1=="Repo-baseurl" || $1=="Repo-baseurl:" || $1=="Repo-mirrors") { url=1; comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else { if (url==1) { if ($1==":") { comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else {url=0; print "";} } } }' | sed -e "s/\/'/'/g" | sed -e "s/'more)'//" | sed -e "s/ ' /' /") ; do
-            echo \'rpm\' ${i} >> ${repo_tmpfile}
+            name=`echo ${i} | cut -d \' -f 2`
+            priority=`echo "${priorities}" | grep "'${name}'" | sed -e "s/priority=\(.*\) '${name}'/\1/"`
+            if [ "${priority}" == "" ] ; then
+                priority=-1
+            fi
+            j=`echo ${i} | sed -e "s/'${name}'/'${name}' '${priority}'/"`
+            echo \'rpm\' ${j} >> ${repo_tmpfile}
+            unset priority
         done
     fi
 
@@ -216,7 +225,12 @@ function get_repos {
         fi
         for i in $(apt-get update --print-uris | grep Packages | cut -d "'" -f 2 | sed -e "s/\/Packages\.[bz2|gz|lzma]*//") ; do
             read osname shortversion <<<$(echo "${os}" | awk '{print $1,$2}' | cut -d . -f 1,2)
-            echo \'deb\' \'${osname} ${shortversion} ${host_arch} repo at ${i}\' \'${i}\' >> ${repo_tmpfile}
+            # placeholder
+            if [ "${priority}" == "" ] ; then
+                priority=-1
+            fi
+            echo \'deb\' \'${osname} ${shortversion} ${host_arch} repo at ${i}\' \'${priority}\' \'${i}\' >> ${repo_tmpfile}
+            unset priority
         done
         if [ "${gpgs}" != "" ] ; then
             cp -a ${tmpdir}/*.gpg /var/lib/apt/lists 2>/dev/null
@@ -234,7 +248,7 @@ function get_repos {
             enabled[i]="true"
         done
         let r=0
-        for i in $(zypper lr -u | tail +3 | cut -d "|" -f 3,6 | sed -e "s/^ /'/g" -e "s/[ ]*| / ${host_arch}' '/g" -e "s/\/*[ ]*$/'/g") ; do
+        for i in $(zypper lr -u --details | tail +3 | cut -d "|" -f 3,6,8 | sed -e "s/ *|/ ${host_arch} |/" -e "s/^ /'/g" -e "s/ *| */' '/g" -e "s/ *$/'/g") ; do
             let r=$r+1
             if [ "${enabled[${r}]}" == "true" ] ; then
                 echo \'rpm\' ${i} >> ${repo_tmpfile}

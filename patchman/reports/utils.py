@@ -29,9 +29,9 @@ def process_repos(report, host):
         repos = parse_repos(report.repos)
         progress_info.send(sender=report, ptext='%s repos' % host.__unicode__()[0:25], plength=len(repos))
         for i, repo in enumerate(repos):
-            repository = process_repo(report, repo)
+            repository, priority = process_repo(report, repo)
             if repository:
-                hostrepo, c = HostRepo.objects.get_or_create(host=host, repo=repository, enabled=True)
+                hostrepo, c = HostRepo.objects.get_or_create(host=host, repo=repository, priority=priority, enabled=True)
                 hostrepo.save()
             progress_update.send(sender=report, index=i + 1)
 
@@ -65,10 +65,13 @@ def process_repo(report, repo):
     elif repo[0] == 'rpm':
         r_type = Repository.RPM
     r_name = repo[1]
+    r_priority = repo[2]
+    if r_priority == '':
+        r_priority = -1
     r_arch, c = MachineArchitecture.objects.get_or_create(name=report.arch)
     repository = None
     unknown = []
-    for r_url in repo[2:]:
+    for r_url in repo[3:]:
         try:
             mirror = Mirror.objects.get(url=r_url)
         except Mirror.DoesNotExist:
@@ -82,7 +85,7 @@ def process_repo(report, repo):
         repository, c = Repository.objects.get_or_create(name=r_name, arch=r_arch, repotype=r_type)
     for url in unknown:
         Mirror.objects.create(repo=repository, url=url)
-    return repository
+    return repository, r_priority
 
 
 def parse_packages(packages_string):
