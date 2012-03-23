@@ -1,7 +1,7 @@
 <table cellspacing="0">
         <thead>
                 <tr>
-                   <th>OS Name</th><th>Hosts</th><th>OS Group</th>
+                   <th>OS Name</th><th>Hosts</th><th>OS Group</th><th>Repos (OS Group)</th>
                 </tr>
         </thead>
     <tbody>
@@ -10,6 +10,7 @@
                     <td><a href="{{ os.get_absolute_url }}">{{ os }}</a></td>
                     <td>{{ os.host_set.count }}</td>
                     <td><a href="{{ os.osgroup.get_absolute_url }}">{{ os.osgroup }}</a></td>
+                    <td>{{ os.osgroup.repos.count }}</td>
                 </tr>
     {% endfor %}
     </tbody>

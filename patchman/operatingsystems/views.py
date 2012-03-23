@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.shortcuts import get_object_or_404, render_to_response
+from django.shortcuts import get_object_or_404, render_to_response, get_list_or_404
 from django.template import RequestContext
 from django.http import HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
@@ -22,8 +22,6 @@ from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.db.models import Q
 from django.contrib import messages
 from django.core.urlresolvers import reverse
-
-from andsome.util.filterspecs import FilterBar
 
 from patchman.operatingsystems.models import OS, OSGroup
 from patchman.operatingsystems.forms import LinkOSGroupForm, AddReposToOSGroupForm, CreateOSGroupForm
@@ -84,6 +82,36 @@ def os_detail(request, os_id):
 
 
 @login_required
+def os_delete(request, os_id):
+
+    if os_id == 'empty_oses':
+        os = False
+        oses = get_list_or_404(OS.objects.filter(host__isnull=True))
+    else:
+        os = get_object_or_404(OS, id=os_id)
+        oses = False
+
+    if request.method == 'POST':
+        if 'delete' in request.REQUEST:
+            if os:
+                os.delete()
+                messages.info(request, 'OS %s has been deleted' % os)
+                return HttpResponseRedirect(reverse('os_list'))
+            if oses:
+                for os in oses:
+                    os.delete()
+                messages.info(request, '%s OS\'s have been deleted' % len(oses))
+                return HttpResponseRedirect(reverse('os_list'))
+        elif 'cancel' in request.REQUEST:
+            if os_id == 'empty_oses':
+                return HttpResponseRedirect(reverse('os_list'))
+            else:
+                return HttpResponseRedirect(reverse('os_detail', args=[os_id]))
+
+    return render_to_response('operatingsystems/os_delete.html', {'os': os, 'oses': oses}, context_instance=RequestContext(request))
+
+
+@login_required
 def osgroup_list(request):
 
     osgroups = OSGroup.objects.select_related()
@@ -110,10 +138,7 @@ def osgroup_list(request):
     except (EmptyPage, InvalidPage):
         page = p.page(p.num_pages)
 
-    filter_list = []
-    filter_bar = FilterBar(request, filter_list)
-
-    return render_to_response('operatingsystems/osgroup_list.html', {'page': page, 'filter_bar': filter_bar}, context_instance=RequestContext(request))
+    return render_to_response('operatingsystems/osgroup_list.html', {'page': page}, context_instance=RequestContext(request))
 
 
 @login_required
