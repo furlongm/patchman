@@ -1,13 +1,14 @@
 <table cellspacing="0">
         <thead>
                 <tr>
-                   <th>OS Group</th>
+                   <th>OS Group</th><th>Repos</th>
                 </tr>
         </thead>
     <tbody>
     {% for osgroup in object_list %}
                 <tr class="{% cycle row1,row2 %}">
                     <td><a href="{{ osgroup.id }}">{{ osgroup }}</a></td>
+                    <td>{{ osgroup.repos.count }}</td>
                 </tr>
     {% endfor %}
     </tbody>

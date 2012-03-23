@@ -5,54 +5,77 @@
 
 {% block content_title %}OS Information{% endblock %}
 
-{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url os_list %}">Operating Systems</a> &rsaquo; {{ os }} {% endblock %}
+{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url os_list %}">Operating Systems</a> &rsaquo;
 
-{% block content %}
-<div class="module">
-<h2>{{ os }} Details</h2>
-<table>
-<tr><td>Name</td><td> {{ os.name }} </td></tr>
-<tr><td>OS Group</td><td>{% if os.osgroup != None %}<a href="{{ os.osgroup.get_absolute_url }}"> {{ os.osgroup }} </a>{% else %}No OS Group{% endif %}</td></tr>
-</table>
-</div>
-<div class="module">
-<h2>Hosts where {{ os }} is installed</h2>
-    {% gen_table os.host_set.all %}
-</div>
-{% if user.is_authenticated %}
-    {% if perms.is_admin %}
-    <div class="module">
-        <h2>Actions</h2>
-        <div>
-        <form action={{ request.path }} method="post">{% csrf_token %}
-        {{ link_form }}
-            <input type="submit" value="Link" />
-        {{ create_form }}
-            <input type="submit" value="Create" />
-        </form>
-        </div>
-    </div>
-    {% endif %}
+{% if os %}
+    {{ os }}
 {% endif %}
-<div class="module">
-    <h2>Operating Systems linked to OS Group {{ os.osgroup }}</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>OS Name</th>
-                </tr>
-            </thead>
-            {% for repo in os.osgroup.os_set.select_related %}
-            <tr class="{% cycle row1,row2 %}">
-                 <td><a href="{{ repo.get_absolute_url }}">{{ repo }}</a></td>
-            </tr>
-            {% endfor %}
-        </table>
-</div>
-<div class="module">
-<h2>{{ os }} Repositories</h2>
-{% gen_table os.osgroup.repos.select_related %}
-</div>
+
+{% if oses %}
+    Multiple
+{% endif %}
 
 {% endblock %}
 
+{% block content %}
+
+{% if os %}
+    <div class="module">
+    <h2>{{ os }} Details</h2>
+    <table>
+    <tr><td>Name</td><td> {{ os.name }} </td></tr>
+    <tr><td>OS Group</td><td>{% if os.osgroup != None %}<a href="{{ os.osgroup.get_absolute_url }}"> {{ os.osgroup }} </a>{% else %}No OS Group{% endif %}</td></tr>
+    </table>
+    </div>
+    <div class="module">
+    <h2>Hosts where {{ os }} is installed</h2>
+        {% gen_table os.host_set.all %}
+    </div>
+{% endif %}
+
+{% if oses %}
+    <div class="module">
+    <h2>Operating Systems</h2>
+    <table>
+      <th>Name</th><th>Hosts</th><th>OS Group</th>
+      {% for os in oses %}
+      <tr>
+        <td><a href="{{ os.get_absolute_url }}"> {{ os }} </a></td>
+        <td> {{ os.host_set.count }}</td>
+        <td>{% if os.osgroup != None %}<a href="{{ os.osgroup.get_absolute_url }}"> {{ os.osgroup }} </a>{% else %}No OS Group{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </table>
+    </div>
+{% endif %}
+
+{% if user.is_authenticated %}
+  {% if perms.is_admin %}
+  <div class="module">
+    <h2>Delete Confirmation</h2>
+    <div class="dialog">
+      Are you sure you want to delete
+{% if os %}
+    this OS?
+{% endif %}
+{% if oses %}
+    these OS's 
+{% endif %}
+      <form action="." method="POST">
+        {% csrf_token %}
+        <input name="delete" type="submit" value="Delete" />
+        <input name="cancel" type="submit" value="Cancel" />
+      </form>
+    </div>
+  </div>
+  {% else %}
+  <div class="module">
+    <h2>Insufficient Permissions</h2>
+    <div class="brick">
+    You do not have sufficient permissions to delete OS's.
+    </div>
+  </div>
+  {% endif %}
+{% endif %}
+
+{% endblock %}

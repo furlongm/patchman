@@ -30,12 +30,15 @@
         {{ create_form }}
             <input type="submit" value="Create" />
         </form>
+        <a class="brick" href="delete">Delete this OS</a>
+        <div class="clearbrick"></div>
+        <br />
         </div>
     </div>
     {% endif %}
 {% endif %}
 <div class="module">
-    <h2>Operating Systems linked to OS Group {{ os.osgroup }}</h2>
+    <h2>Other Operating Systems linked to OS Group {{ os.osgroup }}</h2>
         <table>
             <thead>
                 <tr>

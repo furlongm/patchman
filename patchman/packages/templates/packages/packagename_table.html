@@ -1,13 +1,14 @@
 <table cellspacing="0">
         <thead>
                 <tr>
-                   <th>Package</th>
+                   <th>Package</th><th>Versions available</th>
                 </tr>
         </thead>
     <tbody>
-    {% for package in object_list %}
+    {% for packagename in object_list %}
                 <tr class="{% cycle row1,row2 %}">
-                    <td><a href="{{ package.get_absolute_url }}">{{ package }}</a></td>
+                    <td><a href="{{ packagename.get_absolute_url }}">{{ packagename }}</a></td>
+                    <td>{{ packagename.package_set.count }}</td>
                 </tr>
     {% endfor %}
     </tbody>

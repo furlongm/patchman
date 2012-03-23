@@ -1,4 +1,39 @@
-{% extends "changelist.html" %}
+{% extends "base_site.html" %}
+
+{% load paginator common %}
+
+{% block stylesheet %}changelists{% endblock %}
+
+{% block bodyclass %}change-list{% endblock %}
+
+{% block coltype %}flex{% endblock %}
+
+{% block sidebar %}{% include "sidebar.html" %}{% endblock %}
+
+{% block content %}
+<div class="module  {% if filter_bar %}filtered{% endif %}" id="changelist">
+  {% searchform %}
+
+  {% if filter_bar %}
+  <div id="changelist-filter">
+    <h2>Filter</h2>
+    {{ filter_bar|safe }}
+  </div>
+  {% endif %}
+  {% gen_table page.object_list %}
+  {% pagination page request %}
+</div>
+{% if user.is_authenticated %}
+    {% if perms.is_admin %}
+    <div class="module" id="changelist">
+        <h2>Actions</h2>
+        <a class="brick" href="empty_oses/delete">Delete OS's with no hosts</a>
+        <div class="clearbrick"></div>
+    </div>
+    {% endif %}
+{% endif %}
+
+{% endblock %}
 
 {% block title %}Operating Systems{% endblock %}
 
@@ -9,4 +44,3 @@
 {% block objecttools %}
 
 {% endblock %}
-
