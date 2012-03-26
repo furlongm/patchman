@@ -61,6 +61,10 @@
   <h2>Hosts with this Repository</h2>
   {% gen_table repo.host_set.all %}
 </div>
+<div class="module">
+  <h2>OS Groups with this Repository</h2>
+  {% gen_table repo.osgroup_set.all.distinct %}
+</div>
 
 {% endblock %}
 
