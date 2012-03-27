@@ -30,7 +30,7 @@
         {{ create_form }}
             <input type="submit" value="Create" />
         </form>
-        <a class="brick" href="delete">Delete this OS</a>
+        <a class="brick" href="{% url os_delete os.id %}">Delete this OS</a>
         <div class="clearbrick"></div>
         <br />
         </div>

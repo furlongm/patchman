@@ -27,7 +27,7 @@
   {% if perms.is_admin %}
   <div class="module">
     <h2>Actions</h2>
-    <a class="brick" href="delete">Delete this report</a>
+    <a class="brick" href="{% url report_delete report.id %}">Delete this report</a>
     <div class="clearbrick"></div>
   </div>
   {% endif %}

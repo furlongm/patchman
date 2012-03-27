@@ -7,7 +7,7 @@
     <tbody>
     {% for osgroup in object_list %}
                 <tr class="{% cycle row1,row2 %}">
-                    <td><a href="{{ osgroup.id }}">{{ osgroup }}</a></td>
+                    <td><a href="{% url osgroup_detail osgroup.id %}">{{ osgroup }}</a></td>
                     <td>{{ osgroup.repos.count }}</td>
                 </tr>
     {% endfor %}
