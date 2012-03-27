@@ -204,8 +204,9 @@ function get_repos {
         for i in $(yum repolist enabled --verbose 2>/dev/null | awk '{ if ($1=="Repo-name") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'" ${host_arch}'"' "} if ($1=="Repo-baseurl" || $1=="Repo-baseurl:" || $1=="Repo-mirrors") { url=1; comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else { if (url==1) { if ($1==":") { comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else {url=0; print "";} } } }' | sed -e "s/\/'/'/g" | sed -e "s/'more)'//" | sed -e "s/ ' /' /") ; do
             name=`echo ${i} | cut -d \' -f 2`
             priority=`echo "${priorities}" | grep "'${name}'" | sed -e "s/priority=\(.*\) '${name}'/\1/"`
+            # default yum priority is 99
             if [ "${priority}" == "" ] ; then
-                priority=-1
+                priority=99
             fi
             j=`echo ${i} | sed -e "s/'${name}'/'${name}' '${priority}'/"`
             echo \'rpm\' ${j} >> ${repo_tmpfile}
@@ -223,19 +224,26 @@ function get_repos {
             tmpdir=`${mktemp_bin} -d`
             cp -a ${gpgs} ${tmpdir} 2>/dev/null
         fi
-        for i in $(apt-get update --print-uris | grep Packages | cut -d "'" -f 2 | sed -e "s/\/Packages\.[bz2|gz|lzma]*//") ; do
-            read osname shortversion <<<$(echo "${os}" | awk '{print $1,$2}' | cut -d . -f 1,2)
-            # placeholder
-            if [ "${priority}" == "" ] ; then
-                priority=-1
+    	read osname shortversion <<<$(echo "${os}" | awk '{print $1,$2}' | cut -d . -f 1,2)
+    	let debver=`echo ${shortversion} | sed -e "s/\.//g"`
+    	# we don't support priorities on lenny and older, so revert to the older behaviour
+    	if [ ${debver} -lt 600 ] ; then
+            for i in $(apt-get update --print-uris | grep Packages | cut -d "'" -f 2 | sed -e "s/\/Packages\.[bz2|gz|lzma]*//") ; do
+                if [ "${priority}" == "" ] ; then
+                    priority=0
+                fi
+                echo \'deb\' \'${osname} ${shortversion} ${host_arch} repo at ${i}\' \'${priority}\' \'${i}\' >> ${repo_tmpfile}
+                unset priority
+            done
+            if [ "${gpgs}" != "" ] ; then
+                cp -a ${tmpdir}/*.gpg /var/lib/apt/lists 2>/dev/null
+                rm -fr ${tmpdir}
             fi
-            echo \'deb\' \'${osname} ${shortversion} ${host_arch} repo at ${i}\' \'${priority}\' \'${i}\' >> ${repo_tmpfile}
-            unset priority
-        done
-        if [ "${gpgs}" != "" ] ; then
-            cp -a ${tmpdir}/*.gpg /var/lib/apt/lists 2>/dev/null
-            rm -fr ${tmpdir}
-        fi
+    	else
+    		repo_string="'deb\' \'${osname} ${shortversion}${host_arch} repo at"
+    		apt-cache policy | grep http | cut -d " " -f 2,3,4,5 | \
+    		sed -e "s/\([0-9]*\) \(http:.*\) \(.*\/.*\) \(.*\)/${repo_string} \2dists\/\3\/binary-\4' '\1' '\2dists\/\3\/binary-\4'/" >> ${repo_tmpfile}
+    	fi		
     fi
 
     # SUSE
