@@ -26,18 +26,18 @@
     {% if perms.is_admin %}
     <div class="module">
         <h2>Actions</h2>
-        <a class="brick" href="delete">Delete this repository</a>
+        <a class="brick" href="{% url repo_delete repo.id %}">Delete this repository</a>
         {% if repo.enabled %}
-          <a class="brick" href="disable">Disable this repository</a>
+          <a class="brick" href="{% url repo_disable repo.id %}">Disable this repository</a>
         {% else %}
-          <a class="brick" href="enable">Enable this repository</a>
+          <a class="brick" href="{% url repo_enable repo.id %}">Enable this repository</a>
         {% endif %}
         {% if repo.security %}
-          <a class="brick" href="disablesec">Mark as Non-Security repo</a>
+          <a class="brick" href="{% url repo_disablesec repo.id %}">Mark as Non-Security repo</a>
         {% else %}
-          <a class="brick" href="enablesec">Mark as Security repo</a>
+          <a class="brick" href="{% url repo_enablesec repo.id %}">Mark as Security repo</a>
         {% endif %}
-        <a class="brick" href="edit">Edit this repository</a>
+        <a class="brick" href="{% url repo_edit repo.id %}">Edit this repository</a>
         <div class="clearbrick"></div>
     </div>
     {% endif %}

@@ -45,7 +45,7 @@
     {% if perms.is_admin %}
     <div class="module">
         <h2>Actions</h2>
-        <a class="brick" href="delete">Delete this OS Group</a>
+        <a class="brick" href="{% url osgroup_delete osgroup.id %}">Delete this OS Group</a>
         <div class="clearbrick"></div>
         <br />
     </div>
