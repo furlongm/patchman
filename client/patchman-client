@@ -224,10 +224,10 @@ function get_repos {
             tmpdir=`${mktemp_bin} -d`
             cp -a ${gpgs} ${tmpdir} 2>/dev/null
         fi
-    	read osname shortversion <<<$(echo "${os}" | awk '{print $1,$2}' | cut -d . -f 1,2)
-    	let debver=`echo ${shortversion} | sed -e "s/\.//g"`
-    	# we don't support priorities on lenny and older, so revert to the older behaviour
-    	if [ ${debver} -lt 600 ] ; then
+        IFS=$OLDIFS read osname shortversion <<<$(echo "${os}" | awk '{print $1,$2}' | cut -d . -f 1,2)
+        let debver=`echo ${shortversion} | cut -d . -f 1`
+        # we don't support priorities on lenny and older, so revert to the older behaviour
+        if [ ${debver} -lt 6 ] ; then
             for i in $(apt-get update --print-uris | grep Packages | cut -d "'" -f 2 | sed -e "s/\/Packages\.[bz2|gz|lzma]*//") ; do
                 if [ "${priority}" == "" ] ; then
                     priority=0
@@ -239,11 +239,11 @@ function get_repos {
                 cp -a ${tmpdir}/*.gpg /var/lib/apt/lists 2>/dev/null
                 rm -fr ${tmpdir}
             fi
-    	else
-    		repo_string="'deb\' \'${osname} ${shortversion}${host_arch} repo at"
-    		apt-cache policy | grep http | cut -d " " -f 2,3,4,5 | \
-    		sed -e "s/\([0-9]*\) \(http:.*\) \(.*\/.*\) \(.*\)/${repo_string} \2dists\/\3\/binary-\4' '\1' '\2dists\/\3\/binary-\4'/" >> ${repo_tmpfile}
-    	fi		
+        else
+            repo_string="'deb\' \'${osname} ${shortversion}${host_arch} repo at"
+            apt-cache policy | grep http | cut -d " " -f 2,3,4,5 | \
+            sed -e "s/\([0-9]*\) \(http:.*\) \(.*\/.*\) \(.*\)/${repo_string} \2dists\/\3\/binary-\4' '\1' '\2dists\/\3\/binary-\4'/" >> ${repo_tmpfile}
+        fi        
     fi
 
     # SUSE
