@@ -40,7 +40,7 @@ def dashboard(request):
     stale_hosts = Host.objects.filter(lastreport__lt=(datetime.now() + timedelta(-14)))
     norepo_hosts = Host.objects.filter(repos__isnull=True, os__osgroup__repos__isnull=True)
     norepo_osgroups = OSGroup.objects.filter(repos__isnull=True)
-    norepo_packages = Package.objects.filter(mirror__isnull=True, oldpackage__isnull=True)
+    norepo_packages = Package.objects.filter(mirror__isnull=True, oldpackage__isnull=True, host__isnull=False)
     orphaned_packages = Package.objects.filter(mirror__isnull=True, host__isnull=True)
     lonely_oses = OS.objects.filter(osgroup__isnull=True)
     failed_mirrors = Repository.objects.filter(mirror__last_access_ok=False).filter(mirror__last_access_ok=True).distinct()
