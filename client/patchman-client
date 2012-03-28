@@ -241,8 +241,11 @@ function get_repos {
             fi
         else
             repo_string="'deb\' \'${osname} ${shortversion} ${host_arch} repo at"
-            apt-cache policy | grep http | grep -v Translation | cut -d " " -f 2,3,4,5 | \
-            sed -e "s/\([0-9]*\) \(http:.*\) \(.*\/.*\) \(.*\)/${repo_string} \2dists\/\3\/binary-\4' '\1' '\2dists\/\3\/binary-\4'/" >> ${repo_tmpfile}
+            repos=`apt-cache policy | grep http | grep -v Translation | cut -d " " -f 2,3,4,5`
+            dist_repos=`echo "${repos}" | grep -v -e "Packages$"`
+            nondist_repos=`echo "${repos}" | grep -e "Packages$"`
+            echo "${dist_repos}" | sed -e "s/\([0-9]*\) \(http:.*\) \(.*\/.*\) \(.*\)/${repo_string} \2dists\/\3\/binary-\4' '\1' '\2dists\/\3\/binary-\4'/" >> ${repo_tmpfile}
+            echo "${nondist_repos}" | sed -e "s/\([0-9]*\) \(http:.*\) \(.*\/\?.*\) Packages/${repo_string} \2\3' '\1' '\2\3'/" >> ${repo_tmpfile}
         fi        
     fi
 
