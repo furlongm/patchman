@@ -240,8 +240,8 @@ function get_repos {
                 rm -fr ${tmpdir}
             fi
         else
-            repo_string="'deb\' \'${osname} ${shortversion}${host_arch} repo at"
-            apt-cache policy | grep http | cut -d " " -f 2,3,4,5 | \
+            repo_string="'deb\' \'${osname} ${shortversion} ${host_arch} repo at"
+            apt-cache policy | grep http | grep -v Translation | cut -d " " -f 2,3,4,5 | \
             sed -e "s/\([0-9]*\) \(http:.*\) \(.*\/.*\) \(.*\)/${repo_string} \2dists\/\3\/binary-\4' '\1' '\2dists\/\3\/binary-\4'/" >> ${repo_tmpfile}
         fi        
     fi
