@@ -266,7 +266,11 @@ function get_repos {
             fi
         done
     fi
+
     IFS=${OLDIFS}
+
+    sed -i -e '/^$/d' ${repo_tmpfile}
+
     if [ ${debug} -eq 1 ] ; then
         cat ${repo_tmpfile}
     fi

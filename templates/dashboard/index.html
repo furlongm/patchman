@@ -137,7 +137,7 @@
 {% with unused_repos.count as count %}
   {% if count > 0 %}
   <div class="module">
-    <div class="resultslink" id="r10"><a href="#">{{ count }} Repositories are unused</a></div>
+    <div class="resultslink" id="r10"><a href="#">{{ count }} Repositories are unused (no associated hosts or os groups)</a></div>
       <div class="results" id="r10">
         {% for repo in unused_repos %}
         <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
