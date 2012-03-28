@@ -51,7 +51,7 @@ def process_packages(report, host):
 def parse_repos(repos_string):
     """Parses repo string in a report"""
     repos = []
-    for r in repos_string.splitlines():
+    for r in [s for s in repos_string.splitlines() if s]:
         repodata = re.findall('\'.*?\'', r)
         for i, rs in enumerate(repodata):
             repodata[i] = rs.replace('\'', '')
