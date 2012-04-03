@@ -60,14 +60,15 @@ def parse_repos(repos_string):
 
 
 def process_repo(report, repo):
+    if repo[2] == '':
+        r_priority = 0
     if repo[0] == 'deb':
         r_type = Repository.DEB
+        r_priority = int(repo[2])
     elif repo[0] == 'rpm':
         r_type = Repository.RPM
+        r_priority = int(repo[2]) * -1
     r_name = repo[1]
-    r_priority = repo[2]
-    if r_priority == '':
-        r_priority = -1
     r_arch, c = MachineArchitecture.objects.get_or_create(name=report.arch)
     repository = None
     unknown = []
