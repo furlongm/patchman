@@ -70,6 +70,22 @@ class Host(models.Model):
             hostrepos = Q(mirror__repo__osgroup__os__host=self, mirror__repo__arch=self.arch, mirror__enabled=True, mirror__repo__enabled=True) | Q(mirror__repo__in=self.repos.all(), mirror__enabled=True, mirror__repo__enabled=True)
         return Package.objects.select_related().filter(hostrepos)
 
+    def process_update(self, package, highest, highestpackage):
+        if highest != ('', '0', ''):
+            if self.host_repos_only:
+                hostrepos = Q(repo__host=self)
+            else:
+                hostrepos = Q(repo__osgroup__os__host=self, repo__arch=self.arch) | Q(repo__host=self)
+            matchingrepos = highestpackage.mirror_set.filter(hostrepos)
+            security = False
+            # If any of the containing repos are security, mark the update as security
+            for mirror in matchingrepos:
+                if mirror.repo.security == True:
+                    security = True
+            update, c = PackageUpdate.objects.get_or_create(oldpackage=package, newpackage=highestpackage, security=security)
+            self.updates.add(update)
+            host_update_found.send(sender=self, update=update)
+
     def find_updates(self):
 
         self.updates.clear()
@@ -79,37 +95,78 @@ class Host(models.Model):
 
         repopackages = self.get_host_repo_packages()
 
-        for package in self.packages.exclude(kernels):
-            highest = ('', '0', '')
-            highestpackage = None
-            matchingpackages = repopackages.filter(name=package.name, arch=package.arch, packagetype=package.packagetype)
-            for repopackage in matchingpackages:
-                if package.compare_version(repopackage) == -1:
-                    if package.packagetype == 'R':
-                        if labelCompare(highest, repopackage._version_string_rpm()) == -1:
-                            highest = repopackage._version_string_rpm()
-                            highestpackage = repopackage
-                    elif package.packagetype == 'D':
-                        vr = Version(repopackage._version_string_deb())
-                        if highest == ('', '0', ''):
-                            vh = Version('0')
+        if self.host_repos_only:
+            for package in self.packages.exclude(kernels):
+                highest = ('', '0', '')
+                highestpackage = None
+                # find out what hostrepo it belongs to
+                repos_q = Q(mirror__repo__in=self.repos.all(), mirror__enabled=True, mirror__repo__enabled=True, mirror__packages=package)
+                repos = Repository.objects.filter(repos_q).distinct()
+                hostrepos = HostRepo.objects.filter(repo__in=repos, host=self)
+                if hostrepos:
+                    bestrepo = hostrepos[0]
+                if hostrepos.count() > 1:
+                    for repo in hostrepos:
+                        if repo.repo.security == True:
+                            bestrepo = repo
                         else:
-                            vh = Version('%s:%s-%s' % (str(highest[0]), str(highest[1]), str(highest[2])))
-                        if version_compare(vh, vr) == -1:
-                            highest = repopackage._version_string_deb()
-                            highestpackage = repopackage
-
-            if highest != ('', '0', ''):
-                hostrepos = Q(repo__osgroup__os__host=self, repo__arch=self.arch) | Q(repo__host=self)
-                matchingrepos = highestpackage.mirror_set.filter(hostrepos)
-                security = False
-                # If any of the containing repos are security, mark the update as security
-                for mirror in matchingrepos:
-                    if mirror.repo.security == True:
-                        security = True
-                update, c = PackageUpdate.objects.get_or_create(oldpackage=package, newpackage=highestpackage, security=security)
-                self.updates.add(update)
-                host_update_found.send(sender=self, update=update)
+                            if repo.priority > bestrepo.priority:
+                                bestrepo = repo
+                # find the packages that are potential updates
+                matchingpackages = repopackages.filter(name=package.name, arch=package.arch, packagetype=package.packagetype)
+                for repopackage in matchingpackages:
+                    if package.compare_version(repopackage) == -1:
+                        # find the repos the potential update belongs to
+                        rp_repos_q = Q(mirror__repo__in=self.repos.all(), mirror__enabled=True, mirror__repo__enabled=True, mirror__packages=repopackage)
+                        rp_repos = Repository.objects.filter(rp_repos_q).distinct()
+                        rp_hostrepos = HostRepo.objects.filter(repo__in=rp_repos, host=self)
+                        # if it belongs to more than one, find the best one (favour security repos, then higher priority repos)
+                        if rp_hostrepos:
+                            rp_bestrepo = rp_hostrepos[0]
+                        if rp_hostrepos.count() > 1:
+                            for repo in rp_hostrepos:
+                                if repo.repo.security == True:
+                                    rp_bestrepo = repo
+                                else:
+                                    if repo.priority > rp_bestrepo.priority:
+                                        rp_bestrepo = repo
+                        # proceed if that repo has a higher priority
+                        if rp_bestrepo.priority >= bestrepo.priority:
+                            if package.packagetype == 'R':
+                                if labelCompare(highest, repopackage._version_string_rpm()) == -1:
+                                    highest = repopackage._version_string_rpm()
+                                    highestpackage = repopackage
+                            elif package.packagetype == 'D':
+                                vr = Version(repopackage._version_string_deb())
+                                if highest == ('', '0', ''):
+                                    vh = Version('0')
+                                else:
+                                    vh = Version('%s:%s-%s' % (str(highest[0]), str(highest[1]), str(highest[2])))
+                                if version_compare(vh, vr) == -1:
+                                    highest = repopackage._version_string_deb()
+                                    highestpackage = repopackage
+                self.process_update(package, highest, highestpackage)
+        else:
+            for package in self.packages.exclude(kernels):
+                highest = ('', '0', '')
+                highestpackage = None
+                matchingpackages = repopackages.filter(name=package.name, arch=package.arch, packagetype=package.packagetype)
+                for repopackage in matchingpackages:
+                    if package.compare_version(repopackage) == -1:
+                        if package.packagetype == 'R':
+                            if labelCompare(highest, repopackage._version_string_rpm()) == -1:
+                                highest = repopackage._version_string_rpm()
+                                highestpackage = repopackage
+                        elif package.packagetype == 'D':
+                            vr = Version(repopackage._version_string_deb())
+                            if highest == ('', '0', ''):
+                                vh = Version('0')
+                            else:
+                                vh = Version('%s:%s-%s' % (str(highest[0]), str(highest[1]), str(highest[2])))
+                            if version_compare(vh, vr) == -1:
+                                highest = repopackage._version_string_deb()
+                                highestpackage = repopackage
+                self.process_update(package, highest, highestpackage)
 
         try:
             ver, rel = self.kernel.rsplit('-')
@@ -160,3 +217,6 @@ class HostRepo(models.Model):
 
     class Meta:
         unique_together = ('host', 'repo')
+
+    def __unicode__(self):
+        return '%s-%s' % (self.host, self.repo)

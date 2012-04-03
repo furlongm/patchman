@@ -42,7 +42,8 @@ MEDIA_ROOT = '/usr/share/patchman/media'
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
 # Examples: "http://foo.com/media/", "/media/".
-ADMIN_MEDIA_PREFIX = '/django_media/'
+#ADMIN_MEDIA_PREFIX = '/django_media/'
+STATIC_URL = '/usr/lib/python2.7/site-packages/django/contrib/admin/static/'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -62,12 +63,11 @@ MIDDLEWARE_CLASSES = (
 ROOT_URLCONF = 'patchman.urls'
 
 TEMPLATE_CONTEXT_PROCESSORS = (
-    'django.core.context_processors.auth',
+    'django.contrib.auth.context_processors.auth',
     'django.core.context_processors.debug',
     'django.core.context_processors.media',
     'django.core.context_processors.request',
     'django.core.context_processors.csrf',
-
 )
 
 TEMPLATE_DIRS = (

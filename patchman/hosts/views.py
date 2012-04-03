@@ -32,6 +32,7 @@ from patchman.domains.models import Domain
 from patchman.arch.models import MachineArchitecture
 from patchman.operatingsystems.models import OS, OSGroup
 from patchman.reports.models import Report
+from patchman.hosts.forms import HostForm
 
 
 @login_required
@@ -119,6 +120,33 @@ def host_detail(request, hostname):
     hostrepos = HostRepo.objects.filter(host=host)
 
     return render_to_response('hosts/host_detail.html', {'host': host, 'reversedns': reversedns, 'reports': reports, 'hostrepos': hostrepos}, context_instance=RequestContext(request))
+
+
+@login_required
+def host_edit(request, hostname):
+
+    host = get_object_or_404(Host, hostname=hostname)
+
+    try:
+        reversedns = str(socket.gethostbyaddr(host.ipaddress)[0])
+    except socket.gaierror:
+        reversedns = 'None'
+
+    reports = Report.objects.all().filter(host=hostname).order_by('-time')[:3]
+
+    if request.method == 'POST':
+        edit_form = HostForm(request.POST, instance=host)
+        if edit_form.is_valid():
+            host = edit_form.save()
+            host.save()
+            messages.info(request, 'Saved changes to Host %s' % host)
+            return HttpResponseRedirect(host.get_absolute_url())
+        else:
+            host = get_object_or_404(Host, hostname=hostname)
+    else:
+        edit_form = HostForm(instance=host)
+
+    return render_to_response('hosts/host_edit.html', {'host': host, 'reversedns': reversedns, 'reports': reports, 'edit_form': edit_form}, context_instance=RequestContext(request))
 
 
 @login_required

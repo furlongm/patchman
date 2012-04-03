@@ -14,12 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.conf.urls.defaults import patterns, url
+from django.forms import ModelForm
 
-urlpatterns = patterns('patchman.hosts.views',
+from patchman.hosts.models import Host
 
-    url(r'^$', 'host_list', name='host_list'),
-    url(r'^(?P<hostname>[-.\w]+)/$', 'host_detail', name='host_detail'),
-    url(r'^(?P<hostname>[-.\w]+)/delete/$', 'host_delete', name='host_delete'),
-    url(r'^(?P<hostname>[-.\w]+)/edit/$', 'host_edit', name='host_edit'),
-)
+
+class HostForm(ModelForm):
+
+    class Meta:
+        model = Host
+        fields = ('hostname', 'ipaddress', 'os', 'kernel', 'arch', 'reboot_required', 'host_repos_only', 'tags')
