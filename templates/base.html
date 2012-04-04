@@ -6,8 +6,9 @@
 {% block extrastyle %}{% endblock %}
 <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
 <title>{% block title %}{% endblock %}&nbsp;|&nbsp;{% block site_name_title %}{% endblock %}</title>
-<meta name="author" content="{% block author %}Sam Morrison{% endblock %}"/>
+<meta name="author" content="{% block author %}Marcus Furlong{% endblock %}"/>
 {% block favicon %}{% endblock %}
+<link href="{{ MEDIA_URL }}css/jquery-ui.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript">window.__admin_media_prefix__ = "{% filter escapejs %}{% admin_media_prefix %}{% endfilter %}";</script>
 <script type="text/javascript" src="{{ MEDIA_URL }}js/jquery.min.js"></script>
 <script type="text/javascript" src="{{ MEDIA_URL }}js/show-hide.js"></script>

@@ -115,6 +115,14 @@ def report_detail(request, report):
 
 
 @login_required
+def report_process(request, report):
+
+    report = get_object_or_404(Report, id=report)
+
+    return render_to_response('reports/report_process.html', {'report': report}, context_instance=RequestContext(request))
+
+
+@login_required
 def report_delete(request, report):
 
     report = get_object_or_404(Report, id=report)
