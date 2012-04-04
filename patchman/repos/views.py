@@ -225,6 +225,8 @@ def repo_delete(request, repo_id):
 
     if request.method == 'POST':
         if 'delete' in request.REQUEST:
+            for mirror in repo.mirror_set.all():
+                mirror.delete()
             repo.delete()
             messages.info(request, 'Repository %s has been deleted.' % repo)
             return HttpResponseRedirect(reverse('repo_list'))
