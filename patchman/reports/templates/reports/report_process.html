@@ -6,6 +6,10 @@
 
 {% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url repo_list %}">Reports</a> &rsaquo; {{ report }} {% endblock %}
 
+{% block extrahead %}
+<script type="text/javascript" src="{{ MEDIA_URL }}js/progressbar.js"></script>
+{% endblock %}
+
 {% block content %}
 <div class="module">
   <h2>{{report}}</h2>
@@ -26,32 +30,15 @@
 {% if user.is_authenticated %}
   {% if perms.is_admin %}
   <div class="module">
-    <h2>Actions</h2>
-      <a class="brick" href="{% url report_delete report.id %}">Delete this report</a>
-      <a class="brick" href="{% url report_process report.id %}">Process this report</a>
-    <div class="clearbrick"></div>
-  </div>
+    <h2>Progress</h2>
+      <div>Processing reports via the web interface currently does not work, this page is just a placeholder. Please use patchman-cli or celery to process reports.</div>
+      <br />
+      Packages
+      <div id="progressbar_packages"></div>
+      Repos
+      <div id="progressbar_repos"</div>
+ </div>
   {% endif %}
 {% endif %}
-<div class="module">
-  <h2>Repositories</h2>
-  <table>
-  {% for repo in report.repos.splitlines %}
-    <tr class="{% cycle row1,row2 %}">
-      <td> {{ repo }} </td>
-    </tr>
-  {% endfor %}
-  </table>
-</div>
-<div class="module">
-  <h2>Packages</h2>
-  <table>
-  {% for package in report.packages.splitlines %}
-    <tr class="{% cycle row1,row2 %}">
-      <td> {{ package }} </td>
-    </tr>
-  {% endfor %}
-  </table>
-</div>
 {% endblock %}
 
