@@ -34,7 +34,7 @@ class Repository(models.Model):
     arch = models.ForeignKey(MachineArchitecture)
     security = models.BooleanField(default=False)
     repotype = models.CharField(max_length=1, choices=REPO_TYPES)
-    enabled = models.BooleanField(default=False)
+    enabled = models.BooleanField(default=True)
 
     class Meta:
         verbose_name_plural = 'Repositories'
