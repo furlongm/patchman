@@ -468,7 +468,7 @@ def update_repos(single_repo):
             message = 'Repo with id %s does not exist' % single_repo
     else:
         message = 'Updating all repositories'
-        repos = Repository.objects.all()
+        repos = Repository.objects.filter(enabled=True)
 
     if verbose:
         print message
