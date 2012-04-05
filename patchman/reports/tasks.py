@@ -17,7 +17,7 @@
 from django.conf import settings
 
 if settings.USE_ASYNC_PROCESSING:
-    from celery.decorators import task
+    from celery.task import task
 
     @task()
     def process_report(report):
