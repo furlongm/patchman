@@ -222,7 +222,7 @@ function get_repos {
         IFS=$OLDIFS read osname shortversion <<<$(echo "${os}" | awk '{print $1,$2}' | cut -d . -f 1,2)
         let debver=`echo ${shortversion} | cut -d . -f 1`
         # we don't support priorities on lenny and older, so revert to the older behaviour
-        if [ ${debver} -lt 6 ] && [ "${os}" == "Debian" ] ; then
+        if [ ${debver} -lt 6 ] && [ "${osname}" == "Debian" ] ; then
             gpgs=`find /var/lib/apt/lists -name "*.gpg"`
             if [ "${gpgs}" != "" ] ; then
                 tmpdir=`${mktemp_bin} -d`
