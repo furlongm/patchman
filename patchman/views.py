@@ -44,7 +44,7 @@ def dashboard(request):
     orphaned_packages = Package.objects.filter(mirror__isnull=True, host__isnull=True)
     lonely_oses = OS.objects.filter(osgroup__isnull=True)
     failed_mirrors = Repository.objects.filter(mirror__last_access_ok=False).filter(mirror__last_access_ok=True).distinct()
-    disabled_mirrors = Repository.objects.filter(mirror__enabled=False).distinct()
+    disabled_mirrors = Repository.objects.filter(mirror__enabled=False).filter(mirror__mirrorlist=False).distinct()
     norefresh_mirrors = Repository.objects.filter(mirror__refresh=False).distinct()
     failed_repos = Repository.objects.filter(mirror__last_access_ok=False).exclude(id__in=[x.id for x in failed_mirrors]).distinct()
     reboot_hosts = Host.objects.filter(reboot_required=True)
