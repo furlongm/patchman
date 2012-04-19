@@ -99,8 +99,9 @@ class Host(models.Model):
             for package in self.packages.exclude(kernels):
                 highest = ('', '0', '')
                 highestpackage = None
+                bestrepo = None
                 # find out what hostrepo it belongs to
-                repos_q = Q(mirror__repo__in=self.repos.all(), mirror__enabled=True, mirror__repo__enabled=True, mirror__packages=package)
+                repos_q = Q(mirror__repo__in=self.repos.all(), mirror__enabled=True, mirror__repo__enabled=True, mirror__packages__name=package.name)
                 repos = Repository.objects.filter(repos_q).distinct()
                 hostrepos = HostRepo.objects.filter(repo__in=repos, host=self)
                 if hostrepos:
@@ -116,6 +117,7 @@ class Host(models.Model):
                 matchingpackages = repopackages.filter(name=package.name, arch=package.arch, packagetype=package.packagetype)
                 for repopackage in matchingpackages:
                     if package.compare_version(repopackage) == -1:
+                        rp_bestrepo = None
                         # find the repos the potential update belongs to
                         rp_repos_q = Q(mirror__repo__in=self.repos.all(), mirror__enabled=True, mirror__repo__enabled=True, mirror__packages=repopackage)
                         rp_repos = Repository.objects.filter(rp_repos_q).distinct()
