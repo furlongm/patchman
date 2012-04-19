@@ -125,7 +125,7 @@
   <div class="module">
     <div class="resultslink" id="r9"><a href="#">{{ count }} Repositories have some mirrors that are disabled</a></div>
       <div class="results" id="r9">
-        {% for mirror in failed_mirrors %}
+        {% for mirror in disabled_mirrors %}
         <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
         <a class="dark" href="{{ mirror.get_absolute_url }}">{{ mirror }}</a></div>
         {% endfor %}
@@ -139,7 +139,7 @@
   <div class="module">
     <div class="resultslink" id="r10"><a href="#">{{ count }} Repositories have some mirrors that are not set to refresh (possibly failed too many times)</a></div>
       <div class="results" id="r10">
-        {% for mirror in failed_mirrors %}
+        {% for mirror in norefresh_mirrors %}
         <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
         <a class="dark" href="{{ mirror.get_absolute_url }}">{{ mirror }}</a></div>
         {% endfor %}
