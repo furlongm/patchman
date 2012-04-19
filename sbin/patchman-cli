@@ -207,6 +207,9 @@ def get_url(url):
     try:
         req = Request(url)
         res = urlopen(req)
+        # redirect that should be a 404
+        if res.geturl().rstrip('/') != url:
+            return -1
         return res
     except IOError, e:
         if hasattr(e, 'reason'):
@@ -351,6 +354,8 @@ def failed_mirror(mirror):
     mirror.fail_count = mirror.fail_count + 1
     if mirror.fail_count > 28:
         mirror.refresh = False
+        if verbose:
+            print 'Mirror has failed more than 28 times, disabling refresh'
     mirror.save()
 
 def update_deb_repo(repo):
