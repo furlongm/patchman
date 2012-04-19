@@ -63,6 +63,7 @@ class Mirror(models.Model):
     mirrorlist = models.BooleanField(default=False)
     enabled = models.BooleanField(default=True)
     refresh = models.BooleanField(default=True)
+    fail_count = models.IntegerField(default=0)
 
     def __unicode__(self):
         return self.url

@@ -44,6 +44,8 @@ def dashboard(request):
     orphaned_packages = Package.objects.filter(mirror__isnull=True, host__isnull=True)
     lonely_oses = OS.objects.filter(osgroup__isnull=True)
     failed_mirrors = Repository.objects.filter(mirror__last_access_ok=False).filter(mirror__last_access_ok=True).distinct()
+    disabled_mirrors = Repository.objects.filter(mirror__enabled=False).distinct()
+    norefresh_mirrors = Repository.objects.filter(mirror__refresh=False).distinct()
     failed_repos = Repository.objects.filter(mirror__last_access_ok=False).exclude(id__in=[x.id for x in failed_mirrors]).distinct()
     reboot_hosts = Host.objects.filter(reboot_required=True)
     secupdate_hosts = Host.objects.filter(updates__security=True, updates__isnull=False).values('hostname').annotate(Count('hostname'))
@@ -78,6 +80,7 @@ def dashboard(request):
         'site': site, 'norepo_packages': norepo_packages, 'nohost_repos': nohost_repos,
         'secupdate_hosts': secupdate_hosts, 'update_hosts': update_hosts,
         'norepo_osgroups': norepo_osgroups, 'unused_repos': unused_repos,
+        'disabled_mirrors': disabled_mirrors, 'norefresh_mirrors': norefresh_mirrors,
         'failed_mirrors': failed_mirrors, 'orphaned_packages': orphaned_packages,
         'failed_repos': failed_repos, 'nomirror_repos': nomirror_repos,
         'reboot_hosts': reboot_hosts, 'unprocessed_reports': unprocessed_reports},
