@@ -43,6 +43,7 @@ def dashboard(request):
     norepo_packages = Package.objects.filter(mirror__isnull=True, oldpackage__isnull=True, host__isnull=False)
     orphaned_packages = Package.objects.filter(mirror__isnull=True, host__isnull=True)
     lonely_oses = OS.objects.filter(osgroup__isnull=True)
+    nohost_oses = OS.objects.filter(host__isnull=True)
     failed_mirrors = Repository.objects.filter(mirror__last_access_ok=False).filter(mirror__last_access_ok=True).distinct()
     disabled_mirrors = Repository.objects.filter(mirror__enabled=False).filter(mirror__mirrorlist=False).distinct()
     norefresh_mirrors = Repository.objects.filter(mirror__refresh=False).distinct()
@@ -76,6 +77,7 @@ def dashboard(request):
 
     return render_to_response('dashboard/index.html',
         {'lonely_oses': lonely_oses, 'norepo_hosts': norepo_hosts,
+        'nohost_oses': nohost_oses,
         'stale_hosts': stale_hosts, 'possible_mirrors': possible_mirrors,
         'site': site, 'norepo_packages': norepo_packages, 'nohost_repos': nohost_repos,
         'secupdate_hosts': secupdate_hosts, 'update_hosts': update_hosts,
