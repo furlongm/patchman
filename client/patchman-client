@@ -199,11 +199,15 @@ function get_repos {
             echo 'Finding yum repos...'
         fi
         releasever=`rpm -q --qf "%{version}\n" --whatprovides redhat-release`
-        priorities=`sed -n -e "/^name/h; /priority *=/{ G; s/\n/ /; s/ity *= *\(.*\)/ity=\1/ ; s/\\$releasever/${releasever}/ ; s/name=\(.*\)/'\1 ${host_arch}'/ ; p }" /etc/yum.repos.d/*.repo`
+        if [ -f /etc/yum.repos.d/*.repo ] ; then
+            priorities=`sed -n -e "/^name/h; /priority *=/{ G; s/\n/ /; s/ity *= *\(.*\)/ity=\1/ ; s/\\$releasever/${releasever}/ ; s/name=\(.*\)/'\1 ${host_arch}'/ ; p }" /etc/yum.repos.d/*.repo`
+        fi
         # replace this with a dedicated awk or simple python script?
         for i in $(yum repolist enabled --verbose 2>/dev/null | awk '{ if ($1=="Repo-name") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'" ${host_arch}'"' "} if ($1=="Repo-baseurl" || $1=="Repo-baseurl:" || $1=="Repo-mirrors") { url=1; comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else { if (url==1) { if ($1==":") { comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else {url=0; print "";} } } }' | sed -e "s/\/'/'/g" | sed -e "s/'more)'//" | sed -e "s/ ' /' /") ; do
             name=`echo ${i} | cut -d \' -f 2 | sed -e 's/\//\\\\\//g'`
-            priority=`echo "${priorities}" | grep "'${name}'" | sed -e "s/priority=\(.*\) '${name}'/\1/"`
+            if [ "${priorities}" != "" ] ; then
+                priority=`echo "${priorities}" | grep "'${name}'" | sed -e "s/priority=\(.*\) '${name}'/\1/"`
+            fi
             # default yum priority is 99
             if [ "${priority}" == "" ] ; then
                 priority=99
