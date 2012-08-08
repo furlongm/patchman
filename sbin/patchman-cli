@@ -400,7 +400,9 @@ def update_rpm_repo(repo):
             if verbose:
                 print '%s - mirrorlist found.' % mirror.url
             for m in mirrors:
-                newmirror, c = Mirror.objects.get_or_create(repo=repo, url=m.replace('$ARCH', repo.arch.name))
+                mirror_url=m.replace('$ARCH', repo.arch.name)
+                mirror_url=m.replace('$basearch', repo.arch.name)
+                newmirror, c = Mirror.objects.get_or_create(repo=repo, url=mirror_url)
                 if c and verbose:
                     print 'Added %s as mirror.' % m
 
