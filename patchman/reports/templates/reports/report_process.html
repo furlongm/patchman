@@ -2,13 +2,13 @@
 
 {% block title %}Reports {{ repo }} {% endblock %}
 
+{% block extrahead %}
+<script type="text/javascript" src="{{ STATIC_URL }}js/progressbar.js"></script>
+{% endblock %}
+
 {% block content_title %}Report Information{% endblock %}
 
 {% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url repo_list %}">Reports</a> &rsaquo; {{ report }} {% endblock %}
-
-{% block extrahead %}
-<script type="text/javascript" src="{{ MEDIA_URL }}js/progressbar.js"></script>
-{% endblock %}
 
 {% block content %}
 <div class="module">
