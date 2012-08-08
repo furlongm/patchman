@@ -1,20 +1,20 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en-au" xml:lang="en-au">
 <head>
-<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/{% block stylesheet %}base{% endblock %}.css"/>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/{% block stylesheet %}base{% endblock %}.css"/>
 {% load adminmedia %}
 {% block extrastyle %}{% endblock %}
 <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
 <title>{% block title %}{% endblock %}&nbsp;|&nbsp;{% block site_name_title %}{% endblock %}</title>
 <meta name="author" content="{% block author %}Marcus Furlong{% endblock %}"/>
 {% block favicon %}{% endblock %}
-<link href="{{ MEDIA_URL }}css/jquery-ui.css" rel="stylesheet" type="text/css"/>
+<link href="{{ STATIC_URL }}css/jquery-ui.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript">window.__admin_media_prefix__ = "{% filter escapejs %}{% admin_media_prefix %}{% endfilter %}";</script>
-<script type="text/javascript" src="{{ MEDIA_URL }}js/jquery.min.js"></script>
-<script type="text/javascript" src="{{ MEDIA_URL }}js/show-hide.js"></script>
-<script type="text/javascript" src="{{ MEDIA_URL }}js/button-post.js"></script>
-<script type="text/javascript" src="{{ MEDIA_URL }}js/ajax-jquery.js"></script>
-<script type="text/javascript" src="{{ MEDIA_URL }}js/jquery-ui.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/show-hide.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/button-post.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/ajax-jquery.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery-ui.min.js"></script>
 {% block site_extrahead %}{% endblock %}
 {% block extrahead %}{% endblock %}
 </head>

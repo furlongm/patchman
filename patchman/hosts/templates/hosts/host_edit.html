@@ -2,17 +2,15 @@
 
 {% load forms common %}
 
+{% block extrahead %}
+{{ edit_form.media }}
+{% endblock %}
+
 {% block title %}Host {{ host }} {% endblock %}
 
 {% block content_title %}Host Information{% endblock %}
 
 {% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url host_list %}">Hosts</a> &rsaquo; {{ host }} {% endblock %}
-
-{% block extrahead %}
-<script type="text/javascript" src="{% url admin:jsi18n %}"></script>
-<script type="text/javascript" src="{{ MEDIA_URL }}js/core.js"></script>
-{{ edit_form.media }}
-{% endblock %}
 
 {% block content %}
 
