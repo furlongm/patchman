@@ -199,7 +199,8 @@ function get_repos {
             echo 'Finding yum repos...'
         fi
         releasever=`rpm -q --qf "%{version}\n" --whatprovides redhat-release`
-        if [ -f /etc/yum.repos.d/*.repo ] ; then
+        let numrepos=`ls /etc/yum.repos.d/*.repo | wc -l`
+        if [ ${numrepos} -gt 0 ] ; then
             priorities=`sed -n -e "/^name/h; /priority *=/{ G; s/\n/ /; s/ity *= *\(.*\)/ity=\1/ ; s/\\$releasever/${releasever}/ ; s/name=\(.*\)/'\1 ${host_arch}'/ ; p }" /etc/yum.repos.d/*.repo`
         fi
         # replace this with a dedicated awk or simple python script?
