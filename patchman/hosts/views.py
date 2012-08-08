@@ -25,7 +25,6 @@ from django.contrib import messages
 from tagging.models import Tag
 
 from andsome.util.filterspecs import Filter, FilterBar
-import socket
 
 from patchman.hosts.models import Host, HostRepo
 from patchman.domains.models import Domain
@@ -33,6 +32,7 @@ from patchman.arch.models import MachineArchitecture
 from patchman.operatingsystems.models import OS, OSGroup
 from patchman.reports.models import Report
 from patchman.hosts.forms import HostForm
+from patchman.hosts.utils import reversedns
 
 
 @login_required
@@ -110,16 +110,13 @@ def host_detail(request, hostname):
 
     host = get_object_or_404(Host, hostname=hostname)
 
-    try:
-        reversedns = str(socket.gethostbyaddr(host.ipaddress)[0])
-    except socket.gaierror:
-        reversedns = 'None'
+    rdns = reversedns(host)
 
     reports = Report.objects.all().filter(host=hostname).order_by('-time')[:3]
 
     hostrepos = HostRepo.objects.filter(host=host)
 
-    return render_to_response('hosts/host_detail.html', {'host': host, 'reversedns': reversedns, 'reports': reports, 'hostrepos': hostrepos}, context_instance=RequestContext(request))
+    return render_to_response('hosts/host_detail.html', {'host': host, 'rdns': rdns, 'reports': reports, 'hostrepos': hostrepos}, context_instance=RequestContext(request))
 
 
 @login_required
@@ -127,10 +124,7 @@ def host_edit(request, hostname):
 
     host = get_object_or_404(Host, hostname=hostname)
 
-    try:
-        reversedns = str(socket.gethostbyaddr(host.ipaddress)[0])
-    except socket.gaierror:
-        reversedns = 'None'
+    rdns = reversedns(host)
 
     reports = Report.objects.all().filter(host=hostname).order_by('-time')[:3]
 
@@ -146,7 +140,7 @@ def host_edit(request, hostname):
     else:
         edit_form = HostForm(instance=host)
 
-    return render_to_response('hosts/host_edit.html', {'host': host, 'reversedns': reversedns, 'reports': reports, 'edit_form': edit_form}, context_instance=RequestContext(request))
+    return render_to_response('hosts/host_edit.html', {'host': host, 'rdns': rdns, 'reports': reports, 'edit_form': edit_form}, context_instance=RequestContext(request))
 
 
 @login_required
@@ -162,11 +156,8 @@ def host_delete(request, hostname):
         elif 'cancel' in request.REQUEST:
             return HttpResponseRedirect(reverse('host_detail', args=[hostname]))
 
-    try:
-        reversedns = str(socket.gethostbyaddr(host.ipaddress)[0])
-    except socket.gaierror:
-        reversedns = 'None'
+    rdns = reversedns(host)
 
     reports = Report.objects.all().filter(host=hostname).order_by('-time')[:3]
 
-    return render_to_response('hosts/host_delete.html', {'host': host, 'reversedns': reversedns, 'reports': reports}, context_instance=RequestContext(request))
+    return render_to_response('hosts/host_delete.html', {'host': host, 'rdns': rdns, 'reports': reports}, context_instance=RequestContext(request))
