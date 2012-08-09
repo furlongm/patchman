@@ -8,22 +8,24 @@
       <th>Enabled</th>
       <th>Refresh</th>
       <th>Mirrorlist</th>
-      <th>Last access OK</th>
+      <th>Last Access</th>
       <th>Timestamp</th>
       <th>Checksum</th>
+      <th>Delete</th>
     </tr>
   </thead>
   <tbody>
   {% for mirror in object_list %}
       <tr class="{% cycle row1,row2 %}">
-      <td><a href="{{ mirror.url }}">{{ mirror.url }}</a></td>
+      <td><a href="{{ mirror.url }}">{{ mirror.url|truncatechars:25 }}</a></td>
       <td class="centered">{{ mirror.packages.count }}</td>
       <td class="centered">{% yes_no_img mirror.enabled 'False' 'Enabled' 'Not Enabled' %}</td>
       <td class="centered">{% yes_no_img mirror.refresh 'False' 'Yes' 'No' %}</td>
       <td class="centered">{% yes_no_img mirror.mirrorlist 'False' 'Yes' 'No' %}</td>
       <td class="centered">{% yes_no_img mirror.last_access_ok 'False' 'Yes' 'No' %}</td>
       <td>{{ mirror.timestamp }}</td>
-      <td>{{ mirror.file_checksum }}</td>
+      <td>{{ mirror.file_checksum|truncatechars:16 }}</td>
+      <td class="deletelink"><a href="mirror/{{ mirror.id }}/delete/">Delete</a></td>
     </tr>
   {% endfor %}
   </tbody>
