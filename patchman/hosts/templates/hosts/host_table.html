@@ -14,7 +14,7 @@
                     <td>{{ host.kernel }}</td>
                     <td><a href="{{ host.os.get_absolute_url }}">{{ host.os }}</a></td>
                     <td>{{ host.lastreport }}</td>
-                    <td class="centered">{% yes_no_img host.reboot_required 'reversed' %}</td>
+                    <td class="centered">{% yes_no_img host.reboot_required 'reversed','Required','Not Required' %}</td>
                 </tr>
     {% endfor %}
     </tbody>
