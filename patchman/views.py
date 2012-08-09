@@ -61,7 +61,7 @@ def dashboard(request):
 
     for csvalue in Mirror.objects.all().values('file_checksum').distinct():
         checksum = csvalue['file_checksum']
-        if checksum != None:
+        if checksum is not None:
             for mirror in Mirror.objects.filter(file_checksum=checksum):
                 if mirror.packages.count() > 0:
                     if not checksum in checksums:

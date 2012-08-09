@@ -80,7 +80,7 @@ class Host(models.Model):
             security = False
             # If any of the containing repos are security, mark the update as security
             for mirror in matchingrepos:
-                if mirror.repo.security == True:
+                if mirror.repo.security:
                     security = True
             update, c = PackageUpdate.objects.get_or_create(oldpackage=package, newpackage=highestpackage, security=security)
             self.updates.add(update)
@@ -108,7 +108,7 @@ class Host(models.Model):
                     bestrepo = hostrepos[0]
                 if hostrepos.count() > 1:
                     for repo in hostrepos:
-                        if repo.repo.security == True:
+                        if repo.repo.security:
                             bestrepo = repo
                         else:
                             if repo.priority > bestrepo.priority:
@@ -127,7 +127,7 @@ class Host(models.Model):
                             rp_bestrepo = rp_hostrepos[0]
                         if rp_hostrepos.count() > 1:
                             for repo in rp_hostrepos:
-                                if repo.repo.security == True:
+                                if repo.repo.security:
                                     rp_bestrepo = repo
                                 else:
                                     if repo.priority > rp_bestrepo.priority:
@@ -197,7 +197,7 @@ class Host(models.Model):
                     security = False
                     # If any of the containing repos are security, mark the update as security
                     for mirror in matchingrepos:
-                        if mirror.repo.security == True:
+                        if mirror.repo.security:
                             security = True
                     update, c = PackageUpdate.objects.get_or_create(oldpackage=host_highest_package, newpackage=repo_highest_package, security=security)
                     self.updates.add(update)
