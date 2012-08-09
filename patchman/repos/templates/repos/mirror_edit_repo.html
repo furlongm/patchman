@@ -20,10 +20,10 @@
       <td><a href="{{ mirror.repo.get_absolute_url }}">{{ mirror.repo }}</a></td>
       <td><a href="{{ mirror.url }}">{{ mirror.url }}</a></td>
       <td class="centered">{{ mirror.packages.count }}</td>
-      <td class="centered">{% yes_no_img mirror.enabled %}</td>
-      <td class="centered">{% yes_no_img mirror.refresh %}</td>
-      <td class="centered">{% yes_no_img mirror.mirrorlist %}</td>
-      <td class="centered">{% yes_no_img mirror.last_access_ok %}</td>
+      <td class="centered">{% yes_no_img mirror.enabled 'False' 'Enabled' 'Not Enabled' %}</td>
+      <td class="centered">{% yes_no_img mirror.refresh 'False' 'Yes' 'No' %}</td>
+      <td class="centered">{% yes_no_img mirror.mirrorlist 'False' 'Yes' 'No' %}</td>
+      <td class="centered">{% yes_no_img mirror.last_access_ok 'False' 'Yes' 'No' %}</td>
       <td>{{ mirror.timestamp }}</td>
       <td>{{ mirror.file_checksum }}</td>
     </tr>

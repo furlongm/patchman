@@ -22,8 +22,8 @@
         <tr><td>Name</td><td> {{ repo.name }} </td></tr>
         <tr><td>Type</td><td> {{ repo.get_repotype_display }} </td></tr>
         <tr><td>Architecture</td><td> {{ repo.arch }} </td></tr>
-        <tr><td>Security</td><td> {% yes_no_img repo.security %} </td></tr>
-        <tr><td>Enabled</td><td> {% yes_no_img repo.enabled %} </td></tr>
+        <tr><td>Security</td><td> {% yes_no_img repo.security 'False' 'Security' 'Not Security' %} </td></tr>
+        <tr><td>Enabled</td><td> {% yes_no_img repo.enabled 'False' 'Enabled' 'Not Enabled' %} </td></tr>
         <tr><td>Mirrors</td><td> {{ repo.mirror_set.count }} </td></tr>
     </table>
 </div>
