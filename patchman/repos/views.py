@@ -104,7 +104,7 @@ def mirror_list(request):
         # this is a hack but works, because a host with 0 packages has no packages with package_id > 0
         mirrors = mirrors.filter(packages__gt=0)
         # this is the correct way to do it, but the SQL takes way longer
-        #mirrors = mirrors.annotate(num_packages=Count('packages')).filter(num_packages__gt=0)
+        # mirrors = mirrors.annotate(num_packages=Count('packages')).filter(num_packages__gt=0)
 
     mirrors = mirrors.distinct()
 
@@ -175,7 +175,7 @@ def mirror_list(request):
             arch = mirrors[0].repo.arch
             repotype = mirrors[0].repo.repotype
             prereqs = pre_reqs(arch, repotype)
-            if prereqs != True:
+            if not prereqs:
                 return prereqs
             else:
                 link_form = LinkRepoForm(prefix='link')
@@ -183,6 +183,24 @@ def mirror_list(request):
                 return render_to_response('repos/mirror_with_repo_list.html', {'page': page, 'link_form': link_form, 'create_form': create_form, 'checksum': checksum}, context_instance=RequestContext(request))
 
     return render_to_response('repos/mirror_list.html', {'page': page}, context_instance=RequestContext(request))
+
+
+@login_required
+def mirror_delete(request, repo_id, mirror_id):
+
+    if repo_id == 'mirrors':
+        mirror_list = True
+    else:
+        mirror_list = False
+        repo = get_object_or_404(Repository, id=repo_id)
+
+    mirror = get_object_or_404(Mirror, id=mirror_id)
+    mirror.delete()
+
+    if mirror_list:
+        return HttpResponseRedirect(reverse('mirror_list'))
+    else:
+        return HttpResponseRedirect(repo.get_absolute_url())
 
 
 @login_required
