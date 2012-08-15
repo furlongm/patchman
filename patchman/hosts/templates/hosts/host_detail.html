@@ -32,6 +32,7 @@
         <tr><td>Updates Available</td><td> <a href="#updates">{{ host.updates.count }}</a> </td></tr>
         <tr><td>Reboot Required</td><td> {{ host.reboot_required }} </td></tr>
         <tr><td>Packages Installed</td><td> <a href="#installedpackages">{{ host.packages.count}}</a> </td></tr>
+        <tr><td>Repos In Use</td><td>{% if host.host_repos_only %}Host Repos{% else %}Host and OS Group Repos{% endif %}</td></tr>
         <tr><td>Last 3 reports</td><td>
             {% for report in reports %}
             <span class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
@@ -79,8 +80,6 @@
 </div>
 <div class="module">
   <h2>Repositories</h2>
-    {% with host.os.osgroup.repos.select_related as osrepos %}
-    {% if hostrepos or osrepos %}
     <table>
       <thead>
         <tr>
@@ -88,6 +87,7 @@
         </tr>
       </thead>
       <tbody>
+    {% if hostrepos %}
       {% for hostrepo in hostrepos %}
         <tr class="{% cycle row1,row2 %}">
           <td> <a href="{{ hostrepo.repo.get_absolute_url }}">{{ hostrepo.repo.name }}</a> </td>
@@ -97,6 +97,9 @@
           <td class="centered"> {% yes_no_img hostrepo.repo.security %} </td>
         </tr>
       {% endfor %}
+    {% endif %}
+    {% with host.os.osgroup.repos.select_related as osrepos %}
+    {% if osrepos and not host.host_repos_only %}
       {% for osrepo in osrepos %}
         {% if osrepo.arch == host.arch %}
           <tr class="{% cycle row1,row2 %}">
@@ -108,12 +111,10 @@
           </tr>
         {% endif %}
       {% endfor %}
-      </tbody>
-    </table>
-    {% else %}
-        <p>No repositories associated with this host yet.</p>
     {% endif %}
     {% endwith %}
+      </tbody>
+    </table>
 </div>
 <div class="module" id="installedpackages">
     <h2>Packages</h2>

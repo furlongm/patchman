@@ -30,6 +30,7 @@
         <tr><td>Updates Available</td><td> <a href="#updates">{{ host.updates.count }}</a> </td></tr>
         <tr><td>Reboot Required</td><td> {{ host.reboot_required }} </td></tr>
         <tr><td>Packages Installed</td><td> <a href="#installedpackages">{{ host.packages.count}}</a> </td></tr>
+        <tr><td>Repos In Use</td><td>{% if host.host_repos_only %}Host Repos{% else %}Host and OS Group Repos{% endif %}</td></tr>
         <tr><td>Last 3 reports</td><td>
             {% for report in reports %}
             <span class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
