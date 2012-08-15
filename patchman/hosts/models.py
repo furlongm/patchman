@@ -43,7 +43,7 @@ class Host(models.Model):
     repos = models.ManyToManyField(Repository, through='HostRepo')
     updates = models.ManyToManyField(PackageUpdate)
     reboot_required = models.BooleanField(default=False)
-    host_repos_only = models.BooleanField(default=False)
+    host_repos_only = models.BooleanField(default=True)
     tags = TagField()
 
     class Meta:
