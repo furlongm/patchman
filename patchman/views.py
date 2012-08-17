@@ -65,8 +65,8 @@ def dashboard(request):
     nohost_repos = Repository.objects.filter(host__isnull=True)
 
     # package issues
-    norepo_packages = Package.objects.filter(mirror__isnull=True, oldpackage__isnull=True, host__isnull=False)
-    orphaned_packages = Package.objects.filter(mirror__isnull=True, host__isnull=True)
+    norepo_packages = Package.objects.filter(mirror__isnull=True, oldpackage__isnull=True, host__isnull=False).distinct()
+    orphaned_packages = Package.objects.filter(mirror__isnull=True, host__isnull=True).distinct()
 
     # report issues
     unprocessed_reports = Report.objects.filter(processed=False)
