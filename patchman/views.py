@@ -37,24 +37,39 @@ def dashboard(request):
     except Site.DoesNotExist:
         site = {'name': '', 'domainname': ''}
 
+    # host issues
     stale_hosts = Host.objects.filter(lastreport__lt=(datetime.now() + timedelta(-14)))
     norepo_hosts = Host.objects.filter(repos__isnull=True, os__osgroup__repos__isnull=True)
-    norepo_osgroups = OSGroup.objects.filter(repos__isnull=True)
-    norepo_packages = Package.objects.filter(mirror__isnull=True, oldpackage__isnull=True, host__isnull=False)
-    orphaned_packages = Package.objects.filter(mirror__isnull=True, host__isnull=True)
-    lonely_oses = OS.objects.filter(osgroup__isnull=True)
-    nohost_oses = OS.objects.filter(host__isnull=True)
-    failed_mirrors = Repository.objects.filter(mirror__last_access_ok=False).filter(mirror__last_access_ok=True).distinct()
-    disabled_mirrors = Repository.objects.filter(mirror__enabled=False).filter(mirror__mirrorlist=False).distinct()
-    norefresh_mirrors = Repository.objects.filter(mirror__refresh=False).distinct()
-    failed_repos = Repository.objects.filter(mirror__last_access_ok=False).exclude(id__in=[x.id for x in failed_mirrors]).distinct()
     reboot_hosts = Host.objects.filter(reboot_required=True)
     secupdate_hosts = Host.objects.filter(updates__security=True, updates__isnull=False).values('hostname').annotate(Count('hostname'))
     update_hosts = Host.objects.filter(updates__security=False, updates__isnull=False).values('hostname').annotate(Count('hostname'))
+    # TODO add to host model where reverse dns does not match
+    # badrevp_hosts = Host.objects.filter()
+
+    # os issues
+    lonely_oses = OS.objects.filter(osgroup__isnull=True)
+    nohost_oses = OS.objects.filter(host__isnull=True)
+
+    # osgroup issues
+    norepo_osgroups = OSGroup.objects.filter(repos__isnull=True)
+
+    # mirror issues
+    failed_mirrors = Repository.objects.filter(mirror__last_access_ok=False).filter(mirror__last_access_ok=True).distinct()
+    disabled_mirrors = Repository.objects.filter(mirror__enabled=False).filter(mirror__mirrorlist=False).distinct()
+    norefresh_mirrors = Repository.objects.filter(mirror__refresh=False).distinct()
+
+    # repo issues
+    failed_repos = Repository.objects.filter(mirror__last_access_ok=False).exclude(id__in=[x.id for x in failed_mirrors]).distinct()
     unused_repos = Repository.objects.filter(host__isnull=True, osgroup__isnull=True)
-    unprocessed_reports = Report.objects.filter(processed=False)
     nomirror_repos = Repository.objects.filter(mirror__isnull=True)
     nohost_repos = Repository.objects.filter(host__isnull=True)
+
+    # package issues
+    norepo_packages = Package.objects.filter(mirror__isnull=True, oldpackage__isnull=True, host__isnull=False)
+    orphaned_packages = Package.objects.filter(mirror__isnull=True, host__isnull=True)
+
+    # report issues
+    unprocessed_reports = Report.objects.filter(processed=False)
 
     checksums = dict()
     possible_mirrors = dict()
@@ -67,7 +82,7 @@ def dashboard(request):
                     if not checksum in checksums:
                         checksums[checksum] = []
                     checksums[checksum].append(mirror)
-    
+
     for checksum in checksums:
         first_mirror = checksums[checksum][0]
         for mirror in checksums[checksum]:

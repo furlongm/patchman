@@ -36,8 +36,8 @@ class RepositoryForm(ModelForm):
 class LinkRepoForm(Form):
 
     name = ModelChoiceField(queryset=Repository.objects.order_by('name'), label='Link all mirrors above to an existing Repository')
-    
-        
+
+
 class CreateRepoForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
