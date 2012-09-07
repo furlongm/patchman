@@ -76,7 +76,7 @@ def dashboard(request):
 
     for csvalue in Mirror.objects.all().values('file_checksum').distinct():
         checksum = csvalue['file_checksum']
-        if checksum is not None:
+        if checksum is not None and checksum != 'yast':
             for mirror in Mirror.objects.filter(file_checksum=checksum):
                 if mirror.packages.count() > 0:
                     if not checksum in checksums:
