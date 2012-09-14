@@ -21,6 +21,8 @@ from patchman.arch.models import MachineArchitecture
 from patchman.operatingsystems.models import OS
 from patchman.domains.models import Domain
 
+from socket import gethostbyaddr
+
 
 class Report(models.Model):
 
@@ -96,7 +98,10 @@ class Report(models.Model):
             domain, c = Domain.objects.get_or_create(name=self.domain)
 
             if not self.host:
-                self.host = self.report_ip
+                try:
+                    self.host = str(gethostbyaddr(self.report_ip)[0])
+                except:
+                    self.host = self.report_ip
 
             host, c = Host.objects.get_or_create(
                 hostname=self.host,
