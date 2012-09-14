@@ -86,10 +86,18 @@ class Report(models.Model):
         self.save()
 
     def process(self):
-        if self.host and self.os and self.kernel and self.domain and self.arch:
+        if self.os and self.kernel and self.arch:
             os, c = OS.objects.get_or_create(name=self.os)
-            domain, c = Domain.objects.get_or_create(name=self.domain)
             arch, c = MachineArchitecture.objects.get_or_create(name=self.arch)
+
+            if not self.domain:
+                self.domain = 'unknown'
+
+            domain, c = Domain.objects.get_or_create(name=self.domain)
+
+            if not self.host:
+                self.host = self.report_ip
+
             host, c = Host.objects.get_or_create(
                 hostname=self.host,
                 defaults={
@@ -99,6 +107,7 @@ class Report(models.Model):
                     'domain': domain,
                     'lastreport': self.time,
                 })
+
             host.ipaddress = self.report_ip
             host.kernel = self.kernel
             host.arch = arch
