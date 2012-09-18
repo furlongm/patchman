@@ -146,7 +146,16 @@ function get_packages {
 
 function get_host_data {
 
-    host_name=`hostname -f`
+    fqdn=`hostname -f`
+    if [ "${fqdn}" == "" ] ; then
+        host_name=`hostname`
+        domain_name=`dnsdomainname`
+        if [ "${domain_name}" != "" ] ; then
+            fqdn=${host_name}.${domain_name}
+        else
+            fqdn=${host_name}
+        fi
+    fi
     host_kernel=`uname -r | sed -e 's/\+/%2b/g'`
     host_arch=`uname -m`
 
@@ -180,7 +189,7 @@ function get_host_data {
         fi
     done
     if [ ${debug} -eq 1 ] ; then
-        echo "Host:   ${host_name}"
+        echo "FQDN:   ${fqdn}"
         echo "Kernel: ${host_kernel}"
         echo "Arch:   ${host_arch}"
         echo "OS:     ${os}"
@@ -307,7 +316,7 @@ function post_data {
         curl_opts="${curl_opts} -F debug=\"1\""
     fi
 
-    curl_opts="${curl_opts} -F host=\"${host_name}\""
+    curl_opts="${curl_opts} -F host=\"${fqdn}\""
     curl_opts="${curl_opts} -F tags=\"${tags}\""
     curl_opts="${curl_opts} -F kernel=\"${host_kernel}\""
     curl_opts="${curl_opts} -F arch=\"${host_arch}\""
