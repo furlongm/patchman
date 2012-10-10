@@ -55,17 +55,22 @@ function parseopts {
 
 function cleanup {
 
-    
     if [ ${verbose} -eq 1 -a ${debug} -eq 1 ] ; then
-        echo "Debug: not deleting ${package_tmpfile}..."
-        echo "Debug: not deleting ${repo_tmpfile}..."
+        echo "Debug: not deleting ${tmpfile_pkg} (packages)"
+        echo "Debug: not deleting ${tmpfile_rep} (repos)"
+        echo "Debug: not deleting ${tmpfile_sec} (security updates)"
+        echo "Debug: not deleting ${tmpfile_bug} (bugfix updates)"
     elif [ ${verbose} -eq 1 -a ${debug} -eq 0 ] ; then
-        echo "Deleting ${package_tmpfile}..."
-        echo "Deleting ${repo_tmpfile}..."
+        echo "Deleting ${tmpfile_pkg}"
+        echo "Deleting ${tmpfile_rep}"
+        echo "Deleting ${tmpfile_sec}"
+        echo "Deleting ${tmpfile_bug}"
     fi
     if [ ${debug} -ne 1 ] ; then
-        rm -fr ${package_tmpfile}
-        rm -fr ${repo_tmpfile}
+        rm -fr ${tmpfile_pkg}
+        rm -fr ${tmpfile_rep}
+        rm -fr ${tmpfile_sec}
+        rm -fr ${tmpfile_bug}
     fi
 }
 
@@ -108,9 +113,9 @@ function get_installed_rpms {
         if [ ${verbose} -eq 1 ] ; then
             echo 'Finding installed rpms...'
         fi
-        rpm -qa --queryformat "'%{NAME}' '%{EPOCH}' '%{version}' '%{RELEASE}' '%{ARCH}' 'rpm'\n" 2>/dev/null | sed -e 's/(none)//g' | sed -e 's/\+/%2b/g' >> ${package_tmpfile}
+        rpm -qa --queryformat "'%{NAME}' '%{EPOCH}' '%{version}' '%{RELEASE}' '%{ARCH}' 'rpm'\n" 2>/dev/null | sed -e 's/(none)//g' | sed -e 's/\+/%2b/g' >> ${tmpfile_pkg}
         if [ ${debug} -eq 1 ] ; then
-            cat ${package_tmpfile}
+            cat ${tmpfile_pkg}
         fi
     fi
 }
@@ -130,7 +135,7 @@ function get_installed_debs {
             read remaining release <<<$(echo "${fullversion}" | sed -e "s/\(.*\)-\(.*\)/\1 \2/")
             epoch=`echo "${remaining}" | cut -d ":" -f 1 -s`
             version=`echo "${remaining}" | sed -e "s/.*:\(.*\)/\1/"`
-            echo \'${name}\' \'${epoch}\' \'${version}\' \'${release}\' \'${arch}\' \'deb\'>> ${package_tmpfile}
+            echo \'${name}\' \'${epoch}\' \'${version}\' \'${release}\' \'${arch}\' \'deb\'>> ${tmpfile_pkg}
             if [ ${debug} -eq 1 ] ; then
                 echo \'${name}\' \'${epoch}\' \'${version}\' \'${release}\' \'${arch}\' \'deb\'
             fi
@@ -196,6 +201,12 @@ function get_host_data {
     fi
 }
 
+function get_updates {
+
+    yum --cacheonly --security list updates --disablerepo="*" --enablerepo="${1}" | grep "${1}" >> ${tmpfile_sec}
+    yum --cacheonly --bugfixes list updates --disablerepo="*" --enablerepo="${1}" | grep "${1}" >> ${tmpfile_bug}
+}
+
 function get_repos {
 
     OLDIFS=${IFS}
@@ -213,8 +224,9 @@ function get_repos {
             priorities=`sed -n -e "/^name/h; /priority *=/{ G; s/\n/ /; s/ity *= *\(.*\)/ity=\1/ ; s/\\$releasever/${releasever}/ ; s/name=\(.*\)/'\1 ${host_arch}'/ ; p }" /etc/yum.repos.d/*.repo`
         fi
         # replace this with a dedicated awk or simple python script?
-        for i in $(yum repolist enabled --verbose 2>/dev/null | awk '{ if ($1=="Repo-name") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'" ${host_arch}'"' "} if ($1=="Repo-baseurl" || $1=="Repo-baseurl:" || $1=="Repo-mirrors") { url=1; comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else { if (url==1) { if ($1==":") { comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else {url=0; print "";} } } }' | sed -e "s/\/'/'/g" | sed -e "s/'more)'//" | sed -e "s/ ' /' /") ; do
-            name=`echo ${i} | cut -d \' -f 2 | sed -e 's/\//\\\\\//g'`
+        for i in $(yum --cacheonly repolist enabled --verbose 2>/dev/null | awk '{ if ($1=="Repo-id") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'"'"' "} if ($1=="Repo-name") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'" ${host_arch}'"' "} if ($1=="Repo-baseurl" || $1=="Repo-baseurl:" || $1=="Repo-mirrors") { url=1; comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else { if (url==1) { if ($1==":") { comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else {url=0; print "";} } } }' | sed -e "s/\/'/'/g" | sed -e "s/'more)'//" | sed -e "s/ ' /' /") ; do
+        id=`echo ${i} | cut -d \' -f 2 | sed -e 's/\//\\\\\//g'`
+            name=`echo ${i} | cut -d \' -f 4 | sed -e 's/\//\\\\\//g'`
             if [ "${priorities}" != "" ] ; then
                 priority=`echo "${priorities}" | grep "'${name}'" | sed -e "s/priority=\(.*\) '${name}'/\1/"`
             fi
@@ -222,8 +234,15 @@ function get_repos {
             if [ "${priority}" == "" ] ; then
                 priority=99
             fi
-            j=`echo ${i} | sed -e "s/'${name}'/'${name}' '${priority}'/"`
-            echo \'rpm\' ${j} >> ${repo_tmpfile}
+            j=`echo ${i} | sed -e "s/'${id}' '${name}'/'${name}' '${priority}'/"`
+            redhat_repo=`echo ${j} | grep "https://cdn.redhat.com"`
+            if [ $? -eq 0 ] ; then
+                if [ ${verbose} -eq 1 ] ; then
+                    echo "RedHat repo found, finding updates locally:"
+                fi
+                get_updates ${id}
+            fi
+            echo \'rpm\' ${j} >> ${tmpfile_rep}
             unset priority
         done
     fi
@@ -246,7 +265,7 @@ function get_repos {
                 if [ "${priority}" == "" ] ; then
                     priority=0
                 fi
-                echo \'deb\' \'${osname} ${shortversion} ${host_arch} repo at ${i}\' \'${priority}\' \'${i}\' >> ${repo_tmpfile}
+                echo \'deb\' \'${osname} ${shortversion} ${host_arch} repo at ${i}\' \'${priority}\' \'${i}\' >> ${tmpfile_rep}
                 unset priority
             done
             if [ "${gpgs}" != "" ] ; then
@@ -258,8 +277,8 @@ function get_repos {
             repos=`apt-cache policy | grep http | grep -v Translation | cut -d " " -f 2,3,4,5`
             dist_repos=`echo "${repos}" | grep -v -e "Packages$"`
             nondist_repos=`echo "${repos}" | grep -e "Packages$"`
-            echo "${dist_repos}" | sed -e "s/\([0-9]*\) \(http:.*\) \(.*\/.*\) \(.*\)/${repo_string} \2dists\/\3\/binary-\4' '\1' '\2dists\/\3\/binary-\4'/" >> ${repo_tmpfile}
-            echo "${nondist_repos}" | sed -e "s/\([0-9]*\) \(http:.*\) \(.*\/\?.*\) Packages/${repo_string} \2\3' '\1' '\2\3'/" >> ${repo_tmpfile}
+            echo "${dist_repos}" | sed -e "s/\([0-9]*\) \(http:.*\) \(.*\/.*\) \(.*\)/${repo_string} \2dists\/\3\/binary-\4' '\1' '\2dists\/\3\/binary-\4'/" >> ${tmpfile_rep}
+            echo "${nondist_repos}" | sed -e "s/\([0-9]*\) \(http:.*\) \(.*\/\?.*\) Packages/${repo_string} \2\3' '\1' '\2\3'/" >> ${tmpfile_rep}
         fi        
     fi
 
@@ -276,17 +295,17 @@ function get_repos {
         for i in $(zypper lr -u --details | tail +3 | cut -d "|" -f 3,6,8 | sed -e "s/ *|/ ${host_arch} |/" -e "s/^ /'/g" -e "s/ *| */' '/g" -e "s/ *$/'/g") ; do
             let r=$r+1
             if [ "${enabled[${r}]}" == "true" ] ; then
-                echo \'rpm\' ${i} >> ${repo_tmpfile}
+                echo \'rpm\' ${i} >> ${tmpfile_rep}
             fi
         done
     fi
 
     IFS=${OLDIFS}
 
-    sed -i -e '/^$/d' ${repo_tmpfile}
+    sed -i -e '/^$/d' ${tmpfile_rep}
 
     if [ ${debug} -eq 1 ] ; then
-        cat ${repo_tmpfile}
+        cat ${tmpfile_rep}
     fi
 }
 
@@ -323,12 +342,14 @@ function post_data {
     curl_opts="${curl_opts} -F protocol=\"${protocol}\""
     curl_opts="${curl_opts} -F os=\"${os}\""
     curl_opts="${curl_opts} -F report=\"${report}\""
-    curl_opts="${curl_opts} -F packages=\<${package_tmpfile}"
-    curl_opts="${curl_opts} -F repos=\<${repo_tmpfile}"
+    curl_opts="${curl_opts} -F packages=\<${tmpfile_pkg}"
+    curl_opts="${curl_opts} -F repos=\<${tmpfile_rep}"
+    curl_opts="${curl_opts} -F sec_updates=\<${tmpfile_sec}"
+    curl_opts="${curl_opts} -F bug_updates=\<${tmpfile_bug}"
     curl_opts="${curl_opts} -F reboot=\"${reboot}\""
     post_command="${curl_bin} ${curl_opts} ${server}/reports/upload/"
 
-    sed -i -e 's/%2b/\+/g' ${package_tmpfile}
+    sed -i -e 's/%2b/\+/g' ${tmpfile_pkg}
 
     if [ ${verbose} -eq 1 ] ; then
         echo "Command is : ${post_command}"
@@ -354,8 +375,10 @@ parseopts $@
 check_conf
 
 trap cleanup EXIT
-package_tmpfile=`${mktemp_bin}`
-repo_tmpfile=`${mktemp_bin}`
+tmpfile_pkg=`${mktemp_bin}`
+tmpfile_rep=`${mktemp_bin}`
+tmpfile_sec=`${mktemp_bin}`
+tmpfile_bug=`${mktemp_bin}`
 
 get_host_data
 get_packages
