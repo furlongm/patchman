@@ -204,8 +204,8 @@ function get_host_data {
 function get_updates {
 
     yum -q makecache 2>/dev/null
-    yum --cacheonly --security list updates --disablerepo="*" --enablerepo="${1}" | grep "${1}" >> ${tmpfile_sec}
-    yum --cacheonly --bugfixes list updates --disablerepo="*" --enablerepo="${1}" | grep "${1}" >> ${tmpfile_bug}
+    yum --cacheonly --security list updates --disablerepo="*" --enablerepo="${1}" | sed '1,/Updated Packages/d' >> ${tmpfile_sec}
+    yum --cacheonly --bugfixes list updates --disablerepo="*" --enablerepo="${1}" | sed '1,/Updated Packages/d' >> ${tmpfile_bug}
 }
 
 function get_repos {
