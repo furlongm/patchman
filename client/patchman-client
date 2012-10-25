@@ -239,7 +239,7 @@ function get_repos {
             redhat_repo=`echo ${j} | grep "https://cdn.redhat.com"`
             if [ $? -eq 0 ] ; then
                 if [ ${verbose} -eq 1 ] ; then
-                    echo "RedHat repo found, finding updates locally:"
+                    echo "Red Hat repo found, finding updates locally for ${id}"
                 fi
                 get_updates ${id}
             fi
