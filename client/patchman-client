@@ -215,8 +215,8 @@ function get_host_data {
 function get_updates {
 
     yum -q makecache 2>/dev/null
-    yum --cacheonly --security list updates --disablerepo="*" --enablerepo="${1}" | sed '1,/Updated Packages/d' >> ${tmpfile_sec}
-    yum --cacheonly --bugfixes list updates --disablerepo="*" --enablerepo="${1}" | sed '1,/Updated Packages/d' >> ${tmpfile_bug}
+    yum -C --security list updates --disablerepo="*" --enablerepo="${1}" | sed '1,/Updated Packages/d' >> ${tmpfile_sec}
+    yum -C --bugfixes list updates --disablerepo="*" --enablerepo="${1}" | sed '1,/Updated Packages/d' >> ${tmpfile_bug}
 }
 
 function get_repos {
@@ -236,7 +236,7 @@ function get_repos {
             priorities=`sed -n -e "/^name/h; /priority *=/{ G; s/\n/ /; s/ity *= *\(.*\)/ity=\1/ ; s/\\$releasever/${releasever}/ ; s/name=\(.*\)/'\1 ${host_arch}'/ ; p }" /etc/yum.repos.d/*.repo`
         fi
         # replace this with a dedicated awk or simple python script?
-        for i in $(yum --cacheonly repolist enabled --verbose 2>/dev/null | awk '{ if ($1=="Repo-id") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'"'"' "} if ($1=="Repo-name") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'" ${host_arch}'"' "} if ($1=="Repo-baseurl" || $1=="Repo-baseurl:" || $1=="Repo-mirrors") { url=1; comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else { if (url==1) { if ($1==":") { comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else {url=0; print "";} } } }' | sed -e "s/\/'/'/g" | sed -e "s/'more)'//" | sed -e "s/ ' /' /") ; do
+        for i in $(yum -C repolist enabled --verbose 2>/dev/null | awk '{ if ($1=="Repo-id") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'"'"' "} if ($1=="Repo-name") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'" ${host_arch}'"' "} if ($1=="Repo-baseurl" || $1=="Repo-baseurl:" || $1=="Repo-mirrors") { url=1; comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else { if (url==1) { if ($1==":") { comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else {url=0; print "";} } } }' | sed -e "s/\/'/'/g" | sed -e "s/'more)'//" | sed -e "s/ ' /' /") ; do
         id=`echo ${i} | cut -d \' -f 2 | sed -e 's/\//\\\\\//g'`
             name=`echo ${i} | cut -d \' -f 4 | sed -e 's/\//\\\\\//g'`
             if [ "${priorities}" != "" ] ; then

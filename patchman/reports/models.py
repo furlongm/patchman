@@ -129,11 +129,11 @@ class Report(models.Model):
             if self.repos:
                 host.repos.clear()
                 process_repos(report=self, host=host)
+            process_tags(report=self, host=host)
             if self.reboot == 'True':
                 host.reboot_required = True
             else:
                 host.reboot_required = False
-            process_tags(report=self, host=host)
             host.save()
             self.processed = True
             self.save()
