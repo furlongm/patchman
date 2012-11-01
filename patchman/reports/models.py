@@ -133,7 +133,7 @@ class Report(models.Model):
                 host.reboot_required = True
             else:
                 host.reboot_required = False
-            process_tags(report=self)
+            process_tags(report=self, host=host)
             host.save()
             self.processed = True
             self.save()
