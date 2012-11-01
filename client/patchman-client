@@ -7,7 +7,7 @@ mktemp_bin=`which mktemp`
 verbose=0
 debug=0
 report=0
-tags="Default"
+tags=''
 
 function usage {
 
@@ -345,6 +345,10 @@ function post_data {
 
     if [ ${debug} -eq 1 ] ; then
         curl_opts="${curl_opts} -F debug=\"1\""
+    fi
+
+    if [ "${tags}" == "" ] ; then
+        tags='Default'
     fi
 
     curl_opts="${curl_opts} -F host=\"${fqdn}\""
