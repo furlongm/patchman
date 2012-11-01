@@ -119,9 +119,10 @@ class Report(models.Model):
             host.os = os
             host.domain = domain
             host.lastreport = self.time
+            host.tags = self.tags
 # TODO: fix this to record the history of installed
 # packages on a host.
-            from patchman.reports.utils import process_packages, process_repos, process_tags
+            from patchman.reports.utils import process_packages, process_repos
             host.packages.clear()
             process_packages(report=self, host=host)
             # only clear repos if we have a new list
@@ -133,7 +134,6 @@ class Report(models.Model):
                 host.reboot_required = True
             else:
                 host.reboot_required = False
-            process_tags(report=self)
             host.save()
             self.processed = True
             self.save()

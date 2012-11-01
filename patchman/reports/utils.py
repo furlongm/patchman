@@ -22,14 +22,6 @@ from patchman.repos.models import Repository, Mirror
 from patchman.packages.models import Package, PackageName
 from patchman.signals import progress_info, progress_update
 
-from tagging.models import Tag
-
-
-def process_tags(report, host):
-
-    if report.tags:
-        Tag.objects.update_tags(host, report.tags)
-        
 
 def process_repos(report, host):
 
