@@ -34,6 +34,8 @@ from patchman.reports.models import Report
 from patchman.hosts.forms import HostForm
 from patchman.hosts.utils import reversedns
 
+from tagging.models import TaggedItem
+
 
 @login_required
 def host_list(request):
@@ -62,7 +64,7 @@ def host_list(request):
         hosts = hosts.filter(os__osgroup=int(request.REQUEST['osgroup']))
 
     if 'tag' in request.REQUEST:
-        hosts = hosts.filter(tags=request.REQUEST['tag'])
+        hosts = TaggedItem.objects.get_by_model(hosts, request.REQUEST['tag'])
 
     if 'reboot_required' in request.REQUEST:
         reboot_required = request.REQUEST['reboot_required'] == 'True'
