@@ -85,7 +85,18 @@ function check_conf {
             echo "Warning: config file '${conf}' not found."
         fi
     else
-        . ${conf}
+        source ${conf}
+    fi
+
+    conf_dir=`dirname ${conf}`/conf.d
+
+    if [ -d ${conf_dir} ] ; then
+        let f=`find ${conf_dir} -maxdepth 1 -type f | wc -l`
+        if [ ${f} -gt 0 ] ; then
+            for conf_file in `find ${conf_dir} -maxdepth 1 -type f` ; do
+                source ${conf_file}
+            done
+        fi
     fi
 
     if [ -z "${server}" -a -z "${cli_server}" ] ; then
@@ -280,7 +291,7 @@ function get_repos {
             nondist_repos=`echo "${repos}" | grep -e "Packages$"`
             echo "${dist_repos}" | sed -e "s/\([0-9]*\) \(http:.*\) \(.*\/.*\) \(.*\)/${repo_string} \2dists\/\3\/binary-\4' '\1' '\2dists\/\3\/binary-\4'/" >> ${tmpfile_rep}
             echo "${nondist_repos}" | sed -e "s/\([0-9]*\) \(http:.*\) \(.*\/\?.*\) Packages/${repo_string} \2\3' '\1' '\2\3'/" >> ${tmpfile_rep}
-        fi        
+        fi
     fi
 
     # SUSE
@@ -369,7 +380,7 @@ function post_data {
 
 if [ -z "$mktemp_bin" -o -z "$curl_bin" ] ; then
     echo "Either mktemp or curl was not found, exiting."
-    exit 1 
+    exit 1
 fi
 
 parseopts $@
