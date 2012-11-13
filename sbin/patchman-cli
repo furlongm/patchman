@@ -26,7 +26,7 @@ from patchman.repos.models import Repository, Mirror, MirrorPackage
 from patchman.arch.models import PackageArchitecture, MachineArchitecture
 from patchman.reports.models import Report
 
-from patchman.hosts.signals import update, rdns
+from patchman.hosts.signals import update_signal, rdns_signal
 from patchman.signals import progress_info, progress_update, cli_message
 
 from progressbar import Bar, ETA, Percentage, ProgressBar
@@ -661,9 +661,9 @@ def find_host_updates(host=None):
     for host in update_hosts:
         if verbose:
             print '\n%s' % host
-        update.connect(print_msg)
+        update_signal.connect(print_msg)
         host.find_updates()
-        update.disconnect()
+        update_signal.disconnect()
 
 
 def dns_checks(host=None):
@@ -687,9 +687,9 @@ def dns_checks(host=None):
     for host in check_hosts:
         if verbose:
             print '\n%s' % host
-        rdns.connect(print_msg)
+        rdns_signal.connect(print_msg)
         host.check_rdns()
-        rdns.disconnect()
+        rdns_signal.disconnect()
 
 
 def process_reports(host=None):
