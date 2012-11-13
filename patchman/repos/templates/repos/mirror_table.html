@@ -12,6 +12,7 @@
       <th>Timestamp</th>
       <th>Checksum</th>
       <th>Delete</th>
+      <th>Edit</th>
     </tr>
   </thead>
   <tbody>
@@ -26,6 +27,7 @@
       <td>{{ mirror.timestamp }}</td>
       <td>{{ mirror.file_checksum|truncatechars:16 }}</td>
       <td class="deletelink"><a href="mirror/{{ mirror.id }}/delete/">Delete</a></td>
+      <td class="changelink"><a href="mirror/{{ mirror.id }}/edit/">Edit</a></td>
     </tr>
   {% endfor %}
   </tbody>

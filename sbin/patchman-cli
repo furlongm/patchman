@@ -26,7 +26,7 @@ from patchman.repos.models import Repository, Mirror, MirrorPackage
 from patchman.arch.models import PackageArchitecture, MachineArchitecture
 from patchman.reports.models import Report
 
-from patchman.hosts.signals import host_update_found
+from patchman.hosts.signals import update, rdns
 from patchman.signals import progress_info, progress_update, cli_message
 
 from progressbar import Bar, ETA, Percentage, ProgressBar
@@ -636,9 +636,9 @@ def clean_reports(report_host):
             remove_reports(host)
 
 
-def print_update(update, **kwargs):
+def print_msg(msg, **kwargs):
     if verbose:
-        print update
+        print msg
 
 
 def find_host_updates(host=None):
@@ -661,9 +661,35 @@ def find_host_updates(host=None):
     for host in update_hosts:
         if verbose:
             print '\n%s' % host
-        host_update_found.connect(print_update)
+        update.connect(print_msg)
         host.find_updates()
-        host_update_found.disconnect()
+        update.disconnect()
+
+
+def dns_checks(host=None):
+
+    check_hosts = []
+
+    if host:
+        try:
+            check_hosts.append(Host.objects.get(hostname=host))
+            message = 'Checking reverse DNS for host %s' % host
+        except:
+            message = 'Host %s does not exist' % host
+
+    else:
+        message = 'Checking reverse DNS for all hosts'
+        check_hosts = Host.objects.all()
+
+    if verbose:
+        print message
+
+    for host in check_hosts:
+        if verbose:
+            print '\n%s' % host
+        rdns.connect(print_msg)
+        host.check_rdns()
+        rdns.disconnect()
 
 
 def process_reports(host=None):
@@ -727,6 +753,8 @@ if __name__ == '__main__':
                 help='only find updates for this host (fqdn)')
     parser.add_argument('-c', '--clean-updates', action='store_true',
                 help='find and remove updates that are no longer required')
+    parser.add_argument('-n', '--dns-checks', action='store_true',
+                help='perform reverse DNS checks if enabled for that host')
 
     args = parser.parse_args()
 
@@ -752,3 +780,5 @@ if __name__ == '__main__':
         find_host_updates(args.host)
     if args.clean_updates:
         clean_updates()
+    if args.dns_checks:
+        dns_checks(args.host)

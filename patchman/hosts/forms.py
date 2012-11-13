@@ -14,13 +14,19 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.forms import ModelForm
+from django.forms import ModelForm, TextInput
 
 from patchman.hosts.models import Host
 
 
-class HostForm(ModelForm):
+class EditHostForm(ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super(EditHostForm, self).__init__(*args, **kwargs)
+        self.fields['hostname'].widget = TextInput(attrs={'size': 50},)
+        self.fields['reversedns'].widget = TextInput(attrs={'size': 50},)
+        self.fields['kernel'].widget = TextInput(attrs={'size': 50},)
 
     class Meta:
         model = Host
-        fields = ('hostname', 'ipaddress', 'os', 'kernel', 'arch', 'reboot_required', 'host_repos_only', 'tags')
+        fields = ('hostname', 'reversedns', 'ipaddress', 'os', 'kernel', 'arch', 'reboot_required', 'host_repos_only', 'check_dns', 'tags')

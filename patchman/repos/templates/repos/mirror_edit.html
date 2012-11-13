@@ -1,0 +1,50 @@
+{% extends "forms-side.html" %}
+
+{% load forms common %}
+
+{% block extrahead %}
+<script type="text/javascript" src="{% url admin:jsi18n %}"></script>
+<script type="text/javascript" src="{{ MEDIA_URL }}/patchman_media/admin/js/actions.js"></script>
+{{ edit_form.media }}
+{% endblock %}
+
+{% block title %} Mirror {{ mirror }} {% endblock %}
+
+{% block content_title %}Mirror Information{% endblock %}
+
+{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url repo_list %}">Repositories</a> &rsaquo; <a href="{% url mirror_list %}">Mirrors</a> &rsaquo; {{ mirror }} {% endblock %}
+
+{% block content %}
+
+<div class="module">
+    <h2>{{mirror}} Details</h2>
+    <table>
+        <tr><td>Repo</td><td> <a href="{{ mirror.repo.get_absolute_url }}">{{ mirror.repo }}</a> </td></tr>
+        <tr><td>URL</td><td> <a href="{{ mirror.url }}">{{ mirror.url }}</a> </td></tr>
+        <tr><td>Packages</td><td> {{ mirror.packages.count }} </td></tr>
+        <tr><td>Enabled</td><td> {% yes_no_img mirror.enabled 'False' 'Enabled' 'Not Enabled' %} </td></tr>
+        <tr><td>Refresh</td><td> {% yes_no_img mirror.refresh 'False' 'True' 'False' %} </td></tr>
+        <tr><td>Mirrorlist</td><td> {% yes_no_img mirror.mirrorlist 'False' 'True' 'False' %} </td></tr>
+        <tr><td>Last Access Ok</td><td> {% yes_no_img mirror.last_access_ok 'False' 'True' 'False' %} </td></tr>
+        <tr><td>Fail Count</td><td> {{ mirror.fail_count }} </td></tr>
+        <tr><td>Timestamp</td><td> {{ mirror.timestamp }} </td></tr>
+        <tr><td>Checksum</td><td> {{ mirror.file_checksum }} </td></tr>
+    </table>
+</div>
+
+{% if user.is_authenticated %}
+  {% if perms.is_admin %}
+    <div class="module">
+      <h2>Edit</h2>
+        <form action={{ request.path }} method="post">{% csrf_token %}
+          {% form_as_div edit_form %}
+          <br /><input type="submit" value="Save" />
+        </form>
+    </div>
+  {% else %}
+    <p>No permission to edit this Repository.</p>
+  {% endif %}
+{% endif %}
+
+{% endblock %}
+

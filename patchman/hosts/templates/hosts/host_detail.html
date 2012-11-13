@@ -16,7 +16,7 @@
         <tr><td>Hostname</td><td> {{ host.hostname }} </td></tr>
         <tr><td>Domain</td><td> <a href="{% url host_list %}?domain={{ host.domain.id }}">{{ host.domain }}</a> </td></tr>
         <tr><td>Reporting IP Address</td><td> {{ host.ipaddress }} </td></tr>
-        <tr><td>Reverse DNS</td><td> {{ rdns }} </td></tr>
+        <tr><td>Reverse DNS</td><td> {{ host.reversedns }} </td></tr>
         <tr><td>OS</td><td> <a href="{{ host.os.get_absolute_url }}">{{ host.os }}</a> </td></tr>
         <tr><td>OS Group</td><td> <a href="{{ host.os.osgroup.get_absolute_url }}">{{ host.os.osgroup }}</a> </td></tr>
         <tr><td>Kernel</td><td> {{ host.kernel }} </td></tr>

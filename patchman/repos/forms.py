@@ -20,12 +20,12 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 from patchman.repos.models import Repository, Mirror
 
 
-class RepositoryForm(ModelForm):
+class EditRepoForm(ModelForm):
 
     mirrors = ModelMultipleChoiceField(queryset=Mirror.objects.select_related(), required=False, label=None, widget=FilteredSelectMultiple('Mirrors', True))
 
     def __init__(self, *args, **kwargs):
-        super(RepositoryForm, self).__init__(*args, **kwargs)
+        super(EditRepoForm, self).__init__(*args, **kwargs)
         self.fields['name'].widget = TextInput(attrs={'size': 100})
 
     class Meta:
@@ -63,3 +63,15 @@ class CreateRepoForm(ModelForm):
         if data != self.repotype:
             raise ValidationError("Not all mirror repotypes are the same, cannot proceed.")
         return data
+
+
+class EditMirrorForm(ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super(EditMirrorForm, self).__init__(*args, **kwargs)
+        self.fields['url'].widget = TextInput(attrs={'size': 150},)
+        self.fields['file_checksum'].widget = TextInput(attrs={'size': 100},)
+
+    class Meta:
+        model = Mirror
+        fields = ('repo', 'url', 'enabled', 'refresh', 'mirrorlist', 'last_access_ok', 'fail_count', 'file_checksum')
