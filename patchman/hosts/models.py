@@ -27,13 +27,16 @@ from patchman.domains.models import Domain
 from patchman.repos.models import Repository
 from patchman.operatingsystems.models import OS
 from patchman.arch.models import MachineArchitecture
-from patchman.hosts.signals import host_update_found
+from patchman.hosts.signals import update_signal, rdns_signal
+from patchman.hosts.utils import update_rdns
 
 
 class Host(models.Model):
 
     hostname = models.CharField(max_length=255, unique=True)
     ipaddress = models.IPAddressField()
+    reversedns = models.CharField(max_length=255, blank=True, null=True)
+    check_dns = models.BooleanField(default=True)
     os = models.ForeignKey(OS)
     kernel = models.CharField(max_length=255)
     arch = models.ForeignKey(MachineArchitecture)
@@ -59,13 +62,22 @@ class Host(models.Model):
     def sec_count(self):
         return self.updates.filter(security=True).count()
 
+    def check_rdns(self):
+        if self.check_dns:
+            update_rdns(self)
+            if self.hostname == self.reversedns:
+                rdns_signal.send(sender=self, msg='Reverse DNS matches.')
+            else:
+                rdns_signal.send(sender=self, msg='Reverse DNS mismatch found: %s != %s' % (self.hostname, self.reversedns))
+        else:
+            rdns_signal.send(sender=self, msg='Reverse DNS check disabled for this host.')
+
     def nonsec_count(self):
         return self.updates.filter(security=False).count()
 
     def get_host_repo_packages(self):
-        # FIXME: add support for host repos being enabled/disabled via the 'through' field
         if self.host_repos_only:
-            hostrepos = Q(mirror__repo__in=self.repos.all(), mirror__enabled=True, mirror__repo__enabled=True)
+            hostrepos = Q(mirror__repo__in=self.repos.all(), mirror__enabled=True, mirror__repo__enabled=True, mirror__repo__hostrepo__enabled=True)
         else:
             hostrepos = Q(mirror__repo__osgroup__os__host=self, mirror__repo__arch=self.arch, mirror__enabled=True, mirror__repo__enabled=True) | Q(mirror__repo__in=self.repos.all(), mirror__enabled=True, mirror__repo__enabled=True)
         return Package.objects.select_related().filter(hostrepos)
@@ -84,7 +96,7 @@ class Host(models.Model):
                     security = True
             update, c = PackageUpdate.objects.get_or_create(oldpackage=package, newpackage=highestpackage, security=security)
             self.updates.add(update)
-            host_update_found.send(sender=self, update=update)
+            update_signal.send(sender=self, msg=update)
 
     def find_updates(self):
 
@@ -96,6 +108,7 @@ class Host(models.Model):
         repopackages = self.get_host_repo_packages()
 
         if self.host_repos_only:
+            #find_host_repo_updates(host)
             for package in self.packages.exclude(kernels):
                 highest = ('', '0', '')
                 highestpackage = None
@@ -149,6 +162,7 @@ class Host(models.Model):
                                     highestpackage = repopackage
                 self.process_update(package, highest, highestpackage)
         else:
+            #find_osgroup_repo_updates(host)
             for package in self.packages.exclude(kernels):
                 highest = ('', '0', '')
                 highestpackage = None
@@ -170,6 +184,7 @@ class Host(models.Model):
                                 highestpackage = repopackage
                 self.process_update(package, highest, highestpackage)
 
+        #find_kernel_updates(host)
         try:
             ver, rel = self.kernel.rsplit('-')
             rel = rel.rstrip('xen')
@@ -201,7 +216,7 @@ class Host(models.Model):
                             security = True
                     update, c = PackageUpdate.objects.get_or_create(oldpackage=host_highest_package, newpackage=repo_highest_package, security=security)
                     self.updates.add(update)
-                    host_update_found.send(sender=self, update=update)
+                    update_signal.send(sender=self, msg=update)
                 if labelCompare(running_kernel, host_highest) == -1:
                     self.reboot_required = True
                 else:

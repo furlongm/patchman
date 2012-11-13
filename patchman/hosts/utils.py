@@ -17,7 +17,7 @@
 from socket import gethostbyaddr, gaierror, herror
 
 
-def reversedns(host):
+def update_rdns(host):
 
     try:
         reversedns = str(gethostbyaddr(host.ipaddress)[0])
@@ -25,4 +25,5 @@ def reversedns(host):
         reversedns = 'None'
         print e
 
-    return reversedns
+    host.reversedns = reversedns
+    host.save()

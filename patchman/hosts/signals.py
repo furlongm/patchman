@@ -16,4 +16,5 @@
 
 from django.dispatch import Signal
 
-host_update_found = Signal(providing_args=['update'])
+update_signal = Signal(providing_args=['msg'])
+rdns_signal = Signal(providing_args=['msg'])

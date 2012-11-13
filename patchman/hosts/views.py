@@ -31,8 +31,7 @@ from patchman.domains.models import Domain
 from patchman.arch.models import MachineArchitecture
 from patchman.operatingsystems.models import OS, OSGroup
 from patchman.reports.models import Report
-from patchman.hosts.forms import HostForm
-from patchman.hosts.utils import reversedns
+from patchman.hosts.forms import EditHostForm
 
 from tagging.models import TaggedItem
 
@@ -112,13 +111,11 @@ def host_detail(request, hostname):
 
     host = get_object_or_404(Host, hostname=hostname)
 
-    rdns = reversedns(host)
-
     reports = Report.objects.all().filter(host=hostname).order_by('-time')[:3]
 
     hostrepos = HostRepo.objects.filter(host=host)
 
-    return render_to_response('hosts/host_detail.html', {'host': host, 'rdns': rdns, 'reports': reports, 'hostrepos': hostrepos}, context_instance=RequestContext(request))
+    return render_to_response('hosts/host_detail.html', {'host': host, 'reports': reports, 'hostrepos': hostrepos}, context_instance=RequestContext(request))
 
 
 @login_required
@@ -126,12 +123,10 @@ def host_edit(request, hostname):
 
     host = get_object_or_404(Host, hostname=hostname)
 
-    rdns = reversedns(host)
-
     reports = Report.objects.all().filter(host=hostname).order_by('-time')[:3]
 
     if request.method == 'POST':
-        edit_form = HostForm(request.POST, instance=host)
+        edit_form = EditHostForm(request.POST, instance=host)
         if edit_form.is_valid():
             host = edit_form.save()
             host.save()
@@ -140,9 +135,9 @@ def host_edit(request, hostname):
         else:
             host = get_object_or_404(Host, hostname=hostname)
     else:
-        edit_form = HostForm(instance=host)
+        edit_form = EditHostForm(instance=host)
 
-    return render_to_response('hosts/host_edit.html', {'host': host, 'rdns': rdns, 'reports': reports, 'edit_form': edit_form}, context_instance=RequestContext(request))
+    return render_to_response('hosts/host_edit.html', {'host': host, 'reports': reports, 'edit_form': edit_form}, context_instance=RequestContext(request))
 
 
 @login_required
@@ -158,8 +153,6 @@ def host_delete(request, hostname):
         elif 'cancel' in request.REQUEST:
             return HttpResponseRedirect(reverse('host_detail', args=[hostname]))
 
-    rdns = reversedns(host)
-
     reports = Report.objects.all().filter(host=hostname).order_by('-time')[:3]
 
-    return render_to_response('hosts/host_delete.html', {'host': host, 'rdns': rdns, 'reports': reports}, context_instance=RequestContext(request))
+    return render_to_response('hosts/host_delete.html', {'host': host, 'reports': reports}, context_instance=RequestContext(request))

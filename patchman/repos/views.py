@@ -30,7 +30,7 @@ from patchman.hosts.models import HostRepo
 from patchman.repos.models import Repository, Mirror
 from patchman.operatingsystems.models import OSGroup
 from patchman.arch.models import MachineArchitecture
-from patchman.repos.forms import RepositoryForm, LinkRepoForm, CreateRepoForm
+from patchman.repos.forms import EditRepoForm, LinkRepoForm, CreateRepoForm, EditMirrorForm
 
 
 @login_required
@@ -204,6 +204,25 @@ def mirror_delete(request, repo_id, mirror_id):
 
 
 @login_required
+def mirror_edit(request, repo_id, mirror_id):
+
+    mirror = get_object_or_404(Mirror, id=mirror_id)
+
+    if request.method == 'POST':
+        edit_form = EditMirrorForm(request.POST, instance=mirror)
+        if edit_form.is_valid():
+            mirror = edit_form.save()
+            mirror.save()
+            messages.info(request, 'Saved changes to Mirror %s' % mirror)
+        else:
+            mirror = get_object_or_404(Mirror, id=mirror_id)
+    else:
+        edit_form = EditMirrorForm(instance=mirror)
+
+    return render_to_response('repos/mirror_edit.html', {'mirror': mirror, 'edit_form': edit_form}, context_instance=RequestContext(request))
+
+
+@login_required
 def repo_detail(request, repo_id):
 
     repo = get_object_or_404(Repository, id=repo_id)
@@ -217,7 +236,7 @@ def repo_edit(request, repo_id):
     repo = get_object_or_404(Repository, id=repo_id)
 
     if request.method == 'POST':
-        edit_form = RepositoryForm(request.POST, instance=repo)
+        edit_form = EditRepoForm(request.POST, instance=repo)
         if edit_form.is_valid():
             repo = edit_form.save()
             repo.save()
@@ -230,7 +249,7 @@ def repo_edit(request, repo_id):
         else:
             repo = get_object_or_404(Repository, id=repo_id)
     else:
-        edit_form = RepositoryForm(instance=repo)
+        edit_form = EditRepoForm(instance=repo)
         edit_form.initial['mirrors'] = repo.mirror_set.all()
 
     return render_to_response('repos/repo_edit.html', {'repo': repo, 'edit_form': edit_form}, context_instance=RequestContext(request))

@@ -43,8 +43,7 @@ def dashboard(request):
     reboot_hosts = Host.objects.filter(reboot_required=True)
     secupdate_hosts = Host.objects.filter(updates__security=True, updates__isnull=False).values('hostname').annotate(Count('hostname'))
     update_hosts = Host.objects.filter(updates__security=False, updates__isnull=False).values('hostname').annotate(Count('hostname'))
-    # TODO add to host model where reverse dns does not match
-    # badrevp_hosts = Host.objects.filter()
+#    bad_rdns_hosts = Host.objects.filter(reversedns=F('ipaddress'))
 
     # os issues
     lonely_oses = OS.objects.filter(osgroup__isnull=True)
