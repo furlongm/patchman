@@ -18,7 +18,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.models import Site
-from django.db.models import Count
+from django.db.models import Count, F
 
 from datetime import datetime, timedelta
 
@@ -43,7 +43,7 @@ def dashboard(request):
     reboot_hosts = Host.objects.filter(reboot_required=True)
     secupdate_hosts = Host.objects.filter(updates__security=True, updates__isnull=False).values('hostname').annotate(Count('hostname'))
     update_hosts = Host.objects.filter(updates__security=False, updates__isnull=False).values('hostname').annotate(Count('hostname'))
-#    bad_rdns_hosts = Host.objects.filter(reversedns=F('ipaddress'))
+    diff_rdns_hosts = Host.objects.exclude(reversedns=F('hostname'))
 
     # os issues
     lonely_oses = OS.objects.filter(osgroup__isnull=True)
@@ -91,7 +91,7 @@ def dashboard(request):
 
     return render_to_response('dashboard/index.html',
         {'lonely_oses': lonely_oses, 'norepo_hosts': norepo_hosts,
-        'nohost_oses': nohost_oses,
+        'nohost_oses': nohost_oses, 'diff_rdns_hosts': diff_rdns_hosts,
         'stale_hosts': stale_hosts, 'possible_mirrors': possible_mirrors,
         'site': site, 'norepo_packages': norepo_packages, 'nohost_repos': nohost_repos,
         'secupdate_hosts': secupdate_hosts, 'update_hosts': update_hosts,
