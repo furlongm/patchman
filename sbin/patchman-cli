@@ -207,10 +207,12 @@ def get_url(url):
     try:
         req = Request(url)
         res = urlopen(req)
-        # redirect that should be a 404
-        if res.geturl().rstrip('/') != url:
+        # don't blindly succeed with http 200 (e.g. sourceforge)
+        headers = dict(res.headers.items())
+        if 'content-type' in headers and not re.match('text/html', headers['content-type']):
+            return res
+        else:
             return -1
-        return res
     except IOError, e:
         if hasattr(e, 'reason'):
             if verbose:
