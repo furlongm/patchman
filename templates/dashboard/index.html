@@ -121,6 +121,20 @@
   </div>
   {% endif %}
 {% endwith %}
+{% with diff_rdns_hosts.count as count %}
+  {% if count > 0 %}
+  <div class="module">
+    <div class="resultslink" id="r16"><a href="#">{{ count }} Hosts a different rDNS entry (and have rDNS checking enabled)</a></div>
+      <div class="results" id="r16">
+        {% for host in diff_rdns_hosts %}
+        <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
+        <a class="dark" href="{{ host.get_absolute_url }}">{{ host }}</a></div>
+        {% endfor %}
+        <div class="clearbrick"></div>
+      </div>
+  </div>
+  {% endif %}
+{% endwith %}
 {% with failed_mirrors.count as count %}
   {% if count > 0 %}
   <div class="module">
