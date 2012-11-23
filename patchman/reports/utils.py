@@ -20,32 +20,32 @@ from patchman.hosts.models import HostRepo
 from patchman.arch.models import MachineArchitecture, PackageArchitecture
 from patchman.repos.models import Repository, Mirror
 from patchman.packages.models import Package, PackageName
-from patchman.signals import progress_info, progress_update
+from patchman.signals import progress_info_s, progress_update_s
 
 
 def process_repos(report, host):
 
     if report.repos:
         repos = parse_repos(report.repos)
-        progress_info.send(sender=report, ptext='%s repos' % host.__unicode__()[0:25], plength=len(repos))
+        progress_info_s.send(sender=report, ptext='%s repos' % host.__unicode__()[0:25], plength=len(repos))
         for i, repo in enumerate(repos):
             repository, priority = process_repo(report, repo)
             if repository:
                 hostrepo, c = HostRepo.objects.get_or_create(host=host, repo=repository, priority=priority, enabled=True)
                 hostrepo.save()
-            progress_update.send(sender=report, index=i + 1)
+            progress_update_s.send(sender=report, index=i + 1)
 
 
 def process_packages(report, host):
 
     if report.packages:
         packages = parse_packages(report.packages)
-        progress_info.send(sender=report, ptext='%s packages' % host.__unicode__()[0:25], plength=len(packages))
+        progress_info_s.send(sender=report, ptext='%s packages' % host.__unicode__()[0:25], plength=len(packages))
         for i, pkg in enumerate(packages):
             package = process_package(report, pkg)
             if package:
                 host.packages.add(package)
-            progress_update.send(sender=report, index=i + 1)
+            progress_update_s.send(sender=report, index=i + 1)
 
 
 def parse_repos(repos_string):

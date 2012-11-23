@@ -1,25 +1,37 @@
-Patchman is a django-based patch status monitoring tool for linux systems.
+Patchman
+========
+
+Summary
+-------
+
+Patchman is a django-based patch status monitoring tool for linux systems, that
+provides a web interface for monitoring host package updates.
 
 Patchman clients send a list of installed packages and enabled repositories to
-the patchman server. The patchman server (CLI or web) updates it's package list 
-for each repository and tells the user which hosts require updates, whether
-those updates are normal or security updates, and shows installed packages that
-are not part of any repository. Hosts, packages, repositories and operating
-systems can all be filtered (using features or arbitrary tags). For example, you
-can find out which hosts have a certain version of a package installed, and
-which repository it comes from.
+the patchman server. The patchman server updates its package list for each
+repository and determines which hosts require updates, whether those updates
+are normal or security updates, and shows installed packages that are not part
+of any repository. Hosts, packages, repositories and operating systems can all
+be filtered (using features or arbitrary tags). For example, it is possible to
+find out which hosts have a certain version of a package installed, and which
+repository it comes from.
 
-Patchman does not (yet!) have the ability to update packages on hosts, although
-it is possible to use a yum or apt plugin to send a report to the patchman
-server every time changes are made to packages installed on a system. There are
-plans for a module for patchman<->puppet integration to allow remote
-installation of packages.
+Patchman does not install update packages on hosts, it calculates and keeps
+track of what updates are available for each host. The patchman yum and apt
+plugins can send reports to the patchman server every time packages are
+installed or removed.
+
+
+Source
+------
 
 The current code is available on github:
 
-https://github.com/VPAC/patchman
+   https://github.com/VPAC/patchman
 
-The current dependencies are:
+
+Server-side dependencies
+------------------------
 
 python-django-tagging
 python-django-south
@@ -31,24 +43,47 @@ python-progressbar
 python-lxml
 python-argparse
 
-On the clients, rpm based OS's can tell if a reboot is required to install a
-new kernel by looking at uname -r and comparing it to the highest installed
-kernel version. However debian-based OS's do not often change the kernel
-version, so these clients will need update-notifier-common installed for this
-functionality to work.
+The server can optionally make use of celery to asynchronously process the
+reports send by hosts.
 
-In terms of functionality of the web interface, most things are self-
-explanatory, though two things might need further explaining.
+
+Client-side dependencies
+------------------------
+
+The client-side dependencies are kept to a minimum. rpm and dpkg are required
+to report packages, yum and apt are required to report repositories. These
+packages are normally installed by default on most systems.
+
+rpm-based OS's can tell if a reboot is required to install a new kernel by
+looking at uname -r and comparing it to the highest installed kernel version.
+deb-based OS's do not alway change the kernel version when a kernel update is
+installed, so these clients need the 'update-notifier-common' package installed
+to enable this functionality.
+
+
+Usage
+-----
+
+The  web interface presents a dashboard with items needing attention, and the
+ability to manipulate packages, repositories, operating systems and hosts.
+
+To populate the web interface, run the client on some hosts, this should
+provide some initial data to work with. The cli can be used to run cronjobs
+and process the reports send from hosts. Run 'patchman-cli -h' for a rundown of
+the usage. 
+
+Depending on your setup, there may be some initial work to organise the data
+sent from the reports. The following explanations may help in this case.
 
 An OSGroup differs from an OS, in that an OSGroup is a collection of OS's.
 For example, a "Debian 6" OSGroup could be comprised of machines with the
-following OS's -> "Debian 6.0.1", "Debian 6.0.2", "Debian squeeze/sid".
+following OS's -> "Debian 6.0.1", "Debian 6.0.2", "Debian 6.0.5".
 The OS names are obtained from the client hosts, so these may differ
 depending on patch-level version, even though they are the same operating
 system. Likewise, a "CentOS 5" OSGroup could cover "CentOS 5.4",
-"CentOS 5.7", etc. Once OVAL support is added this will allow you to see
-which CVE affects given machines in an OSGroup, as the CVE's will apply
-to OSGroup. Repositories can be linked to an OSGroup, or to a host itself.
+"CentOS 5.7", etc. The "CentOS 6" group could cover "CentOS 6.0" through
+"CentOS 6.3". Repositories can be linked to an OSGroup, or to a host itself,
+and
 
 Repostiories and mirrors are a similar concept. Each repository URL is
 counted as a separate mirror, unless the repositories are linked together.

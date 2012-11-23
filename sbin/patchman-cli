@@ -3,531 +3,101 @@
 from django.core.management import setup_environ
 
 import sys
-import string
-import bz2
-import gzip
-import re
-import datetime
 import argparse
-import math
-from hashlib import sha1, sha256
-from StringIO import StringIO
-from lxml import etree
-from debian.debian_support import Version
-from debian.deb822 import Sources
-from urllib2 import Request, urlopen
 
 from patchman.conf import settings
 setup_environ(settings)
 
 from patchman.hosts.models import Host
-from patchman.packages.models import Package, PackageName, PackageString, PackageUpdate
-from patchman.repos.models import Repository, Mirror, MirrorPackage
+from patchman.packages.models import Package, PackageName, PackageUpdate
+from patchman.repos.models import Repository
 from patchman.arch.models import PackageArchitecture, MachineArchitecture
 from patchman.reports.models import Report
 
-from patchman.hosts.signals import update_signal, rdns_signal
-from patchman.signals import progress_info, progress_update, cli_message
-
-from progressbar import Bar, ETA, Percentage, ProgressBar
+#from patchman.signals import progress_info_s, progress_update_s, info_message, error_message, debug_message
+from patchman.receivers import print_info_message, print_debug_message, print_error_message
+from patchman.utils import create_pbar, update_pbar
 
 force = False
 verbose = False
-pbar = None
 
+def get_hosts(host=None, action='Performing action'):
+    """ Helper function to get a list of hosts
+    """
 
-def cli_message(text, **kwargs):
-    print text,
-    sys.stdout.softspace = False
+    hosts = []
 
-
-def create_pbar(ptext, plength, **kwargs):
-
-    global pbar
-    if verbose and plength > 0:
-        jtext = string.ljust(ptext, 35)
-        pbar = ProgressBar(widgets=[jtext, Percentage(), Bar(), ETA()], maxval=plength).start()
-        return pbar
-
-
-def update_pbar(index, **kwargs):
-
-    global pbar
-    if verbose and pbar:
-        pbar.update(index)
-        if index == pbar.maxval:
-            pbar.finish()
-            pbar = None
-
-
-def gunzip(contents):
-
-    try:
-        gzipdata = gzip.GzipFile(fileobj=contents)
-        gzipdata = gzipdata.read()
-        contents = StringIO(gzipdata)
-    except IOError, e:
-        import warnings
-        warnings.filterwarnings('ignore', category=DeprecationWarning)
-        if e.message == 'Not a gzipped file':
-            pass
-
-    return contents.getvalue()
-
-
-def bunzip2(contents):
-
-    try:
-        bzip2data = bz2.decompress(contents)
-        return bzip2data
-    except IOError, e:
-        if e == 'invalid data stream':
-            pass
-    except ValueError, e:
-        if e == 'couldn\'t find end of stream':
-            pass
-
-
-def extract(data):
-
-    extracted = bunzip2(data)
-    if not extracted:
-        extracted = gunzip(StringIO(data))
-    return extracted
-
-
-def unpack_debpackages(data, packages):
-
-    extracted = extract(data)
-    package_re = re.compile('^Package: ', re.M)
-    numpackages = len(package_re.findall(extracted))
-
-    if numpackages > 0:
-        create_pbar('Extracting packages: ', numpackages)
-        for i, stanza in enumerate(Sources.iter_paragraphs(StringIO(extracted))):
-            fullversion = Version(stanza['version'])
-            arch = stanza['architecture']
-            name = stanza['package']
-            epoch = fullversion._BaseVersion__epoch
-            if epoch == None:
-                epoch = ''
-            version = fullversion._BaseVersion__upstream_version
-            release = fullversion._BaseVersion__debian_revision
-            if release == None:
-                release = ''
-            update_pbar(i + 1)
-            package = PackageString(name=name, epoch=epoch, version=version, release=release, arch=arch, packagetype='D')
-            packages.add(package)
-    else:
-        if verbose:
-            print 'No packages in found in repo.'
-
-
-def get_primary_url(repo_url, data):
-
-    try:
-        ns = 'http://linux.duke.edu/metadata/repo'
-        context = etree.parse(StringIO(data), etree.XMLParser())
-        location = context.xpath("//ns:data[@type='primary']/ns:location/@href",  namespaces={'ns': ns})[0]
-        checksum = context.xpath("//ns:data[@type='primary']/ns:checksum",  namespaces={'ns': ns})[0].text
-        checksum_type = context.xpath("//ns:data[@type='primary']/ns:checksum/@type",  namespaces={'ns': ns})[0]
-        primary_url = str(repo_url.rsplit('/', 2)[0]) + '/' + location
-        return primary_url, checksum, checksum_type
-    except etree.XMLSyntaxError, e:
-        return None, None, None
-
-
-def get_sha1(data):
-
-    return sha1(data).hexdigest()
-
-
-def get_sha256(data):
-
-    return sha256(data).hexdigest()
-
-
-def unpack_yumpackages(data, packages):
-
-    extracted = extract(data)
-    ns = 'http://linux.duke.edu/metadata/common'
-    context = etree.iterparse(StringIO(extracted), tag='{%s}metadata' % ns)
-    numpackages = int(context.next()[1].get('packages'))
-    context = etree.iterparse(StringIO(extracted), tag='{%s}package' % ns)
-
-    if numpackages > 0:
-
-        create_pbar('Extracting packages: ', numpackages)
-
-        for i, data in enumerate(context):
-            elem = data[1]
-            update_pbar(i + 1)
-            name = elem.xpath('//ns:name', namespaces={'ns': ns})[0].text.lower()
-            arch = elem.xpath('//ns:arch', namespaces={'ns': ns})[0].text
-            fullversion = elem.xpath('//ns:version', namespaces={'ns': ns})[0]
-            epoch = fullversion.get('epoch')
-            version = fullversion.get('ver')
-            release = fullversion.get('rel')
-            elem.clear()
-            while elem.getprevious() is not None:
-                del elem.getparent()[0]
-
-            if name != '' and version != '' and arch != '':
-                if epoch == '0':
-                    epoch = ''
-                package = PackageString(name=name, epoch=epoch, version=version, release=release, arch=arch, packagetype='R')
-                packages.add(package)
-    else:
-        if verbose:
-            print 'No packages in found in repo.'
-
-
-def unpack_yastpackages(data, packages):
-
-    extracted = extract(data)
-    pkgs = re.findall('=Pkg: (.*)', extracted)
-    numpackages = len(pkgs)
-
-    if numpackages > 0:
-
-        create_pbar('Extracting packages: ', numpackages)
-
-        for i, pkg in enumerate(pkgs):
-            update_pbar(i + 1)
-            name, version, release, arch = pkg.split()
-            package = PackageString(name=name.lower(), epoch='', version=version, release=release, arch=arch, packagetype='R')
-            packages.add(package)
-    else:
-        if verbose:
-            print 'No packages in found in repo.'
-
-
-def get_url(url):
-
-    try:
-        req = Request(url)
-        res = urlopen(req)
-        # don't blindly succeed with http 200 (e.g. sourceforge)
-        headers = dict(res.headers.items())
-        if 'content-type' in headers and not re.match('text/html', headers['content-type']):
-            return res
-        else:
-            return -1
-    except IOError, e:
-        if hasattr(e, 'reason'):
-            if verbose:
-                print '%s - %s' % (url, e.reason)
-            return -1
-        elif hasattr(e, 'code'):
-            if verbose:
-                print '%s - %s' % (url, e)
-            return e.code
-        else:
-            print 'Unknown error: %s - %e' % (url, e)
-            return -1
-
-
-def update_packages(mirror, packages):
-
-    new = set()
-    old = set()
-    removed = set()
-
-    repopackages = mirror.packages.all()
-    reposize = len(repopackages)
-
-    create_pbar('Obtaining stored packages: ', reposize)
-    for i, package in enumerate(repopackages):
-        update_pbar(i + 1)
-        name = str(package.name)
-        arch = str(package.arch)
-        strpackage = PackageString(name=name, epoch=package.epoch, version=package.version, release=package.release, arch=arch, packagetype=package.packagetype)
-        old.add(strpackage)
-
-    new = packages.difference(old)
-    removed = old.difference(packages)
-
-    old.clear()
-
-    newlen = len(new)
-    removedlen = len(removed)
-
-    create_pbar('Removing %s obsolete packages:' % removedlen, removedlen)
-    for i, package in enumerate(removed):
-        update_pbar(i + 1)
-        package_id = PackageName.objects.get(name=package.name)
-        epoch = package.epoch
-        version = package.version
-        release = package.release
-        arch = PackageArchitecture.objects.get(name=package.arch)
-        packagetype = package.packagetype
-        p = Package.objects.get(name=package_id, epoch=epoch, version=version, arch=arch, release=release, packagetype=packagetype)
-        MirrorPackage.objects.get(mirror=mirror, package=p).delete()
-    mirror.save()
-    removed.clear()
-
-    create_pbar('Adding %s new packages:' % newlen, newlen)
-    for i, package in enumerate(new):
-        update_pbar(i + 1)
-        package_id, c = PackageName.objects.get_or_create(name=package.name)
-        epoch = package.epoch
-        version = package.version
-        release = package.release
-        packagetype = package.packagetype
-        arch, c = PackageArchitecture.objects.get_or_create(name=package.arch)
-        p, c = Package.objects.get_or_create(name=package_id, epoch=epoch, version=version, arch=arch, release=release, packagetype=packagetype)
-        # This fixes a subtle bug where a stored package name with uppercase letters
-        # will not match until it is lowercased.
-        if package_id.name != package.name:
-            package_id.name = package.name
-            package_id.save()
-        MirrorPackage.objects.create(mirror=mirror, package=p)
-    mirror.save()
-    new.clear()
-
-
-def find_mirror_url(stored_mirror_url, formats):
-
-    yast = False
-
-    for fmt in formats:
-        mirror_url = stored_mirror_url
-        for f in formats:
-            if mirror_url.endswith(f):
-                mirror_url = mirror_url[:-len(f)]
-        mirror_url = mirror_url.rstrip('/') + '/' + fmt
-        res = get_url(mirror_url)
-        if type(res) != int:
-            break
-    if fmt == 'content':
-        yast = True
-    return mirror_url, res, yast
-
-
-def mirrorlist_check(mirror_url):
-
-    res = get_url(mirror_url)
-    if type(res) != int:
-        headers = dict(res.headers.items())
-        if 'content-type' in headers and re.match('text/plain', headers['content-type']) != None:
-            data = download_url(res, '')
-            mirror_urls = re.findall('^http://.*$|^ftp://.*$', data, re.MULTILINE)
-            if len(mirror_urls) > 0:
-                return mirror_urls
-    return None
-
-
-def download_url(res, part=''):
-
-    headers = dict(res.headers.items())
-    if verbose and 'content-length' in headers:
-        if part == None:
-            ptext = 'Downloading repo info:'
-        else:
-            ptext = 'Downloading repo info %s:' % part
-        contentlen = int(headers['content-length'])
-        chunk_size = 16384.0
-        create_pbar(ptext, contentlen)
-        i = 0
-        chunks = int(math.ceil(contentlen / chunk_size))
-        data = ''
-        chunk = ''
-        for x in range(1, chunks + 1):
-            chunk = res.read(int(chunk_size))
-            i += len(chunk)
-            update_pbar(i)
-            data += chunk
-        return data
-    else:
-        return res.read()
-
-
-def check_response(res):
-
-    if type(res) == int:
-        if verbose:
-            print 'No usable mirror URL found.'
-        return False
-    else:
-        return True
-
-
-def failed_mirror(mirror):
-    mirror.fail_count = mirror.fail_count + 1
-    if mirror.fail_count > 28:
-        mirror.refresh = False
-        if verbose:
-            print 'Mirror has failed more than 28 times, disabling refresh'
-    mirror.save()
-
-def update_deb_repo(repo):
-
-    formats = ['Packages.bz2', 'Packages.gz', 'Packages']
-
-    for mirror in repo.mirror_set.filter(refresh=True):
-        repo_url, res, unused = find_mirror_url(mirror.url, formats)
-        mirror.last_access_ok = check_response(res)
-
-        if mirror.last_access_ok:
-            if verbose:
-                print '%s - deb repo found.' % repo_url
-            data = download_url(res)
-            sha1 = get_sha1(data)
-            if mirror.file_checksum == sha1 and verbose:
-                print 'Repo checksum has not changed, not updating packages'
-            else:
-                packages = set()
-                unpack_debpackages(data, packages)
-                mirror.last_access_ok = True
-                mirror.timestamp = datetime.datetime.now()
-                update_packages(mirror, packages)
-                mirror.file_checksum = sha1
-                packages.clear()
-        else:
-            failed_mirror(mirror)
-        mirror.save()
-
-
-def update_rpm_repo(repo):
-
-    formats = ['repodata/repomd.xml.bz2', 'repodata/repomd.xml.gz', 'repodata/repomd.xml', 'suse/repodata/repomd.xml.bz2', 'suse/repodata/repomd.xml.gz', 'suse/repodata/repomd.xml', 'content']
-
-    # check if any of the mirrors are actually mirrorlists
-    for mirror in repo.mirror_set.filter(mirrorlist=False, refresh=True):
-        mirrors = mirrorlist_check(mirror.url)
-        if mirrors != None:
-            mirror.mirrorlist=True
-            mirror.last_access_ok=True
-            mirror.save()
-            if verbose:
-                print '%s - mirrorlist found.' % mirror.url
-            for m in mirrors:
-                mirror_url=m.replace('$ARCH', repo.arch.name)
-                mirror_url=m.replace('$basearch', repo.arch.name)
-                newmirror, c = Mirror.objects.get_or_create(repo=repo, url=mirror_url)
-                if c and verbose:
-                    print 'Added %s as mirror.' % m
-
-    for mirror in repo.mirror_set.filter(mirrorlist=False, refresh=True):
-        repo_url, res, yast = find_mirror_url(mirror.url, formats)
-        mirror.last_access_ok = check_response(res)
-
-        if mirror.last_access_ok:
-            packages = set()
-            update = False
-            if not yast:
-                if verbose:
-                    print '%s - yum rpm repo found.' % repo_url
-                data = download_url(res, '(1/2)')
-                primary, checksum, checksum_type = get_primary_url(res.geturl(), data)
-                if primary == None:
-                    print 'Error obtaining primary url from %s, disabling refresh.' % repo_url
-                    mirror.last_access_ok = False
-                    mirror.refresh = False
-                    continue
-                res = get_url(primary)
-                mirror.last_access_ok = check_response(res)
-                if mirror.last_access_ok:
-                    data = download_url(res, '(2/2)')
-                    sha = None
-                    if checksum_type == 'sha':
-                        sha = get_sha1(data)
-                    elif checksum_type == 'sha256':
-                        sha = get_sha256(data)
-                    else:
-                        print 'Unknown checksum type: %s' % checksum_type
-                    if sha != checksum:
-                        print '%s checksum failed for mirror %s, not updating packages' % (checksum_type, mirror.id)
-                        mirror.last_access_ok = False
-                    elif mirror.file_checksum == sha and verbose:
-                        print 'Repo checksum has not changed, not updating packages'
-                    else:
-                        unpack_yumpackages(data, packages)
-                        mirror.file_checksum = sha
-                        update = True
-            elif yast:
-                if verbose:
-                    print '%s - yast rpm repo found' % repo_url
-                data = download_url(res, '(1/2)')
-                package_dir = re.findall('DESCRDIR *(.*)', data)[0]
-                package_url = '%s/%s/packages.gz' % (mirror.url, package_dir)
-                res = get_url(package_url)
-                mirror.last_access_ok = check_response(res)
-                if mirror.last_access_ok:
-                    data = download_url(res, '(2/2)')
-                    unpack_yastpackages(data, packages)
-                    mirror.file_checksum = 'yast'
-                    update = True
-            mirror.timestamp = datetime.datetime.now()
-            mirror.last_access_ok = True
-            if update:
-                update_packages(mirror, packages)
-            packages.clear()
-        else:
-            failed_mirror(mirror)
-
-        mirror.save()
-
-
-def update_repo(repo):
-    if repo.repotype == Repository.DEB:
-        update_deb_repo(repo)
-    elif repo.repotype == Repository.RPM:
-        update_rpm_repo(repo)
-    else:
-        print 'Error: unknown repo type for repo %s: %s' % (repo.id, repo.repotype)
-
-
-def update_repos(single_repo):
-
-    repos = []
-
-    if single_repo:
+    if host:
         try:
-            repos.append(Repository.objects.get(id=single_repo))
-            message = 'Updating repository with id: %s' % single_repo
+            hosts.append(Host.objects.get(hostname=host))
+            message = '%s for host %s' % (action, host)
         except:
-            message = 'Repo with id %s does not exist' % single_repo
+            message = 'Host %s does not exist' % host
     else:
-        message = 'Updating all repositories'
-        repos = Repository.objects.filter(enabled=True)
+        message = '%s for all hosts' % action
+        hosts = Host.objects.all()
 
     if verbose:
         print message
 
-    for repo in repos:
-        for mirror in repo.mirror_set.all():
-            if force:
-                mirror.file_checksum = ''
-                mirror.save()
-        if verbose:
-            print '\n%s' % repo
-        update_repo(repo)
+    return hosts
 
 
-def list_repos(single_repo):
+def get_repos(repo=None, action='Performing action', only_enabled=False):
+    """ Helper function to get a list of repos
+    """
 
     repos = []
 
-    if single_repo:
+    if repo:
         try:
-            repos.append(Repository.objects.get(id=single_repo))
-            message = 'Repository %s info:' % single_repo
+            repos.append(Repository.objects.get(id=repo))
+            message = '%s for repo %s' % (action, repo)
         except:
-            message = 'Repo with id %s does not exist' % single_repo
+            message = 'Repo %s does not exist' % repo
     else:
-        message = 'Repository information:'
-        print 'id : name\n'
-        repos = Repository.objects.all()
+        message = '%s for all repos' % action
+        if only_enabled:
+            repos = Repository.objects.filter(enabled=True)
+        else:
+            repos = Repository.objects.all()
 
     if verbose:
         print message
 
+    return repos
+
+
+def update_repos(repo=None):
+    """ Update metadata for all enabled repos.
+        Specify a repo ID to update a single repo.
+    """
+
+    repos = get_repos(repo, 'Updating metadata', True)
+
     for repo in repos:
-        print_repo_info(repo)
+        if verbose:
+            print '%s' % repo
+        repo.update(force)
+        if verbose:
+            print '\n'
 
 
-def print_repo_info(repo):
+def list_repos(repo=None):
+    """ Print info about a list of repositories
+        Defaults to all repos
+    """
+
+    repos = get_repos(repo, 'Printing information')
+
+    for repo in repos:
+        repo_info(repo)
+
+
+def repo_info(repo):
+    """ Print info about a single repo
+        If verbose is specified, information about mirrors is also printed
+    """
 
     print '%s : %s' % (repo.id, repo)
     if verbose:
@@ -538,188 +108,154 @@ def print_repo_info(repo):
             print 'last updated: %s    checksum: %s\n' % (mirror.timestamp, mirror.file_checksum)
 
 
-def remove_orphaned_packages():
+def clean_packages():
+    """ Removes packages that are no longer in use
+    """
 
-    orphanedpackages = Package.objects.filter(mirror__isnull=True, host__isnull=True)
-    orphanedlen = len(orphanedpackages)
-
-    create_pbar('Removing %s orphaned packages:' % orphanedlen, orphanedlen)
-    for i, o in enumerate(orphanedpackages):
-        p = Package.objects.get(name=o.name, epoch=o.epoch, version=o.version, release=o.release, arch=o.arch, packagetype=o.packagetype)
-        p.delete()
-        update_pbar(i + 1)
-
-    if orphanedlen == 0 and verbose:
-        print 'No orphaned packages found.'
-
-
-def remove_orphaned_arches():
-
-    orphanedarches = PackageArchitecture.objects.filter(package__isnull=True)
-    orphanedlen = len(orphanedarches)
-
-    create_pbar('Removing %s orphaned p arches:' % orphanedlen, orphanedlen)
-    for i, o in enumerate(orphanedarches):
-        a = PackageArchitecture.objects.get(name=o.name)
-        a.delete()
-        update_pbar(i + 1)
-
-    if orphanedlen == 0 and verbose:
-        print 'No orphaned p arches found.'
-
-    orphanedarches = MachineArchitecture.objects.filter(host__isnull=True, repository__isnull=True)
-    orphanedlen = len(orphanedarches)
-
-    create_pbar('Removing %s orphaned m arches:' % orphanedlen, orphanedlen)
-    for i, o in enumerate(orphanedarches):
-        a = MachineArchitecture.objects.get(name=o.name)
-        a.delete()
-        update_pbar(i + 1)
-
-    if orphanedlen == 0 and verbose:
-        print 'No orphaned m arches found.'
+    packages = Package.objects.filter(mirror__isnull=True, host__isnull=True)
+    plen = packages.count()
+    if plen == 0:
+        if verbose:
+            print 'No orphaned packages found.'
+    else:
+        create_pbar('Removing %s orphaned packages:' % plen, plen)
+        for i, o in enumerate(packages):
+            p = Package.objects.get(name=o.name, epoch=o.epoch, version=o.version, release=o.release, arch=o.arch, packagetype=o.packagetype)
+            p.delete()
+            update_pbar(i + 1)
 
 
-def remove_unused_package_names():
+def clean_arches():
+    """ Removes architectures that are no longer in use
+    """
 
-    unusednames = PackageName.objects.filter(package__isnull=True)
-    unusednameslen = len(unusednames)
+    parches = PackageArchitecture.objects.filter(package__isnull=True)
+    plen = parches.count()
 
-    create_pbar('Removing %s unused package names:' % unusednameslen, unusednameslen)
-    for i, packagename in enumerate(unusednames):
-        packagename.delete()
-        update_pbar(i + 1)
+    if plen == 0:
+        if verbose:
+            print 'No orphaned package architectures found.'
+    else:
+        create_pbar('Removing %s orphaned p arches:' % plen, plen)
+        for i, p in enumerate(parches):
+            a = PackageArchitecture.objects.get(name=p.name)
+            a.delete()
+            update_pbar(i + 1)
 
-    if unusednameslen == 0 and verbose:
-        print 'No unused package names found.'
+    marches = MachineArchitecture.objects.filter(host__isnull=True, repository__isnull=True)
+    mlen = marches.count()
 
-
-def remove_reports(host):
-
-    reports = Report.objects.filter(host=host).order_by('-time')[:3]
-    report_ids = []
-
-    for report in reports:
-        report_ids.append(report.id)
-
-    del_reports = Report.objects.filter(host=host).exclude(id__in=report_ids)
-
-    reportlen = len(del_reports)
-    if verbose:
-        print host
-    create_pbar('Cleaning %s old reports' % reportlen, reportlen)
-    for i, report in enumerate(del_reports):
-        report.delete()
-        update_pbar(i + 1)
+    if mlen == 0:
+        if verbose:
+            print 'No orphaned machine architectures found.'
+    else:
+        create_pbar('Removing %s orphaned m arches:' % mlen, mlen)
+        for i, m in enumerate(marches):
+            a = MachineArchitecture.objects.get(name=m.name)
+            a.delete()
+            update_pbar(i + 1)
 
 
-def remove_empty_repos():
+def clean_package_names():
+    """ Removes package names that are no longer in use
+    """
+
+    names = PackageName.objects.filter(package__isnull=True)
+    nlen = names.count()
+
+    if nlen == 0:
+        if verbose:
+            print 'No orphaned package names found.'
+    else:
+        create_pbar('Removing %s unused package names:' % nlen, nlen)
+        for i, packagename in enumerate(names):
+            packagename.delete()
+            update_pbar(i + 1)
+
+
+def clean_repos():
+    """ Removes repositories that contain no mirrors
+    """
 
     repos = Repository.objects.filter(mirror__isnull=True)
-    reposlen = len(repos)
+    rlen = repos.count()
 
-    create_pbar('Removing %s empty repos:' % reposlen, reposlen)
-    for i, repo in enumerate(repos):
-        repo.delete()
-        update_pbar(i + 1)
-
-    if reposlen == 0 and verbose:
-        print 'No empty repos found.'
-
-
-def clean_reports(report_host):
-
-    if report_host:
-        remove_reports(report_host)
+    if rlen == 0:
+        if verbose:
+            print 'No repositories with zero mirrors found.'
     else:
-        for host in Host.objects.all():
-            remove_reports(host)
+        create_pbar('Removing %s empty repos:' % rlen, rlen)
+        for i, repo in enumerate(repos):
+            repo.delete()
+            update_pbar(i + 1)
 
 
-def print_msg(msg, **kwargs):
-    if verbose:
-        print msg
+def clean_reports(host=None):
+    """ Delete old reports for all hosts, specify host for a single host
+    """
+
+    hosts = get_hosts(host, 'Cleaning reports')
+
+    for host in hosts:
+        if verbose:
+            print host
+        host.clean_reports()
 
 
-def find_host_updates(host=None):
+def host_updates(host=None):
+    """ Find updates for all hosts, specify host for a single host
+    """
 
-    update_hosts = []
+    hosts = get_hosts(host, 'Finding updates')
 
-    if host:
-        try:
-            update_hosts.append(Host.objects.get(hostname=host))
-            message = 'Finding updates for host %s' % host
-        except:
-            message = 'Host %s does not exist' % host
-    else:
-        message = 'Finding updates for all hosts'
-        update_hosts = Host.objects.all()
-
-    if verbose:
-        print message
-
-    for host in update_hosts:
+    for host in hosts:
         if verbose:
             print '\n%s' % host
-        update_signal.connect(print_msg)
         host.find_updates()
-        update_signal.disconnect()
 
 
 def dns_checks(host=None):
+    """ Check all hosts for reverse DNS mismatches, specify host for a single host
+    """
 
-    check_hosts = []
+    hosts = get_hosts(host, 'Checking rDNS')
 
-    if host:
-        try:
-            check_hosts.append(Host.objects.get(hostname=host))
-            message = 'Checking reverse DNS for host %s' % host
-        except:
-            message = 'Host %s does not exist' % host
-
-    else:
-        message = 'Checking reverse DNS for all hosts'
-        check_hosts = Host.objects.all()
-
-    if verbose:
-        print message
-
-    for host in check_hosts:
+    for host in hosts:
         if verbose:
-            print '\n%s' % host
-        rdns_signal.connect(print_msg)
-        host.check_rdns()
-        rdns_signal.disconnect()
+            print '%s:\t' % host.__unicode__()[0:25].ljust(25),
+            sys.stdout.softspace = False
+        host.check_rdns(verbose)
 
 
 def process_reports(host=None):
-    """ Process all pending reports, Specify host to process only a single host
+    """ Process all pending reports, specify host to process only a single host
+        The --force option forces even processed reports to be reprocessed
+        No reports are skipped in case some reports contain repo information
+        and others only contain package information.
     """
 
-    report_hosts = []
+    reports = []
     if host:
         try:
-            report_hosts = Report.objects.filter(processed=force, host=host).order_by('time')
+            reports = Report.objects.filter(processed=force, host=host).order_by('time')
             message = 'Processing reports for host %s' % host
         except:
             message = 'No reports exist for host %s' % host
     else:
         message = 'Processing reports for all hosts'
-        report_hosts = Report.objects.filter(processed=force).order_by('time')
+        reports = Report.objects.filter(processed=force).order_by('time')
 
     if verbose:
         print message
 
-    for report in report_hosts:
-        if verbose:
-            progress_info.connect(create_pbar)
-            progress_update.connect(update_pbar)
-        report.process()
-        progress_info.disconnect()
-        progress_update.disconnect()
+    for report in reports:
+        report.process(False)
 
 
 def clean_updates():
+    """ Removes PackageUpdate objects that are no longer
+        linked to any hosts
+    """
 
     for update in PackageUpdate.objects.all():
         if update.host_set.count() == 0:
@@ -731,32 +267,35 @@ def clean_updates():
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Patchman repository tool')
-    parser.add_argument('-u', '--update', action='store_true',
-                help='update repositories')
     parser.add_argument('-f', '--force', action='store_true',
                 help='disregard stored checksums and force-update all repositories')
-    parser.add_argument('-R', '--repo',
-                help='only update the repository with this ID')
-    parser.add_argument('-l', '--list', action='store_true',
-                help='list all available repositories')
     parser.add_argument('-v', '--verbose', action='store_true',
                 help='verbose output (default is to be silent, for cronjobs)')
-    parser.add_argument('-d', '--dbcheck', action='store_true',
-                help='perform some sanity checks and clean unused entries')
+    parser.add_argument('-u', '--update', action='store_true',
+                help='update repositories')
+    parser.add_argument('-R', '--repo',
+                help='only perform action on this repository (repo_id)')
+    parser.add_argument('-l', '--list', action='store_true',
+                help='list all available repositories and repo_ids')
+    parser.add_argument('-U', '--host-updates', action='store_true',
+                help='find updates for all hosts')
+    parser.add_argument('-H', '--host',
+                help='only perform action on this host (fqdn)')
     parser.add_argument('-p', '--process-reports', action='store_true',
                 help='process all pending reports')
     parser.add_argument('-r', '--clean-reports', action='store_true',
                 help='remove all but the last three reports')
-    parser.add_argument('-U', '--find-updates', action='store_true',
-                help='find updates for all hosts')
-    parser.add_argument('-H', '--host',
-                help='only find updates for this host (fqdn)')
     parser.add_argument('-c', '--clean-updates', action='store_true',
                 help='find and remove updates that are no longer required')
+    parser.add_argument('-d', '--dbcheck', action='store_true',
+                help='perform some sanity checks and clean unused db entries')
     parser.add_argument('-n', '--dns-checks', action='store_true',
                 help='perform reverse DNS checks if enabled for that host')
 
     args = parser.parse_args()
+
+    settings.FORCE = args.force
+    settings.VERBOSE = args.verbose
 
     force = args.force
     verbose = args.verbose
@@ -767,18 +306,18 @@ if __name__ == '__main__':
     if args.update:
         update_repos(args.repo)
         exit
-    if args.dbcheck:
-        remove_orphaned_packages()
-        remove_unused_package_names()
-        remove_orphaned_arches()
-        remove_empty_repos()
-    if args.clean_reports:
-        clean_reports(args.host)
     if args.process_reports:
         process_reports(args.host)
-    if args.find_updates:
-        find_host_updates(args.host)
+    if args.clean_reports:
+        clean_reports(args.host)
+    if args.host_updates:
+        host_updates(args.host)
     if args.clean_updates:
         clean_updates()
+    if args.dbcheck:
+        clean_packages()
+        clean_package_names()
+        clean_arches()
+        clean_repos()
     if args.dns_checks:
         dns_checks(args.host)

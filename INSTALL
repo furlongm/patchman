@@ -9,7 +9,7 @@ python-argparse
 
 # 2. Check out current git to e.g. /srv/patchman
 cd /srv
-git clone https://git.code.vpac.org/gitorious/patchman/patchman.git
+git clone https://github.com/VPAC/patchman.git
 
 # 3. Copy server settings example file to /etc/patchman
 mkdir /etc/patchman && cp /srv/patchman/etc/settings.py.sample /etc/patchman/settings.py

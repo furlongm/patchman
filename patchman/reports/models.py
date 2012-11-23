@@ -87,7 +87,7 @@ class Report(models.Model):
 
         self.save()
 
-    def process(self):
+    def process(self, find_updates=True):
         if self.os and self.kernel and self.arch:
             os, c = OS.objects.get_or_create(name=self.os)
             arch, c = MachineArchitecture.objects.get_or_create(name=self.arch)
@@ -134,7 +134,9 @@ class Report(models.Model):
                 host.reboot_required = True
             else:
                 host.reboot_required = False
+            host.check_rdns()
             host.save()
             self.processed = True
             self.save()
-            host.find_updates()
+            if find_updates:
+                host.find_updates()

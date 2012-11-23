@@ -27,8 +27,8 @@ from patchman.domains.models import Domain
 from patchman.repos.models import Repository
 from patchman.operatingsystems.models import OS
 from patchman.arch.models import MachineArchitecture
-from patchman.hosts.signals import update_signal, rdns_signal
-from patchman.hosts.utils import update_rdns
+from patchman.signals import info_message
+from patchman.hosts.utils import update_rdns, remove_reports
 
 
 class Host(models.Model):
@@ -62,15 +62,20 @@ class Host(models.Model):
     def sec_count(self):
         return self.updates.filter(security=True).count()
 
-    def check_rdns(self):
+    def check_rdns(self, verbose=False):
         if self.check_dns:
             update_rdns(self)
-            if self.hostname == self.reversedns:
-                rdns_signal.send(sender=self, msg='Reverse DNS matches.')
-            else:
-                rdns_signal.send(sender=self, msg='Reverse DNS mismatch found: %s != %s' % (self.hostname, self.reversedns))
+            if verbose:
+                if self.hostname == self.reversedns:
+                    info_message.send(sender=None, text='Reverse DNS matches.\n')
+                else:
+                    info_message.send(sender=None, text='Reverse DNS mismatch found: %s != %s\n' % (self.hostname, self.reversedns))
         else:
-            rdns_signal.send(sender=self, msg='Reverse DNS check disabled for this host.')
+            if verbose:
+                info_message.send(sender=self, text='Reverse DNS check disabled for this host.\n')
+
+    def clean_reports(self):
+        remove_reports(self)
 
     def nonsec_count(self):
         return self.updates.filter(security=False).count()
@@ -96,7 +101,7 @@ class Host(models.Model):
                     security = True
             update, c = PackageUpdate.objects.get_or_create(oldpackage=package, newpackage=highestpackage, security=security)
             self.updates.add(update)
-            update_signal.send(sender=self, msg=update)
+            info_message.send(sender=self, text=update)
 
     def find_updates(self):
 
@@ -216,7 +221,7 @@ class Host(models.Model):
                             security = True
                     update, c = PackageUpdate.objects.get_or_create(oldpackage=host_highest_package, newpackage=repo_highest_package, security=security)
                     self.updates.add(update)
-                    update_signal.send(sender=self, msg=update)
+                    info_message.send(sender=self, text=update)
                 if labelCompare(running_kernel, host_highest) == -1:
                     self.reboot_required = True
                 else:
