@@ -301,7 +301,7 @@ def extract_deb_packages(data, packages):
             package = PackageString(name=name, epoch=epoch, version=version, release=release, arch=arch, packagetype='D')
             packages.add(package)
     else:
-        info_message.send(None, text='No packages found in repo.\n')
+        info_message.send(sender=None, text='No packages found in repo.\n')
 
 
 def extract_yast_packages(data):

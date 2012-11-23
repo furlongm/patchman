@@ -72,7 +72,7 @@ class Host(models.Model):
                     info_message.send(sender=None, text='Reverse DNS mismatch found: %s != %s\n' % (self.hostname, self.reversedns))
         else:
             if verbose:
-                info_message.send(sender=self, text='Reverse DNS check disabled for this host.\n')
+                info_message.send(sender=None, text='Reverse DNS check disabled for this host.\n')
 
     def clean_reports(self):
         remove_reports(self)
@@ -101,7 +101,7 @@ class Host(models.Model):
                     security = True
             update, c = PackageUpdate.objects.get_or_create(oldpackage=package, newpackage=highestpackage, security=security)
             self.updates.add(update)
-            info_message.send(sender=self, text=update)
+            info_message.send(sender=None, text=update)
 
     def find_updates(self):
 
@@ -221,7 +221,7 @@ class Host(models.Model):
                             security = True
                     update, c = PackageUpdate.objects.get_or_create(oldpackage=host_highest_package, newpackage=repo_highest_package, security=security)
                     self.updates.add(update)
-                    info_message.send(sender=self, text=update)
+                    info_message.send(sender=None, text=update)
                 if labelCompare(running_kernel, host_highest) == -1:
                     self.reboot_required = True
                 else:
