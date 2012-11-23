@@ -3,7 +3,6 @@
 #from os import path as os_path
 #PROJECT_DIR = os_path.abspath(os_path.split(__file__)[0])
 
-
 DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
@@ -40,13 +39,12 @@ STATIC_URL = '/patchman_media/'
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = '/home/furlong/src/patchman/media/'
+STATIC_ROOT = '/usr/share/patchman/media/'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
     'django.template.loaders.app_directories.Loader',
-#     'django.template.loaders.eggs.Loader',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -66,6 +64,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'django.core.context_processors.media',
     'django.core.context_processors.request',
     'django.core.context_processors.csrf',
+    'django.contrib.messages.context_processors.messages',
 )
 
 TEMPLATE_DIRS = (

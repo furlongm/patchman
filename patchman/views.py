@@ -43,7 +43,7 @@ def dashboard(request):
     reboot_hosts = Host.objects.filter(reboot_required=True)
     secupdate_hosts = Host.objects.filter(updates__security=True, updates__isnull=False).values('hostname').annotate(Count('hostname'))
     update_hosts = Host.objects.filter(updates__security=False, updates__isnull=False).values('hostname').annotate(Count('hostname'))
-    diff_rdns_hosts = Host.objects.exclude(reversedns=F('hostname'))
+    diff_rdns_hosts = Host.objects.exclude(reversedns=F('hostname')).filter(check_dns=True)
 
     # os issues
     lonely_oses = OS.objects.filter(osgroup__isnull=True)

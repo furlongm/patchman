@@ -31,12 +31,12 @@ class PackageName(models.Model):
         verbose_name = 'Package Name'
         ordering = ('name',)
 
+    def __unicode__(self):
+        return self.name
+
     @models.permalink
     def get_absolute_url(self):
         return ('package_detail', [self.name])
-
-    def __unicode__(self):
-        return self.name
 
 
 class Package(models.Model):

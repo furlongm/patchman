@@ -1,7 +1,7 @@
 @import url('base.css');
 
 /* CHANGELISTS */
-#changelist { position:relative; margin-left: 15em; }
+#changelist { position:relative; }
 #changelist table { width:100%; }
 .change-list .filtered table { border-right:1px solid #ddd;  }
 .change-list .filtered { min-height:400px; }

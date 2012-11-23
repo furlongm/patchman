@@ -19,6 +19,9 @@ from django.db import models
 from patchman.arch.models import MachineArchitecture
 from patchman.packages.models import Package
 
+from patchman.repos.utils import update_deb_repo, update_rpm_repo, update_packages
+from patchman.signals import error_message
+
 
 class Repository(models.Model):
 
@@ -35,6 +38,7 @@ class Repository(models.Model):
     security = models.BooleanField(default=False)
     repotype = models.CharField(max_length=1, choices=REPO_TYPES)
     enabled = models.BooleanField(default=True)
+#    auth = models.BooleanField(default=False)
 
     class Meta:
         verbose_name_plural = 'Repositories'
@@ -46,14 +50,26 @@ class Repository(models.Model):
     def get_absolute_url(self):
         return ('repo_detail', [self.id])
 
-    def update(self):
+    def update(self, force=False):
+        """ Update all of a repos mirror metadata,
+            force can be set to force a reset of all the mirrors metadata
+        """
+
+        if force:
+            for mirror in self.mirror_set.all():
+                mirror.file_checksum = ''
+                mirror.save()
+
         if self.repotype == Repository.DEB:
-            self.update_deb_repo()
+            update_deb_repo(self)
         elif self.repotype == Repository.RPM:
-            self.update_rpm_repo()
+            update_rpm_repo(self)
+        else:
+            error_message.send(sender=None, text='Error: unknown repo type for repo %s: %s' % (self.id, self.repotype))
 
 
 class Mirror(models.Model):
+
     repo = models.ForeignKey(Repository)
     url = models.CharField(max_length=255, unique=True)
     last_access_ok = models.BooleanField()
@@ -68,7 +84,23 @@ class Mirror(models.Model):
     def __unicode__(self):
         return self.url
 
+    def fail(self):
+        """ Records that the mirror has failed
+            Disables refresh on a mirror if it fails more than 28 times
+        """
 
+        error_message.send(sender=None, text='No usable mirror found at %s' % self.url)
+        self.fail_count = self.fail_count + 1
+        if self.fail_count > 28:
+            self.refresh = False
+            error_message.send(sender=None, text='Mirror has failed more than 28 times, disabling refresh')
+
+    def update_packages(self, packages):
+        """ Update the packages associated with a mirror
+        """
+        update_packages(self, packages)
+
+        
 class MirrorPackage(models.Model):
     mirror = models.ForeignKey(Mirror)
     package = models.ForeignKey(Package)
