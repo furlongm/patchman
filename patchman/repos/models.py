@@ -57,7 +57,7 @@ class Repository(models.Model):
 
         if force:
             for mirror in self.mirror_set.all():
-                mirror.file_checksum = ''
+                mirror.file_checksum = None
                 mirror.save()
 
         if self.repotype == Repository.DEB:
