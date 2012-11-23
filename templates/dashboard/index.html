@@ -13,11 +13,7 @@
   <div class="module">
     <div class="resultslink" id="r1"><a href="#">{{ count }} Operating Systems are not linked to any OS Group</a></div>
       <div class="results" id="r1">
-        {% for os in lonely_oses %}
-        <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-        <a class="dark" href="{{ os.get_absolute_url }}">{{ os }}</a></div>
-        {% endfor %}
-        <div class="clearbrick"></div>
+        {% gen_table lonely_oses %}
       </div>
   </div>
   {% endif %}
@@ -28,11 +24,7 @@
   <div class="module">
     <div class="resultslink" id="r3"><a href="#">{{ count }} Operating Systems are not installed on any Host</a></div>
       <div class="results" id="r3">
-        {% for os in nohost_oses %}
-        <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-        <a class="dark" href="{{ os.get_absolute_url }}">{{ os }}</a></div>
-        {% endfor %}
-        <div class="clearbrick"></div>
+        {% gen_table nohost_oses %}
       </div>
   </div>
   {% endif %}
@@ -42,11 +34,7 @@
   <div class="module">
     <div class="resultslink" id="r5"><a href="#">{{ count }} OS Groups have no repositories</a></div>
       <div class="results" id="r5">
-        {% for osgroup in norepo_osgroups %}
-        <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-        <a class="dark" href="{{ osgroup.get_absolute_url }}">{{ osgroup }}</a></div>
-        {% endfor %}
-        <div class="clearbrick"></div>
+        {% gen_table norepo_osgroups %}
       </div>
   </div>
   {% endif %}
@@ -56,11 +44,7 @@
   <div class="module">
    	<div class="resultslink" id="r7"><a href="#">{{ count }} Hosts have not reported in 2 weeks</a></div>
       <div class="results" id="r7">
-        {% for host in stale_hosts %}
-        <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-        <a class="dark" href="{{ host.get_absolute_url }}">{{ host }}</a></div>
-        {% endfor %}
-        <div class="clearbrick"></div>
+        {% gen_table stale_hosts %}
       </div>
   </div>
   {% endif %}
@@ -70,11 +54,7 @@
   <div class="module">
     <div class="resultslink" id="r9"><a href="#">{{ count }} Hosts require a reboot for security reasons (e.g. kernel update)</a></div>
       <div class="results" id="r9">
-        {% for host in reboot_hosts %}
-        <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-        <a class="dark" href="{% url host_detail host.hostname %}">{{ host.hostname }}</a></div>
-        {% endfor %}
-        <div class="clearbrick"></div>
+        {% gen_table reboot_hosts %}
       </div>
   </div>
   {% endif %}
@@ -84,11 +64,7 @@
   <div class="module">
     <div class="resultslink" id="r11"><a href="#">{{ count }} Hosts have security updates pending</a></div>
       <div class="results" id="r11">
-        {% for host in secupdate_hosts %}
-        <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-        <a class="dark" href="{% url host_detail host.hostname %}">{{ host.hostname }} ({{ host.hostname__count }})</a></div>
-        {% endfor %}
-        <div class="clearbrick"></div>
+        {% gen_table secupdate_hosts %}
       </div>
   </div>
   {% endif %}
@@ -96,13 +72,9 @@
 {% with update_hosts.count as count %}
   {% if count > 0 %}
   <div class="module">
-    <div class="resultslink" id="r13"><a href="#">{{ count }} Hosts have normal updates pending</a></div>
+    <div class="resultslink" id="r13"><a href="#">{{ count }} Hosts have bugfix-only updates pending</a></div>
       <div class="results" id="r13">
-        {% for host in update_hosts %}
-        <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-        <a class="dark" href="{% url host_detail host.hostname %}">{{ host.hostname }} ({{ host.hostname__count }})</a></div>
-        {% endfor %}
-        <div class="clearbrick"></div>
+        {% gen_table update_hosts %}
       </div>
   </div>
   {% endif %}
@@ -112,11 +84,7 @@
   <div class="module">
     <div class="resultslink" id="r15"><a href="#">{{ count }} Hosts have no associated repositories</a></div>
       <div class="results" id="r15">
-        {% for host in norepo_hosts %}
-        <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-        <a class="dark" href="{{ host.get_absolute_url }}">{{ host }}</a></div>
-        {% endfor %}
-        <div class="clearbrick"></div>
+        {% gen_table norepo_hosts %}
       </div>
   </div>
   {% endif %}
@@ -126,11 +94,7 @@
   <div class="module">
     <div class="resultslink" id="r16"><a href="#">{{ count }} Hosts a different rDNS entry (and have rDNS checking enabled)</a></div>
       <div class="results" id="r16">
-        {% for host in diff_rdns_hosts %}
-        <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-        <a class="dark" href="{{ host.get_absolute_url }}">{{ host }}</a></div>
-        {% endfor %}
-        <div class="clearbrick"></div>
+        {% gen_table diff_rdns_hosts %}
       </div>
   </div>
   {% endif %}
@@ -140,11 +104,7 @@
   <div class="module">
     <div class="resultslink" id="r17"><a href="#">{{ count }} Repositories have some mirrors that are failing</a></div>
       <div class="results" id="r17">
-        {% for mirror in failed_mirrors %}
-        <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-        <a class="dark" href="{{ mirror.get_absolute_url }}">{{ mirror }}</a></div>
-        {% endfor %}
-        <div class="clearbrick"></div>
+        {% gen_table failed_mirrors %}
       </div>
   </div>
   {% endif %}
@@ -154,11 +114,7 @@
   <div class="module">
     <div class="resultslink" id="r19"><a href="#">{{ count }} Repositories have some mirrors that are disabled</a></div>
       <div class="results" id="r19">
-        {% for mirror in disabled_mirrors %}
-        <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-        <a class="dark" href="{{ mirror.get_absolute_url }}">{{ mirror }}</a></div>
-        {% endfor %}
-        <div class="clearbrick"></div>
+        {% gen_table disabled_mirrors %}
       </div>
   </div>
   {% endif %}
@@ -168,11 +124,7 @@
   <div class="module">
     <div class="resultslink" id="r21"><a href="#">{{ count }} Repositories have some mirrors that are not set to refresh (possibly failed too many times)</a></div>
       <div class="results" id="r21">
-        {% for mirror in norefresh_mirrors %}
-        <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-        <a class="dark" href="{{ mirror.get_absolute_url }}">{{ mirror }}</a></div>
-        {% endfor %}
-        <div class="clearbrick"></div>
+        {% gen_table norefresh_mirrors %}
       </div>
   </div>
   {% endif %}
@@ -182,11 +134,7 @@
   <div class="module">
     <div class="resultslink" id="r23"><a href="#">{{ count }} Repositories where all mirrors are failing</a></div>
       <div class="results" id="r23">
-        {% for repo in failed_repos %}
-        <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-        <a class="dark" href="{{ repo.get_absolute_url }}">{{ repo }}</a></div>
-        {% endfor %}
-        <div class="clearbrick"></div>
+        {% gen_table failed_repos %}
       </div>
   </div>
   {% endif %}
@@ -196,11 +144,7 @@
   <div class="module">
     <div class="resultslink" id="r25"><a href="#">{{ count }} Repositories are unused (no associated hosts or os groups)</a></div>
       <div class="results" id="r25">
-        {% for repo in unused_repos %}
-        <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-        <a class="dark" href="{{ repo.get_absolute_url }}">{{ repo }}</a></div>
-        {% endfor %}
-        <div class="clearbrick"></div>
+        {% gen_table unused_repos %}
       </div>
   </div>
   {% endif %}
@@ -210,11 +154,7 @@
   <div class="module">
     <div class="resultslink" id="r27"><a href="#">{{ count }} Repositories have no mirrors</a></div>
       <div class="results" id="r27">
-        {% for repo in nomirror_repos %}
-        <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-        <a class="dark" href="{{ repo.get_absolute_url }}">{{ repo }}</a></div>
-        {% endfor %}
-        <div class="clearbrick"></div>
+        {% gen_table nomirror_repos %}
       </div>
   </div>
   {% endif %}
@@ -224,11 +164,7 @@
   <div class="module">
     <div class="resultslink" id="r29"><a href="#">{{ count }} Repositories are not used by any hosts</a></div>
       <div class="results" id="r29">
-        {% for repo in nohost_repos %}
-        <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-        <a class="dark" href="{{ repo.get_absolute_url }}">{{ repo }}</a></div>
-        {% endfor %}
-        <div class="clearbrick"></div>
+        {% gen_table nohost_repos %}
       </div>
   </div>
   {% endif %}
@@ -280,11 +216,7 @@
   <div class="module">
     <div class="resultslink" id="r37"><a href="#">{{ count }} Reports have not yet been processed</a></div>
       <div class="results" id="r37">
-        {% for report in unprocessed_reports %}
-        <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-        <a class="dark" href="{{ report.get_absolute_url }}"> {{ report.id }} </a></div>
-        {% endfor %}
-        <div class="clearbrick"></div>
+        {% gen_table unprocessed_reports %}
      </div>
   </div>
   {% endif %}
