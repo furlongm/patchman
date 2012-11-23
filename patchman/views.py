@@ -18,7 +18,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.models import Site
-from django.db.models import Count, F
+from django.db.models import F
 
 from datetime import datetime, timedelta
 
@@ -41,8 +41,8 @@ def dashboard(request):
     stale_hosts = Host.objects.filter(lastreport__lt=(datetime.now() + timedelta(-14)))
     norepo_hosts = Host.objects.filter(repos__isnull=True, os__osgroup__repos__isnull=True)
     reboot_hosts = Host.objects.filter(reboot_required=True)
-    secupdate_hosts = Host.objects.filter(updates__security=True, updates__isnull=False).values('hostname').annotate(Count('hostname'))
-    update_hosts = Host.objects.filter(updates__security=False, updates__isnull=False).values('hostname').annotate(Count('hostname'))
+    secupdate_hosts = Host.objects.filter(updates__security=True, updates__isnull=False).distinct()
+    update_hosts = Host.objects.exclude(updates__security=True, updates__isnull=False).distinct().filter(updates__security=False, updates__isnull=False).distinct()
     diff_rdns_hosts = Host.objects.exclude(reversedns=F('hostname')).filter(check_dns=True)
 
     # os issues
