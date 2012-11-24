@@ -62,17 +62,15 @@ class Host(models.Model):
     def sec_count(self):
         return self.updates.filter(security=True).count()
 
-    def check_rdns(self, verbose=False):
+    def check_rdns(self):
         if self.check_dns:
             update_rdns(self)
-            if verbose:
-                if self.hostname == self.reversedns:
-                    info_message.send(sender=None, text='Reverse DNS matches.\n')
-                else:
-                    info_message.send(sender=None, text='Reverse DNS mismatch found: %s != %s\n' % (self.hostname, self.reversedns))
+            if self.hostname == self.reversedns:
+                info_message.send(sender=None, text='Reverse DNS matches.\n')
+            else:
+                info_message.send(sender=None, text='Reverse DNS mismatch found: %s != %s\n' % (self.hostname, self.reversedns))
         else:
-            if verbose:
-                info_message.send(sender=None, text='Reverse DNS check disabled for this host.\n')
+            info_message.send(sender=None, text='Reverse DNS check disabled for this host.\n')
 
     def clean_reports(self):
         remove_reports(self)
