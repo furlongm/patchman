@@ -224,7 +224,7 @@ def dns_checks(host=None):
         if verbose:
             print '%s:\t' % host.__unicode__()[0:25].ljust(25),
             sys.stdout.softspace = False
-        host.check_rdns(verbose)
+        host.check_rdns()
 
 
 def process_reports(host=None):

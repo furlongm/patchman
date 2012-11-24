@@ -120,8 +120,6 @@ class Report(models.Model):
             host.domain = domain
             host.lastreport = self.time
             host.tags = self.tags
-# TODO: fix this to record the history of installed
-# packages on a host.
             from patchman.reports.utils import process_packages, process_repos
             host.packages.clear()
             process_packages(report=self, host=host)
