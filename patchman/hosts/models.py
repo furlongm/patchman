@@ -99,7 +99,7 @@ class Host(models.Model):
                     security = True
             update, c = PackageUpdate.objects.get_or_create(oldpackage=package, newpackage=highestpackage, security=security)
             self.updates.add(update)
-            info_message.send(sender=None, text=update)
+            info_message.send(sender=None, text="%s\n" % update)
 
     def find_updates(self):
 
@@ -219,7 +219,7 @@ class Host(models.Model):
                             security = True
                     update, c = PackageUpdate.objects.get_or_create(oldpackage=host_highest_package, newpackage=repo_highest_package, security=security)
                     self.updates.add(update)
-                    info_message.send(sender=None, text=update)
+                    info_message.send(sender=None, text="%s\n" % update)
                 if labelCompare(running_kernel, host_highest) == -1:
                     self.reboot_required = True
                 else:
