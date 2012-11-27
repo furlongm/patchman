@@ -65,7 +65,7 @@ class Repository(models.Model):
         elif self.repotype == Repository.RPM:
             update_rpm_repo(self)
         else:
-            error_message.send(sender=None, text='Error: unknown repo type for repo %s: %s' % (self.id, self.repotype))
+            error_message.send(sender=None, text='Error: unknown repo type for repo %s: %s\n' % (self.id, self.repotype))
 
 
 class Mirror(models.Model):
@@ -89,11 +89,11 @@ class Mirror(models.Model):
             Disables refresh on a mirror if it fails more than 28 times
         """
 
-        error_message.send(sender=None, text='No usable mirror found at %s' % self.url)
+        error_message.send(sender=None, text='No usable mirror found at %s\n' % self.url)
         self.fail_count = self.fail_count + 1
         if self.fail_count > 28:
             self.refresh = False
-            error_message.send(sender=None, text='Mirror has failed more than 28 times, disabling refresh')
+            error_message.send(sender=None, text='Mirror has failed more than 28 times, disabling refresh\n')
 
     def update_packages(self, packages):
         """ Update the packages associated with a mirror
