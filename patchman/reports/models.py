@@ -38,6 +38,8 @@ class Report(models.Model):
     useragent = models.CharField(max_length=255, null=True)
     processed = models.BooleanField(default=False)
     packages = models.TextField(null=True, blank=True)
+    sec_updates = models.TextField(null=True, blank=True)
+    bug_updates = models.TextField(null=True, blank=True)
     repos = models.TextField(null=True, blank=True)
     reboot = models.TextField(null=True, blank=True)
 
@@ -78,6 +80,12 @@ class Report(models.Model):
 
         if 'packages' in data:
             self.packages = data['packages']
+
+        if 'sec_updates' in data:
+            self.sec_updates = data['sec_updates']
+
+        if 'bug_updates' in data:
+            self.bug_updates = data['bug_updates']
 
         if 'repos' in data:
             self.repos = data['repos']
@@ -120,9 +128,10 @@ class Report(models.Model):
             host.domain = domain
             host.lastreport = self.time
             host.tags = self.tags
-            from patchman.reports.utils import process_packages, process_repos
+            from patchman.reports.utils import process_packages, process_repos, process_updates
             host.packages.clear()
             process_packages(report=self, host=host)
+            process_updates(report=self, host=host)
             # only clear repos if we have a new list
             # apt and yum plugins don't send repos
             if self.repos:
