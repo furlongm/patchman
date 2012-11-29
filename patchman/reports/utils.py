@@ -24,6 +24,7 @@ from patchman.signals import progress_info_s, progress_update_s
 
 
 def process_repos(report, host):
+    """ Processes the quoted repos string sent with a report """
 
     if report.repos:
         repos = parse_repos(report.repos)
@@ -37,6 +38,7 @@ def process_repos(report, host):
 
 
 def process_packages(report, host):
+    """ Processes the quoted packages string sent with a report """
 
     if report.packages:
         packages = parse_packages(report.packages)
@@ -48,8 +50,39 @@ def process_packages(report, host):
             progress_update_s.send(sender=report, index=i + 1)
 
 
+def process_updates(report, host):
+    """ Processes the update strings sent with a report """
+
+    bug_updates = None
+    sec_updates = None
+    if report.bug_updates:
+        bug_updates = parse_updates(report.bug_updates)
+    if report.sec_updates:
+        sec_updates = parse_updates(report.sec_updates)
+    updates = bug_updates + sec_updates
+    progress_info_s.send(sender=report, ptext='%s updates' % host.__unicode__()[0:25], plength=len(updates))
+    for i, u in enumerate(updates):
+        update = process_update(report, u)
+        if update:
+            host.updates.add(update)
+            progress_update_s.send(sender=report, index=i + 1)
+
+
+def parse_updates(updates_string):
+    """ Parses updates string in a report and returns a sanitized version """
+
+    print updates_string
+    return None
+
+
+def process_update(report, update):
+    """ Processes a single sanitized update string and converts to an update object """
+
+    return None
+
+
 def parse_repos(repos_string):
-    """Parses repo string in a report"""
+    """ Parses repos string in a report and returns a sanitized version """
     repos = []
     for r in [s for s in repos_string.splitlines() if s]:
         repodata = re.findall('\'.*?\'', r)
@@ -60,6 +93,7 @@ def parse_repos(repos_string):
 
 
 def process_repo(report, repo):
+    """ Processes a single sanitized repo string and converts to a repo object """
     if repo[2] == '':
         r_priority = 0
     if repo[0] == 'deb':
@@ -90,7 +124,7 @@ def process_repo(report, repo):
 
 
 def parse_packages(packages_string):
-    """Parses packages string in a report"""
+    """ Parses packages string in a report and returns a sanitized version """
     packages = []
     for p in packages_string.splitlines():
         packages.append(p.replace('\'', '').split(' '))
@@ -98,6 +132,7 @@ def parse_packages(packages_string):
 
 
 def process_package(report, pkg):
+    """ Processes a single sanitized package string and converts to a package object """
     if report.protocol == '1':
         if pkg[0] != 'gpg-pubkey':
             p_name, c = PackageName.objects.get_or_create(name=pkg[0].lower())
