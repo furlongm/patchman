@@ -53,32 +53,34 @@ def process_packages(report, host):
 def process_updates(report, host):
     """ Processes the update strings sent with a report """
 
-    bug_updates = None
-    sec_updates = None
+    bug_updates = ''
+    sec_updates = ''
     if report.bug_updates:
         bug_updates = parse_updates(report.bug_updates)
     if report.sec_updates:
         sec_updates = parse_updates(report.sec_updates)
     updates = bug_updates + sec_updates
-    progress_info_s.send(sender=report, ptext='%s updates' % host.__unicode__()[0:25], plength=len(updates))
-    for i, u in enumerate(updates):
-        update = process_update(report, u)
-        if update:
-            host.updates.add(update)
-            progress_update_s.send(sender=report, index=i + 1)
+    ulen = len(updates)
+    if ulen > 0:
+        progress_info_s.send(sender=report, ptext='%s updates' % host.__unicode__()[0:25], plength=ulen)
+        for i, u in enumerate(updates):
+            update = process_update(report, u)
+            if update:
+                host.updates.add(update)
+                progress_update_s.send(sender=report, index=i + 1)
 
 
 def parse_updates(updates_string):
     """ Parses updates string in a report and returns a sanitized version """
 
     print updates_string
-    return None
+    return ''
 
 
 def process_update(report, update):
     """ Processes a single sanitized update string and converts to an update object """
 
-    return None
+    return ''
 
 
 def parse_repos(repos_string):
