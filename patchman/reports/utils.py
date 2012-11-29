@@ -28,13 +28,13 @@ def process_repos(report, host):
 
     if report.repos:
         repos = parse_repos(report.repos)
-        progress_info_s.send(sender=report, ptext='%s repos' % host.__unicode__()[0:25], plength=len(repos))
+        progress_info_s.send(sender=None, ptext='%s repos' % host.__unicode__()[0:25], plen=len(repos))
         for i, repo in enumerate(repos):
             repository, priority = process_repo(report, repo)
             if repository:
                 hostrepo, c = HostRepo.objects.get_or_create(host=host, repo=repository, priority=priority, enabled=True)
                 hostrepo.save()
-            progress_update_s.send(sender=report, index=i + 1)
+            progress_update_s.send(sender=None, index=i + 1)
 
 
 def process_packages(report, host):
@@ -42,12 +42,12 @@ def process_packages(report, host):
 
     if report.packages:
         packages = parse_packages(report.packages)
-        progress_info_s.send(sender=report, ptext='%s packages' % host.__unicode__()[0:25], plength=len(packages))
+        progress_info_s.send(sender=None, ptext='%s packages' % host.__unicode__()[0:25], plen=len(packages))
         for i, pkg in enumerate(packages):
             package = process_package(report, pkg)
             if package:
                 host.packages.add(package)
-            progress_update_s.send(sender=report, index=i + 1)
+            progress_update_s.send(sender=None, index=i + 1)
 
 
 def process_updates(report, host):
@@ -62,18 +62,18 @@ def process_updates(report, host):
     updates = bug_updates + sec_updates
     ulen = len(updates)
     if ulen > 0:
-        progress_info_s.send(sender=report, ptext='%s updates' % host.__unicode__()[0:25], plength=ulen)
+        progress_info_s.send(sender=None, ptext='%s updates' % host.__unicode__()[0:25], plen=ulen)
         for i, u in enumerate(updates):
             update = process_update(report, u)
             if update:
                 host.updates.add(update)
-                progress_update_s.send(sender=report, index=i + 1)
+                progress_update_s.send(sender=None, index=i + 1)
 
 
 def parse_updates(updates_string):
     """ Parses updates string in a report and returns a sanitized version """
 
-    print updates_string
+#    print updates_string
     return ''
 
 
