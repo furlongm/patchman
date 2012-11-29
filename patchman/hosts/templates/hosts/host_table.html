@@ -9,8 +9,8 @@
     {% for host in object_list %}
                 <tr class="{% cycle row1,row2 %}">
                     <td><a href="{{ host.get_absolute_url }}">{{ host }}</a></td>
-                    <td style="color:red">{% with host.sec_count as tmp %}{% if tmp != 0 %}{{ tmp }}{% endif %}{% endwith %}</td>
-                    <td style="color:orange">{% with host.nonsec_count as tmp %}{% if tmp != 0 %}{{ tmp }}{% endif %}{% endwith %}</td>
+                    <td style="color:red">{% with host.sec_count as tmp %}{% if tmp != 0 %}{{ tmp }}{% else %}&nbsp;{% endif %}{% endwith %}</td>
+                    <td style="color:orange">{% with host.nonsec_count as tmp %}{% if tmp != 0 %}{{ tmp }}{% else %}&nbsp;{% endif %}{% endwith %}</td>
                     <td>{{ host.kernel }}</td>
                     <td><a href="{{ host.os.get_absolute_url }}">{{ host.os }}</a></td>
                     <td>{{ host.lastreport }}</td>
