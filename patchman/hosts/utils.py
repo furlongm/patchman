@@ -48,7 +48,7 @@ def remove_reports(host):
     del_reports = Report.objects.filter(host=host).exclude(id__in=report_ids)
 
     rlen = del_reports.count()
-    progress_info_s.send(sender=host, ptext='Cleaning %s old reports' % rlen, plength=rlen)
+    progress_info_s.send(sender=None, ptext='Cleaning %s old reports' % rlen, plength=rlen)
     for i, report in enumerate(del_reports):
         report.delete()
-        progress_update_s.send(sender=host, index=i + 1)
+        progress_update_s.send(sender=None, index=i + 1)

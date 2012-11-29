@@ -44,7 +44,7 @@ def update_packages(mirror, packages):
     repopackages = mirror.packages.all()
     rplen = repopackages.count()
 
-    progress_info_s.send(sender=None, text='Obtaining stored packages: ', plen=rplen)
+    progress_info_s.send(sender=None, ptext='Obtaining stored packages: ', plen=rplen)
     for i, package in enumerate(repopackages):
         progress_update_s.send(sender=None, index=i + 1)
         name = str(package.name)
@@ -58,7 +58,7 @@ def update_packages(mirror, packages):
     nlen = len(new)
     rlen = len(removed)
 
-    progress_info_s.send(sender=None, text='Removing %s obsolete packages:' % rlen, plen=rlen)
+    progress_info_s.send(sender=None, ptext='Removing %s obsolete packages:' % rlen, plen=rlen)
     for i, package in enumerate(removed):
         progress_update_s.send(sender=None, index=i + 1)
         package_id = PackageName.objects.get(name=package.name)
@@ -72,7 +72,7 @@ def update_packages(mirror, packages):
         MirrorPackage.objects.get(mirror=mirror, package=p).delete()
     mirror.save()
 
-    progress_info_s.send(sender=None, text='Adding %s new packages:' % nlen, plen=nlen)
+    progress_info_s.send(sender=None, ptext='Adding %s new packages:' % nlen, plen=nlen)
     for i, package in enumerate(new):
         progress_update_s.send(sender=None, index=i + 1)
         package_id, c = PackageName.objects.get_or_create(name=package.name)

@@ -14,7 +14,6 @@ from patchman.repos.models import Repository
 from patchman.arch.models import PackageArchitecture, MachineArchitecture
 from patchman.reports.models import Report
 
-#from patchman.signals import progress_info_s, progress_update_s, info_message, error_message, debug_message
 from patchman.receivers import print_info_message, print_debug_message, print_error_message
 from patchman.utils import create_pbar, update_pbar
 

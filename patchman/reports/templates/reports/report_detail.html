@@ -33,6 +33,30 @@
   </div>
   {% endif %}
 {% endif %}
+{% if report.sec_updates %}
+<div class="module">
+  <h2>Security Updates</h2>
+  <table>
+  {% for update in report.sec_updates.splitlines %}
+    <tr class="{% cycle row1,row2 %}">
+      <td> {{ update }} </td>
+    </tr>
+  {% endfor %}
+  </table>
+</div>
+{% endif %}
+{% if report.bug_updates %}
+<div class="module">
+  <h2>Bugfix Updates</h2>
+  <table>
+  {% for update in report.bug_updates.splitlines %}
+    <tr class="{% cycle row1,row2 %}">
+      <td> {{ update }} </td>
+    </tr>
+  {% endfor %}
+  </table>
+</div>
+{% endif %}
 <div class="module">
   <h2>Repositories</h2>
   <table>
