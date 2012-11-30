@@ -132,9 +132,11 @@ def process_repo(report, repo):
     repository.repo_id = r_id
     for url in unknown:
         Mirror.objects.create(repo=repository, url=url)
-    for url in Mirror.objects.filter(repo=repository).values('url'):
-        if url.find('cdn.redhat.com') != -1:
+    for url_d in Mirror.objects.filter(repo=repository).values('url'):
+        print url_d['url'].find('cdn.redhat.com')
+        if url_d['url'].find('cdn.redhat.com') != -1:
             repository.auth_required = True
+    repository.save()
     return repository, r_priority
 
 
