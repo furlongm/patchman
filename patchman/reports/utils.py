@@ -61,6 +61,7 @@ def process_updates(report, host):
         sec_updates = parse_updates(report.sec_updates)
     updates = bug_updates + sec_updates
     ulen = len(updates)
+    print ulen
     if ulen > 0:
         progress_info_s.send(sender=None, ptext='%s updates' % host.__unicode__()[0:25], plen=ulen)
         for i, u in enumerate(updates):
@@ -73,8 +74,15 @@ def process_updates(report, host):
 def parse_updates(updates_string):
     """ Parses updates string in a report and returns a sanitized version """
 
-#    print updates_string
-    return ''
+    updates = ''
+    ulist = updates_string.split()
+    while ulist != []:
+        updates = updates + '%s %s %s\n' % (ulist[0], ulist[1], ulist[2])
+        ulist.pop(0)
+        ulist.pop(0)
+        ulist.pop(0)
+
+    return updates
 
 
 def process_update(report, update):
@@ -103,6 +111,7 @@ def process_repo(report, repo):
         r_priority = int(repo[2])
     elif repo[0] == 'rpm':
         r_type = Repository.RPM
+        r_id = repo.pop(2)
         r_priority = int(repo[2]) * -1
     r_name = repo[1]
     r_arch, c = MachineArchitecture.objects.get_or_create(name=report.arch)
@@ -120,8 +129,12 @@ def process_repo(report, repo):
             repository = mirror.repo
     if not repository:
         repository, c = Repository.objects.get_or_create(name=r_name, arch=r_arch, repotype=r_type)
+    repository.repo_id = r_id
     for url in unknown:
         Mirror.objects.create(repo=repository, url=url)
+    for url in Mirror.objects.filter(repo=repository).values('url'):
+        if url.find('cdn.redhat.com') != -1:
+            repository.auth_required = True
     return repository, r_priority
 
 
