@@ -19,7 +19,7 @@ from django.db import models
 from patchman.arch.models import MachineArchitecture
 from patchman.packages.models import Package
 
-from patchman.repos.utils import update_deb_repo, update_rpm_repo, update_packages
+from patchman.repos.utils import update_deb_repo, update_rpm_repo, update_mirror_packages
 from patchman.signals import error_message
 
 
@@ -99,7 +99,7 @@ class Mirror(models.Model):
     def update_packages(self, packages):
         """ Update the packages associated with a mirror
         """
-        update_packages(self, packages)
+        update_mirror_packages(self, packages)
 
         
 class MirrorPackage(models.Model):
