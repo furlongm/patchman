@@ -32,7 +32,7 @@ from patchman.utils import download_url
 from patchman.signals import info_message, error_message, debug_message, progress_info_s, progress_update_s
 
 
-def update_packages(mirror, packages):
+def update_mirror_packages(mirror, packages):
     """ Updates the packages contained on a mirror, and
         removes obsolete packages.
     """
@@ -405,7 +405,7 @@ def update_rpm_repo(repo):
             mirror.timestamp = datetime.now()
             mirror.last_access_ok = True
             if packages:
-                update_packages(mirror, packages)
+                update_mirror_packages(mirror, packages)
         else:
             mirror.fail()
 
@@ -435,7 +435,7 @@ def update_deb_repo(repo):
                 extract_deb_packages(data, packages)
                 mirror.last_access_ok = True
                 mirror.timestamp = datetime.now()
-                update_packages(mirror, packages)
+                update_mirror_packages(mirror, packages)
                 mirror.file_checksum = sha1
                 packages.clear()
         else:

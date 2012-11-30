@@ -53,12 +53,12 @@ def dashboard(request):
     norepo_osgroups = OSGroup.objects.filter(repos__isnull=True)
 
     # mirror issues
-    failed_mirrors = Repository.objects.filter(mirror__last_access_ok=False).filter(mirror__last_access_ok=True).distinct()
-    disabled_mirrors = Repository.objects.filter(mirror__enabled=False).filter(mirror__mirrorlist=False).distinct()
-    norefresh_mirrors = Repository.objects.filter(mirror__refresh=False).distinct()
+    failed_mirrors = Repository.objects.filter(auth_required=False).filter(mirror__last_access_ok=False).filter(mirror__last_access_ok=True).distinct()
+    disabled_mirrors = Repository.objects.filter(auth_required=False).filter(mirror__enabled=False).filter(mirror__mirrorlist=False).distinct()
+    norefresh_mirrors = Repository.objects.filter(auth_required=False).filter(mirror__refresh=False).distinct()
 
     # repo issues
-    failed_repos = Repository.objects.filter(mirror__last_access_ok=False).exclude(id__in=[x.id for x in failed_mirrors]).distinct()
+    failed_repos = Repository.objects.filter(auth_required=False).filter(mirror__last_access_ok=False).exclude(id__in=[x.id for x in failed_mirrors]).distinct()
     unused_repos = Repository.objects.filter(host__isnull=True, osgroup__isnull=True)
     nomirror_repos = Repository.objects.filter(mirror__isnull=True)
     nohost_repos = Repository.objects.filter(host__isnull=True)

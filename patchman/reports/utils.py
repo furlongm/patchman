@@ -18,8 +18,9 @@ import re
 
 from patchman.hosts.models import HostRepo
 from patchman.arch.models import MachineArchitecture, PackageArchitecture
-from patchman.repos.models import Repository, Mirror
-from patchman.packages.models import Package, PackageName
+from patchman.repos.models import Repository, Mirror, MirrorPackage
+from patchman.packages.models import Package, PackageName, PackageUpdate
+from patchman.packages.utils import find_versions
 from patchman.signals import progress_info_s, progress_update_s
 
 
@@ -57,27 +58,36 @@ def process_updates(report, host):
     sec_updates = ''
     if report.bug_updates:
         bug_updates = parse_updates(report.bug_updates)
+        add_updates(bug_updates, host, False)
     if report.sec_updates:
         sec_updates = parse_updates(report.sec_updates)
-    updates = bug_updates + sec_updates
+        add_updates(sec_updates, host, True)
+
+
+def add_updates(updates, host, security):
+
     ulen = len(updates)
-    print ulen
+    if security:
+        extra = 'sec'
+    else:
+        extra = 'bug'
+
     if ulen > 0:
-        progress_info_s.send(sender=None, ptext='%s updates' % host.__unicode__()[0:25], plen=ulen)
+        progress_info_s.send(sender=None, ptext='%s %s updates' % (host.__unicode__()[0:25], extra), plen=ulen)
         for i, u in enumerate(updates):
-            update = process_update(report, u)
+            update = process_update(host, u, security)
             if update:
                 host.updates.add(update)
-                progress_update_s.send(sender=None, index=i + 1)
+            progress_update_s.send(sender=None, index=i + 1)
 
 
 def parse_updates(updates_string):
     """ Parses updates string in a report and returns a sanitized version """
 
-    updates = ''
+    updates = []
     ulist = updates_string.split()
     while ulist != []:
-        updates = updates + '%s %s %s\n' % (ulist[0], ulist[1], ulist[2])
+        updates.append('%s %s %s\n' % (ulist[0], ulist[1], ulist[2]))
         ulist.pop(0)
         ulist.pop(0)
         ulist.pop(0)
@@ -85,10 +95,30 @@ def parse_updates(updates_string):
     return updates
 
 
-def process_update(report, update):
+def process_update(host, update_string, security):
     """ Processes a single sanitized update string and converts to an update object """
 
-    return ''
+    update_l = update_string.split()
+    parts = update_l[0].rpartition('.')
+    p_str = parts[0]
+    a_str = parts[2]
+    p_epoch, p_ver, p_rel = find_versions(update_l[1])
+    repo_id = update_l[2]
+
+    p_arch, c = PackageArchitecture.objects.get_or_create(name=a_str)
+    p_name, c = PackageName.objects.get_or_create(name=p_str)
+    package, c = Package.objects.get_or_create(name=p_name, arch=p_arch, epoch=p_epoch, version=p_ver, release=p_rel, packagetype='R')
+
+    repo = Repository.objects.get(repo_id=repo_id)
+    if repo:
+        for mirror in repo.mirror_set.all():
+            MirrorPackage.objects.create(mirror=mirror, package=package)
+
+    hp = host.packages.filter(name=p_name, arch=p_arch, packagetype='R')[0]
+
+    update, c = PackageUpdate.objects.get_or_create(oldpackage=hp, newpackage=package, security=security)
+
+    return update
 
 
 def parse_repos(repos_string):
@@ -133,7 +163,6 @@ def process_repo(report, repo):
     for url in unknown:
         Mirror.objects.create(repo=repository, url=url)
     for url_d in Mirror.objects.filter(repo=repository).values('url'):
-        print url_d['url'].find('cdn.redhat.com')
         if url_d['url'].find('cdn.redhat.com') != -1:
             repository.auth_required = True
     repository.save()
