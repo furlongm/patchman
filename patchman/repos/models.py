@@ -38,6 +38,7 @@ class Repository(models.Model):
     security = models.BooleanField(default=False)
     repotype = models.CharField(max_length=1, choices=REPO_TYPES)
     enabled = models.BooleanField(default=True)
+    repo_id = models.CharField(max_length=255, null=True, blank=True)
     auth_required = models.BooleanField(default=False)
 
     class Meta:

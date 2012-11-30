@@ -19,6 +19,8 @@
         <tr><td>Security</td><td> {% yes_no_img repo.security 'False' 'Security' 'Not Security' %} </td></tr>
         <tr><td>Enabled</td><td> {% yes_no_img repo.enabled 'False' 'Enabled' 'Not Enabled' %} </td></tr>
         <tr><td>Mirrors</td><td> {{ repo.mirror_set.count }} </td></tr>
+        <tr><td>Requires Authentication</td><td> {{ repo.auth_required }} </td></tr>
+        <tr><td>Repo ID</td><td> {{ repo.repo_id }} </td></tr>
     </table>
 </div>
 
