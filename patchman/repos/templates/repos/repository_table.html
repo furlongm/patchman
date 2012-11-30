@@ -5,18 +5,22 @@
   <thead>
     <tr>
       <th>Repo Name</th>
+      <th>ID</th>
       <th>Mirrors</th>
       <th>Enabled</th>
       <th>Security</th>
+      <th>Auth Required</th>
     </tr>
   </thead>
   <tbody>
     {% for repo in object_list %}
       <tr class="{% cycle row1,row2 %}">
         <td><a href="{{ repo.get_absolute_url }}">{{ repo }}</a></td>
+        <td>{% if repo.repo_id != None %} {{ repo.repo_id }} {% endif %}</td>
         <td class="centered">{{ repo.mirror_set.count }}</td>
         <td class="centered">{% yes_no_button_repo_en repo %}</td>
-        <td class="centered">{% yes_no_button_repo_sec repo %}</td>                      
+        <td class="centered">{% yes_no_button_repo_sec repo %}</td>
+        <td class="centered">{% yes_no_img repo.auth_required %}</td>
       </tr>
     {% endfor %}
   </tbody>
