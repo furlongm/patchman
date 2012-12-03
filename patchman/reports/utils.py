@@ -159,7 +159,8 @@ def process_repo(report, repo):
             repository = mirror.repo
     if not repository:
         repository, c = Repository.objects.get_or_create(name=r_name, arch=r_arch, repotype=r_type)
-    repository.repo_id = r_id
+    if r_id:
+        repository.repo_id = r_id
     for url in unknown:
         Mirror.objects.create(repo=repository, url=url)
     for url_d in Mirror.objects.filter(repo=repository).values('url'):
