@@ -33,7 +33,8 @@ def process_repos(report, host):
         for i, repo in enumerate(repos):
             repository, priority = process_repo(report, repo)
             if repository:
-                hostrepo, c = HostRepo.objects.get_or_create(host=host, repo=repository, priority=priority, enabled=True)
+                hostrepo, c = HostRepo.objects.get_or_create(host=host, repo=repository)
+                hostrepo.priority = priority
                 hostrepo.save()
             progress_update_s.send(sender=None, index=i + 1)
 
@@ -135,6 +136,7 @@ def parse_repos(repos_string):
 def process_repo(report, repo):
     """ Processes a single sanitized repo string and converts to a repo object """
 
+    repository = r_id = None
     if repo[2] == '':
         r_priority = 0
     if repo[0] == 'deb':
@@ -146,8 +148,6 @@ def process_repo(report, repo):
         r_priority = int(repo[2]) * -1
     r_name = repo[1]
     r_arch, c = MachineArchitecture.objects.get_or_create(name=report.arch)
-    repository = None
-    r_id = None
     unknown = []
     for r_url in repo[3:]:
         try:
