@@ -20,7 +20,7 @@ from patchman.arch.models import MachineArchitecture
 from patchman.packages.models import Package
 
 from patchman.repos.utils import update_deb_repo, update_rpm_repo, update_mirror_packages
-from patchman.signals import error_message
+from patchman.signals import error_message, info_message
 
 
 class Repository(models.Model):
@@ -61,12 +61,15 @@ class Repository(models.Model):
                 mirror.file_checksum = None
                 mirror.save()
 
-        if self.repotype == Repository.DEB:
-            update_deb_repo(self)
-        elif self.repotype == Repository.RPM:
-            update_rpm_repo(self)
+        if not self.auth_required:
+            if self.repotype == Repository.DEB:
+                update_deb_repo(self)
+            elif self.repotype == Repository.RPM:
+                update_rpm_repo(self)
+            else:
+                error_message.send(sender=None, text='Error: unknown repo type for repo %s: %s\n' % (self.id, self.repotype))
         else:
-            error_message.send(sender=None, text='Error: unknown repo type for repo %s: %s\n' % (self.id, self.repotype))
+            info_message.send(sender=None, text='Repo requires certificate authentication, not updating\n')
 
 
 class Mirror(models.Model):
@@ -99,8 +102,8 @@ class Mirror(models.Model):
     def update_packages(self, packages):
         """ Update the packages associated with a mirror
         """
-        if not self.repo.auth_required:
-            update_mirror_packages(self, packages)
+
+        update_mirror_packages(self, packages)
 
         
 class MirrorPackage(models.Model):
