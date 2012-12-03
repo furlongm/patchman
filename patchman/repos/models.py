@@ -99,7 +99,8 @@ class Mirror(models.Model):
     def update_packages(self, packages):
         """ Update the packages associated with a mirror
         """
-        update_mirror_packages(self, packages)
+        if not self.repo.auth_required:
+            update_mirror_packages(self, packages)
 
         
 class MirrorPackage(models.Model):
