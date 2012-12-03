@@ -134,6 +134,7 @@ def parse_repos(repos_string):
 
 def process_repo(report, repo):
     """ Processes a single sanitized repo string and converts to a repo object """
+
     if repo[2] == '':
         r_priority = 0
     if repo[0] == 'deb':
@@ -146,6 +147,7 @@ def process_repo(report, repo):
     r_name = repo[1]
     r_arch, c = MachineArchitecture.objects.get_or_create(name=report.arch)
     repository = None
+    r_id = None
     unknown = []
     for r_url in repo[3:]:
         try:
