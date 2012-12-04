@@ -20,6 +20,7 @@ from patchman.hosts.models import Host
 from patchman.arch.models import MachineArchitecture
 from patchman.operatingsystems.models import OS
 from patchman.domains.models import Domain
+from patchman.signals import error_message
 
 from socket import gethostbyaddr
 
@@ -96,6 +97,9 @@ class Report(models.Model):
         self.save()
 
     def process(self, find_updates=True):
+        """ Process a report and extract os, arch, domain, packages, repos etc
+        """
+
         if self.os and self.kernel and self.arch:
             os, c = OS.objects.get_or_create(name=self.os)
             arch, c = MachineArchitecture.objects.get_or_create(name=self.arch)
@@ -147,3 +151,5 @@ class Report(models.Model):
             self.save()
             if find_updates:
                 host.find_updates()
+        else:
+            error_message.send(sender=None, text='Error: OS, kernel or arch not sent with report %s\n' % (self.id))

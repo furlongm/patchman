@@ -176,7 +176,7 @@ function get_host_data {
     host_arch=`uname -m`
 
     os="unknown"
-    releases="/etc/lsb-release /etc/debian_version /etc/fermi-release /etc/redhat-release /etc/fedora-release /etc/SuSE-release"
+    releases="/etc/SuSE-release /etc/lsb-release /etc/debian_version /etc/fermi-release /etc/redhat-release /etc/fedora-release"
     for i in ${releases} ; do
         if [ -f $i ] ; then
             case "${i}" in
@@ -304,7 +304,7 @@ function get_repos {
             enabled[i]="true"
         done
         let r=0
-        for i in $(zypper lr -u --details | tail +3 | cut -d "|" -f 3,6,8 | sed -e "s/ *|/ ${host_arch} |/" -e "s/^ /'/g" -e "s/ *| */' '/g" -e "s/ *$/'/g") ; do
+        for i in $(zypper lr -u --details | tail +3 | cut -d "|" -f 3,2,6,8 | sed -e "s/ *|/ ${host_arch} |/" -e "s/^ /'/g" -e "s/ *| */' '/g" -e "s/ *$/'/g") ; do
             let r=$r+1
             if [ "${enabled[${r}]}" == "true" ] ; then
                 echo \'rpm\' ${i} >> ${tmpfile_rep}
