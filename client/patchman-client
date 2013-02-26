@@ -176,17 +176,12 @@ function get_host_data {
     host_arch=`uname -m`
 
     os="unknown"
-    releases="/etc/SuSE-release /etc/lsb-release /etc/debian_version /etc/fermi-release /etc/redhat-release /etc/fedora-release"
+    releases="/usr/bin/lsb-release /etc/SuSE-release /etc/debian_version /etc/fermi-release /etc/redhat-release /etc/fedora-release"
     for i in ${releases} ; do
         if [ -f $i ] ; then
             case "${i}" in
-            /etc/lsb-release)
-                tmp_os=`grep DISTRIB_DESCRIPTION ${i}`
-                os=`echo ${tmp_os} | sed -e 's/DISTRIB_DESCRIPTION="\(.*\)"/\1/'`
-                if [ -z "${os}" ] ; then
-                    tmp_os=`grep  DISTRIB_DESC ${i}`
-                    os=`echo ${tmp_os} | sed -e 's/DISTRIB_DESC="\(.*\)"/\1/'`
-                fi
+            /usr/bin/lsb-release)
+                os=$(/usr/bin/lsb-release -ds | sed 's/"//g')
                 break
                 ;;
             /etc/debian_version)
