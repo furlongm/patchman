@@ -187,6 +187,9 @@ function get_host_data {
                     tmp_os=`grep  DISTRIB_DESC ${i}`
                     os=`echo ${tmp_os} | sed -e 's/DISTRIB_DESC="\(.*\)"/\1/'`
                 fi
+                if [ -z "${os}" ] ; then
+                    continue
+                fi
                 break
                 ;;
             /etc/debian_version)
