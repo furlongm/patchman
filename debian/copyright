@@ -1,15 +1,16 @@
 This package was debianized by Sam Morrison
  on Wed, 30 October 2011 14:31:10 +1000.
 
-It was downloaded from http://code.vpac.org/trac/patchman/
+It was downloaded from https://github.com/furlongm/patchman/
 
 Upstream Author:
 
-    Marcus Furlong <furlongm@vpac.org>
+    Marcus Furlong <furlongm@gmail.com>
 
 Copyright:
 
-    Copyright (C) 2011 VPAC Ltd.
+    Copyright (C) 2011, 2012 VPAC Ltd. http://www.vpac.org
+    Copyright (C) 2013, Marcus Furlong <furlongm@gmail.com>
 
 License:
 

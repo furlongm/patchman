@@ -10,7 +10,7 @@
 
 {% block content_title %}OS Group Information{% endblock %}
 
-{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url os_list %}">Operating Systems</a> &rsaquo; <a href="{% url osgroup_list %}">Groups</a> &rsaquo; {{ osgroup }} {% endblock %}
+{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url "os_list" %}">Operating Systems</a> &rsaquo; <a href="{% url "osgroup_list" %}">Groups</a> &rsaquo; {{ osgroup }} {% endblock %}
 
 {% block content %}
 
@@ -43,7 +43,7 @@
     {% if perms.is_admin %}
     <div class="module">
         <h2>Actions</h2>
-        <a class="brick" href="{% url osgroup_delete osgroup.id %}">Delete this OS Group</a>
+        <a class="brick" href="{% url "osgroup_delete" osgroup.id %}">Delete this OS Group</a>
         <div class="clearbrick"></div>
         <br />
     </div>

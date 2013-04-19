@@ -101,9 +101,9 @@ data_files.append(
 setup(
     name = "patchman",
     version = version,
-    url = 'http://code.vpac.org/trac/patchman/',
+    url = 'https://www.github.com/furlongm/patchman/',
     author = 'Marcus Furlong',
-    author_email = 'furlongm@vpac.org',
+    author_email = 'furlongm@gmail.com',
     description = 'Patchman is a django-based patch status monitoring tool for linux systems.',
     packages = packages,
     cmdclass = cmdclasses,

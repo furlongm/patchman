@@ -5,7 +5,7 @@
 
 {% block content_title %}OS Information{% endblock %}
 
-{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url os_list %}">Operating Systems</a> &rsaquo;
+{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url "os_list" %}">Operating Systems</a> &rsaquo;
 
 {% if os %}
     {{ os }}

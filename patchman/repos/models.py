@@ -105,7 +105,7 @@ class Mirror(models.Model):
 
         update_mirror_packages(self, packages)
 
-        
+
 class MirrorPackage(models.Model):
     mirror = models.ForeignKey(Mirror)
     package = models.ForeignKey(Package)

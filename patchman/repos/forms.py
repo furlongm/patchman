@@ -27,11 +27,11 @@ class EditRepoForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(EditRepoForm, self).__init__(*args, **kwargs)
         self.fields['name'].widget = TextInput(attrs={'size': 100})
-        self.fields['id'].widget = TextInput(attrs={'size': 100})
+        self.fields['repo_id'].widget = TextInput(attrs={'size': 100})
 
     class Meta:
         model = Repository
-        fields = ('name', 'id', 'repotype', 'arch', 'security', 'enabled', 'mirrors', 'auth_required')
+        fields = ('name', 'repo_id', 'repotype', 'arch', 'security', 'enabled', 'mirrors', 'auth_required')
 
 
 class LinkRepoForm(Form):

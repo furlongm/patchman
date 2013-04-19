@@ -10,7 +10,7 @@
 
 {% block content_title %}Host Information{% endblock %}
 
-{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url host_list %}">Hosts</a> &rsaquo; {{ host }} {% endblock %}
+{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url "host_list" %}">Hosts</a> &rsaquo; {{ host }} {% endblock %}
 
 {% block content %}
 
@@ -18,7 +18,7 @@
     <h2>{{host}}</h2>
     <table>
         <tr><td>Hostname</td><td> {{ host.hostname }} </td></tr>
-        <tr><td>Domain</td><td> <a href="{% url host_list %}?domain={{ host.domain.id }}">{{ host.domain }}</a> </td></tr>
+        <tr><td>Domain</td><td> <a href="{% url "host_list" %}?domain={{ host.domain.id }}">{{ host.domain }}</a> </td></tr>
         <tr><td>Reporting IP Address</td><td> {{ host.ipaddress }} </td></tr>
         <tr><td>Reverse DNS</td><td> {{ host.reversedns }} </td></tr>
         <tr><td>OS</td><td> <a href="{{ host.os.get_absolute_url }}">{{ host.os }}</a> </td></tr>
@@ -29,7 +29,7 @@
             {% load tagging_tags %}
             {% tags_for_object host as tags %}
             {% for tag in tags %}
-                <a href="{% url host_list %}?tag={{ tag }}">{{ tag }}</a>
+                <a href="{% url "host_list" %}?tag={{ tag }}">{{ tag }}</a>
             {% endfor %}
         </td></tr>
         <tr><td>Last Update</td><td> {{ host.lastreport }} </td></tr>
