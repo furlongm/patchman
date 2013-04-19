@@ -58,7 +58,7 @@ class Package(models.Model):
     arch = models.ForeignKey(PackageArchitecture)
     packagetype = models.CharField(max_length=1, choices=PACKAGE_TYPES, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
-    url = models.URLField(verify_exists=False, max_length=255, blank=True, null=True)
+    url = models.URLField(max_length=255, blank=True, null=True)
 
     objects = PackageManager()
 
@@ -134,7 +134,7 @@ class PackageString(models.Model):
     arch = models.CharField(max_length=255)
     packagetype = models.CharField(max_length=1, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
-    url = models.URLField(verify_exists=False, max_length=255, blank=True, null=True)
+    url = models.URLField(max_length=255, blank=True, null=True)
 
     def __unicode__(self):
         if self.epoch:

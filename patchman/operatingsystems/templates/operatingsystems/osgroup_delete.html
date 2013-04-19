@@ -10,7 +10,7 @@
 
 {% block content_title %}OS Group Information{% endblock %}
 
-{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url os_list %}">Operating Systems</a> &rsaquo; <a href="{% url osgroup_list %}">Groups</a> &rsaquo; {{ osgroup }} {% endblock %}
+{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url "os_list" %}">Operating Systems</a> &rsaquo; <a href="{% url "osgroup_list" %}">Groups</a> &rsaquo; {{ osgroup }} {% endblock %}
 
 {% block content %}
 

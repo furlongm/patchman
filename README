@@ -27,7 +27,7 @@ Source
 
 The current code is available on github:
 
-   https://github.com/VPAC/patchman
+   https://github.com/furlongm/patchman
 
 
 Server-side dependencies
@@ -44,7 +44,7 @@ python-lxml
 python-argparse
 
 The server can optionally make use of celery to asynchronously process the
-reports send by hosts.
+reports send by hosts. The appropriate python database library is also needed.
 
 
 Client-side dependencies

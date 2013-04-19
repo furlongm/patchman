@@ -3,7 +3,7 @@
 {% load forms common %}
 
 {% block extrahead %}
-<script type="text/javascript" src="{% url admin:jsi18n %}"></script>
+<script type="text/javascript" src="{% url "admin:jsi18n" %}"></script>
 <script type="text/javascript" src="{{ MEDIA_URL }}/patchman_media/admin/js/actions.js"></script>
 {{ edit_form.media }}
 {% endblock %}
@@ -12,7 +12,7 @@
 
 {% block content_title %}Repository Information{% endblock %}
 
-{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url repo_list %}">Repositories</a> &rsaquo; {{ repo }} {% endblock %}
+{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url "repo_list" %}">Repositories</a> &rsaquo; {{ repo }} {% endblock %}
 
 {% block content %}
 

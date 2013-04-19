@@ -27,7 +27,6 @@ def update_rdns(host):
         reversedns = str(gethostbyaddr(host.ipaddress)[0])
     except (gaierror, herror) as e:
         reversedns = 'None'
-        error_message(sender=None, text=e)
 
     host.reversedns = reversedns
     host.save()

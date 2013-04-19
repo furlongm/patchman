@@ -7,7 +7,6 @@ ADMINS = (
 #    ('Your Name', 'you@example.com'),
 )
 
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
@@ -16,11 +15,10 @@ DATABASES = {
         'PASSWORD': '',                  # Not used with sqlite3.
         'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
-        'OPTIONS': { 'init_command': 'SET storage_engine=INNODB', 'charset': 'utf8'},
+        'STORAGE_ENGINE': 'INNODB',
         'CHARSET' : 'utf8'
     }
 }
-
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
