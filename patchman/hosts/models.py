@@ -72,8 +72,8 @@ class Host(models.Model):
         else:
             info_message.send(sender=None, text='Reverse DNS check disabled for this host.\n')
 
-    def clean_reports(self):
-        remove_reports(self)
+    def clean_reports(self, timestamp):
+        remove_reports(self, timestamp)
 
     def nonsec_count(self):
         return self.updates.filter(security=False).count()

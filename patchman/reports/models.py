@@ -27,7 +27,8 @@ from socket import gethostbyaddr
 
 class Report(models.Model):
 
-    time = models.DateTimeField(auto_now_add=True)
+    created = models.DateTimeField(auto_now_add=True)
+    accessed = models.DateTimeField(auto_now_add=True)
     host = models.CharField(max_length=255, null=True)
     domain = models.CharField(max_length=255, null=True)
     tags = models.CharField(max_length=255, null=True, default='')
@@ -45,10 +46,10 @@ class Report(models.Model):
     reboot = models.TextField(null=True, blank=True)
 
     class Meta:
-        ordering = ('-time',)
+        ordering = ('-created',)
 
     def __unicode__(self):
-        return '%s %s' % (self.host, self.time)
+        return '%s %s' % (self.host, self.created)
 
     @models.permalink
     def get_absolute_url(self):
@@ -122,7 +123,7 @@ class Report(models.Model):
                     'arch': arch,
                     'os': os,
                     'domain': domain,
-                    'lastreport': self.time,
+                    'lastreport': self.created,
                 })
 
             host.ipaddress = self.report_ip
@@ -130,7 +131,7 @@ class Report(models.Model):
             host.arch = arch
             host.os = os
             host.domain = domain
-            host.lastreport = self.time
+            host.lastreport = self.created
             host.tags = self.tags
             from patchman.reports.utils import process_packages, process_repos, process_updates
             host.packages.clear()

@@ -32,17 +32,19 @@ def update_rdns(host):
     host.save()
 
 
-def remove_reports(host):
+def remove_reports(host, timestamp):
     """ Remove all but the last 3 reports for a host
     """
 
     from patchman.reports.models import Report
 
-    reports = Report.objects.filter(host=host).order_by('-time')[:3]
+    reports = Report.objects.filter(host=host).order_by('-created')[:3]
     report_ids = []
 
     for report in reports:
         report_ids.append(report.id)
+        report.accessed = timestamp
+        report.save()
 
     del_reports = Report.objects.filter(host=host).exclude(id__in=report_ids)
 

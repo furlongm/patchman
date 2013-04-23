@@ -34,7 +34,7 @@
         <tr><td>Last 3 reports</td><td>
             {% for report in reports %}
             <span class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
-                <a class="dark" href="{{ report.get_absolute_url}}">{{ report.time }} </a>
+                <a class="dark" href="{{ report.get_absolute_url}}">{{ report.created }} </a>
             </span>
             {% endfor %}
         </td></tr>
