@@ -16,7 +16,7 @@
 
 from socket import gethostbyaddr, gaierror, herror
 
-from patchman.signals import progress_info_s, progress_update_s, error_message
+from patchman.signals import progress_info_s, progress_update_s
 
 
 def update_rdns(host):
@@ -25,7 +25,7 @@ def update_rdns(host):
 
     try:
         reversedns = str(gethostbyaddr(host.ipaddress)[0])
-    except (gaierror, herror) as e:
+    except (gaierror, herror):
         reversedns = 'None'
 
     host.reversedns = reversedns

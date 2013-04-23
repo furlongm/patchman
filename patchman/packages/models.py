@@ -169,7 +169,7 @@ class PackageUpdate(models.Model):
     security = models.BooleanField(default=False)
 
     def __unicode__(self):
-        if self.security == True:
+        if self.security:
             update_type = 'Security'
         else:
             update_type = 'Bugfix'
