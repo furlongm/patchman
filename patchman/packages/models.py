@@ -169,4 +169,8 @@ class PackageUpdate(models.Model):
     security = models.BooleanField(default=False)
 
     def __unicode__(self):
-        return '%s -> %s (sec:%s)' % (self.oldpackage, self.newpackage, self.security)
+        if self.security == True:
+            update_type = 'Security'
+        else:
+            update_type = 'Bugfix'
+        return '%s -> %s (%s)' % (self.oldpackage, self.newpackage, update_type)
