@@ -4,6 +4,7 @@ from django.core.management import setup_environ
 
 import sys
 import argparse
+import datetime
 
 from patchman.conf import settings
 setup_environ(settings)
@@ -189,16 +190,29 @@ def clean_repos():
             update_pbar(i + 1)
 
 
-def clean_reports(host=None):
-    """ Delete old reports for all hosts, specify host for a single host
+def clean_reports(s_host=None):
+    """ Delete old reports for all hosts, specify host for a single host.
+        Reports with non existent hosts are only removed when no host is specified.
     """
 
-    hosts = get_hosts(host, 'Cleaning reports')
+    hosts = get_hosts(s_host, 'Cleaning reports')
+    timestamp = datetime.date.today()
 
     for host in hosts:
         if verbose:
             print host
-        host.clean_reports()
+        host.clean_reports(timestamp)
+
+    if s_host == None:
+
+        reports = Report.objects.filter(accessed__lt=timestamp)
+        rlen = reports.count()
+
+        if rlen != 0:
+            create_pbar('Removing %s extraneous reports:' % rlen, rlen)
+            for i, report in enumerate(reports):
+                report.delete()
+                update_pbar(i + 1)
 
 
 def host_updates(host=None):
@@ -236,13 +250,13 @@ def process_reports(host=None):
     reports = []
     if host:
         try:
-            reports = Report.objects.filter(processed=force, host=host).order_by('time')
+            reports = Report.objects.filter(processed=force, host=host).order_by('created')
             message = 'Processing reports for host %s' % host
         except:
             message = 'No reports exist for host %s' % host
     else:
         message = 'Processing reports for all hosts'
-        reports = Report.objects.filter(processed=force).order_by('time')
+        reports = Report.objects.filter(processed=force).order_by('created')
 
     if verbose:
         print message

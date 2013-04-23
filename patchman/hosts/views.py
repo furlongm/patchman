@@ -111,7 +111,7 @@ def host_detail(request, hostname):
 
     host = get_object_or_404(Host, hostname=hostname)
 
-    reports = Report.objects.all().filter(host=hostname).order_by('-time')[:3]
+    reports = Report.objects.all().filter(host=hostname).order_by('-created')[:3]
 
     hostrepos = HostRepo.objects.filter(host=host)
 
@@ -123,7 +123,7 @@ def host_edit(request, hostname):
 
     host = get_object_or_404(Host, hostname=hostname)
 
-    reports = Report.objects.all().filter(host=hostname).order_by('-time')[:3]
+    reports = Report.objects.all().filter(host=hostname).order_by('-created')[:3]
 
     if request.method == 'POST':
         edit_form = EditHostForm(request.POST, instance=host)
@@ -153,6 +153,6 @@ def host_delete(request, hostname):
         elif 'cancel' in request.REQUEST:
             return HttpResponseRedirect(reverse('host_detail', args=[hostname]))
 
-    reports = Report.objects.all().filter(host=hostname).order_by('-time')[:3]
+    reports = Report.objects.all().filter(host=hostname).order_by('-created')[:3]
 
     return render_to_response('hosts/host_delete.html', {'host': host, 'reports': reports}, context_instance=RequestContext(request))
