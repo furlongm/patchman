@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from django.core.management import setup_environ
+from django.core.exceptions import ObjectDoesNotExist
 
 import sys
 import argparse
@@ -17,6 +18,8 @@ from patchman.reports.models import Report
 
 from patchman.receivers import print_info_message, print_debug_message, print_error_message
 from patchman.utils import create_pbar, update_pbar
+
+from tagging.models import TaggedItem
 
 force = False
 verbose = False
@@ -215,6 +218,30 @@ def clean_reports(s_host=None):
                 update_pbar(i + 1)
 
 
+def clean_tags():
+    """ Delete unused tags
+    """
+
+    tagged_items = list(TaggedItem.objects.all())
+    to_delete = []
+
+    for t in tagged_items:
+        hostid = t.object_id
+        try:
+            # tags are only used for hosts for now
+            host = Host.objects.get(pk=hostid)
+        except ObjectDoesNotExist:
+            to_delete.append(t)
+
+    tlen = len(to_delete)
+
+    if tlen != 0:
+        create_pbar('Removing %s unused tagged items' % tlen, tlen)
+        for i, t in enumerate(to_delete):
+            t.delete()
+            update_pbar(i + 1)
+
+
 def host_updates(host=None):
     """ Find updates for all hosts, specify host for a single host
     """
@@ -279,11 +306,11 @@ def clean_updates():
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description='Patchman repository tool')
+    parser = argparse.ArgumentParser(description='Patchman CLI tool')
     parser.add_argument('-f', '--force', action='store_true',
                 help='disregard stored checksums and force-update all repositories')
-    parser.add_argument('-v', '--verbose', action='store_true',
-                help='verbose output (default is to be silent, for cronjobs)')
+    parser.add_argument('-q', '--quiet', action='store_true',
+                help='less output (e.g. for cronjobs)')
     parser.add_argument('-u', '--update', action='store_true',
                 help='update repositories')
     parser.add_argument('-R', '--repo',
@@ -308,10 +335,12 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     settings.FORCE = args.force
-    settings.VERBOSE = args.verbose
+    settings.VERBOSE = not args.quiet
 
     force = args.force
-    verbose = args.verbose
+    verbose = not args.quiet
+
+    showhelp = True
 
     if args.list:
         list_repos(args.repo)
@@ -321,16 +350,26 @@ if __name__ == '__main__':
         exit
     if args.process_reports:
         process_reports(args.host)
+        showhelp = False
     if args.clean_reports:
         clean_reports(args.host)
+        showhelp = False
     if args.host_updates:
         host_updates(args.host)
+        showhelp = False
     if args.clean_updates:
         clean_updates()
+        showhelp = False
     if args.dbcheck:
-        clean_packages()
-        clean_package_names()
-        clean_arches()
-        clean_repos()
+        #clean_packages()
+        #clean_package_names()
+        #clean_arches()
+        #clean_repos()
+        clean_tags()
+        showhelp = False
     if args.dns_checks:
         dns_checks(args.host)
+        showhelp = False
+
+    if showhelp:
+        parser.print_help()
