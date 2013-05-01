@@ -343,7 +343,7 @@ def process_args(args):
         return False
     if args.update:
         update_repos(args.repo)
-        return False
+        showhelp = False
     if args.process_reports:
         process_reports(args.host)
         showhelp = False
