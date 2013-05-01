@@ -304,7 +304,7 @@ def clean_updates():
             update.delete()
 
 
-if __name__ == '__main__':
+def collect_args():
 
     parser = argparse.ArgumentParser(description='Patchman CLI tool')
     parser.add_argument('-f', '--force', action='store_true',
@@ -331,23 +331,19 @@ if __name__ == '__main__':
                 help='perform some sanity checks and clean unused db entries')
     parser.add_argument('-n', '--dns-checks', action='store_true',
                 help='perform reverse DNS checks if enabled for that host')
+    return parser
 
-    args = parser.parse_args()
 
-    settings.FORCE = args.force
-    settings.VERBOSE = not args.quiet
-
-    force = args.force
-    verbose = not args.quiet
+def process_args(args):
 
     showhelp = True
 
     if args.list:
         list_repos(args.repo)
-        exit
+        return False
     if args.update:
         update_repos(args.repo)
-        exit
+        return False
     if args.process_reports:
         process_reports(args.host)
         showhelp = False
@@ -361,15 +357,30 @@ if __name__ == '__main__':
         clean_updates()
         showhelp = False
     if args.dbcheck:
-        #clean_packages()
-        #clean_package_names()
-        #clean_arches()
-        #clean_repos()
+        clean_packages()
+        clean_package_names()
+        clean_arches()
+        clean_repos()
         clean_tags()
         showhelp = False
     if args.dns_checks:
         dns_checks(args.host)
         showhelp = False
+    return showhelp
+
+
+if __name__ == '__main__':
+
+    parser = collect_args()
+    args = parser.parse_args()
+
+    settings.FORCE = args.force
+    settings.VERBOSE = not args.quiet
+
+    force = args.force
+    verbose = not args.quiet
+
+    showhelp = process_args(args)
 
     if showhelp:
         parser.print_help()
