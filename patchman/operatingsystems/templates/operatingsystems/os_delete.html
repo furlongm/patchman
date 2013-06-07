@@ -1,11 +1,13 @@
-
 {% extends "main.html" %}
+
 {% load common %}
+{% load url from future %}
+
 {% block title %}Operating System {{ os }} {% endblock %}
 
 {% block content_title %}OS Information{% endblock %}
 
-{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url "os_list" %}">Operating Systems</a> &rsaquo;
+{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url 'os_list' %}">Operating Systems</a> &rsaquo;
 
 {% if os %}
     {{ os }}

@@ -1,10 +1,12 @@
 {% extends "main.html" %}
 
+{% load url from future %}
+
 {% block title %}Reports {{ repo }} {% endblock %}
 
 {% block content_title %}Report Information{% endblock %}
 
-{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url "repo_list" %}">Reports</a> &rsaquo; {{ report }} {% endblock %}
+{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url 'repo_list' %}">Reports</a> &rsaquo; {{ report }} {% endblock %}
 
 {% block content %}
 
