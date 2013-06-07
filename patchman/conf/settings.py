@@ -82,7 +82,6 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.admindocs',
     'django.contrib.staticfiles',
-    'django_extensions',
     'andsome',
     'south',
     'tagging',
