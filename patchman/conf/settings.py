@@ -113,3 +113,5 @@ else:
 execfile("/etc/patchman/settings.py")
 
 MANAGERS = ADMINS
+
+LOGIN_REDIRECT_URL='/'

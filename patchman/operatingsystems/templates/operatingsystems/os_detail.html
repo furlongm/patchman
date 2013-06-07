@@ -1,11 +1,13 @@
-
 {% extends "main.html" %}
+
 {% load common %}
+{% load url from future %}
+
 {% block title %}Operating System {{ os }} {% endblock %}
 
 {% block content_title %}OS Information{% endblock %}
 
-{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url "os_list" %}">Operating Systems</a> &rsaquo; {{ os }} {% endblock %}
+{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url 'os_list' %}">Operating Systems</a> &rsaquo; {{ os }} {% endblock %}
 
 {% block content %}
 <div class="module">
@@ -30,7 +32,7 @@
         {{ create_form }}
             <input type="submit" value="Create" />
         </form>
-        <a class="brick" href="{% url "os_delete" os.id %}">Delete this OS</a>
+        <a class="brick" href="{% url 'os_delete' os.id %}">Delete this OS</a>
         <div class="clearbrick"></div>
         <br />
         </div>

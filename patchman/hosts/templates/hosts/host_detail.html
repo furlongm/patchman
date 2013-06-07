@@ -1,12 +1,13 @@
 {% extends "main.html" %}
 
 {% load common %}
+{% load url from future %}
 
 {% block title %}Host {{ host }} {% endblock %}
 
 {% block content_title %}Host Information{% endblock %}
 
-{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url "host_list" %}">Hosts</a> &rsaquo; {{ host }} {% endblock %}
+{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url 'host_list' %}">Hosts</a> &rsaquo; {{ host }} {% endblock %}
 
 {% block content %}
 
@@ -14,7 +15,7 @@
     <h2>{{host}}</h2>
     <table>
         <tr><td>Hostname</td><td> {{ host.hostname }} </td></tr>
-        <tr><td>Domain</td><td> <a href="{% url "host_list" %}?domain={{ host.domain.id }}">{{ host.domain }}</a> </td></tr>
+        <tr><td>Domain</td><td> <a href="{% url 'host_list' %}?domain={{ host.domain.id }}">{{ host.domain }}</a> </td></tr>
         <tr><td>Reporting IP Address</td><td> {{ host.ipaddress }} </td></tr>
         <tr><td>Reverse DNS</td><td> {{ host.reversedns }} </td></tr>
         <tr><td>OS</td><td> <a href="{{ host.os.get_absolute_url }}">{{ host.os }}</a> </td></tr>
@@ -25,7 +26,7 @@
             {% load tagging_tags %}
             {% tags_for_object host as tags %}
             {% for tag in tags %}
-                <a href="{% url "host_list" %}?tag={{ tag }}">{{ tag }}</a>
+                <a href="{% url 'host_list' %}?tag={{ tag }}">{{ tag }}</a>
             {% endfor %}
         </td></tr>
         <tr><td>Last Update</td><td> {{ host.lastreport }} </td></tr>
@@ -46,8 +47,8 @@
     {% if perms.is_admin %}
     <div class="module">
         <h2>Actions</h2>
-        <a class="brick" href="{% url "host_delete" host.hostname %}">Delete this host</a>
-        <a class="brick" href="{% url "host_edit" host.hostname %}">Edit this host</a>
+        <a class="brick" href="{% url 'host_delete' host.hostname %}">Delete this host</a>
+        <a class="brick" href="{% url 'host_edit' host.hostname %}">Edit this host</a>
         <div class="clearbrick"></div>
     </div>
     {% endif %}

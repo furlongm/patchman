@@ -1,10 +1,12 @@
 {% extends "main.html" %}
 
+{% load url from future %}
+
 {% block title %}Package {{ package }} {% endblock %}
 
 {% block content_title %}Package Information{% endblock %}
 
-{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url "package_list" %}">Packages</a> &rsaquo; {{ package }} {% endblock %}
+{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url 'package_list' %}">Packages</a> &rsaquo; {{ package }} {% endblock %}
 
 {% block content %}
 <div class="module">
@@ -28,8 +30,8 @@
 <td> {{ version.epoch }} </td>
 <td> {{ version.version }} </td><td> {{ version.release }} </td>
 <td> {{ version.arch }} </td><td> {{ version.get_packagetype_display }} </td>
-<td> <a href="{% url "repo_list" %}?package_id={{ version.id }}">Available from {{ version.repo_count }} repositories</a> </td>
-<td> <a href="{% url "host_list" %}?package_id={{ version.id }}">Installed on {{ version.host_set.count }} hosts</a> </td>
+<td> <a href="{% url 'repo_list' %}?package_id={{ version.id }}">Available from {{ version.repo_count }} repositories</a> </td>
+<td> <a href="{% url 'host_list' %}?package_id={{ version.id }}">Installed on {{ version.host_set.count }} hosts</a> </td>
 {% endfor %}
 </table>
 </div>

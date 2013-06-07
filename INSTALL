@@ -61,7 +61,8 @@ ln -sf conf/settings.py
 
 # 11. If you want to run patchman under a subdirectory
 #   e.g. http://example.com/mypatchman/
-# then you need to add the following ti settings.py
-# LOGIN_URL='/mypatchman/accounts/login/'
+# then you need to add the following to settings.py
+#  LOGIN_REDIRECT_URL='/mypatchman/'
+#  LOGIN_URL='/mypatchman/accounts/login/'
 # and uncomment the appropriate line in /etc/apache2/conf.d/patchman.conf
 

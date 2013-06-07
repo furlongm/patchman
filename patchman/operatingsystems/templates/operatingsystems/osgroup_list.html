@@ -1,10 +1,12 @@
 {% extends "changelist.html" %}
 
+{% load url from future %}
+
 {% block title %}OS Groups{% endblock %}
 
 {% block content_title %}OS Groups{% endblock %}
 
-{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url "os_list" %}">Operating Systems</a> &rsaquo; Groups{% endblock %}
+{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url 'os_list' %}">Operating Systems</a> &rsaquo; Groups{% endblock %}
 
 {% block objecttools %}
 
