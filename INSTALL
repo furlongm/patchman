@@ -1,11 +1,20 @@
-# Installation from current git on debian squeeze
+# Installation from current git on debian wheezy
 # -----------------------------------------------
 
-# 1. Install dependencies
+# 1a. Install dependencies
 apt-get install python-django-tagging python-django-south \
-python-django-extensions django-andsome python-debian python-rpm \
-python-progressbar python-lxml apache2 libapache2-mod-wsgi \
-python-argparse
+python-debian python-rpm python-progressbar python-lxml \
+apache2 libapache2-mod-wsgi \
+python-argparse python-django python-pygooglechart python-cracklib
+
+# 1b. Install the django-andsome package
+# - install the VPAC Debian Archive signing key
+wget http://code.vpac.org/debian/vpac-debian-key.gpg -O - | apt-key add -
+# - add the VPAC repo to your sources
+echo 'deb http://code.vpac.org/debian wheezy main' > /etc/apt/sources.list.d/vpac.list
+apt-get update
+# - install django-andsome
+apt-get install django-andsome
 
 # 2. Check out current git to e.g. /srv/patchman
 cd /srv
@@ -19,7 +28,7 @@ vi /etc/patchman/settings.py
 
 # 5. Create links for media and templates, and add python to PYTHON_PATH
 ln -sf /srv/patchman /usr/share/patchman
-ln -sf /srv/patchman /usr/local/lib/python2.6/dist-packages
+ln -sf /srv/patchman/patchman /usr/local/lib/python2.7/dist-packages
 # Only the media/templates are required so you can link just those if needed.
 # Alternatively change the directories in the wsgi file.
 
@@ -27,13 +36,17 @@ ln -sf /srv/patchman /usr/local/lib/python2.6/dist-packages
 a2enmod wsgi
 ln -sf /srv/patchman/etc/patchman-apache.conf /etc/apache2/conf.d/patchman.conf
 
-# 7. Edit the networks allowed to report to apache
+# 7. Edit the networks allowed to report to apache and reload apache
 vi /etc/apache2/conf.d/patchman.conf
+service apache2 reload
 
-# 8. Initialise the patchman database
+# 8. Link to the settings.py file, initialise the database, perform migrations
+# and collect static files.
 cd /srv/patchman/patchman
+ln -sf conf/settings.py
 ./manage.py syncdb
 ./manage.py migrate
+./manage.py collectstatic
 
 # 9. Deploy the client and/or yum/apt plugins via e.g. puppet, and add a daily 
 # cronjob, e.g.
@@ -41,12 +54,14 @@ cd /srv/patchman/patchman
 
 # 10. Optionally install celeryd/rabbitmq for realtime processing of reports.
 # Alternatively, set up a cronjob to run all the daily tasks, e.g.
-# 30 8 * * * http_proxy=http://myproxy.example.com:3128 /srv/patchman/sbin/patchman-cli -u -d -U -c -r -p
+#
+# 30 8 * * * http_proxy=http://myproxy.example.com:3128 /srv/patchman/sbin/patchman-cli -u -d -U -c -r -p -q
+#
+# Run /srv/patchman/sbin/patchman-cli -h to view all options.
 
-# The /srv/patchman/sbin/patchman-cli can be run with the verbose (-v) option
-# to view if there any errors from the above command. Run with -h for further
-# options.
+# 11. If you want to run patchman under a subdirectory
+#   e.g. http://example.com/mypatchman/
+# then you need to add the following ti settings.py
+# LOGIN_URL='/mypatchman/accounts/login/'
+# and uncomment the appropriate line in /etc/apache2/conf.d/patchman.conf
 
-# If the patchman server is not be run under slash (e.g. if you have
-# http://example.com/patchman then you need
-# login_url="/patchman/accounts/login/" in your settings.py
