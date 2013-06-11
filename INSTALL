@@ -32,9 +32,9 @@ ln -sf /srv/patchman/patchman /usr/local/lib/python2.7/dist-packages
 # Only the media/templates are required so you can link just those if needed.
 # Alternatively change the directories in the wsgi file.
 
-# 6. Enable mod-wsgi and link to the apache conf file
+# 6. Enable mod-wsgi and copy the apache conf file
 a2enmod wsgi
-ln -sf /srv/patchman/etc/patchman-apache.conf /etc/apache2/conf.d/patchman.conf
+cp /srv/patchman/etc/patchman-apache.conf /etc/apache2/conf.d/patchman.conf
 
 # 7. Edit the networks allowed to report to apache and reload apache
 vi /etc/apache2/conf.d/patchman.conf
