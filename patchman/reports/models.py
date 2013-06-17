@@ -134,14 +134,14 @@ class Report(models.Model):
             host.lastreport = self.created
             host.tags = self.tags
             from patchman.reports.utils import process_packages, process_repos, process_updates
-            host.packages.clear()
-            process_packages(report=self, host=host)
-            process_updates(report=self, host=host)
             # only clear repos if we have a new list
             # apt and yum plugins don't send repos
             if self.repos:
                 host.repos.clear()
                 process_repos(report=self, host=host)
+            host.packages.clear()
+            process_packages(report=self, host=host)
+            process_updates(report=self, host=host)
             if self.reboot == 'True':
                 host.reboot_required = True
             else:
