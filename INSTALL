@@ -26,6 +26,33 @@ mkdir /etc/patchman && cp /srv/patchman/etc/settings.py.sample /etc/patchman/set
 # 4. Modify settings file to match local admin and database settings
 vi /etc/patchman/settings.py
 
+# e.g. for a mysql backend:
+#
+#mysql> CREATE DATABASE patchman CHARACTER SET utf8 COLLATE utf8_general_ci;
+#Query OK, 1 row affected (0.00 sec)
+#
+#mysql> GRANT ALL PRIVILEGES ON patchman.* TO patchman@localhost IDENTIFIED BY 'changeme';
+#Query OK, 0 rows affected (0.00 sec)
+#
+# Then modify /etc/patchman/settings.py to have the following:
+#
+#ADMINS = (
+#    ('Patchman Admin', 'you@example.com'),
+#)
+#
+#DATABASES = {
+#    'default': {
+#        'ENGINE': 'django.db.backends.mysql',    # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+#        'NAME': 'patchman',                      # Or path to database file if using sqlite3.
+#        'USER': 'patchman',                      # Not used with sqlite3.
+#        'PASSWORD': 'changeme',                  # Not used with sqlite3.
+#        'HOST': '',                               # Set to empty string for localhost. Not used with sqlite3.
+#        'PORT': '',                               # Set to empty string for default. Not used with sqlite3.
+#        'STORAGE_ENGINE': 'INNODB',
+#        'CHARSET' : 'utf8'
+#    }
+#}
+
 # 5. Create links for media and templates, and add python to PYTHON_PATH
 ln -sf /srv/patchman /usr/share/patchman
 ln -sf /srv/patchman/patchman /usr/local/lib/python2.7/dist-packages
@@ -48,7 +75,20 @@ ln -sf conf/settings.py
 ./manage.py migrate
 ./manage.py collectstatic
 
-# 9. Deploy the client and/or yum/apt plugins via e.g. puppet, and add a daily 
+# If the migrate fails with an error such as
+# django.db.utils.DatabaseError: (1050, "Table 'operatingsystems_osgroup' already exists")
+# you may need to run the migrations for each app manually, ending with the troublesome one. e.g.
+#
+# ./manage.py migrate hosts
+# ./manage.py migrate repos
+# ./manage.py migrate arch
+# ./manage.py migrate domains
+# ./manage.py migrate reports
+# ./manage.py migrate packages
+# ./manage.py migrate operatingsystems
+# ./manage.py migrate --list
+
+# 9. Deploy the client and/or yum/apt plugins via e.g. puppet, and add a daily
 # cronjob, e.g.
 # 0 7 * * * /bin/sleep $((RANDOM\%600)); PATH=/bin:/sbin:/usr/bin:/usr/sbin /usr/local/sbin/patchman-client
 
