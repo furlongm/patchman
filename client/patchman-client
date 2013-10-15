@@ -218,8 +218,12 @@ function get_host_data {
 function get_updates {
 
     yum -q makecache 2>/dev/null
-    yum -C --security list updates --disablerepo="*" --enablerepo="${1}" | sed '1,/Updated Packages/d' >> ${tmpfile_sec}
-    yum -C --bugfixes list updates --disablerepo="*" --enablerepo="${1}" | sed '1,/Updated Packages/d' >> ${tmpfile_bug}
+    yum -C --security list updates --disablerepo="*" --enablerepo="${1}" \
+    | grep -v 'This system is not registered to Red Hat Subscription Management. You can use subscription-manager to register.' \
+    | sed '1,/Updated Packages/d' >> ${tmpfile_sec}
+    yum -C --bugfixes list updates --disablerepo="*" --enablerepo="${1}" \
+    | grep -v 'This system is not registered to Red Hat Subscription Management. You can use subscription-manager to register.' \
+    | sed '1,/Updated Packages/d' >> ${tmpfile_bug}
 }
 
 function get_repos {
