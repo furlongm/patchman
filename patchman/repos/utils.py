@@ -173,7 +173,7 @@ def get_url(url):
             return -1
     except httplib.BadStatusLine, e:
         error_message.send(sender=None,
-            text='Http bad status line: %s - %e\n' % (url, e.line))
+            text='Http bad status line: %s - %s\n' % (url, e.line))
         return -1
 
 
