@@ -331,6 +331,8 @@ def collect_args():
                 help='perform some sanity checks and clean unused db entries')
     parser.add_argument('-n', '--dns-checks', action='store_true',
                 help='perform reverse DNS checks if enabled for that host')
+    parser.add_argument('-a', '--all', action='store_true',
+                help='Convenience flag for -u -U -p -r -c -d -n')
     return parser
 
 
@@ -338,6 +340,14 @@ def process_args(args):
 
     showhelp = True
 
+    if args.all:
+        args.process_reports = True
+        args.clean_reports = True
+        args.update = True
+        args.host_updates = True
+        args.clean_updates = True
+        args.dbcheck = True
+        args.dns_checks = True
     if args.list:
         list_repos(args.repo)
         return False
