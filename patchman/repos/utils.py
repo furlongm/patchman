@@ -17,6 +17,7 @@
 import re
 import bz2
 import gzip
+import httplib
 from datetime import datetime
 from hashlib import sha1, sha256
 from StringIO import StringIO
@@ -170,6 +171,10 @@ def get_url(url):
         else:
             error_message.send(sender=None, text='Unknown error: %s - %e\n' % (url, e))
             return -1
+    except httplib.BadStatusLine, e:
+        error_message.send(sender=None,
+            text='Http bad status line: %s - %s\n' % (url, e.line))
+        return -1
 
 
 def find_mirror_url(stored_mirror_url, formats):
