@@ -395,7 +395,21 @@ if [ -z "$mktemp_bin" -o -z "$curl_bin" ] ; then
     exit 1
 fi
 
+lock_dir=/var/lock/patchman
+mkdir -p ${lock_dir}
+if [ ! -d ${lock_dir} ] ; then
+    echo "Lock directory does not exist, exiting: ${lock_dir}"
+    exit 1
+fi
+
 parseopts $@
+
+if [ ${verbose} -eq 1 ] ; then
+    echo "Attempting to obtain lock: ${lock_dir}/patchman.lock"
+fi
+
+lockfile -r 0 ${lock_dir}/patchman.lock || exit 1
+
 check_conf
 
 trap cleanup EXIT
@@ -411,3 +425,5 @@ if [ "${no_repo_check}" != "1" ] ; then
 fi
 reboot_required
 post_data
+
+rm -fr ${lock_dir}/patchman.lock
