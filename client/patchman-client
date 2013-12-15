@@ -72,6 +72,8 @@ function cleanup {
         rm -fr ${tmpfile_sec}
         rm -fr ${tmpfile_bug}
     fi
+    flock -u 200
+    rm -fr ${lock_dir}/patchman.lock
 }
 
 function check_conf {
@@ -408,7 +410,8 @@ if [ ${verbose} -eq 1 ] ; then
     echo "Attempting to obtain lock: ${lock_dir}/patchman.lock"
 fi
 
-lockfile -r 0 ${lock_dir}/patchman.lock || exit 1
+exec 200>${lock_dir}/patchman.lock
+flock -xn 200 || exit 1
 
 check_conf
 
@@ -425,5 +428,3 @@ if [ "${no_repo_check}" != "1" ] ; then
 fi
 reboot_required
 post_data
-
-rm -fr ${lock_dir}/patchman.lock
