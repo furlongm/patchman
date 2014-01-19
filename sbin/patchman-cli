@@ -297,11 +297,37 @@ def clean_updates():
         linked to any hosts
     """
 
-    for update in PackageUpdate.objects.all():
+    package_updates = PackageUpdate.objects.all()
+
+    for update in package_updates:
         if update.host_set.count() == 0:
             if verbose:
                 print 'Removing %s' % update
             update.delete()
+        for duplicate in package_updates:
+            if update.oldpackage == duplicate.oldpackage and \
+               update.newpackage == duplicate.newpackage and \
+               update.security == duplicate.security and \
+               update.id != duplicate.id:
+                if verbose:
+                    print "Removing duplicate update: %s" % (update)
+                for host in duplicate.host_set.all():
+                    host.updates.remove(duplicate)
+                    host.updates.add(update)
+                    host.save()
+                duplicate.delete()
+
+
+def dbcheck():
+    """ Runs all clean_* functions to check database consistency
+    """
+    clean_updates()
+    clean_packages()
+    clean_package_names()
+    clean_arches()
+    clean_repos()
+    clean_updates()
+    clean_tags()
 
 
 def collect_args():
@@ -339,6 +365,7 @@ def collect_args():
 def process_args(args):
 
     showhelp = True
+    recheck = False
 
     if args.all:
         args.process_reports = True
@@ -357,22 +384,19 @@ def process_args(args):
     if args.clean_reports:
         clean_reports(args.host)
         showhelp = False
+    if args.dbcheck:
+        dbcheck()
+        showhelp = False
     if args.update:
         update_repos(args.repo)
         showhelp = False
+        recheck = True
     if args.host_updates:
         host_updates(args.host)
         showhelp = False
-    if args.clean_updates:
-        clean_updates()
-        showhelp = False
-    if args.dbcheck:
-        clean_packages()
-        clean_package_names()
-        clean_arches()
-        clean_repos()
-        clean_tags()
-        showhelp = False
+        recheck = True
+    if args.dbcheck and recheck:
+        dbcheck()
     if args.dns_checks:
         dns_checks(args.host)
         showhelp = False
