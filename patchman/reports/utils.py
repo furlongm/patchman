@@ -16,6 +16,8 @@
 
 import re
 
+from django.db import IntegrityError, DatabaseError
+
 from patchman.hosts.models import HostRepo
 from patchman.arch.models import MachineArchitecture, PackageArchitecture
 from patchman.repos.models import Repository, Mirror, MirrorPackage
@@ -33,7 +35,10 @@ def process_repos(report, host):
         for i, repo in enumerate(repos):
             repository, priority = process_repo(report, repo)
             if repository:
-                hostrepo, c = HostRepo.objects.get_or_create(host=host, repo=repository)
+                try:
+                    hostrepo, c = HostRepo.objects.get_or_create(host=host, repo=repository)
+                except IntegrityError as e:
+                    print e
                 hostrepo.priority = priority
                 hostrepo.save()
             progress_update_s.send(sender=None, index=i + 1)
@@ -48,7 +53,12 @@ def process_packages(report, host):
         for i, pkg in enumerate(packages):
             package = process_package(report, pkg)
             if package:
-                host.packages.add(package)
+                try:
+                    host.packages.add(package)
+                except IntegrityError as e:
+                    print e
+                except DatabaseError as e:
+                    print e
             progress_update_s.send(sender=None, index=i + 1)
 
 
