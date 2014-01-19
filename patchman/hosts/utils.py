@@ -16,6 +16,8 @@
 
 from socket import gethostbyaddr, gaierror, herror
 
+from django.db import DatabaseError
+
 from patchman.signals import progress_info_s, progress_update_s
 
 
@@ -29,7 +31,10 @@ def update_rdns(host):
         reversedns = 'None'
 
     host.reversedns = reversedns
-    host.save()
+    try:
+        host.save()
+    except DatabaseError as e:
+        print e
 
 
 def remove_reports(host, timestamp):

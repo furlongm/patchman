@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.db import models
+from django.db import models, IntegrityError
 from django.db.models import Q, Count
 
 from rpm import labelCompare
@@ -109,9 +109,17 @@ class Host(models.Model):
             for mirror in mirrors:
                 if mirror.repo.security:
                     security = True
-            update, c = PackageUpdate.objects.get_or_create(oldpackage=package,
-                                                            newpackage=highest_package,
-                                                            security=security)
+            try:
+                update, c = PackageUpdate.objects.get_or_create(
+                    oldpackage=package, newpackage=highest_package,
+                    security=security)
+            except IntegrityError as e:
+                print e
+                update = PackageUpdate.objects.get(
+                    oldpackage=package, newpackage=highest_package,
+                    security=security)
+            self.updates.add(update)
+
             info_message.send(sender=None, text="%s\n" % update)
 
     def find_updates(self):
