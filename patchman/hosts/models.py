@@ -1,4 +1,3 @@
-
 # Copyright 2012 VPAC, http://www.vpac.org
 #
 # This file is part of Patchman.
@@ -68,9 +67,12 @@ class Host(models.Model):
             if self.hostname == self.reversedns:
                 info_message.send(sender=None, text='Reverse DNS matches.\n')
             else:
-                info_message.send(sender=None, text='Reverse DNS mismatch found: %s != %s\n' % (self.hostname, self.reversedns))
+                info_message.send(sender=None,
+                                  text='Reverse DNS mismatch found: %s != %s\n'
+                                  % (self.hostname, self.reversedns))
         else:
-            info_message.send(sender=None, text='Reverse DNS check disabled for this host.\n')
+            info_message.send(sender=None,
+                              text='Reverse DNS check disabled.\n')
 
     def clean_reports(self, timestamp):
         remove_reports(self, timestamp)
@@ -80,150 +82,189 @@ class Host(models.Model):
 
     def get_host_repo_packages(self):
         if self.host_repos_only:
-            hostrepos = Q(mirror__repo__in=self.repos.all(), mirror__enabled=True, mirror__repo__enabled=True, mirror__repo__hostrepo__enabled=True)
+            hostrepos_q = Q(mirror__repo__in=self.repos.all(),
+                            mirror__enabled=True, mirror__repo__enabled=True,
+                            mirror__repo__hostrepo__enabled=True)
         else:
-            hostrepos = Q(mirror__repo__osgroup__os__host=self, mirror__repo__arch=self.arch, mirror__enabled=True, mirror__repo__enabled=True) | Q(mirror__repo__in=self.repos.all(), mirror__enabled=True, mirror__repo__enabled=True)
-        return Package.objects.select_related().filter(hostrepos)
+            hostrepos_q = \
+                Q(mirror__repo__osgroup__os__host=self,
+                  mirror__repo__arch=self.arch, mirror__enabled=True,
+                  mirror__repo__enabled=True) | \
+                Q(mirror__repo__in=self.repos.all(),
+                  mirror__enabled=True, mirror__repo__enabled=True)
+        return Package.objects.select_related().filter(hostrepos_q).distinct()
 
-    def process_update(self, package, highest, highestpackage):
-        if highest != ('', '0', ''):
+    def process_update(self, package, highest_ver, highest_package):
+        if highest_ver != ('', '0', ''):
             if self.host_repos_only:
-                hostrepos = Q(repo__host=self)
+                host_repos = Q(repo__host=self)
             else:
-                hostrepos = Q(repo__osgroup__os__host=self, repo__arch=self.arch) | Q(repo__host=self)
-            matchingrepos = highestpackage.mirror_set.filter(hostrepos)
+                host_repos = \
+                    Q(repo__osgroup__os__host=self, repo__arch=self.arch) | \
+                    Q(repo__host=self)
+            mirrors = highest_package.mirror_set.filter(host_repos)
             security = False
-            # If any of the containing repos are security, mark the update as security
-            for mirror in matchingrepos:
+            # If any of the containing repos are security,
+            # mark the update as security
+            for mirror in mirrors:
                 if mirror.repo.security:
                     security = True
-            update, c = PackageUpdate.objects.get_or_create(oldpackage=package, newpackage=highestpackage, security=security)
-            self.updates.add(update)
+            update, c = PackageUpdate.objects.get_or_create(oldpackage=package,
+                                                            newpackage=highest_package,
+                                                            security=security)
             info_message.send(sender=None, text="%s\n" % update)
 
     def find_updates(self):
 
         self.updates.clear()
 
-        kernels = Q(name__name='kernel') | Q(name__name='kernel-xen') | Q(name__name='kernel-pae') | Q(name__name='kernel-devel') | Q(name__name='kernel-pae-devel') | Q(name__name='kernel-xen-devel') | Q(name__name='kernel-headers')
-        kernelpackages = Package.objects.select_related().filter(host=self).filter(kernels).values('name__name').annotate(Count('name'))
-
-        repopackages = self.get_host_repo_packages()
+        kernels = Q(name__name='kernel') | Q(name__name='kernel-devel') | \
+            Q(name__name='kernel-pae') | Q(name__name='kernel-pae-devel') | \
+            Q(name__name='kernel-xen') | Q(name__name='kernel-xen-devel') | \
+            Q(name__name='kernel-headers')
+        repo_packages = self.get_host_repo_packages()
+        host_packages = self.packages.exclude(kernels).distinct()
+        kernel_packages = self.packages.filter(kernels).values('name__name').annotate(Count('name'))
 
         if self.host_repos_only:
-            #find_host_repo_updates(host)
-            for package in self.packages.exclude(kernels):
-                highest = ('', '0', '')
-                highestpackage = None
-                bestrepo = None
-                # find out what hostrepo it belongs to
-                repos_q = Q(mirror__repo__in=self.repos.all(), mirror__enabled=True, mirror__repo__enabled=True, mirror__packages__name=package.name)
-                repos = Repository.objects.filter(repos_q).distinct()
-                hostrepos = HostRepo.objects.filter(repo__in=repos, host=self)
-                if hostrepos:
-                    bestrepo = hostrepos[0]
-                if hostrepos.count() > 1:
-                    for repo in hostrepos:
-                        if repo.repo.security:
-                            bestrepo = repo
-                        else:
-                            if repo.priority > bestrepo.priority:
-                                bestrepo = repo
-                # find the packages that are potential updates
-                matchingpackages = repopackages.filter(name=package.name, arch=package.arch, packagetype=package.packagetype).distinct()
-                for repopackage in matchingpackages:
-                    if package.compare_version(repopackage) == -1:
-                        rp_bestrepo = None
-                        # find the repos the potential update belongs to
-                        rp_repos_q = Q(mirror__repo__in=self.repos.all(), mirror__enabled=True, mirror__repo__enabled=True, mirror__packages=repopackage)
-                        rp_repos = Repository.objects.filter(rp_repos_q).distinct()
-                        rp_hostrepos = HostRepo.objects.filter(repo__in=rp_repos, host=self)
-                        # if it belongs to more than one, find the best one (favour security repos, then higher priority repos)
-                        if rp_hostrepos:
-                            rp_bestrepo = rp_hostrepos[0]
-                        if rp_hostrepos.count() > 1:
-                            for repo in rp_hostrepos:
-                                if repo.repo.security:
-                                    rp_bestrepo = repo
-                                else:
-                                    if repo.priority > rp_bestrepo.priority:
-                                        rp_bestrepo = repo
-                        # proceed if that repo has a higher priority
-                        if rp_bestrepo.priority >= bestrepo.priority:
-                            if package.packagetype == 'R':
-                                if labelCompare(highest, repopackage._version_string_rpm()) == -1:
-                                    highest = repopackage._version_string_rpm()
-                                    highestpackage = repopackage
-                            elif package.packagetype == 'D':
-                                vr = Version(repopackage._version_string_deb())
-                                if highest == ('', '0', ''):
-                                    vh = Version('0')
-                                else:
-                                    vh = Version('%s:%s-%s' % (str(highest[0]), str(highest[1]), str(highest[2])))
-                                if version_compare(vh, vr) == -1:
-                                    highest = repopackage._version_string_deb()
-                                    highestpackage = repopackage
-                self.process_update(package, highest, highestpackage)
+            self.find_host_repo_updates(host_packages, repo_packages)
         else:
-            #find_osgroup_repo_updates(host)
-            for package in self.packages.exclude(kernels):
-                highest = ('', '0', '')
-                highestpackage = None
-                matchingpackages = repopackages.filter(name=package.name, arch=package.arch, packagetype=package.packagetype)
-                for repopackage in matchingpackages:
-                    if package.compare_version(repopackage) == -1:
-                        if package.packagetype == 'R':
-                            if labelCompare(highest, repopackage._version_string_rpm()) == -1:
-                                highest = repopackage._version_string_rpm()
-                                highestpackage = repopackage
-                        elif package.packagetype == 'D':
-                            vr = Version(repopackage._version_string_deb())
-                            if highest == ('', '0', ''):
-                                vh = Version('0')
-                            else:
-                                vh = Version('%s:%s-%s' % (str(highest[0]), str(highest[1]), str(highest[2])))
-                            if version_compare(vh, vr) == -1:
-                                highest = repopackage._version_string_deb()
-                                highestpackage = repopackage
-                self.process_update(package, highest, highestpackage)
+            self.find_osgroup_repo_updates(host_packages, repo_packages)
 
-        #find_kernel_updates(host)
+        self.find_kernel_updates(kernel_packages, repo_packages)
+
+    def find_best_repo(self, package, hostrepos):
+
+        best_repo = None
+        package_hostrepos = hostrepos.filter(repo__mirror__packages__name=package.name)
+
+        if package_hostrepos:
+            best_repo = package_hostrepos[0]
+        if package_hostrepos.count() > 1:
+            for hostrepo in package_hostrepos:
+                if hostrepo.repo.security:
+                    best_repo = hostrepo
+                else:
+                    if hostrepo.priority > best_repo.priority:
+                        best_repo = hostrepo
+        return best_repo
+
+    def find_highest_ver(self, package, potential_update,
+                         highest_ver, highest_package):
+
+        if package.packagetype == 'R':
+            pu_ver = potential_update._version_string_rpm()
+            if labelCompare(highest_ver, pu_ver) == -1:
+                highest_ver = pu_ver
+                highest_package = potential_update
+
+        elif package.packagetype == 'D':
+            pu_ver = potential_update._version_string_deb()
+            pu_deb_ver = Version(pu_ver)
+            if highest_ver == ('', '0', ''):
+                highest_deb_ver = Version('0')
+            else:
+                ver_str = '%s:%s-%s' % (str(highest_ver[0]),
+                                        str(highest_ver[1]),
+                                        str(highest_ver[2]))
+                highest_deb_ver = Version(ver_str)
+            if version_compare(highest_deb_ver, pu_deb_ver) == -1:
+                highest_ver = pu_ver
+                highest_package = potential_update
+
+        return highest_ver, highest_package
+
+    def find_host_repo_updates(self, host_packages, repo_packages):
+
+        hostrepos_q = Q(repo__mirror__enabled=True,
+                        repo__mirror__repo__enabled=True, host=self)
+        hostrepos = HostRepo.objects.select_related().filter(hostrepos_q)
+
+        for package in host_packages:
+            highest_ver = ('', '0', '')
+            highest_package = None
+
+            best_repo = self.find_best_repo(package, hostrepos)
+
+            # find the packages that are potential updates
+            pu_q = Q(name=package.name, arch=package.arch,
+                     packagetype=package.packagetype)
+            potential_updates = repo_packages.filter(pu_q)
+            for potential_update in potential_updates:
+
+                if package.compare_version(potential_update) == -1:
+
+                    pu_best_repo = self.find_best_repo(potential_update,
+                                                       hostrepos)
+                    priority = pu_best_repo.priority
+
+                    # proceed if that repo has a higher priority
+                    if priority >= best_repo.priority:
+                        highest_ver, highest_package = \
+                            self.find_highest_ver(package, potential_update,
+                                                  highest_ver, highest_package)
+
+            self.process_update(package, highest_ver, highest_package)
+
+    def find_osgroup_repo_updates(self, host_packages, repo_packages):
+
+        for package in host_packages:
+            highest_ver = ('', '0', '')
+            highest_package = None
+
+            # find the packages that are potential updates
+            pu_q = Q(name=package.name, arch=package.arch,
+                     packagetype=package.packagetype)
+            potential_updates = repo_packages.filter(pu_q)
+            for potential_update in potential_updates:
+
+                if package.compare_version(potential_update) == -1:
+
+                    highest_ver, highest_package = \
+                        self.find_highest_ver(package, potential_update,
+                                              highest_ver, highest_package)
+
+            self.process_update(package, highest_ver, highest_package)
+
+    def check_if_reboot_required(self, running_kernel_ver, host_highest_ver):
+        if labelCompare(running_kernel_ver, host_highest_ver) == -1:
+            self.reboot_required = True
+        else:
+            self.reboot_required = False
+
+    def find_kernel_updates(self, kernel_packages, repo_packages):
+
         try:
             ver, rel = self.kernel.rsplit('-')
             rel = rel.rstrip('xen')
             rel = rel.rstrip('PAE')
-            running_kernel = ('', str(ver), str(rel))
-            for package in kernelpackages:
-                host_highest = ('', '', '')
-                repo_highest = ('', '', '')
+            kernel_ver = ('', str(ver), str(rel))
+
+            for package in kernel_packages:
+                host_highest_ver = ('', '', '')
+                repo_highest_ver = ('', '', '')
                 host_highest_package = None
                 repo_highest_package = None
-                matchingpackages = repopackages.filter(Q(name__name=package['name__name']))
-                for repopackage in matchingpackages:
-                    repokernel = repopackage._version_string_rpm()
-                    if labelCompare(repo_highest, repokernel) == -1:
-                        repo_highest = repokernel
-                        repo_highest_package = repopackage
-                matchingpackages = self.packages.filter(Q(name__name=package['name__name']))
-                for hostpackage in matchingpackages:
-                    hostkernel = hostpackage._version_string_rpm()
-                    if labelCompare(host_highest, hostkernel) == -1:
-                        host_highest = hostkernel
-                        host_highest_package = hostpackage
-                if labelCompare(host_highest, repo_highest) == -1:
-                    matchingrepos = repo_highest_package.mirror_set.filter(repo__arch=self.arch)
-                    security = False
-                    # If any of the containing repos are security, mark the update as security
-                    for mirror in matchingrepos:
-                        if mirror.repo.security:
-                            security = True
-                    update, c = PackageUpdate.objects.get_or_create(oldpackage=host_highest_package, newpackage=repo_highest_package, security=security)
-                    self.updates.add(update)
-                    info_message.send(sender=None, text="%s\n" % update)
-                if labelCompare(running_kernel, host_highest) == -1:
-                    self.reboot_required = True
-                else:
-                    self.reboot_required = False
+                pk_q = Q(name__name=package['name__name'])
+
+                potential_kernels = repo_packages.filter(pk_q)
+                for potential_kernel in potential_kernels:
+                    repo_highest_ver, repo_highest_package = \
+                        self.find_highest_ver(package, potential_kernel,
+                                              repo_highest_ver,
+                                              repo_highest_package)
+
+                host_kernels = self.packages.filter(pk_q)
+                for host_kernel in host_kernels:
+                    host_highest_ver, host_highest_package = \
+                        self.find_highest_ver(package, potential_kernel,
+                                              host_highest_ver,
+                                              host_highest_package)
+
+                if labelCompare(host_highest_ver, repo_highest_ver) == -1:
+                    self.process_update(package, repo_highest_ver,
+                                        repo_highest_package)
+                self.check_if_reboot_required(kernel_ver, host_highest_ver)
         except ValueError:  # debian kernel
             pass
         self.save()
