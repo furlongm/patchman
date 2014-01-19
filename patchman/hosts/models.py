@@ -130,7 +130,7 @@ class Host(models.Model):
                             if repo.priority > bestrepo.priority:
                                 bestrepo = repo
                 # find the packages that are potential updates
-                matchingpackages = repopackages.filter(name=package.name, arch=package.arch, packagetype=package.packagetype)
+                matchingpackages = repopackages.filter(name=package.name, arch=package.arch, packagetype=package.packagetype).distinct()
                 for repopackage in matchingpackages:
                     if package.compare_version(repopackage) == -1:
                         rp_bestrepo = None

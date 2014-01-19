@@ -92,8 +92,15 @@ ln -sf conf/settings.py
 # cronjob, e.g.
 # 0 7 * * * /bin/sleep $((RANDOM\%600)); PATH=/bin:/sbin:/usr/bin:/usr/sbin /usr/local/sbin/patchman-client
 
-# 10. Optionally install celeryd/rabbitmq for realtime processing of reports.
-# Alternatively, set up a cronjob to run all the daily tasks, e.g.
+# 10a. Optionally install celeryd/rabbitmq for realtime processing of reports:
+apt-get install python-django-celery rabbitmq-server
+./manage.py syncdb
+./manage.py migrate
+./manage.py celeryd_detach
+# add the last command to an initscript (e.g. /etc/rc.local) to make it
+# persistent over reboot
+
+# 10b. Alternatively, set up a cronjob to run all the daily tasks, e.g.
 #
 # 30 8 * * * http_proxy=http://myproxy.example.com:3128 /srv/patchman/sbin/patchman-cli -u -d -U -c -r -p -q
 #
