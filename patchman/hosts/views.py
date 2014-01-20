@@ -24,8 +24,7 @@ from django.db.models import Q
 from django.contrib import messages
 from tagging.models import Tag
 
-from andsome.util.filterspecs import Filter, FilterBar
-
+from patchman.util.filterspecs import Filter, FilterBar
 from patchman.hosts.models import Host, HostRepo
 from patchman.domains.models import Domain
 from patchman.arch.models import MachineArchitecture

@@ -19,7 +19,7 @@ import sys
 from django.dispatch import receiver
 from django.core.management import setup_environ
 
-from patchman.utils import create_pbar, update_pbar
+from patchman.util import create_pbar, update_pbar
 from patchman.signals import progress_info_s, progress_update_s, info_message, error_message, debug_message
 from patchman.conf import settings
 setup_environ(settings)
