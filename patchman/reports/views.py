@@ -27,7 +27,7 @@ from django.db.models import Q
 from django.conf import settings
 from django.contrib import messages
 
-from andsome.util.filterspecs import Filter, FilterBar
+from patchman.util.filterspecs import Filter, FilterBar
 
 from patchman.reports.models import Report
 

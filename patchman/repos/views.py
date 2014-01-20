@@ -24,8 +24,7 @@ from django.db.models import Q
 from django.contrib import messages
 from django.db import IntegrityError
 
-from andsome.util.filterspecs import Filter, FilterBar
-
+from patchman.util.filterspecs import Filter, FilterBar
 from patchman.hosts.models import HostRepo
 from patchman.repos.models import Repository, Mirror
 from patchman.operatingsystems.models import OSGroup

@@ -29,7 +29,7 @@ from debian.deb822 import Sources
 from patchman.packages.models import Package, PackageName, PackageString
 from patchman.arch.models import PackageArchitecture
 
-from patchman.utils import download_url
+from patchman.util import download_url
 from patchman.signals import info_message, error_message, debug_message, progress_info_s, progress_update_s
 
 
