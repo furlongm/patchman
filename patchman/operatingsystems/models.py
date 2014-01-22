@@ -15,7 +15,7 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from django.db import models
-from patchman.repos.models import Repository
+from repos.models import Repository
 
 
 class OSGroup(models.Model):

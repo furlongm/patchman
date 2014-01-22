@@ -16,11 +16,11 @@
 
 from django.db import models
 
-from patchman.arch.models import MachineArchitecture
-from patchman.packages.models import Package
+from arch.models import MachineArchitecture
+from packages.models import Package
 
-from patchman.repos.utils import update_deb_repo, update_rpm_repo, update_mirror_packages
-from patchman.signals import error_message, info_message
+from repos.utils import update_deb_repo, update_rpm_repo, update_mirror_packages
+from signals import error_message, info_message
 
 
 class Repository(models.Model):

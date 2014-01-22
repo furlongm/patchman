@@ -26,11 +26,11 @@ from urllib2 import Request, urlopen
 from debian.debian_support import Version
 from debian.deb822 import Sources
 
-from patchman.packages.models import Package, PackageName, PackageString
-from patchman.arch.models import PackageArchitecture
+from packages.models import Package, PackageName, PackageString
+from arch.models import PackageArchitecture
 
-from patchman.util import download_url
-from patchman.signals import info_message, error_message, debug_message, progress_info_s, progress_update_s
+from util import download_url
+from signals import info_message, error_message, debug_message, progress_info_s, progress_update_s
 
 
 def update_mirror_packages(mirror, packages):
@@ -69,7 +69,7 @@ def update_mirror_packages(mirror, packages):
         arch = PackageArchitecture.objects.get(name=package.arch)
         packagetype = package.packagetype
         p = Package.objects.get(name=package_id, epoch=epoch, version=version, arch=arch, release=release, packagetype=packagetype)
-        from patchman.repos.models import MirrorPackage
+        from repos.models import MirrorPackage
         MirrorPackage.objects.get(mirror=mirror, package=p).delete()
     mirror.save()
 
@@ -88,7 +88,7 @@ def update_mirror_packages(mirror, packages):
         if package_id.name != package.name:
             package_id.name = package.name
             package_id.save()
-        from patchman.repos.models import MirrorPackage
+        from repos.models import MirrorPackage
         MirrorPackage.objects.create(mirror=mirror, package=p)
     mirror.save()
 
@@ -236,7 +236,7 @@ def mirrorlists_check(repo):
             for mirror_url in mirror_urls:
                 mirror_url = mirror_url.replace('$ARCH', repo.arch.name)
                 mirror_url = mirror_url.replace('$basearch', repo.arch.name)
-                from patchman.repos.models import Mirror
+                from repos.models import Mirror
                 new_mirror, c = Mirror.objects.get_or_create(repo=repo, url=mirror_url)
                 if c:
                     info_message.send(sender=None, text='Added mirror - %s\n' % mirror_url)

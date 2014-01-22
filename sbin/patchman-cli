@@ -1,23 +1,22 @@
 #!/usr/bin/env python
 
-from django.core.management import setup_environ
-from django.core.exceptions import ObjectDoesNotExist
-
+import os
 import sys
 import argparse
 import datetime
 
-from patchman.conf import settings
-setup_environ(settings)
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "patchman.settings")
+from django.conf import settings
 
-from patchman.hosts.models import Host
-from patchman.packages.models import Package, PackageName, PackageUpdate
-from patchman.repos.models import Repository
-from patchman.arch.models import PackageArchitecture, MachineArchitecture
-from patchman.reports.models import Report
+from django.core.exceptions import ObjectDoesNotExist
 
-from patchman.receivers import print_info_message, print_debug_message, print_error_message
-from patchman.utils import create_pbar, update_pbar
+from hosts.models import Host
+from packages.models import Package, PackageName, PackageUpdate
+from repos.models import Repository
+from arch.models import PackageArchitecture, MachineArchitecture
+from reports.models import Report
+from receivers import print_info_message, print_debug_message, print_error_message
+from util import create_pbar, update_pbar
 
 from tagging.models import TaggedItem
 
@@ -302,7 +301,7 @@ def clean_updates():
     for update in package_updates:
         if update.host_set.count() == 0:
             if verbose:
-                print 'Removing %s' % update
+                print 'Removing unused update %s' % update
             update.delete()
         for duplicate in package_updates:
             if update.oldpackage == duplicate.oldpackage and \
@@ -351,14 +350,12 @@ def collect_args():
                 help='process all pending reports')
     parser.add_argument('-r', '--clean-reports', action='store_true',
                 help='remove all but the last three reports')
-    parser.add_argument('-c', '--clean-updates', action='store_true',
-                help='find and remove updates that are no longer required')
     parser.add_argument('-d', '--dbcheck', action='store_true',
                 help='perform some sanity checks and clean unused db entries')
     parser.add_argument('-n', '--dns-checks', action='store_true',
                 help='perform reverse DNS checks if enabled for that host')
     parser.add_argument('-a', '--all', action='store_true',
-                help='Convenience flag for -u -U -p -r -c -d -n')
+                help='Convenience flag for -u -U -p -r -d -n')
     return parser
 
 

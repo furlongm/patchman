@@ -14,14 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+import os
 import string
 import math
+
 from progressbar import Bar, ETA, Percentage, ProgressBar
 
-from django.core.management import setup_environ
-
-from patchman.conf import settings
-setup_environ(settings)
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "patchman.settings")
+from django.conf import settings
 
 pbar = None
 
@@ -31,7 +31,8 @@ def create_pbar(ptext, plength, **kwargs):
     global pbar
     if settings.VERBOSE and plength > 0:
         jtext = string.ljust(ptext, 35)
-        pbar = ProgressBar(widgets=[jtext, Percentage(), Bar(), ETA()], maxval=plength).start()
+        pbar = ProgressBar(widgets=[jtext, Percentage(), Bar(), ETA()],
+                           maxval=plength).start()
         return pbar
 
 

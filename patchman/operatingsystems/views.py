@@ -23,8 +23,8 @@ from django.db.models import Q
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 
-from patchman.operatingsystems.models import OS, OSGroup
-from patchman.operatingsystems.forms import LinkOSGroupForm, AddReposToOSGroupForm, CreateOSGroupForm
+from operatingsystems.models import OS, OSGroup
+from operatingsystems.forms import LinkOSGroupForm, AddReposToOSGroupForm, CreateOSGroupForm
 
 
 @login_required

@@ -1,10 +1,13 @@
 # Django settings for patchman project.
 
-#from os import path as os_path
-#PROJECT_DIR = os_path.abspath(os_path.split(__file__)[0])
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+import os
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+PROJECT_DIR = BASE_DIR
 
 DEBUG = False
 TEMPLATE_DEBUG = DEBUG
+ALLOWED_HOSTS = ['127.0.0.1']
 
 ADMINS = ()
 
@@ -67,12 +70,11 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'django.contrib.messages.context_processors.messages',
 )
 
-TEMPLATE_DIRS = (
-    '/usr/share/patchman/templates',
-)
+#TEMPLATE_DIRS = (
+#    '/usr/share/patchman/templates',
+#)
 
-INSTALLED_APPS = (
-    'andsome.layout',
+DEFAULT_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.humanize',
@@ -82,18 +84,26 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.admindocs',
     'django.contrib.staticfiles',
-    'andsome',
+)
+
+THIRD_PARTY_APPS = (
+    'django_extensions',
     'south',
     'tagging',
-    'patchman.hosts',
-    'patchman.domains',
-    'patchman.operatingsystems',
-    'patchman.packages',
-    'patchman.repos',
-    'patchman.arch',
-    'patchman.reports',
-    'patchman',
 )
+
+LOCAL_APPS = (
+    'hosts',
+    'domains',
+    'operatingsystems',
+    'packages',
+    'repos',
+    'arch',
+    'reports',
+    'util',
+)
+
+INSTALLED_APPS = DEFAULT_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 BROKER_HOST = "localhost"
 BROKER_PORT = 5672
@@ -114,4 +124,4 @@ execfile("/etc/patchman/settings.py")
 
 MANAGERS = ADMINS
 
-LOGIN_REDIRECT_URL='/'
+LOGIN_REDIRECT_URL = '/'

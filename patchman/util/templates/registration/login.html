@@ -1,0 +1,37 @@
+{% extends "base_site.html" %}
+{% load	forms %}
+
+{% block title %}Login{% endblock %}
+{% block stylesheet %}base{% endblock %}
+{% block bodyclass %}login{% endblock %}
+
+{% block extrastyle %}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/login.css"/>
+{% endblock %}
+
+{% block usertools %}{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+
+{% block content %}
+
+{% if form.errors %}
+{{ form.non_field_errors }}
+{% endif %}
+
+<form method="post" action=".">{% csrf_token %}
+  {% formfield form.username %}
+  {% formfield form.password %}
+  {% if next %}
+  <div>
+    <input type="hidden" name="next" value="{{ next }}" />
+  </div>
+  {% endif %}
+  <div class="submit-row">
+    <input type="submit" value="Log in" />
+  </div>
+</form>
+<script type="text/javascript">
+  document.getElementById('id_username').focus()
+</script>
+
+{% endblock %}

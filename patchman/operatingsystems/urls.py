@@ -16,7 +16,7 @@
 
 from django.conf.urls import patterns, url
 
-urlpatterns = patterns('patchman.operatingsystems.views',
+urlpatterns = patterns('operatingsystems.views',
 
     url(r'^$', 'os_list', name='os_list'),
     url(r'^groups/$', 'osgroup_list', name='osgroup_list'),

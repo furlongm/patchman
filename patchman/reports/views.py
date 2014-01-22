@@ -27,9 +27,9 @@ from django.db.models import Q
 from django.conf import settings
 from django.contrib import messages
 
-from patchman.util.filterspecs import Filter, FilterBar
+from util.filterspecs import Filter, FilterBar
 
-from patchman.reports.models import Report
+from reports.models import Report
 
 
 @csrf_exempt
@@ -45,7 +45,7 @@ def upload(request):
         report = Report.objects.create()
         report.parse(data, meta)
         if settings.USE_ASYNC_PROCESSING:
-            from patchman.reports.tasks import process_report
+            from reports.tasks import process_report
             process_report.delay(report)
 
         if 'report' in data and data['report'] == '1':

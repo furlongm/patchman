@@ -16,7 +16,7 @@ DATABASES = {
         'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
         'STORAGE_ENGINE': 'INNODB',
-        'CHARSET' : 'utf8'
+        'CHARSET': 'utf8'
     }
 }
 
@@ -43,7 +43,7 @@ USE_L10N = True
 
 # Additional locations of static files
 STATICFILES_DIRS = (
-     '/srv/patchman/media/',
+    '/srv/patchman/media/',
 )
 
 # Make this unique, and don't share it with anybody.
