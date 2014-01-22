@@ -16,7 +16,7 @@
 
 from django.conf.urls import patterns, url
 
-urlpatterns = patterns('patchman.reports.views',
+urlpatterns = patterns('reports.views',
 
     url(r'^$', 'report_list', name='report_list'),
     url(r'^upload/$', 'upload'),

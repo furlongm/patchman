@@ -20,10 +20,10 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.db.models import Q
 
-from patchman.util.filterspecs import Filter, FilterBar
+from util.filterspecs import Filter, FilterBar
 
-from patchman.packages.models import PackageName, Package
-from patchman.arch.models import PackageArchitecture
+from packages.models import PackageName, Package
+from arch.models import PackageArchitecture
 
 
 @login_required

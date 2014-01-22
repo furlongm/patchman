@@ -16,11 +16,11 @@
 
 from django.db import models
 
-from patchman.hosts.models import Host
-from patchman.arch.models import MachineArchitecture
-from patchman.operatingsystems.models import OS
-from patchman.domains.models import Domain
-from patchman.signals import error_message
+from hosts.models import Host
+from arch.models import MachineArchitecture
+from operatingsystems.models import OS
+from domains.models import Domain
+from signals import error_message
 
 from socket import gethostbyaddr
 
@@ -133,7 +133,7 @@ class Report(models.Model):
             host.domain = domain
             host.lastreport = self.created
             host.tags = self.tags
-            from patchman.reports.utils import process_packages, process_repos, process_updates
+            from reports.utils import process_packages, process_repos, process_updates
             # only clear repos if we have a new list
             # apt and yum plugins don't send repos
             if self.repos:

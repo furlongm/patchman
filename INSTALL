@@ -7,15 +7,6 @@ python-debian python-rpm python-progressbar python-lxml \
 apache2 libapache2-mod-wsgi \
 python-argparse python-django python-pygooglechart python-cracklib
 
-# 1b. Install the django-andsome package
-# - install the VPAC Debian Archive signing key
-wget http://code.vpac.org/debian/vpac-debian-key.gpg -O - | apt-key add -
-# - add the VPAC repo to your sources
-echo 'deb http://code.vpac.org/debian wheezy main' > /etc/apt/sources.list.d/vpac.list
-apt-get update
-# - install django-andsome
-apt-get install django-andsome
-
 # 2. Check out current git to e.g. /srv/patchman
 cd /srv
 git clone https://github.com/furlongm/patchman.git

@@ -15,7 +15,7 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from django.contrib import admin
-from patchman.hosts.models import Host
+from hosts.models import Host
 
 
 class HostAdmin(admin.ModelAdmin):

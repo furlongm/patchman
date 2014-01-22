@@ -22,11 +22,11 @@ from django.db.models import F
 
 from datetime import datetime, timedelta
 
-from patchman.hosts.models import Host
-from patchman.operatingsystems.models import OS, OSGroup
-from patchman.repos.models import Repository, Mirror
-from patchman.packages.models import Package
-from patchman.reports.models import Report
+from hosts.models import Host
+from operatingsystems.models import OS, OSGroup
+from repos.models import Repository, Mirror
+from packages.models import Package
+from reports.models import Report
 
 
 @login_required

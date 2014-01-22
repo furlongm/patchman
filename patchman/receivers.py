@@ -14,16 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+import os
 import sys
 
 from django.dispatch import receiver
-from django.core.management import setup_environ
 
-from patchman.util import create_pbar, update_pbar
-from patchman.signals import progress_info_s, progress_update_s, info_message, error_message, debug_message
-from patchman.conf import settings
-setup_environ(settings)
+from util import create_pbar, update_pbar
+from signals import progress_info_s, progress_update_s, info_message, error_message, debug_message
 
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "patchman.settings")
+from django.conf import settings
 
 @receiver(progress_info_s)
 def progress_info_r(**kwargs):
@@ -43,7 +43,7 @@ def progress_update_r(**kwargs):
 @receiver(info_message)
 def print_info_message(sender=None, **kwargs):
     text = kwargs.get('text')
-    if 'VERBOSE' in settings.__dict__ and settings.VERBOSE:
+    if settings.VERBOSE:
         print text,
         sys.stdout.softspace = False
 
@@ -59,6 +59,6 @@ def print_error_message(sender, **kwargs):
 @receiver(debug_message)
 def print_debug_message(sender, **kwargs):
     text = kwargs.get('text')
-    if 'DEBUG' in settings.__dict__ and settings.DEBUG and text:
+    if settings.DEBUG and text:
         print text,
         sys.stdout.softspace = False

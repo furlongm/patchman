@@ -15,7 +15,7 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from django.contrib import admin
-from patchman.reports.models import Report
+from reports.models import Report
 
 
 class ReportAdmin(admin.ModelAdmin):

@@ -21,13 +21,13 @@ from rpm import labelCompare
 from debian.debian_support import Version, version_compare
 from tagging.fields import TagField
 
-from patchman.packages.models import Package, PackageUpdate
-from patchman.domains.models import Domain
-from patchman.repos.models import Repository
-from patchman.operatingsystems.models import OS
-from patchman.arch.models import MachineArchitecture
-from patchman.signals import info_message
-from patchman.hosts.utils import update_rdns, remove_reports
+from packages.models import Package, PackageUpdate
+from domains.models import Domain
+from repos.models import Repository
+from operatingsystems.models import OS
+from arch.models import MachineArchitecture
+from signals import info_message
+from hosts.utils import update_rdns, remove_reports
 
 
 class Host(models.Model):
@@ -157,16 +157,16 @@ class Host(models.Model):
                         best_repo = hostrepo
         return best_repo
 
-    def find_highest_ver(self, package, potential_update,
+    def find_highest_ver(self, package_type, potential_update,
                          highest_ver, highest_package):
 
-        if package.packagetype == 'R':
+        if package_type == 'R':
             pu_ver = potential_update._version_string_rpm()
             if labelCompare(highest_ver, pu_ver) == -1:
                 highest_ver = pu_ver
                 highest_package = potential_update
 
-        elif package.packagetype == 'D':
+        elif package_type == 'D':
             pu_ver = potential_update._version_string_deb()
             pu_deb_ver = Version(pu_ver)
             if highest_ver == ('', '0', ''):
@@ -209,7 +209,8 @@ class Host(models.Model):
                     # proceed if that repo has a higher priority
                     if priority >= best_repo.priority:
                         highest_ver, highest_package = \
-                            self.find_highest_ver(package, potential_update,
+                            self.find_highest_ver(package.packagetype,
+                                                  potential_update,
                                                   highest_ver, highest_package)
 
             self.process_update(package, highest_ver, highest_package)
@@ -229,7 +230,8 @@ class Host(models.Model):
                 if package.compare_version(potential_update) == -1:
 
                     highest_ver, highest_package = \
-                        self.find_highest_ver(package, potential_update,
+                        self.find_highest_ver(package.packagetype,
+                                              potential_update,
                                               highest_ver, highest_package)
 
             self.process_update(package, highest_ver, highest_package)
@@ -258,21 +260,23 @@ class Host(models.Model):
                 potential_kernels = repo_packages.filter(pk_q)
                 for potential_kernel in potential_kernels:
                     repo_highest_ver, repo_highest_package = \
-                        self.find_highest_ver(package, potential_kernel,
+                        self.find_highest_ver('R', potential_kernel,
                                               repo_highest_ver,
                                               repo_highest_package)
 
                 host_kernels = self.packages.filter(pk_q)
                 for host_kernel in host_kernels:
                     host_highest_ver, host_highest_package = \
-                        self.find_highest_ver(package, potential_kernel,
+                        self.find_highest_ver('R', potential_kernel,
                                               host_highest_ver,
                                               host_highest_package)
 
                 if labelCompare(host_highest_ver, repo_highest_ver) == -1:
-                    self.process_update(package, repo_highest_ver,
+                    self.process_update(host_highest_package, repo_highest_ver,
                                         repo_highest_package)
+
                 self.check_if_reboot_required(kernel_ver, host_highest_ver)
+
         except ValueError:  # debian kernel
             pass
         self.save()

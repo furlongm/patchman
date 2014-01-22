@@ -18,12 +18,12 @@ import re
 
 from django.db import IntegrityError, DatabaseError
 
-from patchman.hosts.models import HostRepo
-from patchman.arch.models import MachineArchitecture, PackageArchitecture
-from patchman.repos.models import Repository, Mirror, MirrorPackage
-from patchman.packages.models import Package, PackageName, PackageUpdate
-from patchman.packages.utils import find_versions
-from patchman.signals import progress_info_s, progress_update_s
+from hosts.models import HostRepo
+from arch.models import MachineArchitecture, PackageArchitecture
+from repos.models import Repository, Mirror, MirrorPackage
+from packages.models import Package, PackageName, PackageUpdate
+from packages.utils import find_versions
+from signals import progress_info_s, progress_update_s
 
 
 def process_repos(report, host):

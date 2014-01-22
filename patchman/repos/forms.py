@@ -17,7 +17,7 @@
 from django.forms import ModelForm, ModelMultipleChoiceField, TextInput, Form, ModelChoiceField, ValidationError
 from django.contrib.admin.widgets import FilteredSelectMultiple
 
-from patchman.repos.models import Repository, Mirror
+from repos.models import Repository, Mirror
 
 
 class EditRepoForm(ModelForm):

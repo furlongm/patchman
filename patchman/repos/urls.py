@@ -16,7 +16,7 @@
 
 from django.conf.urls import patterns, url
 
-urlpatterns = patterns('patchman.repos.views',
+urlpatterns = patterns('repos.views',
 
     url(r'^$', 'repo_list', name='repo_list'),
     url(r'^mirrors/$', 'mirror_list', name='mirror_list'),

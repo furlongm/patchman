@@ -16,7 +16,7 @@
 
 from django.forms import ModelForm, TextInput
 
-from patchman.hosts.models import Host
+from hosts.models import Host
 
 
 class EditHostForm(ModelForm):
