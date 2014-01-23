@@ -20,6 +20,7 @@ from django.db.models import Q, Count
 from rpm import labelCompare
 from debian.debian_support import Version, version_compare
 from tagging.fields import TagField
+from datetime import datetime
 
 from packages.models import Package, PackageUpdate
 from domains.models import Domain
@@ -47,6 +48,7 @@ class Host(models.Model):
     reboot_required = models.BooleanField(default=False)
     host_repos_only = models.BooleanField(default=True)
     tags = TagField()
+    updated_at = models.DateTimeField(default=datetime.now())
 
     class Meta:
         ordering = ('hostname',)
