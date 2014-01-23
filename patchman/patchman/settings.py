@@ -72,10 +72,6 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'django.contrib.messages.context_processors.messages',
 )
 
-#TEMPLATE_DIRS = (
-#    '/usr/share/patchman/templates',
-#)
-
 DEFAULT_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -127,5 +123,5 @@ execfile("/etc/patchman/settings.py")
 MANAGERS = ADMINS
 
 LOGIN_REDIRECT_URL = '/'
-#LOGIN_REDIRECT_URL = '/patchman/'
-#LOGIN_URL = '/patchman/accounts/login/'
+#LOGIN_REDIRECT_URL = '/mypatchman/'
+#LOGIN_URL = '/mypatchman/accounts/login/'
