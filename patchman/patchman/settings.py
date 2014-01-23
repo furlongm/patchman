@@ -44,6 +44,8 @@ STATIC_URL = '/patchman_media/'
 # Example: "/home/media/media.lawrence.com/static/"
 STATIC_ROOT = '/usr/share/patchman/media/'
 
+ROOT_URLCONF = 'patchman.urls'
+
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
@@ -125,3 +127,5 @@ execfile("/etc/patchman/settings.py")
 MANAGERS = ADMINS
 
 LOGIN_REDIRECT_URL = '/'
+#LOGIN_REDIRECT_URL = '/patchman/'
+#LOGIN_URL = '/patchman/accounts/login/'

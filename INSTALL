@@ -1,11 +1,11 @@
 # Installation from current git on debian wheezy
 # -----------------------------------------------
 
-# 1a. Install dependencies
-apt-get install python-django-tagging python-django-south \
-python-debian python-rpm python-progressbar python-lxml \
-apache2 libapache2-mod-wsgi \
-python-argparse python-django python-pygooglechart python-cracklib
+# 1. Install dependencies
+apt-get install python-django-tagging python-django-south python-django \
+python-django-extensions python-argparse python-lxml python-rpm python-debian \
+python-pygooglechart python-cracklib python-progressbar libapache2-mod-wsgi \
+apache2
 
 # 2. Check out current git to e.g. /srv/patchman
 cd /srv
@@ -44,24 +44,16 @@ vi /etc/patchman/settings.py
 #    }
 #}
 
-# 5. Create links for media and templates, and add python to PYTHON_PATH
-ln -sf /srv/patchman /usr/share/patchman
-ln -sf /srv/patchman/patchman /usr/local/lib/python2.7/dist-packages
-# Only the media/templates are required so you can link just those if needed.
-# Alternatively change the directories in the wsgi file.
-
-# 6. Enable mod-wsgi and copy the apache conf file
+# 5. Enable mod-wsgi and copy the apache conf file
 a2enmod wsgi
 cp /srv/patchman/etc/patchman-apache.conf /etc/apache2/conf.d/patchman.conf
 
-# 7. Edit the networks allowed to report to apache and reload apache
+# 6. Edit the networks allowed to report to apache and reload apache
 vi /etc/apache2/conf.d/patchman.conf
 service apache2 reload
 
-# 8. Link to the settings.py file, initialise the database, perform migrations
-# and collect static files.
+# 7. Initialise the database, perform migrations, and collect static files.
 cd /srv/patchman/patchman
-ln -sf conf/settings.py
 ./manage.py syncdb
 ./manage.py migrate
 ./manage.py collectstatic
@@ -79,11 +71,11 @@ ln -sf conf/settings.py
 # ./manage.py migrate operatingsystems
 # ./manage.py migrate --list
 
-# 9. Deploy the client and/or yum/apt plugins via e.g. puppet, and add a daily
+# 8. Deploy the client and/or yum/apt plugins via e.g. puppet, and add a daily
 # cronjob, e.g.
 # 0 7 * * * /bin/sleep $((RANDOM\%600)); PATH=/bin:/sbin:/usr/bin:/usr/sbin /usr/local/sbin/patchman-client
 
-# 10a. Optionally install celeryd/rabbitmq for realtime processing of reports:
+# 9. Optionally install celeryd/rabbitmq for realtime processing of reports:
 apt-get install python-django-celery rabbitmq-server
 ./manage.py syncdb
 ./manage.py migrate
@@ -91,16 +83,16 @@ apt-get install python-django-celery rabbitmq-server
 # add the last command to an initscript (e.g. /etc/rc.local) to make it
 # persistent over reboot
 
-# 10b. Alternatively, set up a cronjob to run all the daily tasks, e.g.
+# i0. Alternatively, or in addtion to 9, set up a cronjob to run all the daily tasks, e.g.
 #
-# 30 8 * * * http_proxy=http://myproxy.example.com:3128 /srv/patchman/sbin/patchman-cli -u -d -U -c -r -p -q
+# 30 8 * * * http_proxy=http://myproxy.example.com:3128 PYTHONPATH=/srv/patchman/patchman /srv/patchman/sbin/patchman-cli -a -q
 #
-# Run /srv/patchman/sbin/patchman-cli -h to view all options.
+# Run PYTHONPATH=/srv/patchman/patchman /srv/patchman/sbin/patchman-cli -h to view all options.
 
 # 11. If you want to run patchman under a subdirectory
 #   e.g. http://example.com/mypatchman/
 # then you need to add the following to settings.py
-#  LOGIN_REDIRECT_URL='/mypatchman/'
-#  LOGIN_URL='/mypatchman/accounts/login/'
+#  LOGIN_REDIRECT_URL = '/mypatchman/'
+#  LOGIN_URL = '/mypatchman/accounts/login/'
 # and uncomment the appropriate line in /etc/apache2/conf.d/patchman.conf
 
