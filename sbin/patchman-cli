@@ -23,6 +23,7 @@ from tagging.models import TaggedItem
 force = False
 verbose = False
 
+
 def get_hosts(host=None, action='Performing action'):
     """ Helper function to get a list of hosts
     """
