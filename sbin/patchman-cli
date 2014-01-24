@@ -7,8 +7,11 @@ import datetime
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "patchman.settings")
 from django.conf import settings
-
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Count
+
+from datetime import datetime
+from tagging.models import TaggedItem
 
 from hosts.models import Host
 from packages.models import Package, PackageName, PackageUpdate
@@ -17,8 +20,6 @@ from arch.models import PackageArchitecture, MachineArchitecture
 from reports.models import Report
 from receivers import print_info_message, print_debug_message, print_error_message
 from util import create_pbar, update_pbar
-
-from tagging.models import TaggedItem
 
 force = False
 verbose = False
@@ -242,6 +243,58 @@ def clean_tags():
             update_pbar(i + 1)
 
 
+def host_updates_alt(host=None):
+    """ Find updates for all hosts, specify host for a single host
+    """
+
+    updated_hosts = []
+    hosts = get_hosts(host, 'Finding updates')
+    ts = datetime.now().replace(microsecond=0)
+    for host in hosts:
+        if verbose:
+            print '\n%s' % host
+        if host not in updated_hosts:
+            host.updated_at = ts
+            host.find_updates()
+            host.save()
+
+            # only include hosts with the same number of packages
+            filtered_hosts = Host.objects.annotate(packages_count=Count("packages")).filter(packages_count=host.packages.count())
+            # exclude hosts with the current timestamp
+            filtered_hosts = filtered_hosts.exclude(updated_at=ts)
+
+            packages = set(host.packages.all())
+            repos = set(host.repos.all())
+            updates = host.updates.all()
+
+            phosts = []
+            for fhost in filtered_hosts:
+
+                frepos = set(fhost.repos.all())
+                rdiff = repos.difference(frepos)
+                if len(rdiff) != 0:
+                    continue
+
+                fpackages = set(fhost.packages.all())
+                pdiff = packages.difference(fpackages)
+                if len(pdiff) != 0:
+                    continue
+
+                phosts.append(fhost)
+
+            for phost in phosts:
+                phost.updates.clear()
+                phost.updates = updates
+                phost.updated_at = ts
+                phost.save()
+                updated_hosts.append(phost)
+                if verbose:
+                    print 'Added the same updates to %s' % phost
+        else:
+            if verbose:
+                print 'Updates already added in ths run'
+
+
 def host_updates(host=None):
     """ Find updates for all hosts, specify host for a single host
     """
@@ -345,6 +398,9 @@ def collect_args():
                 help='list all available repositories and repo_ids')
     parser.add_argument('-U', '--host-updates', action='store_true',
                 help='find updates for all hosts')
+    parser.add_argument('-A', '--host-updates-alt', action='store_true',
+                help='find updates for all hosts (alternative algorithm that \
+                may be faster when there are many homogeneous hosts)')
     parser.add_argument('-H', '--host',
                 help='only perform action on this host (fqdn)')
     parser.add_argument('-p', '--process-reports', action='store_true',
@@ -369,7 +425,7 @@ def process_args(args):
         args.process_reports = True
         args.clean_reports = True
         args.update = True
-        args.host_updates = True
+        args.host_updates_alt = True
         args.clean_updates = True
         args.dbcheck = True
         args.dns_checks = True
@@ -391,6 +447,10 @@ def process_args(args):
         recheck = True
     if args.host_updates:
         host_updates(args.host)
+        showhelp = False
+        recheck = True
+    if args.host_updates_alt:
+        host_updates_alt(args.host)
         showhelp = False
         recheck = True
     if args.dbcheck and recheck:
