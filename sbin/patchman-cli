@@ -412,7 +412,7 @@ def collect_args():
     parser.add_argument('-n', '--dns-checks', action='store_true',
                 help='perform reverse DNS checks if enabled for that host')
     parser.add_argument('-a', '--all', action='store_true',
-                help='Convenience flag for -u -U -p -r -d -n')
+                help='Convenience flag for -u -A -p -r -d -n')
     return parser
 
 
