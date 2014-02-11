@@ -3,14 +3,13 @@
 import os
 import sys
 import argparse
-import datetime
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "patchman.settings")
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count
 
-from datetime import datetime
+from datetime import date, datetime
 from tagging.models import TaggedItem
 
 from hosts.models import Host
@@ -200,7 +199,7 @@ def clean_reports(s_host=None):
     """
 
     hosts = get_hosts(s_host, 'Cleaning reports')
-    timestamp = datetime.date.today()
+    timestamp = date.today()
 
     for host in hosts:
         if verbose:
