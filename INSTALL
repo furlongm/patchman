@@ -19,6 +19,12 @@ vi /etc/patchman/settings.py
 
 # e.g. for a mysql backend:
 #
+# Make sure mysql-server and the python mysql bindings are installed:
+#
+# apt-get install mysql-server python-mysqldb
+#
+# Create database and users:
+#
 #mysql> CREATE DATABASE patchman CHARACTER SET utf8 COLLATE utf8_general_ci;
 #Query OK, 1 row affected (0.00 sec)
 #
@@ -83,7 +89,7 @@ apt-get install python-django-celery rabbitmq-server
 # add the last command to an initscript (e.g. /etc/rc.local) to make it
 # persistent over reboot
 
-# i0. Alternatively, or in addtion to 9, set up a cronjob to run all the daily tasks, e.g.
+# i0. Alternatively, or in addition to 9, set up a cronjob to run all the daily tasks, e.g.
 #
 # 30 8 * * * http_proxy=http://myproxy.example.com:3128 PYTHONPATH=/srv/patchman/patchman /srv/patchman/sbin/patchman-cli -a -q
 #
@@ -96,3 +102,12 @@ apt-get install python-django-celery rabbitmq-server
 #  LOGIN_URL = '/mypatchman/accounts/login/'
 # and uncomment the appropriate line in /etc/apache2/conf.d/patchman.conf
 
+# 12. You can optionally run memcached:
+apt-get install memcached python-memcache
+# and add the following to /etc/patchman/settings.py
+#CACHES = {
+#    'default': {
+#        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+#        'LOCATION': '127.0.0.1:11211',
+#    }
+#}
