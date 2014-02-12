@@ -15,6 +15,7 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 import os
+import sys
 import string
 import math
 
@@ -24,12 +25,25 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "patchman.settings")
 from django.conf import settings
 
 pbar = None
+verbose = None
+
+
+def get_verbosity():
+
+    global verbose
+    return verbose
+
+
+def set_verbosity(value):
+
+    global verbose
+    verbose = value
 
 
 def create_pbar(ptext, plength, **kwargs):
 
-    global pbar
-    if settings.VERBOSE and plength > 0:
+    global pbar, verbose
+    if verbose and plength > 0:
         jtext = string.ljust(ptext, 35)
         pbar = ProgressBar(widgets=[jtext, Percentage(), Bar(), ETA()],
                            maxval=plength).start()
@@ -38,8 +52,8 @@ def create_pbar(ptext, plength, **kwargs):
 
 def update_pbar(index, **kwargs):
 
-    global pbar
-    if settings.VERBOSE and pbar:
+    global pbar, verbose
+    if verbose and pbar:
         pbar.update(index)
         if index == pbar.maxval:
             pbar.finish()
@@ -48,8 +62,8 @@ def update_pbar(index, **kwargs):
 
 def download_url(res, text=''):
 
+    global verbose
     headers = dict(res.headers.items())
-    verbose = settings.VERBOSE
     if verbose and 'content-length' in headers:
         clen = int(headers['content-length'])
         chunk_size = 16384.0
@@ -66,3 +80,8 @@ def download_url(res, text=''):
         return data
     else:
         return res.read()
+
+
+def print_nocr(text):
+    print text,
+    sys.stdout.softspace = False
