@@ -9,17 +9,20 @@ provides a web interface for monitoring host package updates.
 
 Patchman clients send a list of installed packages and enabled repositories to
 the patchman server. The patchman server updates its package list for each
-repository and determines which hosts require updates, whether those updates
-are normal or security updates, and shows installed packages that are not part
-of any repository. Hosts, packages, repositories and operating systems can all
-be filtered (using features or arbitrary tags). For example, it is possible to
-find out which hosts have a certain version of a package installed, and which
-repository it comes from.
+repository and determines which hosts require updates, and whether those updates
+are normal or security updates. The web interface also gives information on
+potential issues, such as installed packages that are not from any repository.
 
-Patchman does not install update packages on hosts, it calculates and keeps
-track of what updates are available for each host. The patchman yum and apt
-plugins can send reports to the patchman server every time packages are
-installed or removed.
+Hosts, packages, repositories and operating systems can all be filtered (using
+features or arbitrary tags). For example, it is possible to find out which hosts
+have a certain version of a package installed, and which repository it comes
+from.
+
+Patchman does not install update packages on hosts, it determines and records
+what updates are available for each host.
+
+Yum and apt plugins can send reports to the patchman server every time packages
+are installed or removed on a host.
 
 
 Source
@@ -36,7 +39,6 @@ Server-side dependencies
 python-django-tagging
 python-django-south
 python-django-extensions
-django-andsome
 python-debian
 python-rpm
 python-progressbar
@@ -44,7 +46,8 @@ python-lxml
 python-argparse
 
 The server can optionally make use of celery to asynchronously process the
-reports send by hosts. The appropriate python database library is also needed.
+reports send by hosts. The appropriate python database library bindings are
+also required.
 
 
 Client-side dependencies
@@ -68,24 +71,35 @@ The  web interface presents a dashboard with items needing attention, and the
 ability to manipulate packages, repositories, operating systems and hosts.
 
 To populate the web interface, run the client on some hosts, this should
-provide some initial data to work with. The cli can be used to run cronjobs
-and process the reports send from hosts. Run 'patchman-cli -h' for a rundown of
-the usage. 
+provide some initial data to work with.
 
-Depending on your setup, there may be some initial work to organise the data
-sent from the reports. The following explanations may help in this case.
+On the server, the command line utility can be used to run certain maintenance
+tasks, e.g. processing the reports sent from hosts. Run 'patchman-cli -h' for a
+rundown of the usage.
 
-An OSGroup differs from an OS, in that an OSGroup is a collection of OS's.
-For example, a "Debian 6" OSGroup could be comprised of machines with the
-following OS's -> "Debian 6.0.1", "Debian 6.0.2", "Debian 6.0.5".
-The OS names are obtained from the client hosts, so these may differ
-depending on patch-level version, even though they are the same operating
-system. Likewise, a "CentOS 5" OSGroup could cover "CentOS 5.4",
-"CentOS 5.7", etc. The "CentOS 6" group could cover "CentOS 6.0" through
-"CentOS 6.3". Repositories can be linked to an OSGroup, or to a host itself,
-and
+Depending on your setup, there may be some initial work required to logically
+organise the data sent in the host reports. The following explanations may help
+in this case.
 
-Repostiories and mirrors are a similar concept. Each repository URL is
-counted as a separate mirror, unless the repositories are linked together.
-For Red Hat based hosts, this occurs automatically. Currently, for Debian-
-based hosts, you need to manually link which mirrors form each repository.
+Repositories can be linked to an OSGroup, or to a host itself. If the
+use_host_repos variable is set to True for a host, then updates are found by
+looking only at the repositories that belong to that host. This is the default
+behaviour and does not require OSGroups to be configured.
+
+If use_host_repos is set to False, the update-finding process looks at the
+OSGroup that the host is in, and uses the OSGroup's repositories to determine
+applicable updates. This is useful in environments where many hosts are
+homogeneous (e.g. cloud/cluster environments).
+
+An OSGroup is a collection of OS's. For example, a "Debian 7" OSGroup would be
+comprised of the following OS's -> "Debian 7.0", "Debian 7.3", "Debian 7.4".
+These OS names are obtained from the hosts, so they will probably differ
+depending on which updates have been installed, even though they run the same
+operating system. Likewise, a "CentOS 6" OSGroup covers "CentOS 6.0" through
+"CentOS 6.5".
+
+For repositories, each repository URL is counted as a separate mirror, unless
+the repositories are linked together. For Red Hat based hosts, this occurs
+automatically. Currently, for Debian-based hosts, you may need to link all
+mirrors that form a repository. This is not strictly necessary but may reduce
+the time to find updates.
