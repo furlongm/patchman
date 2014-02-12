@@ -21,26 +21,46 @@ from receivers import print_info_message, print_debug_message, print_error_messa
 from util import create_pbar, update_pbar, set_verbosity
 
 
-def get_hosts(host=None, action='Performing action'):
-    """ Helper function to get a list of hosts
+def get_host(host=None, action='Performing action'):
+    """ Helper function to get a single host object
     """
 
-    hosts = []
+    host_obj = None
 
-    if host:
-        try:
-            hosts.append(Host.objects.get(hostname=host))
-            message = '%s for host %s' % (action, host)
-        except:
-            message = 'Host %s does not exist' % host
-    else:
-        message = '%s for all hosts' % action
-        hosts = Host.objects.all()
+    try:
+        host_obj = Host.objects.get(hostname=host)
+        message = '%s for host %s' % (action, host)
+    except:
+        message = 'Host %s does not exist' % host
 
     if verbose:
         print message
 
-    return hosts
+    return host_obj
+
+
+def get_hosts(hosts=None, action='Performing action'):
+    """ Helper function to get a list of hosts
+    """
+
+    host_objs = []
+
+    if hosts:
+        if type(hosts) == str:
+            host_obj = get_host(hosts, action)
+            if host_obj is not None:
+                host_objs.append(host_obj)
+        elif type(hosts) == list:
+            for host in hosts:
+                host_obj = get_host(host, action)
+                if host_obj is not None:
+                    host_objs.append(host_obj)
+    else:
+        if verbose:
+            print '%s for all hosts' % action
+        host_objs = Host.objects.all()
+
+    return host_objs
 
 
 def get_repos(repo=None, action='Performing action', only_enabled=False):
@@ -203,7 +223,7 @@ def clean_reports(s_host=None):
             print host
         host.clean_reports(timestamp)
 
-    if s_host == None:
+    if s_host is None:
 
         reports = Report.objects.filter(accessed__lt=timestamp)
         rlen = reports.count()
@@ -301,6 +321,70 @@ def host_updates(host=None):
         if verbose:
             print '\n%s' % host
         host.find_updates()
+
+
+def diff_hosts(hosts):
+    """ Display the differences between two hosts
+    """
+    hosts_to_compare = get_hosts(hosts, 'Retrieving info')
+
+    if len(hosts_to_compare) != 2:
+        sys.exit(1)
+
+    hostA = hosts_to_compare[0]
+    hostB = hosts_to_compare[1]
+    packagesA = set(hostA.packages.all())
+    packagesB = set(hostB.packages.all())
+    reposA = set(hostA.repos.all())
+    reposB = set(hostB.repos.all())
+
+    package_diff_AB = packagesA.difference(packagesB)
+    package_diff_BA = packagesB.difference(packagesA)
+    repo_diff_AB = reposA.difference(reposB)
+    repo_diff_BA = reposB.difference(reposA)
+
+    print
+    print '+ %s' % hostA.hostname
+    print '- %s' % hostB.hostname
+
+    if hostA.os != hostB.os:
+        print '\nOperating Systems'
+        print '+ %s' % hostA.os
+        print '- %s' % hostB.os
+    else:
+        print '\nNo OS differences'
+
+    if hostA.arch != hostB.arch:
+        print '\nArchitecture'
+        print '+ %s' % hostA.arch
+        print '- %s' % hostB.arch
+    else:
+        print '\nNo architecture differences'
+
+    if hostA.kernel != hostB.kernel:
+        print '\nKernels'
+        print '+ %s' % hostA.kernel
+        print '- %s' % hostB.kernel
+    else:
+        print '\nNo kernel differences'
+
+    if len(package_diff_AB) != 0 or len(package_diff_BA) != 0:
+        print '\nPackages'
+        for package in package_diff_AB:
+            print '+ %s' % package
+        for package in package_diff_BA:
+            print '- %s' % package
+    else:
+        print '\nNo package differences'
+
+    if len(repo_diff_AB) != 0 or len(repo_diff_BA) != 0:
+        print '\nRepositories'
+        for repo in repo_diff_AB:
+            print '+ %s' % repo
+        for repo in repo_diff_BA:
+            print '- %s' % repo
+    else:
+        print '\nNo repo differences'
 
 
 def dns_checks(host=None):
@@ -409,6 +493,8 @@ def collect_args():
                 help='perform reverse DNS checks if enabled for that host')
     parser.add_argument('-a', '--all', action='store_true',
                 help='Convenience flag for -u -A -p -r -d -n')
+    parser.add_argument('-D', '--diff', metavar=('hostA', 'hostB'), nargs=2,
+                help='Show differences between two hosts in difflike output')
     return parser
 
 
@@ -427,6 +513,9 @@ def process_args(args):
         args.dns_checks = True
     if args.list:
         list_repos(args.repo)
+        return False
+    if args.diff:
+        diff_hosts(args.diff)
         return False
     if args.process_reports:
         process_reports(args.host, args.force)
