@@ -18,10 +18,7 @@ from repos.models import Repository
 from arch.models import PackageArchitecture, MachineArchitecture
 from reports.models import Report
 from receivers import print_info_message, print_debug_message, print_error_message
-from util import create_pbar, update_pbar
-
-force = False
-verbose = False
+from util import create_pbar, update_pbar, set_verbosity
 
 
 def get_hosts(host=None, action='Performing action'):
@@ -71,7 +68,7 @@ def get_repos(repo=None, action='Performing action', only_enabled=False):
     return repos
 
 
-def update_repos(repo=None):
+def update_repos(repo=None, force=False):
     """ Update metadata for all enabled repos.
         Specify a repo ID to update a single repo.
     """
@@ -291,7 +288,7 @@ def host_updates_alt(host=None):
                     print 'Added the same updates to %s' % phost
         else:
             if verbose:
-                print 'Updates already added in ths run'
+                print 'Updates already added in this run'
 
 
 def host_updates(host=None):
@@ -319,7 +316,7 @@ def dns_checks(host=None):
         host.check_rdns()
 
 
-def process_reports(host=None):
+def process_reports(host=None, force=False):
     """ Process all pending reports, specify host to process only a single host
         The --force option forces even processed reports to be reprocessed
         No reports are skipped in case some reports contain repo information
@@ -432,7 +429,7 @@ def process_args(args):
         list_repos(args.repo)
         return False
     if args.process_reports:
-        process_reports(args.host)
+        process_reports(args.host, args.force)
         showhelp = False
     if args.clean_reports:
         clean_reports(args.host)
@@ -441,7 +438,7 @@ def process_args(args):
         dbcheck()
         showhelp = False
     if args.update:
-        update_repos(args.repo)
+        update_repos(args.repo, args.force)
         showhelp = False
         recheck = True
     if args.host_updates:
@@ -465,11 +462,8 @@ if __name__ == '__main__':
     parser = collect_args()
     args = parser.parse_args()
 
-    settings.FORCE = args.force
-    settings.VERBOSE = not args.quiet
-
-    force = args.force
     verbose = not args.quiet
+    set_verbosity(verbose)
 
     showhelp = process_args(args)
 
