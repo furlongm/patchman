@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+import os
 import re
 import bz2
 import gzip
@@ -26,9 +27,11 @@ from urllib2 import Request, urlopen
 from debian.debian_support import Version
 from debian.deb822 import Sources
 
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "patchman.settings")
+from django.conf import settings
+
 from packages.models import Package, PackageName, PackageString
 from arch.models import PackageArchitecture
-
 from util import download_url
 from signals import info_message, error_message, debug_message, progress_info_s, progress_update_s
 
@@ -236,6 +239,13 @@ def mirrorlists_check(repo):
             for mirror_url in mirror_urls:
                 mirror_url = mirror_url.replace('$ARCH', repo.arch.name)
                 mirror_url = mirror_url.replace('$basearch', repo.arch.name)
+                if hasattr(settings, 'MAX_MIRRORS') and type(settings.MAX_MIRRORS) == int:
+                    max_mirrors = settings.MAX_MIRRORS
+                    # only add X mirrors, where X = max_mirrors
+                    existing = mirror.repo.mirror_set.filter(mirrorlist=False, refresh=True).count()
+                    if existing >= max_mirrors:
+                        info_message.send(sender=None, text='%s mirrors already exist, not adding %s\n' % (max_mirrors, mirror_url))
+                        continue
                 from repos.models import Mirror
                 new_mirror, c = Mirror.objects.get_or_create(repo=repo, url=mirror_url)
                 if c:
@@ -332,7 +342,7 @@ def extract_yast_packages(data):
     return
 
 
-def update_yum_repo(mirror, data, repo_url):
+def update_yum_repo(mirror, data, repo_url, ts):
     """ Update package metadata from yum-style rpm repo
         Returns a list of packages on success, or None if there is no packages or access fails
     """
@@ -359,6 +369,13 @@ def update_yum_repo(mirror, data, repo_url):
         elif mirror.file_checksum == sha:
             info_message.send(sender=None, text='Mirror checksum has not changed, not updating package metadata\n')
         else:
+            if hasattr(settings, 'MAX_MIRRORS') and type(settings.MAX_MIRRORS) == int:
+                max_mirrors = settings.MAX_MIRRORS
+                # only refresh X mirrors, where X = max_mirrors
+                have_checksum = mirror.repo.mirror_set.filter(mirrorlist=False, refresh=True, timestamp=ts.replace(microsecond=0)).count()
+                if have_checksum >= max_mirrors:
+                    info_message.send(sender=None, text='%s mirrors already have this checksum, ignoring refresh to save time\n' % max_mirrors)
+                    return
             mirror.file_checksum = sha
             return extract_yum_packages(data)
     else:
@@ -394,6 +411,7 @@ def update_rpm_repo(repo):
     formats = ['repodata/repomd.xml.bz2', 'repodata/repomd.xml.gz', 'repodata/repomd.xml', 'suse/repodata/repomd.xml.bz2', 'suse/repodata/repomd.xml.gz', 'suse/repodata/repomd.xml', 'content']
 
     mirrorlists_check(repo)
+    ts = datetime.now()
 
     for mirror in repo.mirror_set.filter(mirrorlist=False, refresh=True):
         repo_url, res, yast = find_mirror_url(mirror.url, formats)
@@ -403,11 +421,11 @@ def update_rpm_repo(repo):
             data = download_url(res, 'Downloading repo info (1/2):')
             if not yast:
                 debug_message.send(sender=None, text='Found yum rpm repo - %s\n' % repo_url)
-                packages = update_yum_repo(mirror, data, repo_url)
+                packages = update_yum_repo(mirror, data, repo_url, ts)
             else:
                 debug_message.send(sender=None, text='Found yast rpm repo - %s\n' % repo_url)
                 packages = update_yast_repo(mirror, data, repo_url)
-            mirror.timestamp = datetime.now()
+            mirror.timestamp = ts
             mirror.last_access_ok = True
             if packages:
                 update_mirror_packages(mirror, packages)
