@@ -14,7 +14,7 @@ git clone https://github.com/furlongm/patchman.git
 # 3. Copy server settings example file to /etc/patchman
 mkdir /etc/patchman && cp /srv/patchman/etc/settings.py.sample /etc/patchman/settings.py
 
-# 4. Modify settings file to match local admin and database settings
+# 4. Modify settings file to suit your site
 vi /etc/patchman/settings.py
 
 # e.g. for a mysql backend:
@@ -97,7 +97,7 @@ apt-get install python-django-celery rabbitmq-server
 
 # 11. If you want to run patchman under a subdirectory
 #   e.g. http://example.com/mypatchman/
-# then you need to add the following to settings.py
+# then you need to add the following to /etc/patchman/settings.py
 #  LOGIN_REDIRECT_URL = '/mypatchman/'
 #  LOGIN_URL = '/mypatchman/accounts/login/'
 # and uncomment the appropriate line in /etc/apache2/conf.d/patchman.conf
