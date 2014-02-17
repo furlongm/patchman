@@ -34,16 +34,6 @@ USE_I18N = True
 # calendars according to the current locale
 USE_L10N = True
 
-# URL prefix for static files.
-# Example: "http://media.lawrence.com/static/"
-STATIC_URL = '/patchman_media/'
-
-# Absolute path to the directory static files should be collected to.
-# Don't put anything in this directory yourself; store your static files
-# in apps' "static/" subdirectories and in STATICFILES_DIRS.
-# Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = '/usr/share/patchman/media/'
-
 ROOT_URLCONF = 'patchman.urls'
 
 # List of callables that know how to import templates from various sources.
@@ -121,7 +111,3 @@ else:
 execfile("/etc/patchman/settings.py")
 
 MANAGERS = ADMINS
-
-LOGIN_REDIRECT_URL = '/'
-#LOGIN_REDIRECT_URL = '/mypatchman/'
-#LOGIN_URL = '/mypatchman/accounts/login/'
