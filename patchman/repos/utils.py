@@ -156,8 +156,7 @@ def get_sha256(data):
 def get_url(url):
 
     try:
-        req = Request(url)
-        res = urlopen(req)
+        res = urlopen(url=Request(url), timeout=10)
         # don't blindly succeed with http 200 (e.g. sourceforge)
         headers = dict(res.headers.items())
         if 'content-type' in headers and not re.match('text/html', headers['content-type']):
