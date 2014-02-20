@@ -430,7 +430,7 @@ def clean_updates():
         linked to any hosts
     """
 
-    package_updates = PackageUpdate.objects.all()
+    package_updates = list(PackageUpdate.objects.all())
 
     for update in package_updates:
         if update.host_set.count() == 0:
@@ -438,18 +438,17 @@ def clean_updates():
                 print 'Removing unused update %s' % update
             update.delete()
         for duplicate in package_updates:
-            if update.oldpackage == duplicate.oldpackage and \
-               update.newpackage == duplicate.newpackage and \
-               update.security == duplicate.security and \
-               update.id != duplicate.id:
-                if verbose:
-                    print "Removing duplicate update: %s" % (update)
-                for host in duplicate.host_set.all():
-                    host.updates.remove(duplicate)
-                    host.updates.add(update)
-                    host.save()
-                duplicate.delete()
-
+            if (update.oldpackage == duplicate.oldpackage and
+                update.newpackage == duplicate.newpackage and
+                update.security == duplicate.security and
+                update.id != duplicate.id):
+                    if verbose:
+                        print "Removing duplicate update: %s" % (update)
+                    for host in duplicate.host_set.all():
+                        host.updates.remove(duplicate)
+                        host.updates.add(update)
+                        host.save()
+                    duplicate.delete()
 
 def dbcheck():
     """ Runs all clean_* functions to check database consistency
