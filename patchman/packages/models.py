@@ -168,6 +168,9 @@ class PackageUpdate(models.Model):
     newpackage = models.ForeignKey(Package, related_name='newpackage')
     security = models.BooleanField(default=False)
 
+    class Meta:
+        unique_together = (('oldpackage', 'newpackage', 'security'))
+
     def __unicode__(self):
         if self.security:
             update_type = 'Security'
