@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.db import models
+from django.db import models, IntegrityError, DatabaseError, transaction
 
 from hosts.models import Host
 from arch.models import MachineArchitecture
@@ -97,18 +97,24 @@ class Report(models.Model):
 
         self.save()
 
+    @transaction.commit_manually
     def process(self, find_updates=True):
         """ Process a report and extract os, arch, domain, packages, repos etc
         """
 
         if self.os and self.kernel and self.arch:
-            os, c = OS.objects.get_or_create(name=self.os)
-            arch, c = MachineArchitecture.objects.get_or_create(name=self.arch)
+
+            oses = OS.objects.select_for_update()
+            os, c = oses.get_or_create(name=self.os)
+
+            machine_arches = MachineArchitecture.objects.select_for_update()
+            arch, c = machine_arches.get_or_create(name=self.arch)
 
             if not self.domain:
                 self.domain = 'unknown'
 
-            domain, c = Domain.objects.get_or_create(name=self.domain)
+            domains = Domain.objects.select_for_update()
+            domain, c = domains.get_or_create(name=self.domain)
 
             if not self.host:
                 try:
@@ -116,7 +122,8 @@ class Report(models.Model):
                 except:
                     self.host = self.report_ip
 
-            host, c = Host.objects.get_or_create(
+            hosts = Host.objects.select_for_update()
+            host, c = hosts.get_or_create(
                 hostname=self.host,
                 defaults={
                     'ipaddress': self.report_ip,
@@ -133,24 +140,35 @@ class Report(models.Model):
             host.domain = domain
             host.lastreport = self.created
             host.tags = self.tags
-            from reports.utils import process_packages, process_repos, process_updates
-            # only clear repos if we have a new list
-            # apt and yum plugins don't send repos
-            if self.repos:
-                host.repos.clear()
-                process_repos(report=self, host=host)
-            host.packages.clear()
-            process_packages(report=self, host=host)
-            process_updates(report=self, host=host)
             if self.reboot == 'True':
                 host.reboot_required = True
             else:
                 host.reboot_required = False
+            try:
+                host.save()
+                transaction.commit()
+            except IntegrityError as e:
+                print e
+            except DatabaseError as e:
+                transaction.rollback()
+                print e
             host.check_rdns()
-            host.save()
+
+            from reports.utils import process_packages, process_repos, \
+                process_updates
+            process_repos(report=self, host=host)
+            process_packages(report=self, host=host)
+            process_updates(report=self, host=host)
+
             self.processed = True
             self.save()
+            transaction.commit()
+
             if find_updates:
                 host.find_updates()
+                transaction.commit()
         else:
-            error_message.send(sender=None, text='Error: OS, kernel or arch not sent with report %s\n' % (self.id))
+            text = 'Error: OS, kernel or arch not sent with report %s\n' \
+                % (self.id)
+            error_message.send(sender=None, text=text)
+            transaction.commit()

@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.db import models, IntegrityError
+from django.db import models, IntegrityError, DatabaseError, transaction
 from django.db.models import Q, Count
 
 from rpm import labelCompare
@@ -96,6 +96,7 @@ class Host(models.Model):
                   mirror__enabled=True, mirror__repo__enabled=True)
         return Package.objects.select_related().filter(hostrepos_q).distinct()
 
+    @transaction.commit_manually
     def process_update(self, package, highest_ver, highest_package):
         if highest_ver != ('', '0', ''):
             if self.host_repos_only:
@@ -112,21 +113,34 @@ class Host(models.Model):
                 if mirror.repo.security:
                     security = True
             try:
-                update, c = PackageUpdate.objects.get_or_create(
-                    oldpackage=package, newpackage=highest_package,
-                    security=security)
+                updates = PackageUpdate.objects.select_for_update()
+                update, c = updates.get_or_create(oldpackage=package,
+                                                  newpackage=highest_package,
+                                                  security=security)
+                transaction.commit()
             except IntegrityError as e:
                 print e
-                update = PackageUpdate.objects.get(
-                    oldpackage=package, newpackage=highest_package,
-                    security=security)
-            self.updates.add(update)
+                update = updates.get(oldpackage=package,
+                                     newpackage=highest_package,
+                                     security=security)
+            except DatabaseError as e:
+                print e
+                transaction.rollback()
+            try:
+                self.updates.add(update)
+                transaction.commit()
+                info_message.send(sender=None, text="%s\n" % update)
+            except IntegrityError as e:
+                print e
+            except DatabaseError as e:
+                print e
+                transaction.rollback()
+        transaction.commit()
 
-            info_message.send(sender=None, text="%s\n" % update)
-
+    @transaction.commit_manually
     def find_updates(self):
 
-        self.updates.clear()
+        old_updates = self.updates.all()
 
         kernels = Q(name__name='kernel') | Q(name__name='kernel-devel') | \
             Q(name__name='kernel-pae') | Q(name__name='kernel-pae-devel') | \
@@ -135,6 +149,7 @@ class Host(models.Model):
         repo_packages = self.get_host_repo_packages()
         host_packages = self.packages.exclude(kernels).distinct()
         kernel_packages = self.packages.filter(kernels).values('name__name').annotate(Count('name'))
+        transaction.commit()
 
         if self.host_repos_only:
             self.find_host_repo_updates(host_packages, repo_packages)
@@ -142,6 +157,11 @@ class Host(models.Model):
             self.find_osgroup_repo_updates(host_packages, repo_packages)
 
         self.find_kernel_updates(kernel_packages, repo_packages)
+
+        removals = old_updates.exclude(pk__in=self.updates.all())
+        for update in removals:
+            self.updates.remove(update)
+        transaction.commit()
 
     def find_best_repo(self, package, hostrepos):
 
@@ -244,6 +264,7 @@ class Host(models.Model):
         else:
             self.reboot_required = False
 
+    @transaction.commit_manually
     def find_kernel_updates(self, kernel_packages, repo_packages):
 
         try:
@@ -281,7 +302,12 @@ class Host(models.Model):
 
         except ValueError:  # debian kernel
             pass
-        self.save()
+        try:
+            self.save()
+            transaction.commit()
+        except DatabaseError as e:
+            print e
+            transaction.rollback()
 
 
 class HostRepo(models.Model):

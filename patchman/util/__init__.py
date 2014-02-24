@@ -73,7 +73,11 @@ def download_url(res, text=''):
         data = ''
         chunk = ''
         for x in range(1, chunks + 1):
-            chunk = res.read(int(chunk_size))
+            try:
+                chunk = res.read(int(chunk_size))
+            except socket.timeout as e:
+                print 'socket.timeout: %s' % e
+                return
             i += len(chunk)
             update_pbar(i)
             data += chunk
