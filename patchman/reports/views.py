@@ -56,7 +56,12 @@ def upload(request):
                     packages.append(p.replace('\'', '').split(' '))
             if 'repos' in data:
                 repos = data['repos']
-            return render_to_response('reports/report.txt', {'data': data, 'packages': packages, 'repos': repos}, context_instance=RequestContext(request), mimetype='text/plain')
+            return render_to_response('reports/report.txt',
+                                      {'data': data,
+                                       'packages': packages,
+                                       'repos': repos},
+                                      context_instance=RequestContext(request),
+                                      mimetype='text/plain')
         else:
             # Should return HTTP 204
             response.status = 302
@@ -100,10 +105,15 @@ def report_list(request):
         page = p.page(p.num_pages)
 
     filter_list = []
-    filter_list.append(Filter(request, 'processed', {False: 'No', True: 'Yes'}))
+    filter_list.append(Filter(request, 'processed',
+                              {False: 'No', True: 'Yes'}))
     filter_bar = FilterBar(request, filter_list)
 
-    return render_to_response('reports/report_list.html', {'page': page, 'filter_bar': filter_bar, 'terms': terms}, context_instance=RequestContext(request))
+    return render_to_response('reports/report_list.html',
+                              {'page': page,
+                               'filter_bar': filter_bar,
+                               'terms': terms},
+                              context_instance=RequestContext(request))
 
 
 @login_required
@@ -111,7 +121,9 @@ def report_detail(request, report):
 
     report = get_object_or_404(Report, id=report)
 
-    return render_to_response('reports/report_detail.html', {'report': report}, context_instance=RequestContext(request))
+    return render_to_response('reports/report_detail.html',
+                              {'report': report},
+                              context_instance=RequestContext(request))
 
 
 @login_required
@@ -119,7 +131,9 @@ def report_process(request, report):
 
     report = get_object_or_404(Report, id=report)
 
-    return render_to_response('reports/report_process.html', {'report': report}, context_instance=RequestContext(request))
+    return render_to_response('reports/report_process.html',
+                              {'report': report},
+                              context_instance=RequestContext(request))
 
 
 @login_required
@@ -133,6 +147,9 @@ def report_delete(request, report):
             messages.info(request, 'Report %s has been deleted' % report)
             return HttpResponseRedirect(reverse('report_list'))
         elif 'cancel' in request.REQUEST:
-            return HttpResponseRedirect(reverse('report_detail', args=[report.id]))
+            return HttpResponseRedirect(reverse('report_detail',
+                                        args=[report.id]))
 
-    return render_to_response('reports/report_delete.html', {'report': report}, context_instance=RequestContext(request))
+    return render_to_response('reports/report_delete.html',
+                              {'report': report},
+                              context_instance=RequestContext(request))

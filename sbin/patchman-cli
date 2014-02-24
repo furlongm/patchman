@@ -516,11 +516,11 @@ def process_args(args):
     if args.diff:
         diff_hosts(args.diff)
         return False
-    if args.process_reports:
-        process_reports(args.host, args.force)
-        showhelp = False
     if args.clean_reports:
         clean_reports(args.host)
+        showhelp = False
+    if args.process_reports:
+        process_reports(args.host, args.force)
         showhelp = False
     if args.dbcheck:
         dbcheck()
