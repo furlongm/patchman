@@ -423,7 +423,7 @@ def update_yum_repo(mirror, data, repo_url, ts):
             mirror.fail()
             return
 
-        valid = checksum_is_valid(mirror, checksum, checksum_type)
+        valid = checksum_is_valid(mirror, checksum, checksum_type, data)
         if valid and hasattr(settings, 'MAX_MIRRORS') and \
                 type(settings.MAX_MIRRORS) == int:
             max_mirrors = settings.MAX_MIRRORS
@@ -441,7 +441,7 @@ def update_yum_repo(mirror, data, repo_url, ts):
         mirror.fail()
 
 
-def checksum_is_valid(mirror, checksum, checksum_type):
+def checksum_is_valid(mirror, checksum, checksum_type, data):
     """ Check the checksum of the data, returns True if checksum is valid, or
         False if it is invalid or if it has not changed.
     """
