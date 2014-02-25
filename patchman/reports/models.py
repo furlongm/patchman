@@ -20,7 +20,7 @@ from hosts.models import Host
 from arch.models import MachineArchitecture
 from operatingsystems.models import OS
 from domains.models import Domain
-from signals import error_message
+from signals import error_message, info_message
 
 from socket import gethostbyaddr
 
@@ -102,7 +102,7 @@ class Report(models.Model):
         """ Process a report and extract os, arch, domain, packages, repos etc
         """
 
-        if self.os and self.kernel and self.arch:
+        if self.os and self.kernel and self.arch and not self.processed:
 
             oses = OS.objects.select_for_update()
             os, c = oses.get_or_create(name=self.os)
@@ -168,7 +168,11 @@ class Report(models.Model):
                 host.find_updates()
                 transaction.commit()
         else:
-            text = 'Error: OS, kernel or arch not sent with report %s\n' \
+            if self.processed:
+                text = 'Report %s has already been processed\n' % (self.id)
+                info_message.send(sender=None, text=text)
+            else:
+                text = 'Error: OS, kernel or arch not sent with report %s\n' \
                 % (self.id)
-            error_message.send(sender=None, text=text)
+                error_message.send(sender=None, text=text)
             transaction.commit()
