@@ -100,7 +100,7 @@ apt-get install python-django-celery rabbitmq-server
 # then you need to add the following to /etc/patchman/settings.py
 #  LOGIN_REDIRECT_URL = '/mypatchman/'
 #  LOGIN_URL = '/mypatchman/accounts/login/'
-# and uncomment the appropriate line in /etc/apache2/conf.d/patchman.conf
+# and make the appropriate changes in /etc/apache2/conf.d/patchman.conf
 
 # 12. You can optionally run memcached:
 apt-get install memcached python-memcache
