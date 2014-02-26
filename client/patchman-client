@@ -309,12 +309,12 @@ function get_repos {
         if [ ${verbose} -eq 1 ] ; then
             echo 'Finding zypper repos...'
         fi
-        enabled_repos=$(zypper --no-refresh lr | tail +3 | cut -d "|" -f 1,4 | grep "Yes" | cut -d "|" -f 1 | sed -e "s/ //")
+        enabled_repos=$(zypper --no-refresh lr | tail -n +3 | cut -d "|" -f 1,4 | grep "Yes" | cut -d "|" -f 1 | sed -e "s/ //")
         for i in $enabled_repos ; do
             enabled[i]="true"
         done
         let r=0
-        for i in $(zypper --no-refresh lr -u --details | tail +3 | cut -d "|" -f 2,3,6,8 | sed -e "s/ *|/ ${host_arch} |/" -e "s/^ /'/g" -e "s/ *| */' '/g" -e "s/ *$/'/g") ; do
+        for i in $(zypper --no-refresh lr -u --details | tail -n +3 | cut -d "|" -f 2,3,6,8 | sed -e "s/ *|/ ${host_arch} |/" -e "s/^ /'/g" -e "s/ *| */' '/g" -e "s/ *$/'/g") ; do
             let r=$r+1
             if [ "${enabled[${r}]}" == "true" ] ; then
                 echo \'rpm\' ${i} >> ${tmpfile_rep}
