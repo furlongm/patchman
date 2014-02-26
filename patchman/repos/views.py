@@ -281,6 +281,10 @@ def repo_edit(request, repo_id):
             for mirror in mirrors:
                 mirror.repo = repo
                 mirror.save()
+            if repo.enabled:
+                repo.enable()
+            else:
+                repo.disable()
             messages.info(request, 'Saved changes to Repository %s' % repo)
             return HttpResponseRedirect(repo.get_absolute_url())
         else:
@@ -321,7 +325,7 @@ def repo_enable(request, repo_id):
 
     if request.method == 'POST':
         if 'enable' in request.REQUEST:
-            repo.enabled = True
+            repo.enable()
             repo.save()
             if request.is_ajax():
                 return HttpResponse(status=204)
@@ -346,7 +350,7 @@ def repo_disable(request, repo_id):
 
     if request.method == 'POST':
         if 'disable' in request.REQUEST:
-            repo.enabled = False
+            repo.disable()
             repo.save()
             if request.is_ajax():
                 return HttpResponse(status=204)
