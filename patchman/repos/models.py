@@ -75,6 +75,30 @@ class Repository(models.Model):
             text = 'Repo requires certificate authentication, not updating\n'
             info_message.send(sender=None, text=text)
 
+    def disable(self):
+        """ Disable a repo. This involves disabling each mirror, which stops it
+            being considered for package updates, and disabling refresh for
+            each mirror so that it doesn't try to update its package metadata.
+        """
+
+        self.enabled = False
+        for mirror in self.mirror_set.all():
+            mirror.enabled = False
+            mirror.refresh = False
+            mirror.save()
+
+    def enable(self):
+        """ Enable a repo. This involves enabling each mirror, which allows it
+            to be considered for package updates, and enabling refresh for each
+            mirror so that it updates its package metadata.
+        """
+
+        self.enabled = True
+        for mirror in self.mirror_set.all():
+            mirror.enabled = True
+            mirror.refresh = True
+            mirror.save()
+
 
 class Mirror(models.Model):
 
