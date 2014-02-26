@@ -1,0 +1,9 @@
+To upgrade from git
+-------------------
+
+$ cd /srv/patchman
+$ git pull
+$ patchman/manage.py syncdb
+$ patchman/manage.py migrate
+$ service apache2 reload
+
