@@ -14,7 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.forms import ModelForm, ModelMultipleChoiceField, TextInput, Form, ModelChoiceField, ValidationError
+from django.forms import ModelForm, ModelMultipleChoiceField, TextInput, \
+    Form, ModelChoiceField, ValidationError
 from django.contrib.admin.widgets import FilteredSelectMultiple
 
 from repos.models import Repository, Mirror
@@ -22,7 +23,11 @@ from repos.models import Repository, Mirror
 
 class EditRepoForm(ModelForm):
 
-    mirrors = ModelMultipleChoiceField(queryset=Mirror.objects.select_related(), required=False, label=None, widget=FilteredSelectMultiple('Mirrors', True))
+    mirrors = ModelMultipleChoiceField(
+        queryset=Mirror.objects.select_related(),
+        required=False,
+        label=None,
+        widget=FilteredSelectMultiple('Mirrors', True))
 
     def __init__(self, *args, **kwargs):
         super(EditRepoForm, self).__init__(*args, **kwargs)
@@ -31,12 +36,15 @@ class EditRepoForm(ModelForm):
 
     class Meta:
         model = Repository
-        fields = ('name', 'repo_id', 'repotype', 'arch', 'security', 'enabled', 'mirrors', 'auth_required')
+        fields = ('name', 'repo_id', 'repotype', 'arch', 'security', 'enabled',
+                  'mirrors', 'auth_required')
 
 
 class LinkRepoForm(Form):
 
-    name = ModelChoiceField(queryset=Repository.objects.order_by('name'), label='Link all mirrors above to an existing Repository')
+    name = ModelChoiceField(
+        queryset=Repository.objects.order_by('name'),
+        label='Link all mirrors above to an existing Repository')
 
 
 class CreateRepoForm(ModelForm):
@@ -56,13 +64,15 @@ class CreateRepoForm(ModelForm):
     def clean_arch(self):
         data = self.cleaned_data['arch']
         if data != self.arch:
-            raise ValidationError("Not all mirror architectures are the same, cannot proceed.")
+            text = 'Not all mirror architectures are the same, cannot proceed'
+            raise ValidationError(text)
         return data
 
     def clean_repotype(self):
         data = self.cleaned_data['repotype']
         if data != self.repotype:
-            raise ValidationError("Not all mirror repotypes are the same, cannot proceed.")
+            text = 'Not all mirror repotypes are the same, cannot proceed'
+            raise ValidationError(text)
         return data
 
 
@@ -75,4 +85,5 @@ class EditMirrorForm(ModelForm):
 
     class Meta:
         model = Mirror
-        fields = ('repo', 'url', 'enabled', 'refresh', 'mirrorlist', 'last_access_ok', 'fail_count', 'file_checksum')
+        fields = ('repo', 'url', 'enabled', 'refresh', 'mirrorlist',
+                  'last_access_ok', 'fail_count', 'file_checksum')

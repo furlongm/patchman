@@ -98,11 +98,17 @@ def host_list(request):
     filter_list.append(Filter(request, 'domain', Domain.objects.all()))
     filter_list.append(Filter(request, 'os', OS.objects.all()))
     filter_list.append(Filter(request, 'osgroup', OSGroup.objects.all()))
-    filter_list.append(Filter(request, 'arch', MachineArchitecture.objects.all()))
-    filter_list.append(Filter(request, 'reboot_required', {False: 'No', True: 'Yes'}))
+    filter_list.append(Filter(request, 'arch',
+                              MachineArchitecture.objects.all()))
+    filter_list.append(Filter(request, 'reboot_required',
+                              {False: 'No', True: 'Yes'}))
     filter_bar = FilterBar(request, filter_list)
 
-    return render_to_response('hosts/host_list.html', {'page': page, 'filter_bar': filter_bar, 'terms': terms}, context_instance=RequestContext(request))
+    return render_to_response('hosts/host_list.html',
+                              {'page': page,
+                               'filter_bar': filter_bar,
+                               'terms': terms},
+                              context_instance=RequestContext(request))
 
 
 @login_required
@@ -110,11 +116,15 @@ def host_detail(request, hostname):
 
     host = get_object_or_404(Host, hostname=hostname)
 
-    reports = Report.objects.all().filter(host=hostname).order_by('-created')[:3]
+    reports = Report.objects.filter(host=hostname).order_by('-created')[:3]
 
     hostrepos = HostRepo.objects.filter(host=host)
 
-    return render_to_response('hosts/host_detail.html', {'host': host, 'reports': reports, 'hostrepos': hostrepos}, context_instance=RequestContext(request))
+    return render_to_response('hosts/host_detail.html',
+                              {'host': host,
+                               'reports': reports,
+                               'hostrepos': hostrepos},
+                              context_instance=RequestContext(request))
 
 
 @login_required
@@ -122,7 +132,7 @@ def host_edit(request, hostname):
 
     host = get_object_or_404(Host, hostname=hostname)
 
-    reports = Report.objects.all().filter(host=hostname).order_by('-created')[:3]
+    reports = Report.objects.filter(host=hostname).order_by('-created')[:3]
 
     if request.method == 'POST':
         edit_form = EditHostForm(request.POST, instance=host)
@@ -136,7 +146,11 @@ def host_edit(request, hostname):
     else:
         edit_form = EditHostForm(instance=host)
 
-    return render_to_response('hosts/host_edit.html', {'host': host, 'reports': reports, 'edit_form': edit_form}, context_instance=RequestContext(request))
+    return render_to_response('hosts/host_edit.html',
+                              {'host': host,
+                               'reports': reports,
+                               'edit_form': edit_form},
+                              context_instance=RequestContext(request))
 
 
 @login_required
@@ -150,8 +164,12 @@ def host_delete(request, hostname):
             messages.info(request, 'Host %s has been deleted' % hostname)
             return HttpResponseRedirect(reverse('host_list'))
         elif 'cancel' in request.REQUEST:
-            return HttpResponseRedirect(reverse('host_detail', args=[hostname]))
+            return HttpResponseRedirect(reverse('host_detail',
+                                                args=[hostname]))
 
-    reports = Report.objects.all().filter(host=hostname).order_by('-created')[:3]
+    reports = Report.objects.filter(host=hostname).order_by('-created')[:3]
 
-    return render_to_response('hosts/host_delete.html', {'host': host, 'reports': reports}, context_instance=RequestContext(request))
+    return render_to_response('hosts/host_delete.html',
+                              {'host': host,
+                               'reports': reports},
+                              context_instance=RequestContext(request))

@@ -16,17 +16,22 @@
 
 from django.conf.urls import patterns, url
 
-urlpatterns = patterns('repos.views',
-
+urlpatterns = patterns(
+    'repos.views',
     url(r'^$', 'repo_list', name='repo_list'),
     url(r'^mirrors/$', 'mirror_list', name='mirror_list'),
     url(r'^(?P<repo_id>[-.\w]+)/$', 'repo_detail', name='repo_detail'),
     url(r'^(?P<repo_id>[-.\w]+)/delete/$', 'repo_delete', name='repo_delete'),
     url(r'^(?P<repo_id>[-.\w]+)/enable/$', 'repo_enable', name='repo_enable'),
-    url(r'^(?P<repo_id>[-.\w]+)/disable/$', 'repo_disable', name='repo_disable'),
-    url(r'^(?P<repo_id>[-.\w]+)/enablesec/$', 'repo_enablesec', name='repo_enablesec'),
-    url(r'^(?P<repo_id>[-.\w]+)/disablesec/$', 'repo_disablesec', name='repo_disablesec'),
+    url(r'^(?P<repo_id>[-.\w]+)/disable/$', 'repo_disable',
+        name='repo_disable'),
+    url(r'^(?P<repo_id>[-.\w]+)/enablesec/$', 'repo_enablesec',
+        name='repo_enablesec'),
+    url(r'^(?P<repo_id>[-.\w]+)/disablesec/$', 'repo_disablesec',
+        name='repo_disablesec'),
     url(r'^(?P<repo_id>[-.\w]+)/edit/$', 'repo_edit', name='repo_edit'),
-    url(r'^(?P<repo_id>[-.\w]+)/mirror/(?P<mirror_id>[-.\w]+)/delete/$', 'mirror_delete', name='mirror_delete'),
-    url(r'^(?P<repo_id>[-.\w]+)/mirror/(?P<mirror_id>[-.\w]+)/edit/$', 'mirror_edit', name='mirror_edit'),
+    url(r'^(?P<repo_id>[-.\w]+)/mirror/(?P<mirror_id>[-.\w]+)/delete/$',
+        'mirror_delete', name='mirror_delete'),
+    url(r'^(?P<repo_id>[-.\w]+)/mirror/(?P<mirror_id>[-.\w]+)/edit/$',
+        'mirror_edit', name='mirror_edit'),
 )

@@ -56,7 +56,10 @@ class Package(models.Model):
     version = models.CharField(max_length=255)
     release = models.CharField(max_length=255, blank=True, null=True)
     arch = models.ForeignKey(PackageArchitecture)
-    packagetype = models.CharField(max_length=1, choices=PACKAGE_TYPES, blank=True, null=True)
+    packagetype = models.CharField(max_length=1,
+                                   choices=PACKAGE_TYPES,
+                                   blank=True,
+                                   null=True)
     description = models.TextField(blank=True, null=True)
     url = models.URLField(max_length=255, blank=True, null=True)
 
@@ -64,7 +67,8 @@ class Package(models.Model):
 
     class Meta:
         ordering = ('name', 'epoch', 'version', 'release', 'arch')
-        unique_together = ('name', 'epoch', 'version', 'release', 'arch', 'packagetype',)
+        unique_together = (
+            'name', 'epoch', 'version', 'release', 'arch', 'packagetype',)
 
     def __unicode__(self):
         if self.epoch:
@@ -81,7 +85,8 @@ class Package(models.Model):
         return self.name.get_absolute_url()
 
     def __key(self):
-        return (self.name, self.epoch, self.version, self.release, self.arch, self.packagetype)
+        return (self.name, self.epoch, self.version, self.release, self.arch,
+                self.packagetype)
 
     def __eq__(self, other):
         return self.__key() == other.__key()
@@ -111,7 +116,8 @@ class Package(models.Model):
 
     def compare_version(self, other):
         if self.packagetype == 'R' and other.packagetype == 'R':
-            return labelCompare(self._version_string_rpm(), other._version_string_rpm())
+            return labelCompare(self._version_string_rpm(),
+                                other._version_string_rpm())
         elif self.packagetype == 'D' and other.packagetype == 'D':
             vs = Version(self._version_string_deb())
             vo = Version(other._version_string_deb())
@@ -119,7 +125,8 @@ class Package(models.Model):
 
     def repo_count(self):
         from repos.models import Repository
-        return Repository.objects.filter(mirror__packages=self).distinct().count()
+        return Repository.objects.filter(
+            mirror__packages=self).distinct().count()
 
 
 class PackageString(models.Model):
@@ -148,7 +155,8 @@ class PackageString(models.Model):
         return '%s-%s%s%s-%s' % (self.name, epo, self.version, rel, self.arch)
 
     def __key(self):
-        return (self.name, self.epoch, self.version, self.release, self.arch, self.packagetype)
+        return (self.name, self.epoch, self.version, self.release, self.arch,
+                self.packagetype)
 
     def __eq__(self, other):
         return self.__key() == other.__key()
@@ -176,4 +184,5 @@ class PackageUpdate(models.Model):
             update_type = 'Security'
         else:
             update_type = 'Bugfix'
-        return '%s -> %s (%s)' % (self.oldpackage, self.newpackage, update_type)
+        return '%s -> %s (%s)' % (self.oldpackage, self.newpackage,
+                                  update_type)

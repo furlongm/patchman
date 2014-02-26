@@ -39,7 +39,8 @@ class OS(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
 # Django 1.3+
-#    osgroup = models.ForeignKey(OSGroup, blank=True, null=True, on_delete=models.SET_NULL)
+#    osgroup = models.ForeignKey(OSGroup, blank=True, null=True,
+#                                on_delete=models.SET_NULL)
     osgroup = models.ForeignKey(OSGroup, blank=True, null=True)
 
     class Meta:

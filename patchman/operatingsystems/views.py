@@ -14,7 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.shortcuts import get_object_or_404, render_to_response, get_list_or_404
+from django.shortcuts import get_object_or_404, render_to_response, \
+    get_list_or_404
 from django.template import RequestContext
 from django.http import HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
@@ -24,7 +25,8 @@ from django.contrib import messages
 from django.core.urlresolvers import reverse
 
 from operatingsystems.models import OS, OSGroup
-from operatingsystems.forms import LinkOSGroupForm, AddReposToOSGroupForm, CreateOSGroupForm
+from operatingsystems.forms import LinkOSGroupForm, AddReposToOSGroupForm, \
+    CreateOSGroupForm
 
 
 @login_required
@@ -53,7 +55,9 @@ def os_list(request):
     except (EmptyPage, InvalidPage):
         page = p.page(p.num_pages)
 
-    return render_to_response('operatingsystems/os_list.html', {'page': page, 'terms': terms}, context_instance=RequestContext(request))
+    return render_to_response('operatingsystems/os_list.html',
+                              {'page': page, 'terms': terms},
+                              context_instance=RequestContext(request))
 
 
 @login_required
@@ -78,7 +82,11 @@ def os_detail(request, os_id):
         link_form = LinkOSGroupForm(instance=os, prefix='link')
         create_form = CreateOSGroupForm(prefix='create')
 
-    return render_to_response('operatingsystems/os_detail.html', {'os': os, 'link_form': link_form, 'create_form': create_form}, context_instance=RequestContext(request))
+    return render_to_response('operatingsystems/os_detail.html',
+                              {'os': os,
+                               'link_form': link_form,
+                               'create_form': create_form},
+                              context_instance=RequestContext(request))
 
 
 @login_required
@@ -100,7 +108,8 @@ def os_delete(request, os_id):
             if oses:
                 for os in oses:
                     os.delete()
-                messages.info(request, '%s OS\'s have been deleted' % len(oses))
+                text = '%s OS\'s have been deleted' % len(oses)
+                messages.info(request, text)
                 return HttpResponseRedirect(reverse('os_list'))
         elif 'cancel' in request.REQUEST:
             if os_id == 'empty_oses':
@@ -108,7 +117,9 @@ def os_delete(request, os_id):
             else:
                 return HttpResponseRedirect(reverse('os_detail', args=[os_id]))
 
-    return render_to_response('operatingsystems/os_delete.html', {'os': os, 'oses': oses}, context_instance=RequestContext(request))
+    return render_to_response('operatingsystems/os_delete.html',
+                              {'os': os, 'oses': oses},
+                              context_instance=RequestContext(request))
 
 
 @login_required
@@ -138,7 +149,9 @@ def osgroup_list(request):
     except (EmptyPage, InvalidPage):
         page = p.page(p.num_pages)
 
-    return render_to_response('operatingsystems/osgroup_list.html', {'page': page}, context_instance=RequestContext(request))
+    return render_to_response('operatingsystems/osgroup_list.html',
+                              {'page': page},
+                              context_instance=RequestContext(request))
 
 
 @login_required
@@ -155,7 +168,9 @@ def osgroup_detail(request, osgroup_id):
 
     form = AddReposToOSGroupForm(instance=osgroup)
 
-    return render_to_response('operatingsystems/osgroup_detail.html', {'osgroup': osgroup, 'form': form}, context_instance=RequestContext(request))
+    return render_to_response('operatingsystems/osgroup_detail.html',
+                              {'osgroup': osgroup, 'form': form},
+                              context_instance=RequestContext(request))
 
 
 @login_required
@@ -169,6 +184,9 @@ def osgroup_delete(request, osgroup_id):
             messages.info(request, 'OS Group %s has been deleted' % osgroup)
             return HttpResponseRedirect(reverse('os_list'))
         elif 'cancel' in request.REQUEST:
-            return HttpResponseRedirect(reverse('osgroup_detail', args=[osgroup_id]))
+            oid = osgroup_id
+            return HttpResponseRedirect(reverse('osgroup_detail', args=[oid]))
 
-    return render_to_response('operatingsystems/osgroup_delete.html', {'osgroup': osgroup}, context_instance=RequestContext(request))
+    return render_to_response('operatingsystems/osgroup_delete.html',
+                              {'osgroup': osgroup},
+                              context_instance=RequestContext(request))

@@ -67,14 +67,14 @@ class Host(models.Model):
         if self.check_dns:
             update_rdns(self)
             if self.hostname == self.reversedns:
-                info_message.send(sender=None, text='Reverse DNS matches.\n')
+                info_message.send(sender=None, text='Reverse DNS matches\n')
             else:
                 info_message.send(sender=None,
                                   text='Reverse DNS mismatch found: %s != %s\n'
                                   % (self.hostname, self.reversedns))
         else:
             info_message.send(sender=None,
-                              text='Reverse DNS check disabled.\n')
+                              text='Reverse DNS check disabled\n')
 
     def clean_reports(self, timestamp):
         remove_reports(self, timestamp)
@@ -142,13 +142,14 @@ class Host(models.Model):
 
         old_updates = self.updates.all()
 
-        kernels = Q(name__name='kernel') | Q(name__name='kernel-devel') | \
+        kernels_q = Q(name__name='kernel') | Q(name__name='kernel-devel') | \
             Q(name__name='kernel-pae') | Q(name__name='kernel-pae-devel') | \
             Q(name__name='kernel-xen') | Q(name__name='kernel-xen-devel') | \
             Q(name__name='kernel-headers')
         repo_packages = self.get_host_repo_packages()
-        host_packages = self.packages.exclude(kernels).distinct()
-        kernel_packages = self.packages.filter(kernels).values('name__name').annotate(Count('name'))
+        host_packages = self.packages.exclude(kernels_q).distinct()
+        kernels = self.packages.filter(kernels_q)
+        kernel_packages = kernels.values('name__name').annotate(Count('name'))
         transaction.commit()
 
         if self.host_repos_only:
@@ -166,12 +167,12 @@ class Host(models.Model):
     def find_best_repo(self, package, hostrepos):
 
         best_repo = None
-        package_hostrepos = hostrepos.filter(repo__mirror__packages__name=package.name)
+        package_repos = hostrepos.filter(repo__mirror__packages__name=package)
 
-        if package_hostrepos:
-            best_repo = package_hostrepos[0]
-        if package_hostrepos.count() > 1:
-            for hostrepo in package_hostrepos:
+        if package_repos:
+            best_repo = package_repos[0]
+        if package_repos.count() > 1:
+            for hostrepo in package_repos:
                 if hostrepo.repo.security:
                     best_repo = hostrepo
                 else:
@@ -214,7 +215,7 @@ class Host(models.Model):
             highest_ver = ('', '0', '')
             highest_package = None
 
-            best_repo = self.find_best_repo(package, hostrepos)
+            best_repo = self.find_best_repo(package.name, hostrepos)
 
             # find the packages that are potential updates
             pu_q = Q(name=package.name, arch=package.arch,
@@ -224,7 +225,7 @@ class Host(models.Model):
 
                 if package.compare_version(potential_update) == -1:
 
-                    pu_best_repo = self.find_best_repo(potential_update,
+                    pu_best_repo = self.find_best_repo(potential_update.name,
                                                        hostrepos)
                     priority = pu_best_repo.priority
 

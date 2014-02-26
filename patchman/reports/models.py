@@ -173,6 +173,6 @@ class Report(models.Model):
                 info_message.send(sender=None, text=text)
             else:
                 text = 'Error: OS, kernel or arch not sent with report %s\n' \
-                % (self.id)
+                    % (self.id)
                 error_message.send(sender=None, text=text)
             transaction.commit()

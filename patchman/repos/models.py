@@ -19,7 +19,8 @@ from django.db import models
 from arch.models import MachineArchitecture
 from packages.models import Package
 
-from repos.utils import update_deb_repo, update_rpm_repo, update_mirror_packages
+from repos.utils import update_deb_repo, update_rpm_repo, \
+    update_mirror_packages
 from signals import error_message, info_message
 
 
@@ -67,9 +68,12 @@ class Repository(models.Model):
             elif self.repotype == Repository.RPM:
                 update_rpm_repo(self)
             else:
-                error_message.send(sender=None, text='Error: unknown repo type for repo %s: %s\n' % (self.id, self.repotype))
+                text = 'Error: unknown repo type for repo %s: %s\n' % \
+                    (self.id, self.repotype)
+                error_message.send(sender=None, text=text)
         else:
-            info_message.send(sender=None, text='Repo requires certificate authentication, not updating\n')
+            text = 'Repo requires certificate authentication, not updating\n'
+            info_message.send(sender=None, text=text)
 
 
 class Mirror(models.Model):
@@ -79,7 +83,10 @@ class Mirror(models.Model):
     last_access_ok = models.BooleanField()
     file_checksum = models.CharField(max_length=255, blank=True, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
-    packages = models.ManyToManyField(Package, blank=True, null=True, through='MirrorPackage')
+    packages = models.ManyToManyField(Package,
+                                      blank=True,
+                                      null=True,
+                                      through='MirrorPackage')
     mirrorlist = models.BooleanField(default=False)
     enabled = models.BooleanField(default=True)
     refresh = models.BooleanField(default=True)
@@ -93,11 +100,13 @@ class Mirror(models.Model):
             Disables refresh on a mirror if it fails more than 28 times
         """
 
-        error_message.send(sender=None, text='No usable mirror found at %s\n' % self.url)
+        text = 'No usable mirror found at %s\n' % self.url
+        error_message.send(sender=None, text=text)
         self.fail_count = self.fail_count + 1
         if self.fail_count > 28:
             self.refresh = False
-            error_message.send(sender=None, text='Mirror has failed more than 28 times, disabling refresh\n')
+            text = 'Mirror has failed more than 28 times, disabling refresh\n'
+            error_message.send(sender=None, text=text)
 
     def update_packages(self, packages):
         """ Update the packages associated with a mirror
