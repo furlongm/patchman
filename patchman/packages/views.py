@@ -32,10 +32,12 @@ def package_list(request):
     packages = PackageName.objects.select_related()
 
     if 'arch' in request.REQUEST:
-        packages = packages.filter(package__arch=int(request.REQUEST['arch'])).distinct()
+        packages = packages.filter(
+            package__arch=int(request.REQUEST['arch'])).distinct()
 
     if 'packagetype' in request.REQUEST:
-        packages = packages.filter(package__packagetype=request.REQUEST['packagetype']).distinct()
+        packages = packages.filter(
+            package__packagetype=request.REQUEST['packagetype']).distinct()
 
     if 'search' in request.REQUEST:
         terms = request.REQUEST['search'].lower()
@@ -60,12 +62,20 @@ def package_list(request):
         page = p.page(p.num_pages)
 
     filter_list = []
-    filter_list.append(Filter(request, 'arch', PackageArchitecture.objects.all()))
+    filter_list.append(
+        Filter(request, 'arch', PackageArchitecture.objects.all()))
 #   Disable for speed, this is a huge slowdown
-#    filter_list.append(Filter(request, 'packagetype', Package.objects.values_list('packagetype', flat=True).distinct()))
+#    filter_list.append(
+#        Filter(
+#            request, 'packagetype',
+#            Package.objects.values_list('packagetype', flat=True).distinct()))
     filter_bar = FilterBar(request, filter_list)
 
-    return render_to_response('packages/package_list.html', {'page': page, 'filter_bar': filter_bar, 'terms': terms}, context_instance=RequestContext(request))
+    return render_to_response('packages/package_list.html',
+                              {'page': page,
+                               'filter_bar': filter_bar,
+                               'terms': terms},
+                              context_instance=RequestContext(request))
 
 
 @login_required
@@ -74,4 +84,6 @@ def package_detail(request, packagename):
     package = get_object_or_404(PackageName, name=packagename)
     allversions = Package.objects.select_related().filter(name=package.id)
 
-    return render_to_response('packages/package_detail.html', {'package': package, 'allversions': allversions}, context_instance=RequestContext(request))
+    return render_to_response('packages/package_detail.html',
+                              {'package': package, 'allversions': allversions},
+                              context_instance=RequestContext(request))

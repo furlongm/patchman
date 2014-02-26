@@ -85,19 +85,28 @@ def dashboard(request):
     for checksum in checksums:
         first_mirror = checksums[checksum][0]
         for mirror in checksums[checksum]:
-            if mirror.repo != first_mirror.repo and mirror.repo.arch == first_mirror.repo.arch and mirror.repo.repotype == first_mirror.repo.repotype:
+            if mirror.repo != first_mirror.repo and \
+                    mirror.repo.arch == first_mirror.repo.arch and \
+                    mirror.repo.repotype == first_mirror.repo.repotype:
                 possible_mirrors[checksum] = checksums[checksum]
                 continue
 
-    return render_to_response('dashboard/index.html',
-        {'lonely_oses': lonely_oses, 'norepo_hosts': norepo_hosts,
-        'nohost_oses': nohost_oses, 'diff_rdns_hosts': diff_rdns_hosts,
-        'stale_hosts': stale_hosts, 'possible_mirrors': possible_mirrors,
-        'site': site, 'norepo_packages': norepo_packages, 'nohost_repos': nohost_repos,
-        'secupdate_hosts': secupdate_hosts, 'update_hosts': update_hosts,
-        'norepo_osgroups': norepo_osgroups, 'unused_repos': unused_repos,
-        'disabled_mirrors': disabled_mirrors, 'norefresh_mirrors': norefresh_mirrors,
-        'failed_mirrors': failed_mirrors, 'orphaned_packages': orphaned_packages,
-        'failed_repos': failed_repos, 'nomirror_repos': nomirror_repos,
-        'reboot_hosts': reboot_hosts, 'unprocessed_reports': unprocessed_reports},
+    return render_to_response(
+        'dashboard/index.html',
+        {'site': site,
+         'lonely_oses': lonely_oses, 'norepo_hosts': norepo_hosts,
+         'nohost_oses': nohost_oses, 'diff_rdns_hosts': diff_rdns_hosts,
+         'stale_hosts': stale_hosts, 'possible_mirrors': possible_mirrors,
+         'norepo_packages': norepo_packages,
+         'nohost_repos': nohost_repos,
+         'secupdate_hosts': secupdate_hosts,
+         'update_hosts': update_hosts,
+         'norepo_osgroups': norepo_osgroups, 'unused_repos': unused_repos,
+         'disabled_mirrors': disabled_mirrors,
+         'norefresh_mirrors': norefresh_mirrors,
+         'failed_mirrors': failed_mirrors,
+         'orphaned_packages': orphaned_packages,
+         'failed_repos': failed_repos, 'nomirror_repos': nomirror_repos,
+         'reboot_hosts': reboot_hosts,
+         'unprocessed_reports': unprocessed_reports},
         context_instance=RequestContext(request))

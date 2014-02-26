@@ -92,6 +92,7 @@ def process_packages(report, host):
             host.packages.remove(package)
     transaction.commit()
 
+
 def process_updates(report, host):
     """ Processes the update strings sent with a report """
 
@@ -157,7 +158,7 @@ def process_update(host, update_string, security):
     transaction.commit()
 
     package_names = PackageName.objects.select_for_update()
-    p_name, c = packagenames.get_or_create(name=package_str)
+    p_name, c = package_names.get_or_create(name=package_str)
     transaction.commit()
 
     packages = Package.objects.select_for_update()
@@ -178,7 +179,9 @@ def process_update(host, update_string, security):
             MirrorPackage.objects.create(mirror=mirror, package=package)
         transaction.commit()
 
-    installed_package = host.packages.filter(name=p_name, arch=p_arch, packagetype='R')[0]
+    installed_package = host.packages.filter(name=p_name,
+                                             arch=p_arch,
+                                             packagetype='R')[0]
 
     updates = PackageUpdate.objects.select_for_update()
     update, c = updates.get_or_create(oldpackage=installed_package,

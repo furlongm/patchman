@@ -45,7 +45,11 @@ class CreateOSGroupForm(ModelForm):
 
 class AddReposToOSGroupForm(ModelForm):
 
-    repos = ModelMultipleChoiceField(queryset=Repository.objects.select_related(), required=False, label=None, widget=FilteredSelectMultiple('Repos', False))
+    repos = ModelMultipleChoiceField(
+        queryset=Repository.objects.select_related(),
+        required=False,
+        label=None,
+        widget=FilteredSelectMultiple('Repos', False))
 
     class Meta:
         model = OSGroup

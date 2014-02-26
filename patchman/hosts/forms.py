@@ -29,4 +29,13 @@ class EditHostForm(ModelForm):
 
     class Meta:
         model = Host
-        fields = ('hostname', 'reversedns', 'ipaddress', 'os', 'kernel', 'arch', 'reboot_required', 'host_repos_only', 'check_dns', 'tags')
+        fields = ('hostname',
+                  'reversedns',
+                  'ipaddress',
+                  'os',
+                  'kernel',
+                  'arch',
+                  'reboot_required',
+                  'host_repos_only',
+                  'check_dns',
+                  'tags')

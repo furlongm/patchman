@@ -190,7 +190,7 @@ def get_url(url):
         # don't blindly succeed with http 200 (e.g. sourceforge)
         headers = dict(res.headers.items())
         if 'content-type' in headers and \
-           not re.match('text/html', headers['content-type']):
+                not re.match('text/html', headers['content-type']):
             return res
         else:
             return -1
@@ -249,7 +249,7 @@ def mirrorlist_check(mirror_url):
     if type(res) != int:
         headers = dict(res.headers.items())
         if 'content-type' in headers and \
-           re.match('text/plain', headers['content-type']) is not None:
+                re.match('text/plain', headers['content-type']) is not None:
             data = download_url(res, 'Downloading repo info:')
             if data is None:
                 return
@@ -335,7 +335,7 @@ def extract_yum_packages(data):
                 packages.add(package)
         return packages
     else:
-        info_message.send(sender=None, text='No packages found in repo.\n')
+        info_message.send(sender=None, text='No packages found in repo\n')
     return
 
 
@@ -372,7 +372,7 @@ def extract_deb_packages(data, packages):
                                     packagetype='D')
             packages.add(package)
     else:
-        info_message.send(sender=None, text='No packages found in repo.\n')
+        info_message.send(sender=None, text='No packages found in repo\n')
 
 
 def extract_yast_packages(data):
@@ -400,7 +400,7 @@ def extract_yast_packages(data):
             packages.add(package)
         return packages
     else:
-        info_message.send(sender=None, text='No packages found in repo.\n')
+        info_message.send(sender=None, text='No packages found in repo\n')
     return
 
 
@@ -431,7 +431,8 @@ def update_yum_repo(mirror, data, repo_url, ts):
             checksum_q = Q(mirrorlist=False, refresh=True, timestamp=ts)
             have_checksum = mirror.repo.mirror_set.filter(checksum_q).count()
             if have_checksum >= max_mirrors:
-                text = '%s mirrors already have this checksum, ignoring refresh to save time\n' % max_mirrors
+                text = '%s mirrors already have this checksum, ' % max_mirrors
+                text += 'ignoring refresh to save time\n'
                 info_message.send(sender=None, text=text)
             else:
                 packages = extract_yum_packages(data)
@@ -455,12 +456,14 @@ def checksum_is_valid(mirror, checksum, checksum_type, data):
         error_message.send(sender=None, text=text)
 
     if sha != checksum:
-        text = '%s checksum failed for mirror %s, not updating package metadata\n' % (checksum_type, mirror.id)
+        text = '%s checksum failed for mirror %s' % (checksum_type, mirror.id)
+        text += ', not updating package metadata\n'
         error_message.send(sender=None, text=text)
         mirror.last_access_ok = False
         return False
     elif mirror.file_checksum == sha:
-        text = 'Mirror checksum has not changed, not updating package metadata\n'
+        text = 'Mirror checksum has not changed, '
+        text += 'not updating package metadata\n'
         info_message.send(sender=None, text=text)
         return False
     return True
@@ -553,7 +556,8 @@ def update_deb_repo(repo):
                 return
             sha1 = get_sha1(data)
             if mirror.file_checksum == sha1:
-                text = 'Mirror checksum has not changed, not updating package metadata\n'
+                text = 'Mirror checksum has not changed, '
+                text += 'not updating package metadata\n'
                 info_message.send(sender=None, text=text)
             else:
                 packages = set()

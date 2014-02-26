@@ -18,6 +18,7 @@ import os
 import sys
 import string
 import math
+import socket
 
 from progressbar import Bar, ETA, Percentage, ProgressBar
 

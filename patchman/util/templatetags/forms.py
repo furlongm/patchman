@@ -19,7 +19,6 @@
 from django.template import Library
 from django.conf import settings
 from django import template
-from django.template import resolve_variable
 
 register = Library()
 
@@ -72,7 +71,6 @@ class FormFieldNode(template.Node):
             label_class_names.append('required')
 
         widget_class_name = field.field.widget.__class__.__name__.lower()
-        field_class_name = field.field.__class__.__name__.lower()
         if widget_class_name == 'checkboxinput':
             label_class_names.append('vCheckboxLabel')
 
@@ -83,7 +81,7 @@ class FormFieldNode(template.Node):
         context.push()
         context['class'] = class_str
         context['formfield'] = field
-        output = self.get_template(field.field.widget.__class__.__name__.lower()).render(context)
+        output = self.get_template(widget_class_name).render(context)
         context.pop()
         context.pop()
         return output

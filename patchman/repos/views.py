@@ -29,7 +29,8 @@ from hosts.models import HostRepo
 from repos.models import Repository, Mirror
 from operatingsystems.models import OSGroup
 from arch.models import MachineArchitecture
-from repos.forms import EditRepoForm, LinkRepoForm, CreateRepoForm, EditMirrorForm
+from repos.forms import EditRepoForm, LinkRepoForm, CreateRepoForm, \
+    EditMirrorForm
 
 
 @login_required
@@ -55,7 +56,8 @@ def repo_list(request):
         repos = repos.filter(enabled=enabled)
 
     if 'package_id' in request.REQUEST:
-        repos = repos.filter(mirror__packages=int(request.REQUEST['package_id']))
+        repos = repos.filter(
+            mirror__packages=int(request.REQUEST['package_id']))
 
     if 'search' in request.REQUEST:
         terms = request.REQUEST['search'].lower()
@@ -80,14 +82,24 @@ def repo_list(request):
         page = p.page(p.num_pages)
 
     filter_list = []
-    filter_list.append(Filter(request, 'repotype', Repository.objects.values_list('repotype', flat=True).distinct()))
-    filter_list.append(Filter(request, 'arch', MachineArchitecture.objects.all()))
+    filter_list.append(
+        Filter(
+            request,
+            'repotype',
+            Repository.objects.values_list('repotype', flat=True).distinct()))
+    filter_list.append(Filter(request,
+                              'arch',
+                              MachineArchitecture.objects.all()))
     filter_list.append(Filter(request, 'enabled', {False: 'No', True: 'Yes'}))
     filter_list.append(Filter(request, 'security', {False: 'No', True: 'Yes'}))
     filter_list.append(Filter(request, 'osgroup', OSGroup.objects.all()))
     filter_bar = FilterBar(request, filter_list)
 
-    return render_to_response('repos/repo_list.html', {'page': page, 'filter_bar': filter_bar, 'terms': terms}, context_instance=RequestContext(request))
+    return render_to_response('repos/repo_list.html',
+                              {'page': page,
+                               'filter_bar': filter_bar,
+                               'terms': terms},
+                              context_instance=RequestContext(request))
 
 
 @login_required
@@ -99,22 +111,34 @@ def mirror_list(request):
         checksum = request.REQUEST['checksum']
         mirrors = mirrors.filter(file_checksum=checksum)
     else:
-        # only show mirrors with more than 0 packages
-        # this is a hack but works, because a host with 0 packages has no packages with package_id > 0
+        # Only show mirrors with more than 0 packages. Thiis is a hack but
+        # works, because a host with 0 packages has no packages with
+        # package_id > 0
         mirrors = mirrors.filter(packages__gt=0)
-        # this is the correct way to do it, but the SQL takes way longer
-        # mirrors = mirrors.annotate(num_packages=Count('packages')).filter(num_packages__gt=0)
+        # iThis is the correct way to do it, but the SQL takes way longer
+        # mirrors = mirrors.annotate(
+        #    num_packages=Count('packages')).filter(num_packages__gt=0)
 
     mirrors = mirrors.distinct()
 
     def pre_reqs(arch, repotype):
         for mirror in mirrors:
             if mirror.repo.arch != arch:
-                messages.info(request, 'Not all mirror architectures are the same, cannot link to or create repos.')
-                return render_to_response('repos/mirror_with_repo_list.html', {'page': page, 'checksum': checksum}, context_instance=RequestContext(request))
+                text = 'Not all mirror architectures are the same,'
+                text += ' cannot link to or create repos'
+                messages.info(request, text)
+                return render_to_response('repos/mirror_with_repo_list.html',
+                                          {'page': page, 'checksum': checksum},
+                                          context_instance=RequestContext(
+                                              request))
             if mirror.repo.repotype != repotype:
-                messages.info(request, 'Not all mirror repotypes are the same, cannot link to or create repos.')
-                return render_to_response('repos/mirror_with_repo_list.html', {'page': page, 'checksum': checksum}, context_instance=RequestContext(request))
+                text = 'Not all mirror repotypes are the same,'
+                text += ' cannot link to or create repos'
+                messages.info(request, text)
+                return render_to_response('repos/mirror_with_repo_list.html',
+                                          {'page': page, 'checksum': checksum},
+                                          context_instance=RequestContext(
+                                              request))
         return True
 
     def move_mirrors(repo):
@@ -150,7 +174,8 @@ def mirror_list(request):
         enabled = mirrors[0].repo.enabled
         security = mirrors[0].repo.security
 
-        create_form = CreateRepoForm(request.POST, prefix='create', arch=arch, repotype=repotype)
+        create_form = CreateRepoForm(request.POST, prefix='create', arch=arch,
+                                     repotype=repotype)
         if create_form.is_valid():
             repo = create_form.save(commit=False)
             repo.arch = create_form.arch
@@ -159,7 +184,8 @@ def mirror_list(request):
             repo.security = security
             repo.save()
             move_mirrors(repo)
-            messages.info(request, 'Mirrors linked to new Repository %s' % repo)
+            text = 'Mirrors linked to new Repository %s' % repo
+            messages.info(request, text)
             return HttpResponseRedirect(repo.get_absolute_url())
 
         link_form = LinkRepoForm(request.POST, prefix='link')
@@ -179,9 +205,17 @@ def mirror_list(request):
             else:
                 link_form = LinkRepoForm(prefix='link')
                 create_form = CreateRepoForm(prefix='create')
-                return render_to_response('repos/mirror_with_repo_list.html', {'page': page, 'link_form': link_form, 'create_form': create_form, 'checksum': checksum}, context_instance=RequestContext(request))
+                return render_to_response('repos/mirror_with_repo_list.html',
+                                          {'page': page,
+                                           'link_form': link_form,
+                                           'create_form': create_form,
+                                           'checksum': checksum},
+                                          context_instance=RequestContext(
+                                              request))
 
-    return render_to_response('repos/mirror_list.html', {'page': page}, context_instance=RequestContext(request))
+    return render_to_response('repos/mirror_list.html',
+                              {'page': page},
+                              context_instance=RequestContext(request))
 
 
 @login_required
@@ -218,7 +252,9 @@ def mirror_edit(request, repo_id, mirror_id):
     else:
         edit_form = EditMirrorForm(instance=mirror)
 
-    return render_to_response('repos/mirror_edit.html', {'mirror': mirror, 'edit_form': edit_form}, context_instance=RequestContext(request))
+    return render_to_response('repos/mirror_edit.html',
+                              {'mirror': mirror, 'edit_form': edit_form},
+                              context_instance=RequestContext(request))
 
 
 @login_required
@@ -226,7 +262,9 @@ def repo_detail(request, repo_id):
 
     repo = get_object_or_404(Repository, id=repo_id)
 
-    return render_to_response('repos/repo_detail.html', {'repo': repo}, context_instance=RequestContext(request))
+    return render_to_response('repos/repo_detail.html',
+                              {'repo': repo},
+                              context_instance=RequestContext(request))
 
 
 @login_required
@@ -251,7 +289,9 @@ def repo_edit(request, repo_id):
         edit_form = EditRepoForm(instance=repo)
         edit_form.initial['mirrors'] = repo.mirror_set.all()
 
-    return render_to_response('repos/repo_edit.html', {'repo': repo, 'edit_form': edit_form}, context_instance=RequestContext(request))
+    return render_to_response('repos/repo_edit.html',
+                              {'repo': repo, 'edit_form': edit_form},
+                              context_instance=RequestContext(request))
 
 
 @login_required
@@ -264,12 +304,14 @@ def repo_delete(request, repo_id):
             for mirror in repo.mirror_set.all():
                 mirror.delete()
             repo.delete()
-            messages.info(request, 'Repository %s has been deleted.' % repo)
+            messages.info(request, 'Repository %s has been deleted' % repo)
             return HttpResponseRedirect(reverse('repo_list'))
         elif 'cancel' in request.REQUEST:
             return HttpResponseRedirect(reverse('repo_detail', args=[repo_id]))
 
-    return render_to_response('repos/repo_delete.html', {'repo': repo}, context_instance=RequestContext(request))
+    return render_to_response('repos/repo_delete.html',
+                              {'repo': repo},
+                              context_instance=RequestContext(request))
 
 
 @login_required
@@ -284,12 +326,17 @@ def repo_enable(request, repo_id):
             if request.is_ajax():
                 return HttpResponse(status=204)
             else:
-                messages.info(request, 'Repository %s has been enabled.' % repo)
-                return HttpResponseRedirect(reverse('repo_detail', args=[repo_id]))
+                text = 'Repository %s has been enabled' % repo
+                messages.info(request, text)
+                return HttpResponseRedirect(reverse('repo_detail',
+                                                    args=[repo_id]))
         elif 'cancel' in request.REQUEST:
-            return HttpResponseRedirect(reverse('repo_detail', args=[repo_id]))
+            return HttpResponseRedirect(reverse('repo_detail',
+                                                args=[repo_id]))
 
-    return render_to_response('repos/repo_endisable.html', {'repo': repo, 'enable': True}, context_instance=RequestContext(request))
+    return render_to_response('repos/repo_endisable.html',
+                              {'repo': repo, 'enable': True},
+                              context_instance=RequestContext(request))
 
 
 @login_required
@@ -304,12 +351,17 @@ def repo_disable(request, repo_id):
             if request.is_ajax():
                 return HttpResponse(status=204)
             else:
-                messages.info(request, 'Repository %s has been disabled.' % repo)
-                return HttpResponseRedirect(reverse('repo_detail', args=[repo_id]))
+                text = 'Repository %s has been disabled' % repo
+                messages.info(request, text)
+                return HttpResponseRedirect(
+                    reverse('repo_detail', args=[repo_id]))
         elif 'cancel' in request.REQUEST:
-            return HttpResponseRedirect(reverse('repo_detail', args=[repo_id]))
+            return HttpResponseRedirect(
+                reverse('repo_detail', args=[repo_id]))
 
-    return render_to_response('repos/repo_endisable.html', {'repo': repo, 'enable': False}, context_instance=RequestContext(request))
+    return render_to_response('repos/repo_endisable.html',
+                              {'repo': repo, 'enable': False},
+                              context_instance=RequestContext(request))
 
 
 @login_required
@@ -324,12 +376,18 @@ def repo_enablesec(request, repo_id):
             if request.is_ajax():
                 return HttpResponse(status=204)
             else:
-                messages.info(request, 'Repository %s has been marked as a security repo.' % repo)
-                return HttpResponseRedirect(reverse('repo_detail', args=[repo_id]))
+                text = 'Repository %s has been marked as a security' % repo
+                text += ' repo'
+                messages.info(request, text)
+                return HttpResponseRedirect(reverse('repo_detail',
+                                                    args=[repo_id]))
         elif 'cancel' in request.REQUEST:
-            return HttpResponseRedirect(reverse('repo_detail', args=[repo_id]))
+            return HttpResponseRedirect(reverse('repo_detail',
+                                                args=[repo_id]))
 
-    return render_to_response('repos/repo_endisablesec.html', {'repo': repo, 'enable': True}, context_instance=RequestContext(request))
+    return render_to_response('repos/repo_endisablesec.html',
+                              {'repo': repo, 'enable': True},
+                              context_instance=RequestContext(request))
 
 
 @login_required
@@ -344,9 +402,15 @@ def repo_disablesec(request, repo_id):
             if request.is_ajax():
                 return HttpResponse(status=204)
             else:
-                messages.info(request, 'Repository %s has been marked as a non-security repo.' % repo)
-                return HttpResponseRedirect(reverse('repo_detail', args=[repo_id]))
+                text = 'Repository %s has been marked as a non-security' % repo
+                text += ' repo'
+                messages.info(request, text)
+                return HttpResponseRedirect(reverse('repo_detail',
+                                                    args=[repo_id]))
         elif 'cancel' in request.REQUEST:
-            return HttpResponseRedirect(reverse('repo_detail', args=[repo_id]))
+            return HttpResponseRedirect(reverse('repo_detail',
+                                                args=[repo_id]))
 
-    return render_to_response('repos/repo_endisablesec.html', {'repo': repo, 'enable': False}, context_instance=RequestContext(request))
+    return render_to_response('repos/repo_endisablesec.html',
+                              {'repo': repo, 'enable': False},
+                              context_instance=RequestContext(request))
