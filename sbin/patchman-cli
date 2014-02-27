@@ -6,7 +6,7 @@ import argparse
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "patchman.settings")
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import Count
 
 from datetime import date, datetime
@@ -28,10 +28,13 @@ def get_host(host=None, action='Performing action'):
     host_obj = None
 
     try:
-        host_obj = Host.objects.get(hostname=host)
+        host_obj = Host.objects.get(hostname__startswith=host)
         message = '%s for host %s' % (action, host)
-    except:
+    except ObjectDoesNotExist:
         message = 'Host %s does not exist' % host
+    except MultipleObjectsReturned:
+        matches = Host.objects.filter(hostname__startswith=host).count()
+        message = '%s hosts match hostname "%s"' % (matches, host)
 
     if verbose:
         print message
@@ -246,7 +249,7 @@ def clean_tags():
         hostid = t.object_id
         try:
             # tags are only used for hosts for now
-            host = Host.objects.get(pk=hostid)
+            Host.objects.get(pk=hostid)
         except ObjectDoesNotExist:
             to_delete.append(t)
 
