@@ -56,12 +56,48 @@ class Host(models.Model):
     def __unicode__(self):
         return self.hostname
 
+    def show(self):
+        """ Show info about this host
+        """
+        text = []
+        text.append('%s:\n' % self)
+        text.append('IP address   : %s\n' % self.ipaddress)
+        text.append('Reverse DNS  : %s\n' % self.reversedns)
+        text.append('Domain       : %s\n' % self.domain)
+        text.append('OS           : %s\n' % self.os)
+        text.append('Kernel       : %s\n' % self.kernel)
+        text.append('Architecture : %s\n' % self.arch)
+        text.append('Last report  : %s\n' % self.lastreport)
+        text.append('Packages     : %s\n' % self.get_num_packages())
+        text.append('Repos        : %s\n' % self.get_num_repos())
+        text.append('Updates      : %s\n' % self.get_num_updates())
+        text.append('Tags         : %s\n' % self.tags)
+        text.append('Needs reboot : %s\n' % self.reboot_required)
+        text.append('Updated at   : %s\n' % self.updated_at)
+        text.append('Host repos   : %s\n' % self.host_repos_only)
+        text.append('\n')
+
+        for line in text:
+            info_message.send(sender=None, text=line)
+
     @models.permalink
     def get_absolute_url(self):
         return ('host_detail', [self.hostname])
 
-    def sec_count(self):
+    def get_num_security_updates(self):
         return self.updates.filter(security=True).count()
+
+    def get_num_bugfix_updates(self):
+        return self.updates.filter(security=False).count()
+
+    def get_num_updates(self):
+        return self.updates.count()
+
+    def get_num_packages(self):
+        return self.packages.count()
+
+    def get_num_repos(self):
+        return self.repos.count()
 
     def check_rdns(self):
         if self.check_dns:
@@ -78,9 +114,6 @@ class Host(models.Model):
 
     def clean_reports(self, timestamp):
         remove_reports(self, timestamp)
-
-    def nonsec_count(self):
-        return self.updates.filter(security=False).count()
 
     def get_host_repo_packages(self):
         if self.host_repos_only:
