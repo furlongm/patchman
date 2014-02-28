@@ -17,7 +17,8 @@ from packages.models import Package, PackageName, PackageUpdate
 from repos.models import Repository
 from arch.models import PackageArchitecture, MachineArchitecture
 from reports.models import Report
-from receivers import print_info_message, print_debug_message, print_error_message
+from receivers import print_info_message, print_debug_message, \
+    print_error_message
 from util import create_pbar, update_pbar, set_verbosity
 
 
@@ -26,12 +27,16 @@ def get_host(host=None, action='Performing action'):
     """
 
     host_obj = None
+    hostdot = host + '.'
+    message = '%s for host %s' % (action, host)
 
     try:
-        host_obj = Host.objects.get(hostname__startswith=host)
-        message = '%s for host %s' % (action, host)
+        host_obj = Host.objects.get(hostname__startswith=hostdot)
     except ObjectDoesNotExist:
-        message = 'Host %s does not exist' % host
+        try:
+            host_obj = Host.objects.get(hostname__startswith=host)
+        except ObjectDoesNotExist:
+            message = 'Host %s does not exist' % host
     except MultipleObjectsReturned:
         matches = Host.objects.filter(hostname__startswith=host).count()
         message = '%s hosts match hostname "%s"' % (matches, host)
@@ -128,7 +133,8 @@ def repo_info(repo):
         print 'Mirrors:'
         for mirror in repo.mirror_set.all():
             print mirror.url
-            print 'last updated: %s    checksum: %s\n' % (mirror.timestamp, mirror.file_checksum)
+            print 'last updated: %s    checksum: %s\n' % \
+                (mirror.timestamp, mirror.file_checksum)
 
 
 def clean_packages():
@@ -143,7 +149,12 @@ def clean_packages():
     else:
         create_pbar('Removing %s orphaned packages:' % plen, plen)
         for i, o in enumerate(packages):
-            p = Package.objects.get(name=o.name, epoch=o.epoch, version=o.version, release=o.release, arch=o.arch, packagetype=o.packagetype)
+            p = Package.objects.get(name=o.name,
+                                    epoch=o.epoch,
+                                    version=o.version,
+                                    release=o.release,
+                                    arch=o.arch,
+                                    packagetype=o.packagetype)
             p.delete()
             update_pbar(i + 1)
 
@@ -165,7 +176,8 @@ def clean_arches():
             a.delete()
             update_pbar(i + 1)
 
-    marches = MachineArchitecture.objects.filter(host__isnull=True, repository__isnull=True)
+    marches = MachineArchitecture.objects.filter(host__isnull=True,
+                                                 repository__isnull=True)
     mlen = marches.count()
 
     if mlen == 0:
@@ -215,7 +227,8 @@ def clean_repos():
 
 def clean_reports(s_host=None):
     """ Delete old reports for all hosts, specify host for a single host.
-        Reports with non existent hosts are only removed when no host is specified.
+        Reports with non existent hosts are only removed when no host is
+        specified.
     """
 
     hosts = get_hosts(s_host, 'Cleaning reports')
@@ -278,7 +291,9 @@ def host_updates_alt(host=None):
             host.save()
 
             # only include hosts with the same number of packages
-            filtered_hosts = Host.objects.annotate(packages_count=Count("packages")).filter(packages_count=host.packages.count())
+            filtered_hosts = Host.objects.annotate(
+                packages_count=Count("packages")).filter(
+                    packages_count=host.packages.count())
             # exclude hosts with the current timestamp
             filtered_hosts = filtered_hosts.exclude(updated_at=ts)
 
@@ -391,7 +406,8 @@ def diff_hosts(hosts):
 
 
 def dns_checks(host=None):
-    """ Check all hosts for reverse DNS mismatches, specify host for a single host
+    """ Check all hosts for reverse DNS mismatches, specify host for a single
+        host
     """
 
     hosts = get_hosts(host, 'Checking rDNS')
@@ -413,7 +429,8 @@ def process_reports(host=None, force=False):
     reports = []
     if host:
         try:
-            reports = Report.objects.filter(processed=force, host=host).order_by('created')
+            reports = Report.objects.filter(
+                processed=force, host=host).order_by('created')
             message = 'Processing reports for host %s' % host
         except:
             message = 'No reports exist for host %s' % host
@@ -441,17 +458,18 @@ def clean_updates():
                 print 'Removing unused update %s' % update
             update.delete()
         for duplicate in package_updates:
-            if (update.oldpackage == duplicate.oldpackage and
-                update.newpackage == duplicate.newpackage and
-                update.security == duplicate.security and
-                update.id != duplicate.id):
-                    if verbose:
-                        print "Removing duplicate update: %s" % (update)
-                    for host in duplicate.host_set.all():
-                        host.updates.remove(duplicate)
-                        host.updates.add(update)
-                        host.save()
-                    duplicate.delete()
+            if update.oldpackage == duplicate.oldpackage and \
+                    update.newpackage == duplicate.newpackage and \
+                    update.security == duplicate.security and \
+                    update.id != duplicate.id:
+                if verbose:
+                    print "Removing duplicate update: %s" % (update)
+                for host in duplicate.host_set.all():
+                    host.updates.remove(duplicate)
+                    host.updates.add(update)
+                    host.save()
+                duplicate.delete()
+
 
 def dbcheck():
     """ Runs all clean_* functions to check database consistency
@@ -468,35 +486,49 @@ def dbcheck():
 def collect_args():
 
     parser = argparse.ArgumentParser(description='Patchman CLI tool')
-    parser.add_argument('-f', '--force', action='store_true',
-                help='disregard stored checksums and force-update all repositories')
-    parser.add_argument('-q', '--quiet', action='store_true',
-                help='less output (e.g. for cronjobs)')
-    parser.add_argument('-u', '--update', action='store_true',
-                help='update repositories')
-    parser.add_argument('-R', '--repo',
-                help='only perform action on this repository (repo_id)')
-    parser.add_argument('-l', '--list', action='store_true',
-                help='list all available repositories and repo_ids')
-    parser.add_argument('-U', '--host-updates', action='store_true',
-                help='find updates for all hosts')
-    parser.add_argument('-A', '--host-updates-alt', action='store_true',
-                help='find updates for all hosts (alternative algorithm that \
-                may be faster when there are many homogeneous hosts)')
-    parser.add_argument('-H', '--host',
-                help='only perform action on this host (fqdn)')
-    parser.add_argument('-p', '--process-reports', action='store_true',
-                help='process all pending reports')
-    parser.add_argument('-r', '--clean-reports', action='store_true',
-                help='remove all but the last three reports')
-    parser.add_argument('-d', '--dbcheck', action='store_true',
-                help='perform some sanity checks and clean unused db entries')
-    parser.add_argument('-n', '--dns-checks', action='store_true',
-                help='perform reverse DNS checks if enabled for that host')
-    parser.add_argument('-a', '--all', action='store_true',
-                help='Convenience flag for -u -A -p -r -d -n')
-    parser.add_argument('-D', '--diff', metavar=('hostA', 'hostB'), nargs=2,
-                help='Show differences between two hosts in difflike output')
+    parser.add_argument(
+        '-f', '--force', action='store_true',
+        help='ignore stored checksums and force-refresh all mirrors')
+    parser.add_argument(
+        '-q', '--quiet', action='store_true',
+        help='less output (e.g. for cronjobs)')
+    parser.add_argument(
+        '-u', '--update', action='store_true',
+        help='update repositories')
+    parser.add_argument(
+        '-R', '--repo',
+        help='only perform action on this repository (repo_id)')
+    parser.add_argument(
+        '-l', '--list', action='store_true',
+        help='list all available repositories and repo_ids')
+    parser.add_argument(
+        '-U', '--host-updates', action='store_true',
+        help='find updates for all hosts')
+    parser.add_argument(
+        '-A', '--host-updates-alt', action='store_true',
+        help='find updates for all hosts (alternative algorithm that \
+        may be faster when there are many homogeneous hosts)')
+    parser.add_argument(
+        '-H', '--host',
+        help='only perform action on this host (fqdn)')
+    parser.add_argument(
+        '-p', '--process-reports', action='store_true',
+        help='process all pending reports')
+    parser.add_argument(
+        '-r', '--clean-reports', action='store_true',
+        help='remove all but the last three reports')
+    parser.add_argument(
+        '-d', '--dbcheck', action='store_true',
+        help='perform some sanity checks and clean unused db entries')
+    parser.add_argument(
+        '-n', '--dns-checks', action='store_true',
+        help='perform reverse DNS checks if enabled for that host')
+    parser.add_argument(
+        '-a', '--all', action='store_true',
+        help='Convenience flag for -u -A -p -r -d -n')
+    parser.add_argument(
+        '-D', '--diff', metavar=('hostA', 'hostB'), nargs=2,
+        help='Show differences between two hosts in difflike output')
     return parser
 
 

@@ -74,7 +74,7 @@ To populate the web interface, run the client on some hosts, this should
 provide some initial data to work with.
 
 On the server, the command line utility can be used to run certain maintenance
-tasks, e.g. processing the reports sent from hosts. Run 'patchman-cli -h' for a
+tasks, e.g. processing the reports sent from hosts. Run 'patchman -h' for a
 rundown of the usage.
 
 Depending on your setup, there may be some initial work required to logically

@@ -95,7 +95,7 @@ data_files.append(
     ('/usr/share/patchman', ['scripts/patchman.wsgi']),
 )
 data_files.append(
-    ('/usr/sbin', ['sbin/patchman-cli'])
+    ('/usr/sbin', ['sbin/patchman'])
 )
 
 setup(
