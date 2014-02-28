@@ -52,6 +52,21 @@ class Repository(models.Model):
     def get_absolute_url(self):
         return ('repo_detail', [self.id])
 
+    def show(self):
+        """ Show info about this repo, including mirrors
+        """
+        text = ['%s : %s\n' % (self.id, self.name),
+                'security: %s  arch: %s\n' % (self.security, self.arch),
+                'Mirrors:\n']
+
+        for line in text:
+            info_message.send(sender=None, text=line)
+
+        for mirror in self.mirror_set.all():
+            mirror.show()
+
+        info_message.send(sender=None, text='\n')
+
     def update(self, force=False):
         """ Update all of a repos mirror metadata,
             force can be set to force a reset of all the mirrors metadata
@@ -118,6 +133,17 @@ class Mirror(models.Model):
 
     def __unicode__(self):
         return self.url
+
+    def show(self):
+        """ Show info about this mirror
+        """
+
+        text = [' %s : %s\n' % (self.id, self.url),
+                ' last updated: %s    checksum: %s\n' %
+                (self.timestamp, self.file_checksum)]
+
+        for line in text:
+            info_message.send(sender=None, text=line)
 
     def fail(self):
         """ Records that the mirror has failed

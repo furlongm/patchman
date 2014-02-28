@@ -111,30 +111,26 @@ def update_repos(repo=None, force=False):
             print '\n'
 
 
-def list_repos(repo=None):
+def list_repos(repos=None):
     """ Print info about a list of repositories
         Defaults to all repos
     """
 
-    repos = get_repos(repo, 'Printing information')
+    matching_repos = get_repos(repos, 'Printing information')
 
-    for repo in repos:
-        repo_info(repo)
+    for repo in matching_repos:
+        repo.show()
 
 
-def repo_info(repo):
-    """ Print info about a single repo
-        If verbose is specified, information about mirrors is also printed
+def list_hosts(hosts=None):
+    """ Print info about a list of hosts
+        Defaults to all hosts
     """
 
-    print '%s : %s' % (repo.id, repo)
-    if verbose:
-        print 'security: %s  arch: %s' % (repo.security, repo.arch)
-        print 'Mirrors:'
-        for mirror in repo.mirror_set.all():
-            print mirror.url
-            print 'last updated: %s    checksum: %s\n' % \
-                (mirror.timestamp, mirror.file_checksum)
+    matching_hosts = get_hosts(hosts, 'Printing information')
+
+    for host in matching_hosts:
+        host.show()
 
 
 def clean_packages():
@@ -499,8 +495,11 @@ def collect_args():
         '-R', '--repo',
         help='only perform action on this repository (repo_id)')
     parser.add_argument(
-        '-l', '--list', action='store_true',
-        help='list all available repositories and repo_ids')
+        '-lr', '--list-repos', action='store_true',
+        help='list all available repositories')
+    parser.add_argument(
+        '-lh', '--list-hosts', action='store_true',
+        help='list all available hosts')
     parser.add_argument(
         '-U', '--host-updates', action='store_true',
         help='find updates for all hosts')
@@ -545,8 +544,11 @@ def process_args(args):
         args.clean_updates = True
         args.dbcheck = True
         args.dns_checks = True
-    if args.list:
+    if args.list_repos:
         list_repos(args.repo)
+        return False
+    if args.list_hosts:
+        list_hosts(args.host)
         return False
     if args.diff:
         diff_hosts(args.diff)
