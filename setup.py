@@ -92,7 +92,7 @@ for dirpath, dirnames, filenames in os.walk('templates'):
 print data_files
 
 data_files.append(
-    ('/usr/share/patchman', ['scripts/patchman.wsgi']),
+    ('/etc/patchman', ['etc/patchman-apache.conf']),
 )
 data_files.append(
     ('/usr/sbin', ['sbin/patchman'])
