@@ -150,12 +150,14 @@ class Host(models.Model):
                 update, c = updates.get_or_create(oldpackage=package,
                                                   newpackage=highest_package,
                                                   security=security)
+                return update.id
                 transaction.commit()
             except IntegrityError as e:
                 print e
                 update = updates.get(oldpackage=package,
                                      newpackage=highest_package,
                                      security=security)
+                return update.id
             except DatabaseError as e:
                 print e
                 transaction.rollback()
@@ -186,13 +188,17 @@ class Host(models.Model):
         transaction.commit()
 
         if self.host_repos_only:
-            self.find_host_repo_updates(host_packages, repo_packages)
+            update_ids = self.find_host_repo_updates(host_packages,
+                                                     repo_packages)
         else:
-            self.find_osgroup_repo_updates(host_packages, repo_packages)
+            update_ids = self.find_osgroup_repo_updates(host_packages,
+                                                        repo_packages)
 
-        self.find_kernel_updates(kernel_packages, repo_packages)
+        kernel_update_ids = self.find_kernel_updates(kernel_packages,
+                                                     repo_packages)
+        update_ids.append(kernel_update_ids)
 
-        removals = old_updates.exclude(pk__in=self.updates.all())
+        removals = old_updates.exclude(pk__in=update_ids)
         for update in removals:
             self.updates.remove(update)
         transaction.commit()
@@ -240,6 +246,8 @@ class Host(models.Model):
 
     def find_host_repo_updates(self, host_packages, repo_packages):
 
+        update_ids = []
+
         hostrepos_q = Q(repo__mirror__enabled=True,
                         repo__mirror__repo__enabled=True, host=self)
         hostrepos = HostRepo.objects.select_related().filter(hostrepos_q)
@@ -269,9 +277,14 @@ class Host(models.Model):
                                                   potential_update,
                                                   highest_ver, highest_package)
 
-            self.process_update(package, highest_ver, highest_package)
+            uid = self.process_update(package, highest_ver, highest_package)
+            update_ids.append(uid)
+
+        return update_ids
 
     def find_osgroup_repo_updates(self, host_packages, repo_packages):
+
+        update_ids = []
 
         for package in host_packages:
             highest_ver = ('', '0', '')
@@ -290,7 +303,10 @@ class Host(models.Model):
                                               potential_update,
                                               highest_ver, highest_package)
 
-            self.process_update(package, highest_ver, highest_package)
+            uid = self.process_update(package, highest_ver, highest_package)
+            update_ids.append(uid)
+
+        return update_ids
 
     def check_if_reboot_required(self, running_kernel_ver, host_highest_ver):
         if labelCompare(running_kernel_ver, host_highest_ver) == -1:
@@ -300,6 +316,8 @@ class Host(models.Model):
 
     @transaction.commit_manually
     def find_kernel_updates(self, kernel_packages, repo_packages):
+
+        update_ids = []
 
         try:
             ver, rel = self.kernel.rsplit('-')
@@ -329,8 +347,10 @@ class Host(models.Model):
                                               host_highest_package)
 
                 if labelCompare(host_highest_ver, repo_highest_ver) == -1:
-                    self.process_update(host_highest_package, repo_highest_ver,
-                                        repo_highest_package)
+                    uid = self.process_update(host_highest_package,
+                                              repo_highest_ver,
+                                              repo_highest_package)
+                    update_ids.append(uid)
 
                 self.check_if_reboot_required(kernel_ver, host_highest_ver)
 
@@ -342,6 +362,8 @@ class Host(models.Model):
         except DatabaseError as e:
             print e
             transaction.rollback()
+
+        return update_ids
 
 
 class HostRepo(models.Model):
