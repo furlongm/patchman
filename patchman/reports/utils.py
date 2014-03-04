@@ -32,6 +32,7 @@ def process_repos(report, host):
 
     if report.repos:
         old_repos = host.repos.all()
+        repo_ids = []
 
         repos = parse_repos(report.repos)
         progress_info_s.send(sender=None,
@@ -41,6 +42,7 @@ def process_repos(report, host):
             repo, priority = process_repo(repo_str, report.arch)
             if repo:
                 try:
+                    repo_ids.append(repo.id)
                     host_repos = HostRepo.objects.select_for_update()
                     hostrepo, c = host_repos.get_or_create(host=host,
                                                            repo=repo)
@@ -56,7 +58,7 @@ def process_repos(report, host):
                     print e
             progress_update_s.send(sender=None, index=i + 1)
 
-        removals = old_repos.exclude(pk__in=host.repos.all())
+        removals = old_repos.exclude(pk__in=repo_ids)
         for repo in removals:
             host.repos.remove(repo)
         transaction.commit()
@@ -69,6 +71,7 @@ def process_packages(report, host):
 
     if report.packages:
         old_packages = host.packages.all()
+        package_ids = []
 
         packages = parse_packages(report.packages)
         progress_info_s.send(sender=None,
@@ -78,6 +81,7 @@ def process_packages(report, host):
             package = process_package(pkg_str, report.protocol)
             if package:
                 try:
+                    package_ids.append(package.id)
                     host.packages.add(package)
                     transaction.commit()
                 except IntegrityError as e:
@@ -87,7 +91,7 @@ def process_packages(report, host):
                     transaction.rollback()
             progress_update_s.send(sender=None, index=i + 1)
 
-        removals = old_packages.exclude(pk__in=host.packages.all())
+        removals = old_packages.exclude(pk__in=package_ids)
         for package in removals:
             host.packages.remove(package)
     transaction.commit()
