@@ -46,7 +46,7 @@ LOGIN_REDIRECT_URL = '/'
 #LOGIN_REDIRECT_URL = '/patchman/'
 #LOGIN_URL = '/patchman/accounts/login/'
 
-STATICFILES_DIRS = ( '/srv/patchman/media/' )
+STATICFILES_DIRS = ( '/srv/patchman/media/', )
 
 # URL prefix for static files.
 STATIC_URL = '/patchman_media/'

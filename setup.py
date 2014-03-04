@@ -65,9 +65,6 @@ if len(sys.argv) > 1 and sys.argv[1] == 'bdist_wininst':
     for file_info in data_files:
         file_info[0] = '\\PURELIB\\%s' % file_info[0]
 
-# Dynamically calculate the version based on vomit.VERSION.
-version = __import__(code_dir).get_version()
-
 for dirpath, dirnames, filenames in os.walk('etc'):
     for i, dirname in enumerate(dirnames):
         if dirname.startswith('.'): del dirnames[i]
@@ -89,8 +86,6 @@ for dirpath, dirnames, filenames in os.walk('templates'):
     if filenames:
         data_files.append([dirpath.replace('templates', '/usr/share/patchman/templates'), [os.path.join(dirpath, f) for f in filenames]])
 
-print data_files
-
 data_files.append(
     ('/etc/patchman', ['etc/patchman-apache.conf']),
 )
@@ -99,8 +94,8 @@ data_files.append(
 )
 
 setup(
-    name = "patchman",
-    version = version,
+    name = 'patchman',
+    version = '0.9.1',
     url = 'https://www.github.com/furlongm/patchman/',
     author = 'Marcus Furlong',
     author_email = 'furlongm@gmail.com',
