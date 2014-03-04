@@ -150,21 +150,20 @@ class Host(models.Model):
                 update, c = updates.get_or_create(oldpackage=package,
                                                   newpackage=highest_package,
                                                   security=security)
-                return update.id
                 transaction.commit()
             except IntegrityError as e:
                 print e
                 update = updates.get(oldpackage=package,
                                      newpackage=highest_package,
                                      security=security)
-                return update.id
             except DatabaseError as e:
                 print e
                 transaction.rollback()
             try:
                 self.updates.add(update)
-                transaction.commit()
                 info_message.send(sender=None, text="%s\n" % update)
+                transaction.commit()
+                return update.id
             except IntegrityError as e:
                 print e
             except DatabaseError as e:
@@ -196,7 +195,8 @@ class Host(models.Model):
 
         kernel_update_ids = self.find_kernel_updates(kernel_packages,
                                                      repo_packages)
-        update_ids.append(kernel_update_ids)
+        for ku_id in kernel_update_ids:
+            update_ids.append(ku_id)
 
         removals = old_updates.exclude(pk__in=update_ids)
         for update in removals:
@@ -278,7 +278,8 @@ class Host(models.Model):
                                                   highest_ver, highest_package)
 
             uid = self.process_update(package, highest_ver, highest_package)
-            update_ids.append(uid)
+            if uid is not None:
+                update_ids.append(uid)
 
         return update_ids
 
@@ -304,7 +305,8 @@ class Host(models.Model):
                                               highest_ver, highest_package)
 
             uid = self.process_update(package, highest_ver, highest_package)
-            update_ids.append(uid)
+            if uid is not None:
+                update_ids.append(uid)
 
         return update_ids
 
@@ -350,7 +352,8 @@ class Host(models.Model):
                     uid = self.process_update(host_highest_package,
                                               repo_highest_ver,
                                               repo_highest_package)
-                    update_ids.append(uid)
+                    if uid is not None:
+                        update_ids.append(uid)
 
                 self.check_if_reboot_required(kernel_ver, host_highest_ver)
 
