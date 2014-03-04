@@ -22,7 +22,7 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
 
-    url(r'^$', 'views.dashboard', name='dashboard'),
+    url(r'^$', 'patchman.views.dashboard', name='dashboard'),
     url(r'^reports/', include('reports.urls')),
     url(r'^hosts/', include('hosts.urls')),
     url(r'^packages/', include('packages.urls')),
