@@ -91,8 +91,6 @@ LOCAL_APPS = (
     'util',
 )
 
-INSTALLED_APPS = DEFAULT_APPS + THIRD_PARTY_APPS + LOCAL_APPS
-
 BROKER_HOST = "localhost"
 BROKER_PORT = 5672
 BROKER_USER = "guest"
@@ -104,10 +102,11 @@ try:
 except ImportError:
     USE_ASYNC_PROCESSING = False
 else:
-    INSTALLED_APPS += ('djcelery',)
+    THIRD_PARTY_APPS += ('djcelery',)
     USE_ASYNC_PROCESSING = True
     djcelery.setup_loader()
 
 execfile("/etc/patchman/settings.py")
 
 MANAGERS = ADMINS
+INSTALLED_APPS = DEFAULT_APPS + THIRD_PARTY_APPS + LOCAL_APPS
