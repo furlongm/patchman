@@ -98,7 +98,7 @@ def dashboard(request):
                 continue
 
     return render_to_response(
-        'dashboard/index.html',
+        'dashboard.html',
         {'site': site,
          'lonely_oses': lonely_oses, 'norepo_hosts': norepo_hosts,
          'nohost_oses': nohost_oses, 'diff_rdns_hosts': diff_rdns_hosts,

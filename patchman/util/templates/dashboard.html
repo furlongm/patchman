@@ -43,7 +43,7 @@
 {% with stale_hosts.count as count %}
   {% if count > 0 %}
   <div class="module">
-   	<div class="resultslink" id="r7"><a href="#">{{ count }} Hosts have not reported in 2 weeks</a></div>
+    <div class="resultslink" id="r7"><a href="#">{{ count }} Hosts have not reported in 2 weeks</a></div>
       <div class="results" id="r7">
         {% gen_table stale_hosts %}
       </div>
