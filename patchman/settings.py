@@ -50,8 +50,6 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
 )
 
-ROOT_URLCONF = 'patchman.urls'
-
 TEMPLATE_CONTEXT_PROCESSORS = (
     'django.contrib.auth.context_processors.auth',
     'django.core.context_processors.static',
@@ -81,14 +79,14 @@ THIRD_PARTY_APPS = (
 )
 
 LOCAL_APPS = (
-    'hosts',
-    'domains',
-    'operatingsystems',
-    'packages',
-    'repos',
-    'arch',
-    'reports',
-    'util',
+    'patchman.hosts',
+    'patchman.domains',
+    'patchman.operatingsystems',
+    'patchman.packages',
+    'patchman.repos',
+    'patchman.arch',
+    'patchman.reports',
+    'patchman.util',
 )
 
 BROKER_HOST = "localhost"

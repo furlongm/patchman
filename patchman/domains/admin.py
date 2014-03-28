@@ -15,6 +15,6 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from django.contrib import admin
-from domains.models import Domain
+from patchman.domains.models import Domain
 
 admin.site.register(Domain)

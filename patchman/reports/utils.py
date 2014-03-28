@@ -18,21 +18,22 @@ import re
 
 from django.db import IntegrityError, DatabaseError, transaction
 
-from hosts.models import HostRepo
-from arch.models import MachineArchitecture, PackageArchitecture
-from repos.models import Repository, Mirror, MirrorPackage
-from packages.models import Package, PackageName, PackageUpdate
-from packages.utils import find_versions
-from signals import progress_info_s, progress_update_s
+from patchman.hosts.models import HostRepo
+from patchman.arch.models import MachineArchitecture, PackageArchitecture
+from patchman.repos.models import Repository, Mirror, MirrorPackage
+from patchman.packages.models import Package, PackageName, PackageUpdate
+from patchman.packages.utils import find_versions
+from patchman.signals import progress_info_s, progress_update_s
 
 
-@transaction.commit_manually
 def process_repos(report, host):
     """ Processes the quoted repos string sent with a report """
 
     if report.repos:
         old_repos = host.repos.all()
         repo_ids = []
+
+        host_repos = HostRepo.objects.all()
 
         repos = parse_repos(report.repos)
         progress_info_s.send(sender=None,
@@ -41,19 +42,19 @@ def process_repos(report, host):
         for i, repo_str in enumerate(repos):
             repo, priority = process_repo(repo_str, report.arch)
             if repo:
+                repo_ids.append(repo.id)
                 try:
-                    repo_ids.append(repo.id)
-                    host_repos = HostRepo.objects.select_for_update()
-                    hostrepo, c = host_repos.get_or_create(host=host,
-                                                           repo=repo)
-                    transaction.commit()
+                    with transaction.atomic():
+                        hostrepo, c = host_repos.get_or_create(host=host,
+                                                               repo=repo)
                 except IntegrityError as e:
                     print e
                     hostrepo = host_repos.get(host=host, repo=repo)
-                hostrepo.priority = priority
                 try:
-                    hostrepo.save()
-                    transaction.commit()
+                    if hostrepo.priority != priority:
+                        hostrepo.priority = priority
+                        with transaction.atomic():
+                            hostrepo.save()
                 except IntegrityError as e:
                     print e
             progress_update_s.send(sender=None, index=i + 1)
@@ -61,11 +62,9 @@ def process_repos(report, host):
         removals = old_repos.exclude(pk__in=repo_ids)
         for repo in removals:
             repo.delete()
-        transaction.commit()
     transaction.commit()
 
 
-@transaction.commit_manually
 def process_packages(report, host):
     """ Processes the quoted packages string sent with a report """
 
@@ -80,21 +79,21 @@ def process_packages(report, host):
         for i, pkg_str in enumerate(packages):
             package = process_package(pkg_str, report.protocol)
             if package:
+                package_ids.append(package.id)
                 try:
-                    package_ids.append(package.id)
-                    host.packages.add(package)
-                    transaction.commit()
+                    with transaction.atomic():
+                        host.packages.add(package)
                 except IntegrityError as e:
                     print e
                 except DatabaseError as e:
                     print e
-                    transaction.rollback()
+            else:
+                print 'No package returned for %s' % pkg_str
             progress_update_s.send(sender=None, index=i + 1)
 
         removals = old_packages.exclude(pk__in=package_ids)
         for package in removals:
             host.packages.remove(package)
-    transaction.commit()
 
 
 def process_updates(report, host):
@@ -142,7 +141,6 @@ def parse_updates(updates_string):
     return updates
 
 
-@transaction.commit_manually
 def process_update(host, update_string, security):
     """ Processes a single sanitized update string and converts to an update
     object
@@ -157,22 +155,22 @@ def process_update(host, update_string, security):
 
     p_epoch, p_version, p_release = find_versions(update_str[1])
 
-    package_arches = PackageArchitecture.objects.select_for_update()
-    p_arch, c = package_arches.get_or_create(name=arch_str)
-    transaction.commit()
+    package_arches = PackageArchitecture.objects.all()
+    with transaction.atomic():
+        p_arch, c = package_arches.get_or_create(name=arch_str)
 
-    package_names = PackageName.objects.select_for_update()
-    p_name, c = package_names.get_or_create(name=package_str)
-    transaction.commit()
+    package_names = PackageName.objects.all()
+    with transaction.atomic():
+        p_name, c = package_names.get_or_create(name=package_str)
 
-    packages = Package.objects.select_for_update()
-    package, c = packages.get_or_create(name=p_name,
-                                        arch=p_arch,
-                                        epoch=p_epoch,
-                                        version=p_version,
-                                        release=p_release,
-                                        packagetype='R')
-    transaction.commit()
+    packages = Package.objects.all()
+    with transaction.atomic():
+        package, c = packages.get_or_create(name=p_name,
+                                            arch=p_arch,
+                                            epoch=p_epoch,
+                                            version=p_version,
+                                            release=p_release,
+                                            packagetype='R')
 
     try:
         repo = Repository.objects.get(repo_id=repo_id)
@@ -180,18 +178,18 @@ def process_update(host, update_string, security):
         repo = None
     if repo:
         for mirror in repo.mirror_set.all():
-            MirrorPackage.objects.create(mirror=mirror, package=package)
-        transaction.commit()
+            with transaction.atomic():
+                MirrorPackage.objects.create(mirror=mirror, package=package)
 
     installed_package = host.packages.filter(name=p_name,
                                              arch=p_arch,
                                              packagetype='R')[0]
 
-    updates = PackageUpdate.objects.select_for_update()
-    update, c = updates.get_or_create(oldpackage=installed_package,
-                                      newpackage=package,
-                                      security=security)
-    transaction.commit()
+    updates = PackageUpdate.objects.all()
+    with transaction.atomic():
+        update, c = updates.get_or_create(oldpackage=installed_package,
+                                          newpackage=package,
+                                          security=security)
     return update
 
 
@@ -207,7 +205,6 @@ def parse_repos(repos_string):
     return repos
 
 
-@transaction.commit_manually
 def process_repo(repo, arch):
     """ Processes a single sanitized repo string and converts to a repo object
     """
@@ -228,8 +225,9 @@ def process_repo(repo, arch):
     if repo[1]:
         r_name = repo[1]
 
-    machine_arches = MachineArchitecture.objects.select_for_update()
-    r_arch, c = machine_arches.get_or_create(name=arch)
+    machine_arches = MachineArchitecture.objects.all()
+    with transaction.atomic():
+        r_arch, c = machine_arches.get_or_create(name=arch)
 
     unknown = []
     for r_url in repo[3:]:
@@ -238,30 +236,39 @@ def process_repo(repo, arch):
         except Mirror.DoesNotExist:
             if repository:
                 Mirror.objects.create(repo=repository, url=r_url)
-                transaction.commit()
             else:
                 unknown.append(r_url)
         else:
             repository = mirror.repo
     if not repository:
-        repositories = Repository.objects.select_for_update()
-        repository, c = repositories.get_or_create(name=r_name,
-                                                   arch=r_arch,
-                                                   repotype=r_type)
-        transaction.commit()
-    if r_id:
+        repositories = Repository.objects.all()
+        try:
+            with transaction.atomic():
+                repository, c = repositories.get_or_create(name=r_name,
+                                                           arch=r_arch,
+                                                           repotype=r_type)
+        except IntegrityError as e:
+            print e
+            repository = repositories.get(name=r_name,
+                                          arch=r_arch,
+                                          repotype=r_type)
+        except DatabaseError as e:
+            print e
+
+    if r_id and repository.repo_id != r_id:
         repository.repo_id = r_id
+        with transaction.atomic():
+            repository.save()
 
     for url in unknown:
         Mirror.objects.create(repo=repository, url=url)
-    transaction.commit()
 
     for url_d in Mirror.objects.filter(repo=repository).values('url'):
         if url_d['url'].find('cdn.redhat.com') != -1 or \
                 url_d['url'].find('nu.novell.com') != -1:
             repository.auth_required = True
-    repository.save()
-    transaction.commit()
+            with transaction.atomic():
+                repository.save()
 
     return repository, r_priority
 
@@ -274,33 +281,32 @@ def parse_packages(packages_string):
     return packages
 
 
-@transaction.commit_manually
 def process_package(pkg, protocol):
     """ Processes a single sanitized package string and converts to a package
         object """
 
     if protocol == '1':
         # ignore gpg-pupbkey pseudo packages
-        if pkg[0] == 'gpg-pubkey':
+        name = pkg[0].lower()
+        if name == 'gpg-pubkey':
             return
         try:
-            name = pkg[0].lower()
-            package_names = PackageName.objects.select_for_update()
-            p_name, c = package_names.get_or_create(name=name)
-            transaction.commit()
+            with transaction.atomic():
+                package_names = PackageName.objects.all()
+                p_name, c = package_names.get_or_create(name=name)
         except IntegrityError as e:
             print e
             p_name = package_names.get(name=name)
         except DatabaseError as e:
             print e
-            transaction.rollback()
 
         if pkg[4] != '':
             arch = pkg[4]
         else:
             arch = 'unknown'
-        package_arches = PackageArchitecture.objects.select_for_update()
-        p_arch, c = package_arches.get_or_create(name=arch)
+        package_arches = PackageArchitecture.objects.all()
+        with transaction.atomic():
+            p_arch, c = package_arches.get_or_create(name=arch)
 
         p_epoch = p_version = p_release = ''
 
@@ -322,14 +328,15 @@ def process_package(pkg, protocol):
             p_type = Package.RPM
 
         try:
-            packages = Package.objects.select_for_update()
-            package, c = packages.get_or_create(name=p_name,
-                                                arch=p_arch,
-                                                epoch=p_epoch,
-                                                version=p_version,
-                                                release=p_release,
-                                                packagetype=p_type)
-            transaction.commit()
+            with transaction.atomic():
+                packages = Package.objects.all()
+                package, c = packages.get_or_create(name=p_name,
+                                                    arch=p_arch,
+                                                    epoch=p_epoch,
+                                                    version=p_version,
+                                                    release=p_release,
+                                                    packagetype=p_type)
+                return package
         except IntegrityError as e:
             print e
             package = packages.get(name=p_name,
@@ -338,7 +345,6 @@ def process_package(pkg, protocol):
                                    version=p_version,
                                    release=p_release,
                                    packagetype=p_type)
+            return package
         except DatabaseError as e:
             print e
-            transaction.rollback()
-        return package

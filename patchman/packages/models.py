@@ -19,8 +19,8 @@ from django.db import models
 from rpm import labelCompare
 from debian.debian_support import Version, version_compare
 
-from arch.models import PackageArchitecture
-from packages.managers import PackageManager
+from patchman.arch.models import PackageArchitecture
+from patchman.packages.managers import PackageManager
 
 
 class PackageName(models.Model):
@@ -124,7 +124,7 @@ class Package(models.Model):
             return version_compare(vs, vo)
 
     def repo_count(self):
-        from repos.models import Repository
+        from patchman.repos.models import Repository
         return Repository.objects.filter(
             mirror__packages=self).distinct().count()
 

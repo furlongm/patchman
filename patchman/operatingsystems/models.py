@@ -16,7 +16,7 @@
 
 from django.db import models
 
-from repos.models import Repository
+from patchman.repos.models import Repository
 
 
 class OSGroup(models.Model):

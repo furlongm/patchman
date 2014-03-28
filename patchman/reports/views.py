@@ -23,13 +23,14 @@ from django.http import HttpResponseRedirect
 from django.http import Http404
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.core.urlresolvers import reverse
+from django.db import transaction
 from django.db.models import Q
 from django.conf import settings
 from django.contrib import messages
 
-from util.filterspecs import Filter, FilterBar
+from patchman.util.filterspecs import Filter, FilterBar
 
-from reports.models import Report
+from patchman.reports.models import Report
 
 
 @csrf_exempt
@@ -42,10 +43,13 @@ def upload(request):
         data = request.POST.copy()
         meta = request.META.copy()
 
-        report = Report.objects.create()
+        with transaction.atomic():
+            report = Report.objects.create()
+        print "created report"
         report.parse(data, meta)
+        print "parseed report"
         if settings.USE_ASYNC_PROCESSING:
-            from reports.tasks import process_report
+            from patchman.reports.tasks import process_report
             process_report.delay(report)
 
         if 'report' in data and data['report'] == '1':
