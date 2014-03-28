@@ -62,7 +62,6 @@ def process_repos(report, host):
         removals = old_repos.exclude(pk__in=repo_ids)
         for repo in removals:
             repo.delete()
-    transaction.commit()
 
 
 def process_packages(report, host):
