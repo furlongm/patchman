@@ -22,11 +22,11 @@ from django.db.models import F
 
 from datetime import datetime, timedelta
 
-from hosts.models import Host
-from operatingsystems.models import OS, OSGroup
-from repos.models import Repository, Mirror
-from packages.models import Package
-from reports.models import Report
+from patchman.hosts.models import Host
+from patchman.operatingsystems.models import OS, OSGroup
+from patchman.repos.models import Repository, Mirror
+from patchman.packages.models import Package
+from patchman.reports.models import Report
 
 
 @login_required
@@ -37,35 +37,41 @@ def dashboard(request):
     except Site.DoesNotExist:
         site = {'name': '', 'domainname': ''}
 
+    hosts = Host.objects.all()
+    oses = OS.objects.all()
+    osgroups = OSGroup.objects.all()
+    repos = Repository.objects.all()
+    packages = Package.objects.all()
+
     # host issues
-    stale_hosts = Host.objects.filter(lastreport__lt=(datetime.now() + timedelta(-14)))
-    norepo_hosts = Host.objects.filter(repos__isnull=True, os__osgroup__repos__isnull=True)
-    reboot_hosts = Host.objects.filter(reboot_required=True)
-    secupdate_hosts = Host.objects.filter(updates__security=True, updates__isnull=False).distinct()
-    update_hosts = Host.objects.exclude(updates__security=True, updates__isnull=False).distinct().filter(updates__security=False, updates__isnull=False).distinct()
-    diff_rdns_hosts = Host.objects.exclude(reversedns=F('hostname')).filter(check_dns=True)
+    stale_hosts = hosts.filter(lastreport__lt=(datetime.now() + timedelta(-14)))
+    norepo_hosts = hosts.filter(repos__isnull=True, os__osgroup__repos__isnull=True)
+    reboot_hosts = hosts.filter(reboot_required=True)
+    secupdate_hosts = hosts.filter(updates__security=True, updates__isnull=False).distinct()
+    update_hosts = hosts.exclude(updates__security=True, updates__isnull=False).distinct().filter(updates__security=False, updates__isnull=False).distinct()
+    diff_rdns_hosts = hosts.exclude(reversedns=F('hostname')).filter(check_dns=True)
 
     # os issues
-    lonely_oses = OS.objects.filter(osgroup__isnull=True)
-    nohost_oses = OS.objects.filter(host__isnull=True)
+    lonely_oses = oses.filter(osgroup__isnull=True)
+    nohost_oses = oses.filter(host__isnull=True)
 
     # osgroup issues
-    norepo_osgroups = OSGroup.objects.filter(repos__isnull=True)
+    norepo_osgroups = osgroups.filter(repos__isnull=True)
 
     # mirror issues
-    failed_mirrors = Repository.objects.filter(auth_required=False).filter(mirror__last_access_ok=False).filter(mirror__last_access_ok=True).distinct()
-    disabled_mirrors = Repository.objects.filter(auth_required=False).filter(mirror__enabled=False).filter(mirror__mirrorlist=False).distinct()
-    norefresh_mirrors = Repository.objects.filter(auth_required=False).filter(mirror__refresh=False).distinct()
+    failed_mirrors = repos.filter(auth_required=False).filter(mirror__last_access_ok=False).filter(mirror__last_access_ok=True).distinct()
+    disabled_mirrors = repos.filter(auth_required=False).filter(mirror__enabled=False).filter(mirror__mirrorlist=False).distinct()
+    norefresh_mirrors = repos.filter(auth_required=False).filter(mirror__refresh=False).distinct()
 
     # repo issues
-    failed_repos = Repository.objects.filter(auth_required=False).filter(mirror__last_access_ok=False).exclude(id__in=[x.id for x in failed_mirrors]).distinct()
-    unused_repos = Repository.objects.filter(host__isnull=True, osgroup__isnull=True)
-    nomirror_repos = Repository.objects.filter(mirror__isnull=True)
-    nohost_repos = Repository.objects.filter(host__isnull=True)
+    failed_repos = repos.filter(auth_required=False).filter(mirror__last_access_ok=False).exclude(id__in=[x.id for x in failed_mirrors]).distinct()
+    unused_repos = repos.filter(host__isnull=True, osgroup__isnull=True)
+    nomirror_repos = repos.filter(mirror__isnull=True)
+    nohost_repos = repos.filter(host__isnull=True)
 
     # package issues
-    norepo_packages = Package.objects.filter(mirror__isnull=True, oldpackage__isnull=True, host__isnull=False).distinct()
-    orphaned_packages = Package.objects.filter(mirror__isnull=True, host__isnull=True).distinct()
+    norepo_packages = packages.filter(mirror__isnull=True, oldpackage__isnull=True, host__isnull=False).distinct()
+    orphaned_packages = packages.filter(mirror__isnull=True, host__isnull=True).distinct()
 
     # report issues
     unprocessed_reports = Report.objects.filter(processed=False)

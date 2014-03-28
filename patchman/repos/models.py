@@ -16,12 +16,12 @@
 
 from django.db import models
 
-from arch.models import MachineArchitecture
-from packages.models import Package
+from patchman.arch.models import MachineArchitecture
+from patchman.packages.models import Package
 
-from repos.utils import update_deb_repo, update_rpm_repo, \
+from patchman.repos.utils import update_deb_repo, update_rpm_repo, \
     update_mirror_packages
-from signals import error_message, info_message
+from patchman.signals import error_message, info_message
 
 
 class Repository(models.Model):
@@ -119,7 +119,7 @@ class Mirror(models.Model):
 
     repo = models.ForeignKey(Repository)
     url = models.CharField(max_length=255, unique=True)
-    last_access_ok = models.BooleanField()
+    last_access_ok = models.BooleanField(default=False)
     file_checksum = models.CharField(max_length=255, blank=True, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
     packages = models.ManyToManyField(Package,

@@ -18,7 +18,7 @@ from django.conf.urls import patterns, url
 
 urlpatterns = patterns(
 
-    'operatingsystems.views',
+    'patchman.operatingsystems.views',
     url(r'^$', 'os_list', name='os_list'),
     url(r'^groups/$', 'osgroup_list', name='osgroup_list'),
     url(r'^(?P<os_id>[-.\w]+)/$', 'os_detail', name='os_detail'),

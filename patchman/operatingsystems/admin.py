@@ -15,7 +15,7 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from django.contrib import admin
-from operatingsystems.models import OS, OSGroup
+from patchman.operatingsystems.models import OS, OSGroup
 
 
 class OSGroupAdmin(admin.ModelAdmin):

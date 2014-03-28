@@ -21,4 +21,4 @@ if settings.USE_ASYNC_PROCESSING:
 
     @task()
     def process_report(report):
-        report.process()
+        report.process(verbose=True)

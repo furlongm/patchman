@@ -18,7 +18,7 @@ from django.conf.urls import patterns, url
 
 urlpatterns = patterns(
 
-    'packages.views',
+    'patchman.packages.views',
     url(r'^$', 'package_list', name='package_list'),
     url(r'^(?P<packagename>[_+-.\w]+)/$', 'package_detail',
         name='package_detail'),

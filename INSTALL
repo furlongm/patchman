@@ -52,15 +52,17 @@ vi /etc/patchman/settings.py
 
 # 5. Enable mod-wsgi and copy the apache conf file
 a2enmod wsgi
-cp /srv/patchman/etc/patchman-apache.conf /etc/apache2/conf.d/patchman.conf
+cp /srv/patchman/etc/patchman-apache.conf /etc/apache2/conf-available/patchman.conf
+a2enconf
 
 # 6. Edit the networks allowed to report to apache and reload apache
-vi /etc/apache2/conf.d/patchman.conf
+vi /etc/apache2/conf-enabled/patchman.conf
 service apache2 reload
 
 # 7. Initialise the database, perform migrations, and collect static files.
 cd /srv/patchman/patchman
-./manage.py syncdb
+./manage.py syncdb # answer questions here if required
+
 ./manage.py migrate
 ./manage.py collectstatic
 
@@ -89,7 +91,7 @@ apt-get install python-django-celery rabbitmq-server
 # add the last command to an initscript (e.g. /etc/rc.local) to make it
 # persistent over reboot
 
-# i0. Alternatively, or in addition to 9, set up a cronjob to run all the daily tasks, e.g.
+# 10. Alternatively, or in addition to 9, set up a cronjob to run all the daily tasks, e.g.
 #
 # 30 8 * * * http_proxy=http://myproxy.example.com:3128 PYTHONPATH=/srv/patchman/patchman /srv/patchman/sbin/patchman -a -q
 #

@@ -16,11 +16,11 @@
 
 from django.db import models, IntegrityError, DatabaseError, transaction
 
-from hosts.models import Host
-from arch.models import MachineArchitecture
-from operatingsystems.models import OS
-from domains.models import Domain
-from signals import error_message, info_message
+from patchman.hosts.models import Host
+from patchman.arch.models import MachineArchitecture
+from patchman.operatingsystems.models import OS
+from patchman.domains.models import Domain
+from patchman.signals import error_message, info_message
 
 from socket import gethostbyaddr
 
@@ -95,26 +95,28 @@ class Report(models.Model):
         if 'reboot' in data:
             self.reboot = data['reboot']
 
-        self.save()
+        with transaction.atomic():
+            self.save()
 
-    @transaction.commit_manually
-    def process(self, find_updates=True):
+    def process(self, find_updates=True, verbose=False):
         """ Process a report and extract os, arch, domain, packages, repos etc
         """
 
         if self.os and self.kernel and self.arch and not self.processed:
 
-            oses = OS.objects.select_for_update()
-            os, c = oses.get_or_create(name=self.os)
+            oses = OS.objects.all()
+            with transaction.atomic():
+                os, c = oses.get_or_create(name=self.os)
 
-            machine_arches = MachineArchitecture.objects.select_for_update()
-            arch, c = machine_arches.get_or_create(name=self.arch)
+            machine_arches = MachineArchitecture.objects.all()
+            with transaction.atomic():
+                arch, c = machine_arches.get_or_create(name=self.arch)
 
             if not self.domain:
                 self.domain = 'unknown'
-
-            domains = Domain.objects.select_for_update()
-            domain, c = domains.get_or_create(name=self.domain)
+            domains = Domain.objects.all()
+            with transaction.atomic():
+                domain, c = domains.get_or_create(name=self.domain)
 
             if not self.host:
                 try:
@@ -122,16 +124,17 @@ class Report(models.Model):
                 except:
                     self.host = self.report_ip
 
-            hosts = Host.objects.select_for_update()
-            host, c = hosts.get_or_create(
-                hostname=self.host,
-                defaults={
-                    'ipaddress': self.report_ip,
-                    'arch': arch,
-                    'os': os,
-                    'domain': domain,
-                    'lastreport': self.created,
-                })
+            hosts = Host.objects.all()
+            with transaction.atomic():
+                host, c = hosts.get_or_create(
+                    hostname=self.host,
+                    defaults={
+                        'ipaddress': self.report_ip,
+                        'arch': arch,
+                        'os': os,
+                        'domain': domain,
+                        'lastreport': self.created,
+                    })
 
             host.ipaddress = self.report_ip
             host.kernel = self.kernel
@@ -145,28 +148,34 @@ class Report(models.Model):
             else:
                 host.reboot_required = False
             try:
-                host.save()
-                transaction.commit()
+                with transaction.atomic():
+                    host.save()
             except IntegrityError as e:
                 print e
             except DatabaseError as e:
-                transaction.rollback()
                 print e
             host.check_rdns()
 
-            from reports.utils import process_packages, process_repos, \
+            if verbose:
+                print 'Processing %s - %s' % (self.id, self.host)
+
+            from patchman.reports.utils import process_packages, process_repos, \
                 process_updates
-            process_repos(report=self, host=host)
-            process_packages(report=self, host=host)
-            process_updates(report=self, host=host)
+            with transaction.atomic():
+                process_repos(report=self, host=host)
+            with transaction.atomic():
+                process_packages(report=self, host=host)
+            with transaction.atomic():
+                process_updates(report=self, host=host)
 
             self.processed = True
-            self.save()
-            transaction.commit()
+            with transaction.atomic():
+                self.save()
 
             if find_updates:
+                if verbose:
+                    print 'Finding updates for %s - %s' % (self.id, self.host)
                 host.find_updates()
-                transaction.commit()
         else:
             if self.processed:
                 text = 'Report %s has already been processed\n' % (self.id)
@@ -175,4 +184,3 @@ class Report(models.Model):
                 text = 'Error: OS, kernel or arch not sent with report %s\n' \
                     % (self.id)
                 error_message.send(sender=None, text=text)
-            transaction.commit()

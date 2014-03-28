@@ -29,12 +29,13 @@ from debian.deb822 import Sources
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "patchman.settings")
 from django.conf import settings
+from django.db import transaction
 from django.db.models import Q
 
-from packages.models import Package, PackageName, PackageString
-from arch.models import PackageArchitecture
-from util import download_url
-from signals import info_message, error_message, debug_message, \
+from patchman.packages.models import Package, PackageName, PackageString
+from patchman.arch.models import PackageArchitecture
+from patchman.util import download_url
+from patchman.signals import info_message, error_message, debug_message, \
     progress_info_s, progress_update_s
 
 
@@ -45,14 +46,14 @@ def update_mirror_packages(mirror, packages):
 
     new = set()
     old = set()
-    removed = set()
+    removals = set()
 
-    repopackages = mirror.packages.all()
-    rplen = repopackages.count()
+    mirror_packages = mirror.packages.all()
+    mlen = mirror_packages.count()
 
     ptext = 'Obtaining stored packages: '
-    progress_info_s.send(sender=None, ptext=ptext, plen=rplen)
-    for i, package in enumerate(repopackages):
+    progress_info_s.send(sender=None, ptext=ptext, plen=mlen)
+    for i, package in enumerate(mirror_packages):
         progress_update_s.send(sender=None, index=i + 1)
         name = str(package.name)
         arch = str(package.arch)
@@ -65,14 +66,14 @@ def update_mirror_packages(mirror, packages):
         old.add(strpackage)
 
     new = packages.difference(old)
-    removed = old.difference(packages)
+    removals = old.difference(packages)
 
     nlen = len(new)
-    rlen = len(removed)
+    rlen = len(removals)
 
     ptext = 'Removing %s obsolete packages:' % rlen
     progress_info_s.send(sender=None, ptext=ptext, plen=rlen)
-    for i, package in enumerate(removed):
+    for i, package in enumerate(removals):
         progress_update_s.send(sender=None, index=i + 1)
         package_id = PackageName.objects.get(name=package.name)
         epoch = package.epoch
@@ -86,41 +87,45 @@ def update_mirror_packages(mirror, packages):
                                 arch=arch,
                                 release=release,
                                 packagetype=packagetype)
-        from repos.models import MirrorPackage
-        MirrorPackage.objects.get(mirror=mirror, package=p).delete()
-    mirror.save()
+        from patchman.repos.models import MirrorPackage
+        with transaction.atomic():
+            MirrorPackage.objects.get(mirror=mirror, package=p).delete()
 
     ptext = 'Adding %s new packages:' % nlen
     progress_info_s.send(sender=None, ptext=ptext, plen=nlen)
     for i, package in enumerate(new):
         progress_update_s.send(sender=None, index=i + 1)
 
-        package_names = PackageName.objects.select_for_update()
-        package_id, c = package_names.get_or_create(name=package.name)
+        package_names = PackageName.objects.all()
+        with transaction.atomic():
+            package_id, c = package_names.get_or_create(name=package.name)
 
         epoch = package.epoch
         version = package.version
         release = package.release
         packagetype = package.packagetype
 
-        package_arches = PackageArchitecture.objects.select_for_update()
-        arch, c = package_arches.get_or_create(name=package.arch)
+        package_arches = PackageArchitecture.objects.all()
+        with transaction.atomic():
+            arch, c = package_arches.get_or_create(name=package.arch)
 
-        all_packages = Package.objects.select_for_update()
-        p, c = all_packages.get_or_create(name=package_id,
-                                          epoch=epoch,
-                                          version=version,
-                                          arch=arch,
-                                          release=release,
-                                          packagetype=packagetype)
+        all_packages = Package.objects.all()
+        with transaction.atomic():
+            p, c = all_packages.get_or_create(name=package_id,
+                                              epoch=epoch,
+                                              version=version,
+                                              arch=arch,
+                                              release=release,
+                                              packagetype=packagetype)
         # This fixes a subtle bug where a stored package name with uppercase
         # letters will not match until it is lowercased.
         if package_id.name != package.name:
             package_id.name = package.name
-            package_id.save()
-        from repos.models import MirrorPackage
-        MirrorPackage.objects.create(mirror=mirror, package=p)
-    mirror.save()
+            with transaction.atomic():
+                package_id.save()
+        from patchman.repos.models import MirrorPackage
+        with transaction.atomic():
+            MirrorPackage.objects.create(mirror=mirror, package=p)
 
 
 def gunzip(contents):
@@ -285,7 +290,7 @@ def mirrorlists_check(repo):
                             % (max_mirrors, mirror_url)
                         info_message.send(sender=None, text=text)
                         continue
-                from repos.models import Mirror
+                from patchman.repos.models import Mirror
                 m, c = Mirror.objects.get_or_create(repo=repo, url=mirror_url)
                 if c:
                     text = 'Added mirror - %s\n' % mirror_url

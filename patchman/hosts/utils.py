@@ -18,7 +18,7 @@ from socket import gethostbyaddr, gaierror, herror
 
 from django.db import DatabaseError
 
-from signals import progress_info_s, progress_update_s
+from patchman.signals import progress_info_s, progress_update_s
 
 
 def update_rdns(host):
@@ -41,7 +41,7 @@ def remove_reports(host, timestamp):
     """ Remove all but the last 3 reports for a host
     """
 
-    from reports.models import Report
+    from patchman.reports.models import Report
 
     reports = Report.objects.filter(host=host).order_by('-created')[:3]
     report_ids = []

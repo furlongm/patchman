@@ -1,6 +1,6 @@
 # Copyright 2012 VPAC, http://www.vpac.org
 #
-# This file is part of 
+# This file is part of patchman
 #
 # Patchman is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,11 +23,11 @@ admin.autodiscover()
 urlpatterns = patterns('',
 
     url(r'^$', 'patchman.views.dashboard', name='dashboard'),
-    url(r'^reports/', include('reports.urls')),
-    url(r'^hosts/', include('hosts.urls')),
-    url(r'^packages/', include('packages.urls')),
-    url(r'^repos/', include('repos.urls')),
-    url(r'^os/', include('operatingsystems.urls')),
+    url(r'^reports/', include('patchman.reports.urls')),
+    url(r'^hosts/', include('patchman.hosts.urls')),
+    url(r'^packages/', include('patchman.packages.urls')),
+    url(r'^repos/', include('patchman.repos.urls')),
+    url(r'^os/', include('patchman.operatingsystems.urls')),
     # Uncomment the admin/doc line below to enable admin documentation:
     #(r'^admin/doc/', include('django.contrib.admindocs.urls')),
     url(r'^accounts/login/$', 'django.contrib.auth.views.login', name='login'),

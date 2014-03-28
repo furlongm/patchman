@@ -22,13 +22,13 @@ from debian.debian_support import Version, version_compare
 from tagging.fields import TagField
 from datetime import datetime
 
-from packages.models import Package, PackageUpdate
-from domains.models import Domain
-from repos.models import Repository
-from operatingsystems.models import OS
-from arch.models import MachineArchitecture
-from signals import info_message
-from hosts.utils import update_rdns, remove_reports
+from patchman.packages.models import Package, PackageUpdate
+from patchman.domains.models import Domain
+from patchman.repos.models import Repository
+from patchman.operatingsystems.models import OS
+from patchman.arch.models import MachineArchitecture
+from patchman.signals import info_message
+from patchman.hosts.utils import update_rdns, remove_reports
 
 
 class Host(models.Model):
@@ -129,7 +129,6 @@ class Host(models.Model):
                   mirror__enabled=True, mirror__repo__enabled=True)
         return Package.objects.select_related().filter(hostrepos_q).distinct()
 
-    @transaction.commit_manually
     def process_update(self, package, highest_ver, highest_package):
         if highest_ver != ('', '0', ''):
             if self.host_repos_only:
@@ -146,11 +145,12 @@ class Host(models.Model):
                 if mirror.repo.security:
                     security = True
             try:
-                updates = PackageUpdate.objects.select_for_update()
-                update, c = updates.get_or_create(oldpackage=package,
-                                                  newpackage=highest_package,
-                                                  security=security)
-                transaction.commit()
+                updates = PackageUpdate.objects.all()
+                with transaction.atomic():
+                    update, c = updates.get_or_create(
+                        oldpackage=package,
+                        newpackage=highest_package,
+                        security=security)
             except IntegrityError as e:
                 print e
                 update = updates.get(oldpackage=package,
@@ -158,20 +158,16 @@ class Host(models.Model):
                                      security=security)
             except DatabaseError as e:
                 print e
-                transaction.rollback()
             try:
-                self.updates.add(update)
+                with transaction.atomic():
+                    self.updates.add(update)
                 info_message.send(sender=None, text="%s\n" % update)
-                transaction.commit()
                 return update.id
             except IntegrityError as e:
                 print e
             except DatabaseError as e:
                 print e
-                transaction.rollback()
-        transaction.commit()
 
-    @transaction.commit_manually
     def find_updates(self):
 
         old_updates = self.updates.all()
@@ -184,7 +180,6 @@ class Host(models.Model):
         host_packages = self.packages.exclude(kernels_q).distinct()
         kernels = self.packages.filter(kernels_q)
         kernel_packages = kernels.values('name__name').annotate(Count('name'))
-        transaction.commit()
 
         if self.host_repos_only:
             update_ids = self.find_host_repo_updates(host_packages,
@@ -201,7 +196,6 @@ class Host(models.Model):
         removals = old_updates.exclude(pk__in=update_ids)
         for update in removals:
             self.updates.remove(update)
-        transaction.commit()
 
     def find_best_repo(self, package, hostrepos):
 
@@ -316,7 +310,6 @@ class Host(models.Model):
         else:
             self.reboot_required = False
 
-    @transaction.commit_manually
     def find_kernel_updates(self, kernel_packages, repo_packages):
 
         update_ids = []
@@ -360,11 +353,10 @@ class Host(models.Model):
         except ValueError:  # debian kernel
             pass
         try:
-            self.save()
-            transaction.commit()
+            with transaction.atomic():
+                self.save()
         except DatabaseError as e:
             print e
-            transaction.rollback()
 
         return update_ids
 
