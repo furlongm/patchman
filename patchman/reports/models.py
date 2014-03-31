@@ -157,10 +157,10 @@ class Report(models.Model):
             host.check_rdns()
 
             if verbose:
-                print 'Processing %s - %s' % (self.id, self.host)
+                print 'Processing report %s - %s' % (self.id, self.host)
 
-            from patchman.reports.utils import process_packages, process_repos, \
-                process_updates
+            from patchman.reports.utils import process_packages, \
+                process_repos, process_updates
             with transaction.atomic():
                 process_repos(report=self, host=host)
             with transaction.atomic():
@@ -174,7 +174,8 @@ class Report(models.Model):
 
             if find_updates:
                 if verbose:
-                    print 'Finding updates for %s - %s' % (self.id, self.host)
+                    print 'Finding updates for report %s - %s' % \
+                        (self.id, self.host)
                 host.find_updates()
         else:
             if self.processed:

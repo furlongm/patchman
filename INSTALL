@@ -1,7 +1,7 @@
-# Installation from current git on debian wheezy
+# Installation from git on Ubuntu Trusty 14.04
 # -----------------------------------------------
 
-# 1. Install dependencies
+# 1. Install dependencies. Note that Django >= 1.6 is required.
 apt-get install python-django-tagging python-django-south python-django \
 python-django-extensions python-argparse python-lxml python-rpm python-debian \
 python-pygooglechart python-cracklib python-progressbar libapache2-mod-wsgi \
@@ -53,7 +53,7 @@ vi /etc/patchman/settings.py
 # 5. Enable mod-wsgi and copy the apache conf file
 a2enmod wsgi
 cp /srv/patchman/etc/patchman-apache.conf /etc/apache2/conf-available/patchman.conf
-a2enconf
+a2enconf patchman
 
 # 6. Edit the networks allowed to report to apache and reload apache
 vi /etc/apache2/conf-enabled/patchman.conf
@@ -93,7 +93,7 @@ apt-get install python-django-celery rabbitmq-server
 
 # 10. Alternatively, or in addition to 9, set up a cronjob to run all the daily tasks, e.g.
 #
-# 30 8 * * * http_proxy=http://myproxy.example.com:3128 PYTHONPATH=/srv/patchman/patchman /srv/patchman/sbin/patchman -a -q
+# 30 8 * * * http_proxy=http://myproxy.example.com:3128 PYTHONPATH=/srv/patchman /srv/patchman/sbin/patchman -a -q
 #
 # Run PYTHONPATH=/srv/patchman/patchman /srv/patchman/sbin/patchman -h to view all options.
 

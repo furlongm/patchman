@@ -25,8 +25,8 @@ from django.contrib import messages
 from django.core.urlresolvers import reverse
 
 from patchman.operatingsystems.models import OS, OSGroup
-from patchman.operatingsystems.forms import LinkOSGroupForm, AddReposToOSGroupForm, \
-    CreateOSGroupForm
+from patchman.operatingsystems.forms import LinkOSGroupForm, \
+    AddReposToOSGroupForm, CreateOSGroupForm
 
 
 @login_required
