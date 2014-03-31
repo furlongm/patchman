@@ -13,7 +13,7 @@ from datetime import date, datetime
 from tagging.models import TaggedItem
 
 from patchman.hosts.models import Host
-from packages.models import Package, PackageName, PackageUpdate
+from patchman.packages.models import Package, PackageName, PackageUpdate
 from patchman.repos.models import Repository
 from patchman.arch.models import PackageArchitecture, MachineArchitecture
 from patchman.reports.models import Report
