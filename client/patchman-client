@@ -142,7 +142,7 @@ function get_installed_debs {
         OLDIFS=${IFS}
         IFS="
 "
-        for i in $(dpkg-query -W --showformat="\${Status}\|\${Package} \${Version} \${Architecture}\n" | grep '^install ok installed' | sed -e 's/^install ok installed|//') ; do
+        for i in $(dpkg-query -W --showformat="\${Status}\|\${Package} \${Version} \${Architecture}\n" | egrep '^(install)|(hold) ok installed' | sed -e 's/^\(install\|hold\) ok installed|//g') ; do
             IFS=${OLDIFS}
             read name fullversion arch <<<$(echo "${i}" | cut -d " " -f 1,2,3)
             read remaining release <<<$(echo "${fullversion}" | sed -e "s/\(.*\)-\(.*\)/\1 \2/")
