@@ -45,9 +45,7 @@ def upload(request):
 
         with transaction.atomic():
             report = Report.objects.create()
-        print "created report"
         report.parse(data, meta)
-        print "parseed report"
         if settings.USE_ASYNC_PROCESSING:
             from patchman.reports.tasks import process_report
             process_report.delay(report)
