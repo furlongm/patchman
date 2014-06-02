@@ -166,6 +166,8 @@ def extract(data):
 
 def get_primary_url(repo_url, data):
 
+    if data.startswith('Bad repo - not in list'):
+        return None, None, None
     ns = 'http://linux.duke.edu/metadata/repo'
     context = etree.parse(StringIO(data), etree.XMLParser())
     location = context.xpath("//ns:data[@type='primary']/ns:location/@href",
