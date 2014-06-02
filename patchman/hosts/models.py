@@ -129,44 +129,43 @@ class Host(models.Model):
                   mirror__enabled=True, mirror__repo__enabled=True)
         return Package.objects.select_related().filter(hostrepos_q).distinct()
 
-    def process_update(self, package, highest_ver, highest_package):
-        if highest_ver != ('', '0', ''):
-            if self.host_repos_only:
-                host_repos = Q(repo__host=self)
-            else:
-                host_repos = \
-                    Q(repo__osgroup__os__host=self, repo__arch=self.arch) | \
-                    Q(repo__host=self)
-            mirrors = highest_package.mirror_set.filter(host_repos)
-            security = False
-            # If any of the containing repos are security,
-            # mark the update as security
-            for mirror in mirrors:
-                if mirror.repo.security:
-                    security = True
-            try:
-                updates = PackageUpdate.objects.all()
-                with transaction.atomic():
-                    update, c = updates.get_or_create(
-                        oldpackage=package,
-                        newpackage=highest_package,
-                        security=security)
-            except IntegrityError as e:
-                print e
-                update = updates.get(oldpackage=package,
-                                     newpackage=highest_package,
-                                     security=security)
-            except DatabaseError as e:
-                print e
-            try:
-                with transaction.atomic():
-                    self.updates.add(update)
-                info_message.send(sender=None, text="%s\n" % update)
-                return update.id
-            except IntegrityError as e:
-                print e
-            except DatabaseError as e:
-                print e
+    def process_update(self, package, highest_package):
+        if self.host_repos_only:
+            host_repos = Q(repo__host=self)
+        else:
+            host_repos = \
+                Q(repo__osgroup__os__host=self, repo__arch=self.arch) | \
+                Q(repo__host=self)
+        mirrors = highest_package.mirror_set.filter(host_repos)
+        security = False
+        # If any of the containing repos are security,
+        # mark the update as security
+        for mirror in mirrors:
+            if mirror.repo.security:
+                security = True
+        try:
+            updates = PackageUpdate.objects.all()
+            with transaction.atomic():
+                update, c = updates.get_or_create(
+                    oldpackage=package,
+                    newpackage=highest_package,
+                    security=security)
+        except IntegrityError as e:
+            print e
+            update = updates.get(oldpackage=package,
+                                 newpackage=highest_package,
+                                 security=security)
+        except DatabaseError as e:
+            print e
+        try:
+            with transaction.atomic():
+                self.updates.add(update)
+            info_message.send(sender=None, text="%s\n" % update)
+            return update.id
+        except IntegrityError as e:
+            print e
+        except DatabaseError as e:
+            print e
 
     def find_updates(self):
 
@@ -200,7 +199,7 @@ class Host(models.Model):
     def find_best_repo(self, package, hostrepos):
 
         best_repo = None
-        package_repos = hostrepos.filter(repo__mirror__packages__name=package)
+        package_repos = hostrepos.filter(repo__mirror__packages=package)
 
         if package_repos:
             best_repo = package_repos[0]
@@ -213,44 +212,19 @@ class Host(models.Model):
                         best_repo = hostrepo
         return best_repo
 
-    def find_highest_ver(self, package_type, potential_update,
-                         highest_ver, highest_package):
-
-        if package_type == 'R':
-            pu_ver = potential_update._version_string_rpm()
-            if labelCompare(highest_ver, pu_ver) == -1:
-                highest_ver = pu_ver
-                highest_package = potential_update
-
-        elif package_type == 'D':
-            pu_ver = potential_update._version_string_deb()
-            pu_deb_ver = Version(pu_ver)
-            if highest_ver == ('', '0', ''):
-                highest_deb_ver = Version('0')
-            else:
-                ver_str = '%s:%s-%s' % (str(highest_ver[0]),
-                                        str(highest_ver[1]),
-                                        str(highest_ver[2]))
-                highest_deb_ver = Version(ver_str)
-            if version_compare(highest_deb_ver, pu_deb_ver) == -1:
-                highest_ver = pu_ver
-                highest_package = potential_update
-
-        return highest_ver, highest_package
-
     def find_host_repo_updates(self, host_packages, repo_packages):
 
         update_ids = []
-
         hostrepos_q = Q(repo__mirror__enabled=True,
                         repo__mirror__repo__enabled=True, host=self)
         hostrepos = HostRepo.objects.select_related().filter(hostrepos_q)
 
         for package in host_packages:
-            highest_ver = ('', '0', '')
-            highest_package = None
-
-            best_repo = self.find_best_repo(package.name, hostrepos)
+            highest_package = package
+            best_repo = self.find_best_repo(package, hostrepos)
+            priority = 0
+            if best_repo is not None:
+                priority = best_repo.priority
 
             # find the packages that are potential updates
             pu_q = Q(name=package.name, arch=package.arch,
@@ -258,22 +232,21 @@ class Host(models.Model):
             potential_updates = repo_packages.filter(pu_q)
             for potential_update in potential_updates:
 
-                if package.compare_version(potential_update) == -1:
+                if highest_package.compare_version(potential_update) == -1 \
+                        and package.compare_version(potential_update) == -1:
 
-                    pu_best_repo = self.find_best_repo(potential_update.name,
+                    pu_best_repo = self.find_best_repo(potential_update,
                                                        hostrepos)
-                    priority = pu_best_repo.priority
+                    pu_priority = pu_best_repo.priority
 
-                    # proceed if that repo has a higher priority
-                    if priority >= best_repo.priority:
-                        highest_ver, highest_package = \
-                            self.find_highest_ver(package.packagetype,
-                                                  potential_update,
-                                                  highest_ver, highest_package)
+                    # proceed if that repo has a greater or equal priority
+                    if pu_priority >= priority:
+                        highest_package = potential_update
 
-            uid = self.process_update(package, highest_ver, highest_package)
-            if uid is not None:
-                update_ids.append(uid)
+            if highest_package != package:
+                uid = self.process_update(package, highest_package)
+                if uid is not None:
+                    update_ids.append(uid)
 
         return update_ids
 
@@ -282,8 +255,7 @@ class Host(models.Model):
         update_ids = []
 
         for package in host_packages:
-            highest_ver = ('', '0', '')
-            highest_package = None
+            highest_package = package
 
             # find the packages that are potential updates
             pu_q = Q(name=package.name, arch=package.arch,
@@ -291,16 +263,14 @@ class Host(models.Model):
             potential_updates = repo_packages.filter(pu_q)
             for potential_update in potential_updates:
 
-                if package.compare_version(potential_update) == -1:
+                if highest_package.compare_version(potential_update) == -1 \
+                        and package.compare_version(potential_update) == -1:
+                    highest_package = potential_update
 
-                    highest_ver, highest_package = \
-                        self.find_highest_ver(package.packagetype,
-                                              potential_update,
-                                              highest_ver, highest_package)
-
-            uid = self.process_update(package, highest_ver, highest_package)
-            if uid is not None:
-                update_ids.append(uid)
+            if highest_package != package:
+                uid = self.process_update(package, highest_package)
+                if uid is not None:
+                    update_ids.append(uid)
 
         return update_ids
 
@@ -321,30 +291,24 @@ class Host(models.Model):
             kernel_ver = ('', str(ver), str(rel))
 
             for package in kernel_packages:
-                host_highest_ver = ('', '', '')
-                repo_highest_ver = ('', '', '')
-                host_highest_package = None
-                repo_highest_package = None
+                host_highest = package
+                repo_highest = package
+
                 pk_q = Q(name__name=package['name__name'])
+                potential_updates = repo_packages.filter(pk_q)
+                for pu in potential_updates:
+                    if package.compare_version(pu) == -1 \
+                            and repo_highest.compare_version(pu) == -1:
+                        repo_highest = pu
 
-                potential_kernels = repo_packages.filter(pk_q)
-                for potential_kernel in potential_kernels:
-                    repo_highest_ver, repo_highest_package = \
-                        self.find_highest_ver('R', potential_kernel,
-                                              repo_highest_ver,
-                                              repo_highest_package)
+                host_packages = self.packages.filter(pk_q)
+                for hp in host_packages:
+                    if package.compare_version(hp) == -1 and \
+                            host_highest.compare_version(hp) == -1:
+                        host_highest = hp
 
-                host_kernels = self.packages.filter(pk_q)
-                for host_kernel in host_kernels:
-                    host_highest_ver, host_highest_package = \
-                        self.find_highest_ver('R', potential_kernel,
-                                              host_highest_ver,
-                                              host_highest_package)
-
-                if labelCompare(host_highest_ver, repo_highest_ver) == -1:
-                    uid = self.process_update(host_highest_package,
-                                              repo_highest_ver,
-                                              repo_highest_package)
+                if host_highest.compare_version(repo_highest) == -1:
+                    uid = self.process_update(host_highest, repo_highest)
                     if uid is not None:
                         update_ids.append(uid)
 
