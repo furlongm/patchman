@@ -96,17 +96,17 @@ def get_repos(repo=None, action='Performing action', only_enabled=False):
     return repos
 
 
-def update_repos(repo=None, force=False):
-    """ Update metadata for all enabled repos.
+def refresh_repos(repo=None, force=False):
+    """ Refresh metadata for all enabled repos.
         Specify a repo ID to update a single repo.
     """
 
-    repos = get_repos(repo, 'Updating metadata', True)
+    repos = get_repos(repo, 'Refreshing metadata', True)
 
     for repo in repos:
         if verbose:
             print '%s' % repo
-        repo.update(force)
+        repo.refresh(force)
         if verbose:
             print '\n'
 
@@ -489,8 +489,8 @@ def collect_args():
         '-q', '--quiet', action='store_true',
         help='less output (e.g. for cronjobs)')
     parser.add_argument(
-        '-u', '--update-repos', action='store_true',
-        help='update repositories')
+        '-r', '--refresh-repos', action='store_true',
+        help='Refresh repositories')
     parser.add_argument(
         '-R', '--repo',
         help='only perform action on this repository (repo_id)')
@@ -539,7 +539,7 @@ def process_args(args):
     if args.all:
         args.process_reports = True
         args.clean_reports = True
-        args.update_repos = True
+        args.refresh_repos = True
         args.host_updates_alt = True
         args.clean_updates = True
         args.dbcheck = True
@@ -562,8 +562,8 @@ def process_args(args):
     if args.dbcheck:
         dbcheck()
         showhelp = False
-    if args.update_repos:
-        update_repos(args.repo, args.force)
+    if args.refresh_repos:
+        refresh_repos(args.repo, args.force)
         showhelp = False
         recheck = True
     if args.host_updates:
