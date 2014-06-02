@@ -66,7 +66,10 @@ class Report(models.Model):
         if 'host' in data:
             self.host = data['host']
             fqdn = self.host.split('.', 1)
-            self.domain = fqdn.pop()
+            if len(fqdn) == 2:
+                self.domain = fqdn.pop()
+            else:
+                self.domain = None
 
         if 'os' in data:
             self.os = data['os']
