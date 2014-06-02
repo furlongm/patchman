@@ -484,47 +484,47 @@ def collect_args():
     parser = argparse.ArgumentParser(description='Patchman CLI tool')
     parser.add_argument(
         '-f', '--force', action='store_true',
-        help='ignore stored checksums and force-refresh all mirrors')
+        help='Ignore stored checksums and force-refresh all mirrors')
     parser.add_argument(
         '-q', '--quiet', action='store_true',
-        help='less output (e.g. for cronjobs)')
+        help='Quiet mode (e.g. for cronjobs)')
     parser.add_argument(
         '-r', '--refresh-repos', action='store_true',
         help='Refresh repositories')
     parser.add_argument(
         '-R', '--repo',
-        help='only perform action on this repository (repo_id)')
+        help='Only perform action on a specific repository (repo_id)')
     parser.add_argument(
         '-lr', '--list-repos', action='store_true',
-        help='list all available repositories')
+        help='List all repositories')
     parser.add_argument(
         '-lh', '--list-hosts', action='store_true',
-        help='list all available hosts')
+        help='List all hosts')
     parser.add_argument(
-        '-U', '--host-updates', action='store_true',
-        help='find updates for all hosts')
+        '-u', '--host-updates', action='store_true',
+        help='Find host updates')
     parser.add_argument(
         '-A', '--host-updates-alt', action='store_true',
-        help='find updates for all hosts (alternative algorithm that \
-        may be faster when there are many homogeneous hosts)')
+        help='Find host updates (alternative algorithm that may be faster \
+        when there are many homogeneous hosts)')
     parser.add_argument(
         '-H', '--host',
-        help='only perform action on this host (fqdn)')
+        help='Only perform action on a specific host (fqdn)')
     parser.add_argument(
         '-p', '--process-reports', action='store_true',
-        help='process all pending reports')
+        help='Process pending reports')
     parser.add_argument(
-        '-r', '--clean-reports', action='store_true',
-        help='remove all but the last three reports')
+        '-c', '--clean-reports', action='store_true',
+        help='Remove all but the last three reports')
     parser.add_argument(
         '-d', '--dbcheck', action='store_true',
-        help='perform some sanity checks and clean unused db entries')
+        help='Perform some sanity checks and clean unused db entries')
     parser.add_argument(
         '-n', '--dns-checks', action='store_true',
-        help='perform reverse DNS checks if enabled for that host')
+        help='Perform reverse DNS checks if enabled for that host')
     parser.add_argument(
         '-a', '--all', action='store_true',
-        help='Convenience flag for -u -A -p -r -d -n')
+        help='Convenience flag for -r -A -p -c -d -n')
     parser.add_argument(
         '-D', '--diff', metavar=('hostA', 'hostB'), nargs=2,
         help='Show differences between two hosts in difflike output')
