@@ -177,8 +177,7 @@ class Host(models.Model):
             Q(name__name='kernel-headers')
         repo_packages = self.get_host_repo_packages()
         host_packages = self.packages.exclude(kernels_q).distinct()
-        kernels = self.packages.filter(kernels_q)
-        kernel_packages = kernels.values('name__name').annotate(Count('name'))
+        kernel_packages = self.packages.filter(kernels_q)
 
         if self.host_repos_only:
             update_ids = self.find_host_repo_updates(host_packages,
@@ -274,8 +273,14 @@ class Host(models.Model):
 
         return update_ids
 
-    def check_if_reboot_required(self, running_kernel_ver, host_highest_ver):
-        if labelCompare(running_kernel_ver, host_highest_ver) == -1:
+    def check_if_reboot_required(self, host_highest):
+
+        ver, rel = self.kernel.rsplit('-')
+        rel = rel.rstrip('xen')
+        rel = rel.rstrip('PAE')
+        kernel_ver = ('', str(ver), str(rel))
+        host_highest_ver = ('', host_highest.version, host_highest.release)
+        if labelCompare(kernel_ver, host_highest_ver) == -1:
             self.reboot_required = True
         else:
             self.reboot_required = False
@@ -284,38 +289,30 @@ class Host(models.Model):
 
         update_ids = []
 
-        try:
-            ver, rel = self.kernel.rsplit('-')
-            rel = rel.rstrip('xen')
-            rel = rel.rstrip('PAE')
-            kernel_ver = ('', str(ver), str(rel))
+        for package in kernel_packages:
+            host_highest = package
+            repo_highest = package
 
-            for package in kernel_packages:
-                host_highest = package
-                repo_highest = package
+            pk_q = Q(name=package.name)
+            potential_updates = repo_packages.filter(pk_q)
+            for pu in potential_updates:
+                if package.compare_version(pu) == -1 \
+                        and repo_highest.compare_version(pu) == -1:
+                    repo_highest = pu
 
-                pk_q = Q(name__name=package['name__name'])
-                potential_updates = repo_packages.filter(pk_q)
-                for pu in potential_updates:
-                    if package.compare_version(pu) == -1 \
-                            and repo_highest.compare_version(pu) == -1:
-                        repo_highest = pu
+            host_packages = self.packages.filter(pk_q)
+            for hp in host_packages:
+                if package.compare_version(hp) == -1 and \
+                        host_highest.compare_version(hp) == -1:
+                    host_highest = hp
 
-                host_packages = self.packages.filter(pk_q)
-                for hp in host_packages:
-                    if package.compare_version(hp) == -1 and \
-                            host_highest.compare_version(hp) == -1:
-                        host_highest = hp
+            if host_highest.compare_version(repo_highest) == -1:
+                uid = self.process_update(host_highest, repo_highest)
+                if uid is not None:
+                    update_ids.append(uid)
 
-                if host_highest.compare_version(repo_highest) == -1:
-                    uid = self.process_update(host_highest, repo_highest)
-                    if uid is not None:
-                        update_ids.append(uid)
+            self.check_if_reboot_required(host_highest)
 
-                self.check_if_reboot_required(kernel_ver, host_highest_ver)
-
-        except ValueError:  # debian kernel
-            pass
         try:
             with transaction.atomic():
                 self.save()
