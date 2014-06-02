@@ -114,13 +114,19 @@ class Package(models.Model):
             release = '-' + str(self.release)
         return (epoch + version + release)
 
+    def get_version_string(self):
+        if self.packagetype == 'R':
+            return self._version_string_rpm()
+        elif self.packagetype == 'D':
+            return self._version_string_deb()
+
     def compare_version(self, other):
         if self.packagetype == 'R' and other.packagetype == 'R':
-            return labelCompare(self._version_string_rpm(),
-                                other._version_string_rpm())
+            return labelCompare(self.get_version_string(),
+                                other.get_version_string())
         elif self.packagetype == 'D' and other.packagetype == 'D':
-            vs = Version(self._version_string_deb())
-            vo = Version(other._version_string_deb())
+            vs = Version(self.get_version_string())
+            vo = Version(other.get_version_string())
             return version_compare(vs, vo)
 
     def repo_count(self):
