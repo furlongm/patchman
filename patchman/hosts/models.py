@@ -15,10 +15,9 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from django.db import models, IntegrityError, DatabaseError, transaction
-from django.db.models import Q, Count
+from django.db.models import Q
 
 from rpm import labelCompare
-from debian.debian_support import Version, version_compare
 from tagging.fields import TagField
 from datetime import datetime
 
