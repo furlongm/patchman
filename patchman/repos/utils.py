@@ -300,7 +300,7 @@ def mirrorlists_check(repo):
 
 
 def extract_yum_packages(data):
-    """ Unpack package metadata from a yum primary.xml file
+    """ Extract package metadata from a yum primary.xml file
     """
 
     extracted = extract(data)
@@ -411,8 +411,8 @@ def extract_yast_packages(data):
     return
 
 
-def update_yum_repo(mirror, data, repo_url, ts):
-    """ Update package metadata for a yum-style rpm mirror
+def refresh_yum_repo(mirror, data, repo_url, ts):
+    """ Refresh package metadata for a yum-style rpm mirror
         and add the packages to the mirror
     """
 
@@ -464,20 +464,20 @@ def checksum_is_valid(mirror, checksum, checksum_type, data):
 
     if sha != checksum:
         text = '%s checksum failed for mirror %s' % (checksum_type, mirror.id)
-        text += ', not updating package metadata\n'
+        text += ', not refreshing package metadata\n'
         error_message.send(sender=None, text=text)
         mirror.last_access_ok = False
         return False
     elif mirror.file_checksum == sha:
         text = 'Mirror checksum has not changed, '
-        text += 'not updating package metadata\n'
+        text += 'not refreshing package metadata\n'
         info_message.send(sender=None, text=text)
         return False
     return True
 
 
-def update_yast_repo(mirror, data, repo_url):
-    """ Update package metadata for a yast-style rpm mirror
+def refresh_yast_repo(mirror, data, repo_url):
+    """ Refresh package metadata for a yast-style rpm mirror
         and add the packages to the mirror
     """
 
@@ -498,8 +498,8 @@ def update_yast_repo(mirror, data, repo_url):
         mirror.fail()
 
 
-def update_rpm_repo(repo):
-    """ Update an rpm repo.
+def refresh_rpm_repo(repo):
+    """ Refresh an rpm repo.
         Checks if the repo url is a mirrorlist, and extracts mirrors if so.
         If not, checks a number of common rpm repo formats to determine
         which type of repo it is, and to determine the mirror urls.
@@ -531,19 +531,19 @@ def update_rpm_repo(repo):
             if not yast:
                 text = 'Found yum rpm repo - %s\n' % repo_url
                 debug_message.send(sender=None, text=text)
-                update_yum_repo(mirror, data, repo_url, ts)
+                refresh_yum_repo(mirror, data, repo_url, ts)
             else:
                 text = 'Found yast rpm repo - %s\n' % repo_url
                 debug_message.send(sender=None, text=text)
-                update_yast_repo(mirror, data, repo_url)
+                refresh_yast_repo(mirror, data, repo_url)
             mirror.timestamp = ts
         else:
             mirror.fail()
         mirror.save()
 
 
-def update_deb_repo(repo):
-    """ Update a debian repo.
+def refresh_deb_repo(repo):
+    """ Refresh a debian repo.
         Checks for the Packages* files to determine what the mirror urls
         are and then downloads and extracts packages from those files.
     """
@@ -564,7 +564,7 @@ def update_deb_repo(repo):
             sha1 = get_sha1(data)
             if mirror.file_checksum == sha1:
                 text = 'Mirror checksum has not changed, '
-                text += 'not updating package metadata\n'
+                text += 'not refreshing package metadata\n'
                 info_message.send(sender=None, text=text)
             else:
                 packages = set()

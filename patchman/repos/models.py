@@ -19,7 +19,7 @@ from django.db import models
 from patchman.arch.models import MachineArchitecture
 from patchman.packages.models import Package
 
-from patchman.repos.utils import update_deb_repo, update_rpm_repo, \
+from patchman.repos.utils import refresh_deb_repo, refresh_rpm_repo, \
     update_mirror_packages
 from patchman.signals import error_message, info_message
 
@@ -67,8 +67,8 @@ class Repository(models.Model):
 
         info_message.send(sender=None, text='\n')
 
-    def update(self, force=False):
-        """ Update all of a repos mirror metadata,
+    def refresh(self, force=False):
+        """ Refresh all of a repos mirror metadata,
             force can be set to force a reset of all the mirrors metadata
         """
 
@@ -79,9 +79,9 @@ class Repository(models.Model):
 
         if not self.auth_required:
             if self.repotype == Repository.DEB:
-                update_deb_repo(self)
+                refresh_deb_repo(self)
             elif self.repotype == Repository.RPM:
-                update_rpm_repo(self)
+                refresh_rpm_repo(self)
             else:
                 text = 'Error: unknown repo type for repo %s: %s\n' % \
                     (self.id, self.repotype)
