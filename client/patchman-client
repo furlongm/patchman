@@ -296,7 +296,7 @@ function get_repos {
             fi
         else
             repo_string="'deb\' \'${osname} ${shortversion} ${host_arch} repo at"
-            repos=`apt-cache policy | grep http | grep -v Translation | sed -e "s/^ *//g" -e "s/ *$//g" | cut -d " " -f 1,2,3,4`
+            repos=`apt-cache policy | grep http: | grep -v Translation | sed -e "s/^ *//g" -e "s/ *$//g" | cut -d " " -f 1,2,3,4`
             dist_repos=`echo "${repos}" | grep -v -e "Packages$"`
             nondist_repos=`echo "${repos}" | grep -e "Packages$"`
             echo "${dist_repos}" | sed -e "s/\([0-9]*\) \(http:.*\) \(.*\/.*\) \(.*\)/${repo_string} \2dists\/\3\/binary-\4' '\1' '\2dists\/\3\/binary-\4'/" >> ${tmpfile_rep}
