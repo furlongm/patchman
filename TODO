@@ -2,8 +2,11 @@
 * web interface support for updating repos, finding updates
 * add checkrestart-style options to see which services need restarting
 * CVE/OVAL apps
-* allow updating via puppet
 * CA support (tinyca?)
 * native python client, using apt/yum/debian libraries
 * record the history of installed packages on a host
 * also store package descriptions/tags/urls
+* check for unused repos
+* only complain about osgroups with no repos if osgroups are in use by some hosts
+* rdns checks off by default
+* suggest names for repos with the same checksum
