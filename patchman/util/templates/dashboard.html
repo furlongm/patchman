@@ -31,7 +31,7 @@
   {% endif %}
 {% endwith %}
 {% with norepo_osgroups.count as count %}
-  {% if count > 0 %}
+  {% if count > 0 and norepo_osgroups != None %}
   <div class="module">
     <div class="resultslink" id="r5"><a href="#">{{ count }} OS Groups have no repositories</a></div>
       <div class="results" id="r5">

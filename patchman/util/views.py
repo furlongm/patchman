@@ -56,7 +56,9 @@ def dashboard(request):
     nohost_oses = oses.filter(host__isnull=True)
 
     # osgroup issues
-    norepo_osgroups = osgroups.filter(repos__isnull=True)
+    norepo_osgroups = None
+    if len(hosts.filter(host_repos_only=False)) > 0:
+        norepo_osgroups = osgroups.filter(repos__isnull=True)
 
     # mirror issues
     failed_mirrors = repos.filter(auth_required=False).filter(mirror__last_access_ok=False).filter(mirror__last_access_ok=True).distinct()
