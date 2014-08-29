@@ -3,15 +3,15 @@ Section: python
 Priority: optional
 Maintainer: Marcus Furlong <furlongm@gmail.com>
 Uploaders: Marcus Furlong <furlongm@gmail.com>
-Build-Depends: debhelper (>=7.0.0), python (>= 2.4), python-support (>= 0.6), cdbs (>= 0.4.49)
-Standards-Version: 3.9.2
+Build-Depends: debhelper (>=9.0.0), python (>= 2.7), python-support (>= 0.6)
+Standards-Version: 3.9.4
 
 Package: patchman
 Architecture: all
 Homepage: https://github.com/furlongm/patchman/
-Depends: ${misc:Depends}, ${python:Depends}, python, python-django (>= 1.2.1), python-django-south (>= 0.7), python-django-tagging (>= 0.3.1), python-debian (>= 0.1.18) , python-rpm (>= 4.8.1), python-progressbar (>= 2.2), python-lxml (>=2.2.8), python-argparse (>= 1.1), libapache2-mod-wsgi (>=3.3), python-django-extensions
+Depends: ${misc:Depends}, ${python:Depends}, python, python-django (>= 1.6.5), python-django-south (>= 0.7), python-django-tagging (>= 0.3.1), python-debian (>= 0.1.21) , python-rpm (>= 4.10.0), python-progressbar (>= 2.2), python-lxml (>=2.3.2), python-argparse (>= 1.2.1), libapache2-mod-wsgi (>=3.3), python-django-extensions
 Suggests: python-django-celery
-Description: Patchman is a django-based patch status monitoring tool for linux systems, that
+Description: Django-based patch status monitoring tool for linux systems, that
  provides a web interface for monitoring host package updates.
  .
  Patchman clients send a list of installed packages and enabled repositories to
