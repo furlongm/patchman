@@ -1,12 +1,12 @@
 #!/usr/bin/make -f
 # -*- makefile -*-
 
-DEB_PYTHON2_MODULE_PACKAGES := patchman
-
-include /usr/share/cdbs/1/rules/debhelper.mk
-include /usr/share/cdbs/1/class/python-distutils.mk
-
 clean::
-	rm -rf build MANIFEST dist
+	rm -rf build MANIFEST dist .pybuild
 	dh_clean
+
+export PYBUILD_NAME=patchman
+
+%:
+	dh $@ --with python2 --buildsystem=pybuild
 
