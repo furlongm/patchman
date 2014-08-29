@@ -95,7 +95,7 @@ data_files.append(
 
 setup(
     name = 'patchman',
-    version = '0.9.1',
+    version = '0.9.2',
     url = 'https://www.github.com/furlongm/patchman/',
     author = 'Marcus Furlong',
     author_email = 'furlongm@gmail.com',
