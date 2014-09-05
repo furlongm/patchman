@@ -59,44 +59,18 @@ class Report(models.Model):
 
         self.report_ip = meta['REMOTE_ADDR']
         self.useragent = meta['HTTP_USER_AGENT']
+        self.domain = None
 
-        if 'arch' in data:
-            self.arch = data['arch']
+        attrs = ['arch', 'host', 'os', 'kernel', 'protocol', 'packages',
+                 'tags', 'sec_updates', 'bug_updates', 'repos', 'reboot']
 
-        if 'host' in data:
-            self.host = data['host']
+        for attr in attrs:
+            setattr(self, attr, data.get(attr))
+
+        if self.host is not None:
             fqdn = self.host.split('.', 1)
             if len(fqdn) == 2:
                 self.domain = fqdn.pop()
-            else:
-                self.domain = None
-
-        if 'os' in data:
-            self.os = data['os']
-
-        if 'kernel' in data:
-            self.kernel = data['kernel']
-
-        if 'tags' in data:
-            self.tags = data['tags']
-
-        if 'protocol' in data:
-            self.protocol = data['protocol']
-
-        if 'packages' in data:
-            self.packages = data['packages']
-
-        if 'sec_updates' in data:
-            self.sec_updates = data['sec_updates']
-
-        if 'bug_updates' in data:
-            self.bug_updates = data['bug_updates']
-
-        if 'repos' in data:
-            self.repos = data['repos']
-
-        if 'reboot' in data:
-            self.reboot = data['reboot']
 
         with transaction.atomic():
             self.save()
