@@ -1,0 +1,13 @@
+language: python
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install libcrack2-dev
+install:
+  - pip install tox --use-mirrors
+script:
+  - tox
+env:
+  - TOXENV=flake8
+  - TOXENV=py27
+  - TOXENV=py27-dj17
+  - TOXENV=py27-dj16
