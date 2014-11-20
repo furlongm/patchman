@@ -582,7 +582,7 @@ def process_args(args):
     return showhelp
 
 
-if __name__ == '__main__':
+def main():
 
     parser = collect_args()
     args = parser.parse_args()
@@ -594,3 +594,6 @@ if __name__ == '__main__':
 
     if showhelp:
         parser.print_help()
+
+if __name__ == '__main__':
+    main()
