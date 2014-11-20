@@ -19,7 +19,7 @@ from patchman.arch.models import PackageArchitecture, MachineArchitecture
 from patchman.reports.models import Report
 from patchman.receivers import print_info_message, print_debug_message, \
     print_error_message
-from patchman.util import create_pbar, update_pbar, set_verbosity
+from patchman.util import create_pbar, update_pbar, set_verbosity, verbose
 
 
 def get_host(host=None, action='Performing action'):
