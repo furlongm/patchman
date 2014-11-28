@@ -530,11 +530,11 @@ def refresh_rpm_repo(repo):
                 return
             if not yast:
                 text = 'Found yum rpm repo - %s\n' % repo_url
-                debug_message.send(sender=None, text=text)
+                info_message.send(sender=None, text=text)
                 refresh_yum_repo(mirror, data, repo_url, ts)
             else:
                 text = 'Found yast rpm repo - %s\n' % repo_url
-                debug_message.send(sender=None, text=text)
+                info_message.send(sender=None, text=text)
                 refresh_yast_repo(mirror, data, repo_url)
             mirror.timestamp = ts
         else:
@@ -556,7 +556,7 @@ def refresh_deb_repo(repo):
 
         if mirror.last_access_ok:
             text = 'Found deb repo - %s\n' % repo_url
-            debug_message.send(sender=None, text=text)
+            info_message.send(sender=None, text=text)
             data = download_url(res, 'Downloading repo info:')
             if data is None:
                 mirror.fail()
