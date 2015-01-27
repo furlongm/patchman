@@ -584,6 +584,7 @@ def process_args(args):
 
 def main():
 
+    global verbose
     parser = collect_args()
     args = parser.parse_args()
 
