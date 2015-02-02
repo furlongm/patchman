@@ -31,7 +31,7 @@ Configuration of patchman under Ubuntu/Debian
             }
         }
 
-2.  Add a secret key, admin contact details and external IP address to /etc/patchman/settings.py
+2.  Add admin contact details and external IP address to /etc/patchman/settings.py
 
 3.  Set up a default superuser, database, and run migrations:
 

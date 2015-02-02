@@ -90,7 +90,10 @@ data_files.append(
     ('/etc/patchman', ['etc/patchman-apache.conf']),
 )
 scripts.append(
-    ('sbin/patchman')
+    ('sbin/patchman'),
+)
+scripts.append(
+    ('sbin/patchman-set-secret-key'),
 )
 
 setup(
