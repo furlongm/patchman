@@ -17,7 +17,7 @@ Depends: ${misc:Depends}, ${python:Depends}, python, python-django (>= 1.6.1),
  python-django-south (>= 0.7), python-django-tagging (>= 0.3.1),
  python-debian (>= 0.1.21), python-rpm (>= 4.10.0),
  python-progressbar (>= 2.2), python-lxml (>=2.3.2),
- libapache2-mod-wsgi (>=3.3), python-django-extensions
+ libapache2-mod-wsgi (>=3.3), python-django-extensions, apache2
 Suggests: python-django-celery
 Description: Django-based patch status monitoring tool for linux systems, that
  provides a web interface for monitoring host package updates.
