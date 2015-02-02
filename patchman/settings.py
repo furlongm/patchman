@@ -104,6 +104,15 @@ else:
     USE_ASYNC_PROCESSING = True
     djcelery.setup_loader()
 
+LOGIN_REDIRECT_URL = '/patchman/'
+LOGIN_URL = '/patchman/accounts/login/'
+
+# URL prefix for static files.
+STATIC_URL = '/patchman_media/'
+
+# Absolute path to the directory static files should be collected to.
+STATIC_ROOT = '/var/lib/patchman/media/'
+
 execfile("/etc/patchman/settings.py")
 
 MANAGERS = ADMINS
