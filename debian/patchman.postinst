@@ -27,14 +27,6 @@ if [ "$1" = "configure" ]; then
 
     patchman-set-secret-key
 
-    if [ "$2" = "" ]; then
-        dpkg-trigger patchman-static
-    fi
-fi
-
-if [ "$1" = "triggered" ]; then
-    if [ "$2" = "patchman-static" ]; then
-        python2.7 /usr/lib/python2.7/dist-packages/django/bin/django-admin.py \
-            collectstatic --settings=patchman.settings --noinput
-    fi
+    python2.7 /usr/lib/python2.7/dist-packages/django/bin/django-admin.py \
+        collectstatic --settings=patchman.settings --noinput
 fi
