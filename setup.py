@@ -90,7 +90,7 @@ data_files.append(
     ('/etc/patchman', ['etc/patchman-apache.conf']),
 )
 scripts.append(
-    ('/usr/sbin', ['sbin/patchman'])
+    ('/usr/sbin/patchman')
 )
 
 setup(
