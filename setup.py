@@ -44,7 +44,7 @@ for scheme in INSTALL_SCHEMES.values():
 
 # Compile the list of packages available, because distutils doesn't have
 # an easy way to do this.
-packages, data_files = [], []
+scripts, packages, data_files = [], [], []
 root_dir = os.path.dirname(__file__)
 if root_dir != '':
     os.chdir(root_dir)
