@@ -17,10 +17,10 @@ class osx_install_data(install_data):
         self.set_undefined_options('install', ('install_lib', 'install_dir'))
         install_data.finalize_options(self)
 
-if sys.platform == "darwin": 
-    cmdclasses = {'install_data': osx_install_data} 
-else: 
-    cmdclasses = {'install_data': install_data} 
+if sys.platform == "darwin":
+    cmdclasses = {'install_data': osx_install_data}
+else:
+    cmdclasses = {'install_data': install_data}
 
 def fullsplit(path, result=None):
     """
@@ -89,7 +89,7 @@ for dirpath, dirnames, filenames in os.walk('templates'):
 data_files.append(
     ('/etc/patchman', ['etc/patchman-apache.conf']),
 )
-data_files.append(
+scripts.append(
     ('/usr/sbin', ['sbin/patchman'])
 )
 
@@ -103,4 +103,5 @@ setup(
     packages = packages,
     cmdclass = cmdclasses,
     data_files = data_files,
+    scripts = scripts,
 )
