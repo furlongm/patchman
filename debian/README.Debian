@@ -1,0 +1,43 @@
+Configuration of patchman under Ubuntu/Debian
+
+1.  Create a database and add the details to /etc/patchman/settings.py
+
+    e.g. to use the mysql backend:
+
+    Install mysql-server and the python mysql bindings:
+
+        apt-get install mysql-server python-mysqldb
+
+    Create database and users:
+
+        mysql> CREATE DATABASE patchman CHARACTER SET utf8 COLLATE utf8_general_ci;
+        Query OK, 1 row affected (0.00 sec)
+
+        mysql> GRANT ALL PRIVILEGES ON patchman.* TO patchman@localhost IDENTIFIED BY 'changeme';
+        Query OK, 0 rows affected (0.00 sec)
+
+    Then update /etc/patchman/settings.py:
+
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+                'NAME': 'patchman',                   # Or path to database file if using sqlite3.
+                'USER': 'patchman',                   # Not used with sqlite3
+                'PASSWORD': 'changeme',               # Not used with sqlite3
+                'HOST': '',                           # Set to empty string for localhost. Not used with sqlite3.
+                'PORT': '',                           # Set to empty string for default. Not used with sqlite3.
+                'STORAGE_ENGINE': 'INNODB',
+                'CHARSET' : 'utf8'
+            }
+        }
+
+2.  Add a secret key, admin contact details and external IP address to /etc/patchman/settings.py
+
+3.  Set up a default superuser, database, and run migrations:
+
+        python2.7 /usr/lib/python2.7/dist-packages/django/bin/django-admin.py syncdb --settings=patchman.settings
+        python2.7 /usr/lib/python2.7/dist-packages/django/bin/django-admin.py migrate --settings=patchman.settings
+
+4.  Restart apache:
+
+        service apache2 restart
