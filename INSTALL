@@ -97,14 +97,7 @@ apt-get install python-django-celery rabbitmq-server
 #
 # Run PYTHONPATH=/srv/patchman/patchman /srv/patchman/sbin/patchman -h to view all options.
 
-# 11. If you want to run patchman under a subdirectory
-#   e.g. http://example.com/mypatchman/
-# then you need to add the following to /etc/patchman/settings.py
-#  LOGIN_REDIRECT_URL = '/mypatchman/'
-#  LOGIN_URL = '/mypatchman/accounts/login/'
-# and make the appropriate changes in /etc/apache2/conf.d/patchman.conf
-
-# 12. You can optionally run memcached:
+# 11. You can optionally run memcached:
 apt-get install memcached python-memcache
 # and add the following to /etc/patchman/settings.py
 #CACHES = {
