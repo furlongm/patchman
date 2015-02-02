@@ -111,7 +111,7 @@ LOGIN_URL = '/patchman/accounts/login/'
 STATIC_URL = '/patchman_media/'
 
 # Additional dirs where the media should be copied from
-STATICFILES_DIRS = ( '/usr/share/patchman/media/', )
+STATICFILES_DIRS = ('/usr/share/patchman/media/',)
 
 # Absolute path to the directory static files should be collected to.
 STATIC_ROOT = '/var/lib/patchman/media/'
