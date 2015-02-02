@@ -25,6 +25,8 @@ if [ "$1" = "configure" ]; then
         apache_force_reload
     fi
 
+    patchman-set-secret-key
+
     if [ "$2" = "" ]; then
         dpkg-trigger patchman-static
     fi
