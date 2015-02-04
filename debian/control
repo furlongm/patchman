@@ -35,3 +35,12 @@ Description: Django-based patch status monitoring tool for linux systems, that
  track of what updates are available for each host. The patchman yum and apt
  plugins can send reports to the patchman server every time packages are
  installed or removed.
+
+Package: patchman-client
+Architecture: all
+Homepage: https://github.com/furlongm/patchman/
+Depends: curl
+Description: Client for the patchman monitoring system.
+ .
+ The client will send a list of packages and repositories to the upstream
+ patchman server.
