@@ -10,7 +10,7 @@ Vcs-Git: git://github.com/furlongm/patchman
 Vcs-Browser: https://github.com/furlongm/patchman
 X-Python-Version: >= 2.7
 
-Package: patchman
+Package: python-patchman
 Architecture: all
 Homepage: https://github.com/furlongm/patchman/
 Depends: ${misc:Depends}, ${python:Depends}, python, python-django (>= 1.6.1),
