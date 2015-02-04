@@ -4,6 +4,9 @@ from distutils.command.install import INSTALL_SCHEMES
 import os
 import sys
 
+with open('VERSION.txt', 'r') as f:
+    version = f.readline().strip()
+
 class osx_install_data(install_data):
     # On MacOS, the platform-specific lib dir is /System/Library/Framework/Python/.../
     # which is wrong. Python 2.5 supplied with MacOS 10.5 has an Apple-specific fix
@@ -98,7 +101,7 @@ scripts.append(
 
 setup(
     name = 'patchman',
-    version = '0.9.2',
+    version = version,
     url = 'https://www.github.com/furlongm/patchman/',
     author = 'Marcus Furlong',
     author_email = 'furlongm@gmail.com',
@@ -107,4 +110,14 @@ setup(
     cmdclass = cmdclasses,
     data_files = data_files,
     scripts = scripts,
+)
+
+setup(
+    name = 'patchman-client',
+    version = version,
+    url = 'https://www.github.com/furlongm/patchman/',
+    author = 'Marcus Furlong',
+    author_email = 'furlongm@gmail.com',
+    description = 'Patchman is a django-based patch status monitoring tool for linux systems.',
+    scripts = ['client/patchman-client'],
 )
