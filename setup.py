@@ -30,7 +30,6 @@ for dirpath, dirnames, filenames in os.walk('patchman'):
 
 data_files = [
               ('/etc/patchman', ['etc/patchman-apache.conf']),
-              ('/etc/patchman', ['client/patchman-client.conf'])
 ]
 for dirpath, dirnames, filenames in os.walk('etc'):
     # Ignore dirnames that start with '.'
