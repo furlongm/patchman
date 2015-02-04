@@ -1,3 +1,24 @@
+patchman (0.9.3-1) stable; urgency=medium
+
+  [ Russell Sim ]
+  * Added initial tox and travis-ci
+
+  [ Marcus Furlong ]
+  * remove support for debian lenny and older
+  * update required django versions, fixed #8
+  * add main
+  * import verbose from utils
+  * make repo found message informational
+  * update debian packaging configuration
+  * add apache2 dependency
+  * use apache 2.4 configuration
+  * fix setup.py
+  * flake8 fix for travis
+  * set secret key automatically to enable collectstatic
+  * debian package for client
+
+ -- Marcus Furlong <furlongm@gmail.com>  Wed, 04 Feb 2015 01:01:40 +0000
+
 patchman (0.9.2-1) stable; urgency=low
 
   [ Marcus Furlong ]
