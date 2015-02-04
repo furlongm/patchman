@@ -4,7 +4,6 @@ include COPYING
 include MANIFEST.in
 include INSTALL
 include UPGRADE
-#recursive-include docs *
 recursive-include scripts *
 recursive-include patchman *
 recursive-include sbin *
