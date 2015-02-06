@@ -32,23 +32,27 @@ data_files = []
 data_files.append(
     ('/etc/patchman', ['etc/patchman-apache.conf']),
 )
-for dirpath, dirnames, files in os.walk('etc'):
+for dirpath, dirnames, filenames in os.walk('etc'):
     # Ignore dirnames that start with '.'
     for i, dirname in enumerate(dirnames):
         if dirname.startswith('.'):
             del dirnames[i]
-    if files:
+    if filenames:
         path = dirpath.replace('etc', '/etc/patchman')
-        data_files.append([path, [os.path.join(dirpath, f) for f in files]])
+        data_files.append(
+            [path, [os.path.join(dirpath, f) for f in filenames]]
+        )
 
-for dirpath, dirnames, files in os.walk('media'):
+for dirpath, dirnames, filenames in os.walk('media'):
     # Ignore dirnames that start with '.'
     for i, dirname in enumerate(dirnames):
         if dirname.startswith('.'):
             del dirnames[i]
-    if files:
+    if filenames:
         path = dirpath.replace('media', '/usr/share/patchman/media')
-        data_files.append([path, [os.path.join(dirpath, f) for f in files]])
+        data_files.append(
+            [path, [os.path.join(dirpath, f) for f in filenames]]
+        )
 
 setup(
     name='patchman',
