@@ -1,9 +1,8 @@
 from setuptools import setup
 import os
 
-with open('VERSION.txt', 'r') as f:
-    version = f.readline().strip()
-
+with open('VERSION.txt', 'r') as version_file:
+    version = version_file.readline().strip()
 
 def fullsplit(path, result=None):
     """
@@ -35,26 +34,28 @@ data_files.append(
 for dirpath, dirnames, filenames in os.walk('etc'):
     # Ignore dirnames that start with '.'
     for i, dirname in enumerate(dirnames):
-        if dirname.startswith('.'): del dirnames[i]
+        if dirname.startswith('.'):
+            del dirnames[i]
     if filenames:
-       data_files.append([dirpath.replace('etc', '/etc/patchman'), [os.path.join(dirpath, f) for f in filenames]])
+        data_files.append([dirpath.replace('etc', '/etc/patchman'), [os.path.join(dirpath, f) for f in filenames]])
 
 for dirpath, dirnames, filenames in os.walk('media'):
     # Ignore dirnames that start with '.'
     for i, dirname in enumerate(dirnames):
-        if dirname.startswith('.'): del dirnames[i]
+        if dirname.startswith('.'):
+            del dirnames[i]
     if filenames:
         data_files.append([dirpath.replace('media', '/usr/share/patchman/media'), [os.path.join(dirpath, f) for f in filenames]])
 
 setup(
-    name = 'patchman',
-    version = version,
-    url = 'https://www.github.com/furlongm/patchman/',
-    author = 'Marcus Furlong',
-    author_email = 'furlongm@gmail.com',
-    description = 'Patchman is a django-based patch status monitoring tool for linux systems.',
-    packages = packages,
-    data_files = data_files,
+    name='patchman',
+    version=version,
+    url='https://www.github.com/furlongm/patchman/',
+    author='Marcus Furlong',
+    author_email='furlongm@gmail.com',
+    description='Patchman is a django-based patch status monitoring tool for linux systems.',
+    packages=packages,
+    data_files=data_files,
     package_data={'': ['*.html'], },
-    scripts = ['sbin/patchman', 'sbin/patchman-set-secret-key'],
+    scripts=['sbin/patchman', 'sbin/patchman-set-secret-key'],
 )
