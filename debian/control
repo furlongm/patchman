@@ -14,7 +14,6 @@ Package: python-patchman
 Architecture: all
 Homepage: https://github.com/furlongm/patchman/
 Depends: ${misc:Depends}, python (>= 2.7),  python-django (>= 1.6.1),
- python-django-south (>= 0.7),
  python-django-tagging (>= 0.3.1), python-debian (>= 0.1.21),
  python-rpm (>= 4.10.0), python-progressbar (>= 2.2), python-lxml (>=2.3.2),
  libapache2-mod-wsgi (>=3.3), python-django-extensions, apache2
