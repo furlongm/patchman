@@ -1,6 +1,5 @@
 from setuptools import setup
 import os
-import sys
 
 with open('VERSION.txt', 'r') as f:
     version = f.readline().strip()
