@@ -64,5 +64,8 @@ setup(
     packages=packages,
     data_files=data_files,
     package_data={'': ['*.html'], },
-    scripts=['sbin/patchman', 'sbin/patchman-set-secret-key'],
+    scripts=['sbin/patchman',
+             'sbin/patchman-set-secret-key',
+             'sbin/patchman-manage',
+             'sbin/patchman-south-migrations', ],
 )

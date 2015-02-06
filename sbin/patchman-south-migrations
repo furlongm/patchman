@@ -1,0 +1,14 @@
+#!/bin/sh
+set -ex
+
+TMPDIR=$(mktemp -d)
+trap "rm -rf -- '$TMPDIR'" EXIT HUP INT TERM
+
+virtualenv --system-site-packages "$TMPDIR"
+. "$TMPDIR/bin/activate"
+
+pip install django==1.6.5
+pip install south
+
+CMD="$(command -v patchman-manage)"
+python "$CMD" migrate "$@"
