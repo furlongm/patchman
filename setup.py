@@ -1,5 +1,6 @@
 from setuptools import setup
 import os
+import sys
 
 with open('VERSION.txt', 'r') as f:
     version = f.readline().strip()
@@ -28,9 +29,10 @@ for dirpath, dirnames, filenames in os.walk('patchman'):
     if filenames:
         packages.append('.'.join(fullsplit(dirpath)))
 
-data_files = [
-              ('/etc/patchman', ['etc/patchman-apache.conf']),
-]
+data_files = []
+data_files.append(
+    ('/etc/patchman', ['etc/patchman-apache.conf']),
+)
 for dirpath, dirnames, filenames in os.walk('etc'):
     # Ignore dirnames that start with '.'
     for i, dirname in enumerate(dirnames):
@@ -45,13 +47,6 @@ for dirpath, dirnames, filenames in os.walk('media'):
     if filenames:
         data_files.append([dirpath.replace('media', '/usr/share/patchman/media'), [os.path.join(dirpath, f) for f in filenames]])
 
-for dirpath, dirnames, filenames in os.walk('templates'):
-    # Ignore dirnames that start with '.'
-    for i, dirname in enumerate(dirnames):
-        if dirname.startswith('.'): del dirnames[i]
-    if filenames:
-        data_files.append([dirpath.replace('templates', '/usr/share/patchman/templates'), [os.path.join(dirpath, f) for f in filenames]])
-
 setup(
     name = 'patchman',
     version = version,
@@ -61,5 +56,6 @@ setup(
     description = 'Patchman is a django-based patch status monitoring tool for linux systems.',
     packages = packages,
     data_files = data_files,
+    package_data={'': ['*.html'], },
     scripts = ['sbin/patchman', 'sbin/patchman-set-secret-key'],
 )
