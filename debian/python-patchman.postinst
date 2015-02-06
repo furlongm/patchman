@@ -26,7 +26,5 @@ if [ "$1" = "configure" ]; then
     fi
 
     patchman-set-secret-key
-
-    python2.7 /usr/lib/python2.7/dist-packages/django/bin/django-admin.py \
-        collectstatic --settings=patchman.settings --noinput
+    patchman-manage collectstatic --noinput
 fi

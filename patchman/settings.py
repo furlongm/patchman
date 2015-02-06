@@ -74,9 +74,15 @@ DEFAULT_APPS = (
 
 THIRD_PARTY_APPS = (
     'django_extensions',
-    'south',
     'tagging',
 )
+
+try:
+    from django.db import migrations  # noqa
+except ImportError:
+    pass
+else:
+    THIRD_PARTY_APPS += ('south',)
 
 LOCAL_APPS = (
     'patchman.hosts',
