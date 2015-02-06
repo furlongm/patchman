@@ -4,6 +4,7 @@ import os
 with open('VERSION.txt', 'r') as version_file:
     version = version_file.readline().strip()
 
+
 def fullsplit(path, result=None):
     """
     Split a pathname into components (the opposite of os.path.join) in a
@@ -31,21 +32,23 @@ data_files = []
 data_files.append(
     ('/etc/patchman', ['etc/patchman-apache.conf']),
 )
-for dirpath, dirnames, filenames in os.walk('etc'):
+for dirpath, dirnames, files in os.walk('etc'):
     # Ignore dirnames that start with '.'
     for i, dirname in enumerate(dirnames):
         if dirname.startswith('.'):
             del dirnames[i]
-    if filenames:
-        data_files.append([dirpath.replace('etc', '/etc/patchman'), [os.path.join(dirpath, f) for f in filenames]])
+    if files:
+        path = dirpath.replace('etc', '/etc/patchman')
+        data_files.append([path, [os.path.join(dirpath, f) for f in files]])
 
-for dirpath, dirnames, filenames in os.walk('media'):
+for dirpath, dirnames, files in os.walk('media'):
     # Ignore dirnames that start with '.'
     for i, dirname in enumerate(dirnames):
         if dirname.startswith('.'):
             del dirnames[i]
-    if filenames:
-        data_files.append([dirpath.replace('media', '/usr/share/patchman/media'), [os.path.join(dirpath, f) for f in filenames]])
+    if files:
+        path = dirpath.replace('media', '/usr/share/patchman/media')
+        data_files.append([path, [os.path.join(dirpath, f) for f in files]])
 
 setup(
     name='patchman',
@@ -53,7 +56,7 @@ setup(
     url='https://www.github.com/furlongm/patchman/',
     author='Marcus Furlong',
     author_email='furlongm@gmail.com',
-    description='Patchman is a django-based patch status monitoring tool for linux systems.',
+    description='django based patch status monitoring tool for linux systems',
     packages=packages,
     data_files=data_files,
     package_data={'': ['*.html'], },
