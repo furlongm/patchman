@@ -122,6 +122,8 @@ STATICFILES_DIRS = ('/usr/share/patchman/media/',)
 # Absolute path to the directory static files should be collected to.
 STATIC_ROOT = '/var/lib/patchman/media/'
 
+TEST_RUNNER = 'django.test.runner.DiscoverRunner'
+
 execfile("/etc/patchman/settings.py")
 
 MANAGERS = ADMINS
