@@ -77,13 +77,6 @@ THIRD_PARTY_APPS = (
     'tagging',
 )
 
-try:
-    from django.db import migrations  # noqa
-except ImportError:
-    pass
-else:
-    THIRD_PARTY_APPS += ('south',)
-
 LOCAL_APPS = (
     'patchman.hosts',
     'patchman.domains',
