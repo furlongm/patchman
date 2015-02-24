@@ -6,7 +6,7 @@ Configuration of patchman under Ubuntu/Debian
 
     Install mysql-server and the python mysql bindings:
 
-        apt-get install mysql-server python-mysqldb
+        $ apt-get install mysql-server python-mysqldb
 
     Create database and users:
 
@@ -35,9 +35,13 @@ Configuration of patchman under Ubuntu/Debian
 
 3.  Set up a default superuser, database, and run migrations:
 
-        python2.7 /usr/lib/python2.7/dist-packages/django/bin/django-admin.py syncdb --settings=patchman.settings
-        python2.7 /usr/lib/python2.7/dist-packages/django/bin/django-admin.py migrate --settings=patchman.settings
+        # Django 1.6
+        $ patchman-manage syncdb
+
+        # Django 1.7
+        $ patchman-manage migrate
+        $ patchman-manage createsuperuser
 
 4.  Restart apache:
 
-        service apache2 restart
+        $ service apache2 restart

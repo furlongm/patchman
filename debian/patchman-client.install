@@ -1,2 +1,3 @@
 client/patchman-client.conf etc/patchman
 client/patchman-client usr/bin
+hooks/apt/05patchman etc/apt/apt.conf.d

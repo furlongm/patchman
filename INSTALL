@@ -1,7 +1,31 @@
-# Installation from git on Ubuntu Trusty 14.04
-# -----------------------------------------------
+# Installation from deb on Ubuntu 14.04 (trusty)
+# ----------------------------------------------
 
-# 1. Install dependencies. Note that Django >= 1.6 is required.
+$ apt-key add 0412F522
+$ echo "deb http://repo.openbytes.ie/ubuntu trusty main" > /etc/apt/sources.list.d/patchman.list
+$ apt-get update
+$ apt-get install python-patchman
+# Modify /etc/patchman/settings.py to suit your site
+$ patchman-manage syncdb
+
+
+# Installation from deb on Debian 7 (wheezy)
+# ------------------------------------------
+
+$ echo "deb http://http.debian.net/debian wheezy-backports main" > /etc/apt/sources.list.d/backports.list
+$ apt-key add 0412F522
+$ echo "deb http://repo.openbytes.ie/debian wheezy main" > /etc/apt/sources.list.d/patchman.list
+$ apt-get update
+$ apt-get install python-patchman
+# Modify /etc/patchman/settings.py to suit your site
+$ patchman-manage migrate
+$ patchman-manage createsuperuser
+
+
+# Installation from git on Ubuntu Trusty 14.04
+# --------------------------------------------
+
+# 1. Install dependencies.
 apt-get install python-django-tagging python-django \
 python-django-extensions python-argparse python-lxml python-rpm python-debian \
 python-pygooglechart python-cracklib python-progressbar libapache2-mod-wsgi \
@@ -65,19 +89,6 @@ cd /srv/patchman/patchman
 
 ./manage.py migrate
 ./manage.py collectstatic
-
-# If the migrate fails with an error such as
-# django.db.utils.DatabaseError: (1050, "Table 'operatingsystems_osgroup' already exists")
-# you may need to run the migrations for each app manually, ending with the troublesome one. e.g.
-#
-# ./manage.py migrate hosts
-# ./manage.py migrate repos
-# ./manage.py migrate arch
-# ./manage.py migrate domains
-# ./manage.py migrate reports
-# ./manage.py migrate packages
-# ./manage.py migrate operatingsystems
-# ./manage.py migrate --list
 
 # 8. Deploy the client and/or yum/apt plugins via e.g. puppet, and add a daily
 # cronjob, e.g.
