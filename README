@@ -37,7 +37,6 @@ Server-side dependencies
 ------------------------
 
 python-django-tagging
-python-django-south
 python-django-extensions
 python-debian
 python-rpm

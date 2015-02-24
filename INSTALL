@@ -2,7 +2,7 @@
 # -----------------------------------------------
 
 # 1. Install dependencies. Note that Django >= 1.6 is required.
-apt-get install python-django-tagging python-django-south python-django \
+apt-get install python-django-tagging python-django \
 python-django-extensions python-argparse python-lxml python-rpm python-debian \
 python-pygooglechart python-cracklib python-progressbar libapache2-mod-wsgi \
 apache2
