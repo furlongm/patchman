@@ -1,7 +1,7 @@
 # Installation from deb on Ubuntu 14.04 (trusty)
 # ----------------------------------------------
 
-$ apt-key add 0412F522
+$ apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0412F522
 $ echo "deb http://repo.openbytes.ie/ubuntu trusty main" > /etc/apt/sources.list.d/patchman.list
 $ apt-get update
 $ apt-get install python-patchman
@@ -13,7 +13,7 @@ $ patchman-manage syncdb
 # ------------------------------------------
 
 $ echo "deb http://http.debian.net/debian wheezy-backports main" > /etc/apt/sources.list.d/backports.list
-$ apt-key add 0412F522
+$ apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0412F522
 $ echo "deb http://repo.openbytes.ie/debian wheezy main" > /etc/apt/sources.list.d/patchman.list
 $ apt-get update
 $ apt-get install python-patchman
