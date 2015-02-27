@@ -18,8 +18,9 @@ Depends: ${misc:Depends}, python (>= 2.7),  python-django (>= 1.6.1),
  python-rpm (>= 4.10.0), python-progressbar (>= 2.2), python-lxml (>=2.3.2),
  libapache2-mod-wsgi (>=3.3), python-django-extensions, apache2
 Suggests: python-django-celery
-Description: Django-based patch status monitoring tool for linux systems, that
- provides a web interface for monitoring host package updates.
+Description: Django-based patch status monitoring tool for linux systems.
+ .
+ Patchman provides a web interface for monitoring host package updates.
  .
  Patchman clients send a list of installed packages and enabled repositories to
  the patchman server. The patchman server updates its package list for each
@@ -30,9 +31,9 @@ Description: Django-based patch status monitoring tool for linux systems, that
  find out which hosts have a certain version of a package installed, and which
  repository it comes from.
  .
- Patchman does not install update packages on hosts, it calculates and keeps
- track of what updates are available for each host. The patchman yum and apt
- plugins can send reports to the patchman server every time packages are
+ Patchman does not install update packages on hosts, it determines and records
+ what updates are available for each host. The patchman yum and apt plugins can
+ optionally send reports to the patchman server every time packages are
  installed or removed.
 
 Package: patchman-client
