@@ -1,3 +1,18 @@
+patchman (0.9.4-1) stable; urgency=medium
+
+  [ Marcus Furlong ]
+  * handle apache 2.2 and 2.4 correctly
+  * add missing html templates
+  * flake8 fixes
+  * use get_queryset instead of get_query_set
+  * add TEST_RUNNER variable for django 1.6+
+  * workaround yum updates error
+  * remove dependency on south
+  * update deb to include apt hook, cronjob and installation details
+  * apache configuration and documentation updates
+
+ -- Marcus Furlong <furlongm@gmail.com>  Fri, 27 Feb 2015 15:51:06 +1100
+
 patchman (0.9.3-1) stable; urgency=medium
 
   [ Russell Sim ]
