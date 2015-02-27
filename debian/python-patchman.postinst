@@ -27,4 +27,5 @@ if [ "$1" = "configure" ]; then
 
     patchman-set-secret-key
     patchman-manage collectstatic --noinput
+    chown -R www-data:www-data /var/lib/patchman
 fi

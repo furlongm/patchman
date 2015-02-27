@@ -16,6 +16,7 @@ $ echo "deb http://http.debian.net/debian wheezy-backports main" > /etc/apt/sour
 $ apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0412F522
 $ echo "deb http://repo.openbytes.ie/debian wheezy main" > /etc/apt/sources.list.d/patchman.list
 $ apt-get update
+$ apt-get install python-django/wheezy-backports
 $ apt-get install python-patchman
 # Modify /etc/patchman/settings.py to suit your site
 $ patchman-manage migrate
