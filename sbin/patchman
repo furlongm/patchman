@@ -8,6 +8,9 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "patchman.settings")
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import Count
+from django import setup as django_setup
+
+django_setup()
 
 from datetime import date, datetime
 from tagging.models import TaggedItem
