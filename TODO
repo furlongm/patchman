@@ -9,3 +9,5 @@
 * check for unused repos
 * rdns checks off by default
 * suggest names for repos with the same checksum
+* hook for zypper
+* helper script to change paths (e.g. /usr/lib/python2.7/dist-packages/patchman)

@@ -23,14 +23,18 @@ $ patchman-manage migrate
 $ patchman-manage createsuperuser
 
 
-# Installation from git on Ubuntu Trusty 14.04
-# --------------------------------------------
+# Installation from git on Ubuntu 14.04 and Debian 8.0
+# ----------------------------------------------------
 
 # 1. Install dependencies.
 apt-get install python-django-tagging python-django \
 python-django-extensions python-argparse python-lxml python-rpm python-debian \
 python-pygooglechart python-cracklib python-progressbar libapache2-mod-wsgi \
 apache2
+
+# If python-django-tagging is older than 0.3.3, you may need to install a
+# newer version. E.g. to upgrade to the latest pip version:
+pip install --upgrade django-tagging
 
 # 2. Check out current git to e.g. /srv/patchman
 cd /srv
@@ -78,6 +82,7 @@ vi /etc/patchman/settings.py
 # 5. Enable mod-wsgi and copy the apache conf file
 a2enmod wsgi
 cp /srv/patchman/etc/patchman-apache.conf /etc/apache2/conf-available/patchman.conf
+vi /etc/apache2/conf-available/patchman.conf # change /usr/lib/python2.7/dist-packages/patchman to /srv/patchman/patchman
 a2enconf patchman
 
 # 6. Edit the networks allowed to report to apache and reload apache
@@ -89,6 +94,9 @@ cd /srv/patchman/patchman
 ./manage.py syncdb # answer questions here if required
 
 ./manage.py migrate
+
+vi /srv/patchman/patchman/settings.py # change STATICFILES_DIRS to /srv/patchman/media
+
 ./manage.py collectstatic
 
 # 8. Deploy the client and/or yum/apt plugins via e.g. puppet, and add a daily
@@ -107,7 +115,7 @@ apt-get install python-django-celery rabbitmq-server
 #
 # 30 8 * * * http_proxy=http://myproxy.example.com:3128 PYTHONPATH=/srv/patchman /srv/patchman/sbin/patchman -a -q
 #
-# Run PYTHONPATH=/srv/patchman/patchman /srv/patchman/sbin/patchman -h to view all options.
+# Run PYTHONPATH=/srv/patchman /srv/patchman/sbin/patchman -h to view all options.
 
 # 11. You can optionally run memcached:
 apt-get install memcached python-memcache
@@ -118,3 +126,11 @@ apt-get install memcached python-memcache
 #        'LOCATION': '127.0.0.1:11211',
 #    }
 #}
+
+# 12. To test your installation, run the client locally:
+/srv/patchman/client/patchman-client -s http://127.0.0.1/patchman/
+
+# and then run the daily server tasks:
+PYTHONPATH=/srv/patchman /srv/patchman/sbin/patchman -a
+
+# The django interface should be available at http://127.0.0.1/patchman/
