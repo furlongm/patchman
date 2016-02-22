@@ -22,7 +22,7 @@ import datetime
 from operator import itemgetter
 
 def get_query_string(qs):
-    return '?' + '&amp;'.join([u'%s=%s' % (k, v) for k, v in qs.items()]).replace(' ', '%20')
+    return '?' + '&amp;'.join([u'{0!s}={1!s}'.format(k, v) for k, v in qs.items()]).replace(' ', '%20')
 
 class Filter(object):
     multi = False
@@ -64,21 +64,21 @@ class Filter(object):
             pass
 
         output = ''
-        output += '<h3>By %s</h3>\n' % self.header.replace('_', ' ')
+        output += '<h3>By {0!s}</h3>\n'.format(self.header.replace('_', ' '))
         output += '<ul>\n'
         filters = sorted(self.filters.iteritems(), key=itemgetter(1))
 
         if self.selected is not None:
-            output += """<li><a href="%s">All</a></li>\n""" % get_query_string(qs)
+            output += """<li><a href="{0!s}">All</a></li>\n""".format(get_query_string(qs))
         else:
-            output += """<li class="selected"><a href="%s">All</a></li>\n""" % get_query_string(qs)
+            output += """<li class="selected"><a href="{0!s}">All</a></li>\n""".format(get_query_string(qs))
         for k, v in filters:
             if str(self.selected) == str(k):
                 style = """class="selected" """
             else:
                 style = ""
             qs[self.name] = k
-            output += """<li %s><a href="%s">%s</a></li>\n""" % (style, get_query_string(qs), v)
+            output += """<li {0!s}><a href="{1!s}">{2!s}</a></li>\n""".format(style, get_query_string(qs), v)
 
         output += '</ul>'
 
@@ -98,7 +98,7 @@ class DateFilter(object):
             self.header = header
         params = dict(request.GET.items())
 
-        self.field_generic = '%s__' % self.name
+        self.field_generic = '{0!s}__'.format(self.name)
 
         self.date_params = dict([(k, v) for k, v in params.items() if k.startswith(self.field_generic)])
 
@@ -108,14 +108,14 @@ class DateFilter(object):
 
         self.links = (
             ('Any date', {}),
-            ('Today', {'%s__year' % self.name: str(today.year),
-                       '%s__month' % self.name: str(today.month),
-                       '%s__day' % self.name: str(today.day)}),
-            ('Past 7 days', {'%s__gte' % self.name: one_week_ago.strftime('%Y-%m-%d'),
-                             '%s__lte' % self.name: today_str}),
-            ('This month', {'%s__year' % self.name: str(today.year),
-                             '%s__month' % self.name: str(today.month)}),
-            ('This year', {'%s__year' % self.name: str(today.year)})
+            ('Today', {'{0!s}__year'.format(self.name): str(today.year),
+                       '{0!s}__month'.format(self.name): str(today.month),
+                       '{0!s}__day'.format(self.name): str(today.day)}),
+            ('Past 7 days', {'{0!s}__gte'.format(self.name): one_week_ago.strftime('%Y-%m-%d'),
+                             '{0!s}__lte'.format(self.name): today_str}),
+            ('This month', {'{0!s}__year'.format(self.name): str(today.year),
+                             '{0!s}__month'.format(self.name): str(today.month)}),
+            ('This year', {'{0!s}__year'.format(self.name): str(today.year)})
         )
 
     def choices(self):
@@ -129,7 +129,7 @@ class DateFilter(object):
         choices = self.choices()
 
         output = ''
-        output += '<h3>By %s</h3>\n' % self.header.replace('_', ' ')
+        output += '<h3>By {0!s}</h3>\n'.format(self.header.replace('_', ' '))
         output += '<ul>\n'
 
 
@@ -141,7 +141,7 @@ class DateFilter(object):
             for k,v in choice['query_dict'].items():
                 qs[k] = v
 
-            output += """<li %s><a href="%s">%s</a></li>\n""" % (choice['selected'] and "class='selected'" or '', get_query_string(qs), choice['display'])
+            output += """<li {0!s}><a href="{1!s}">{2!s}</a></li>\n""".format(choice['selected'] and "class='selected'" or '', get_query_string(qs), choice['display'])
 
         output += '</ul>'
         return output
@@ -165,7 +165,7 @@ class FilterBar(object):
         for f in self.filter_list:
             if f.multi:
                 params = dict(request.GET.items())
-                field_generic = '%s__' % f.name
+                field_generic = '{0!s}__'.format(f.name)
                 m_params = dict([(k, v) for k, v in params.items() if k.startswith(field_generic)])
                 for k,v in m_params.items():
                     qs[k] = v

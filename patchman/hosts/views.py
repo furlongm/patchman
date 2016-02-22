@@ -139,7 +139,7 @@ def host_edit(request, hostname):
         if edit_form.is_valid():
             host = edit_form.save()
             host.save()
-            messages.info(request, 'Saved changes to Host %s' % host)
+            messages.info(request, 'Saved changes to Host {0!s}'.format(host))
             return HttpResponseRedirect(host.get_absolute_url())
         else:
             host = get_object_or_404(Host, hostname=hostname)
@@ -161,7 +161,7 @@ def host_delete(request, hostname):
     if request.method == 'POST':
         if 'delete' in request.REQUEST:
             host.delete()
-            messages.info(request, 'Host %s has been deleted' % hostname)
+            messages.info(request, 'Host {0!s} has been deleted'.format(hostname))
             return HttpResponseRedirect(reverse('host_list'))
         elif 'cancel' in request.REQUEST:
             return HttpResponseRedirect(reverse('host_detail',

@@ -45,7 +45,7 @@ def formfield(parser, token):
     try:
         tag_name, field = token.split_contents()
     except:
-        raise template.TemplateSyntaxError, "%r tag requires exactly one argument" % token.contents.split()[0]
+        raise template.TemplateSyntaxError, "{0!r} tag requires exactly one argument".format(token.contents.split()[0])
     return FormFieldNode(field)
 
 
@@ -55,7 +55,7 @@ class FormFieldNode(template.Node):
 
     def get_template(self, class_name):
         try:
-            template_name = 'formfield/%s.html' % class_name
+            template_name = 'formfield/{0!s}.html'.format(class_name)
             return template.loader.get_template(template_name)
         except template.TemplateDoesNotExist:
             return template.loader.get_template('formfield/default.html')
@@ -75,7 +75,7 @@ class FormFieldNode(template.Node):
             label_class_names.append('vCheckboxLabel')
 
 
-        class_str = label_class_names and u' class="%s"' % u' '.join(label_class_names) or u''
+        class_str = label_class_names and u' class="{0!s}"'.format(u' '.join(label_class_names)) or u''
 
         context.push()
         context.push()

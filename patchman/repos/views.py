@@ -184,7 +184,7 @@ def mirror_list(request):
             repo.security = security
             repo.save()
             move_mirrors(repo)
-            text = 'Mirrors linked to new Repository %s' % repo
+            text = 'Mirrors linked to new Repository {0!s}'.format(repo)
             messages.info(request, text)
             return HttpResponseRedirect(repo.get_absolute_url())
 
@@ -192,7 +192,7 @@ def mirror_list(request):
         if link_form.is_valid():
             repo = link_form.cleaned_data['name']
             move_mirrors(repo)
-            messages.info(request, 'Mirrors linked to Repository %s' % repo)
+            messages.info(request, 'Mirrors linked to Repository {0!s}'.format(repo))
             return HttpResponseRedirect(repo.get_absolute_url())
 
     else:
@@ -246,7 +246,7 @@ def mirror_edit(request, repo_id, mirror_id):
         if edit_form.is_valid():
             mirror = edit_form.save()
             mirror.save()
-            messages.info(request, 'Saved changes to Mirror %s' % mirror)
+            messages.info(request, 'Saved changes to Mirror {0!s}'.format(mirror))
         else:
             mirror = get_object_or_404(Mirror, id=mirror_id)
     else:
@@ -285,7 +285,7 @@ def repo_edit(request, repo_id):
                 repo.enable()
             else:
                 repo.disable()
-            messages.info(request, 'Saved changes to Repository %s' % repo)
+            messages.info(request, 'Saved changes to Repository {0!s}'.format(repo))
             return HttpResponseRedirect(repo.get_absolute_url())
         else:
             repo = get_object_or_404(Repository, id=repo_id)
@@ -308,7 +308,7 @@ def repo_delete(request, repo_id):
             for mirror in repo.mirror_set.all():
                 mirror.delete()
             repo.delete()
-            messages.info(request, 'Repository %s has been deleted' % repo)
+            messages.info(request, 'Repository {0!s} has been deleted'.format(repo))
             return HttpResponseRedirect(reverse('repo_list'))
         elif 'cancel' in request.REQUEST:
             return HttpResponseRedirect(reverse('repo_detail', args=[repo_id]))
@@ -330,7 +330,7 @@ def repo_enable(request, repo_id):
             if request.is_ajax():
                 return HttpResponse(status=204)
             else:
-                text = 'Repository %s has been enabled' % repo
+                text = 'Repository {0!s} has been enabled'.format(repo)
                 messages.info(request, text)
                 return HttpResponseRedirect(reverse('repo_detail',
                                                     args=[repo_id]))
@@ -355,7 +355,7 @@ def repo_disable(request, repo_id):
             if request.is_ajax():
                 return HttpResponse(status=204)
             else:
-                text = 'Repository %s has been disabled' % repo
+                text = 'Repository {0!s} has been disabled'.format(repo)
                 messages.info(request, text)
                 return HttpResponseRedirect(
                     reverse('repo_detail', args=[repo_id]))
@@ -380,7 +380,7 @@ def repo_enablesec(request, repo_id):
             if request.is_ajax():
                 return HttpResponse(status=204)
             else:
-                text = 'Repository %s has been marked as a security' % repo
+                text = 'Repository {0!s} has been marked as a security'.format(repo)
                 text += ' repo'
                 messages.info(request, text)
                 return HttpResponseRedirect(reverse('repo_detail',
@@ -406,7 +406,7 @@ def repo_disablesec(request, repo_id):
             if request.is_ajax():
                 return HttpResponse(status=204)
             else:
-                text = 'Repository %s has been marked as a non-security' % repo
+                text = 'Repository {0!s} has been marked as a non-security'.format(repo)
                 text += ' repo'
                 messages.info(request, text)
                 return HttpResponseRedirect(reverse('repo_detail',

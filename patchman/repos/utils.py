@@ -71,7 +71,7 @@ def update_mirror_packages(mirror, packages):
     nlen = len(new)
     rlen = len(removals)
 
-    ptext = 'Removing %s obsolete packages:' % rlen
+    ptext = 'Removing {0!s} obsolete packages:'.format(rlen)
     progress_info_s.send(sender=None, ptext=ptext, plen=rlen)
     for i, package in enumerate(removals):
         progress_update_s.send(sender=None, index=i + 1)
@@ -91,7 +91,7 @@ def update_mirror_packages(mirror, packages):
         with transaction.atomic():
             MirrorPackage.objects.get(mirror=mirror, package=p).delete()
 
-    ptext = 'Adding %s new packages:' % nlen
+    ptext = 'Adding {0!s} new packages:'.format(nlen)
     progress_info_s.send(sender=None, ptext=ptext, plen=nlen)
     for i, package in enumerate(new):
         progress_update_s.send(sender=None, index=i + 1)
@@ -203,17 +203,17 @@ def get_url(url):
             return -1
     except IOError, e:
         if hasattr(e, 'reason'):
-            debug_message.send(sender=None, text='%s - %s\n' % (url, e.reason))
+            debug_message.send(sender=None, text='{0!s} - {1!s}\n'.format(url, e.reason))
             return -1
         elif hasattr(e, 'code'):
-            debug_message.send(sender=None, text='%s - %s\n' % (url, e))
+            debug_message.send(sender=None, text='{0!s} - {1!s}\n'.format(url, e))
             return e.code
         else:
-            text = 'Unknown error: %s - %s\n' % (url, e)
+            text = 'Unknown error: {0!s} - {1!s}\n'.format(url, e)
             error_message.send(sender=None, text=text)
             return -1
     except httplib.BadStatusLine, e:
-        text = 'http bad status line: %s - %s\n' % (url, e.line)
+        text = 'http bad status line: {0!s} - {1!s}\n'.format(url, e.line)
         error_message.send(sender=None, text=text)
         return -1
 
@@ -276,7 +276,7 @@ def mirrorlists_check(repo):
         if mirror_urls:
             mirror.mirrorlist = True
             mirror.last_access_ok = True
-            text = 'Found mirrorlist - %s\n' % mirror.url
+            text = 'Found mirrorlist - {0!s}\n'.format(mirror.url)
             info_message.send(sender=None, text=text)
             for mirror_url in mirror_urls:
                 mirror_url = mirror_url.replace('$ARCH', repo.arch.name)
@@ -288,14 +288,13 @@ def mirrorlists_check(repo):
                     q = Q(mirrorlist=False, refresh=True)
                     existing = mirror.repo.mirror_set.filter(q).count()
                     if existing >= max_mirrors:
-                        text = '%s mirrors already exist, not adding %s\n' \
-                            % (max_mirrors, mirror_url)
+                        text = '{0!s} mirrors already exist, not adding {1!s}\n'.format(max_mirrors, mirror_url)
                         info_message.send(sender=None, text=text)
                         continue
                 from patchman.repos.models import Mirror
                 m, c = Mirror.objects.get_or_create(repo=repo, url=mirror_url)
                 if c:
-                    text = 'Added mirror - %s\n' % mirror_url
+                    text = 'Added mirror - {0!s}\n'.format(mirror_url)
                     info_message.send(sender=None, text=text)
 
 
@@ -305,9 +304,9 @@ def extract_yum_packages(data):
 
     extracted = extract(data)
     ns = 'http://linux.duke.edu/metadata/common'
-    context = etree.iterparse(StringIO(extracted), tag='{%s}metadata' % ns)
+    context = etree.iterparse(StringIO(extracted), tag='{{{0!s}}}metadata'.format(ns))
     plen = int(context.next()[1].get('packages'))
-    context = etree.iterparse(StringIO(extracted), tag='{%s}package' % ns)
+    context = etree.iterparse(StringIO(extracted), tag='{{{0!s}}}package'.format(ns))
 
     if plen > 0:
         packages = set()
@@ -438,7 +437,7 @@ def refresh_yum_repo(mirror, data, repo_url, ts):
             checksum_q = Q(mirrorlist=False, refresh=True, timestamp=ts)
             have_checksum = mirror.repo.mirror_set.filter(checksum_q).count()
             if have_checksum >= max_mirrors:
-                text = '%s mirrors already have this checksum, ' % max_mirrors
+                text = '{0!s} mirrors already have this checksum, '.format(max_mirrors)
                 text += 'ignoring refresh to save time\n'
                 info_message.send(sender=None, text=text)
             else:
@@ -459,11 +458,11 @@ def checksum_is_valid(mirror, checksum, checksum_type, data):
     elif checksum_type == 'sha256':
         sha = get_sha256(data)
     else:
-        text = 'Unknown checksum type: %s\n' % checksum_type
+        text = 'Unknown checksum type: {0!s}\n'.format(checksum_type)
         error_message.send(sender=None, text=text)
 
     if sha != checksum:
-        text = '%s checksum failed for mirror %s' % (checksum_type, mirror.id)
+        text = '{0!s} checksum failed for mirror {1!s}'.format(checksum_type, mirror.id)
         text += ', not refreshing package metadata\n'
         error_message.send(sender=None, text=text)
         mirror.last_access_ok = False
@@ -482,7 +481,7 @@ def refresh_yast_repo(mirror, data, repo_url):
     """
 
     package_dir = re.findall('DESCRDIR *(.*)', data)[0]
-    package_url = '%s/%s/packages.gz' % (mirror.url, package_dir)
+    package_url = '{0!s}/{1!s}/packages.gz'.format(mirror.url, package_dir)
     res = get_url(package_url)
     mirror.last_access_ok = check_response(res)
     if mirror.last_access_ok:
@@ -529,11 +528,11 @@ def refresh_rpm_repo(repo):
                 mirror.fail()
                 return
             if not yast:
-                text = 'Found yum rpm repo - %s\n' % repo_url
+                text = 'Found yum rpm repo - {0!s}\n'.format(repo_url)
                 info_message.send(sender=None, text=text)
                 refresh_yum_repo(mirror, data, repo_url, ts)
             else:
-                text = 'Found yast rpm repo - %s\n' % repo_url
+                text = 'Found yast rpm repo - {0!s}\n'.format(repo_url)
                 info_message.send(sender=None, text=text)
                 refresh_yast_repo(mirror, data, repo_url)
             mirror.timestamp = ts
@@ -555,7 +554,7 @@ def refresh_deb_repo(repo):
         mirror.last_access_ok = check_response(res)
 
         if mirror.last_access_ok:
-            text = 'Found deb repo - %s\n' % repo_url
+            text = 'Found deb repo - {0!s}\n'.format(repo_url)
             info_message.send(sender=None, text=text)
             data = download_url(res, 'Downloading repo info:')
             if data is None:

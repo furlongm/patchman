@@ -59,21 +59,21 @@ class Host(models.Model):
         """ Show info about this host
         """
         text = []
-        text.append('%s:\n' % self)
-        text.append('IP address   : %s\n' % self.ipaddress)
-        text.append('Reverse DNS  : %s\n' % self.reversedns)
-        text.append('Domain       : %s\n' % self.domain)
-        text.append('OS           : %s\n' % self.os)
-        text.append('Kernel       : %s\n' % self.kernel)
-        text.append('Architecture : %s\n' % self.arch)
-        text.append('Last report  : %s\n' % self.lastreport)
-        text.append('Packages     : %s\n' % self.get_num_packages())
-        text.append('Repos        : %s\n' % self.get_num_repos())
-        text.append('Updates      : %s\n' % self.get_num_updates())
-        text.append('Tags         : %s\n' % self.tags)
-        text.append('Needs reboot : %s\n' % self.reboot_required)
-        text.append('Updated at   : %s\n' % self.updated_at)
-        text.append('Host repos   : %s\n' % self.host_repos_only)
+        text.append('{0!s}:\n'.format(self))
+        text.append('IP address   : {0!s}\n'.format(self.ipaddress))
+        text.append('Reverse DNS  : {0!s}\n'.format(self.reversedns))
+        text.append('Domain       : {0!s}\n'.format(self.domain))
+        text.append('OS           : {0!s}\n'.format(self.os))
+        text.append('Kernel       : {0!s}\n'.format(self.kernel))
+        text.append('Architecture : {0!s}\n'.format(self.arch))
+        text.append('Last report  : {0!s}\n'.format(self.lastreport))
+        text.append('Packages     : {0!s}\n'.format(self.get_num_packages()))
+        text.append('Repos        : {0!s}\n'.format(self.get_num_repos()))
+        text.append('Updates      : {0!s}\n'.format(self.get_num_updates()))
+        text.append('Tags         : {0!s}\n'.format(self.tags))
+        text.append('Needs reboot : {0!s}\n'.format(self.reboot_required))
+        text.append('Updated at   : {0!s}\n'.format(self.updated_at))
+        text.append('Host repos   : {0!s}\n'.format(self.host_repos_only))
         text.append('\n')
 
         for line in text:
@@ -105,8 +105,7 @@ class Host(models.Model):
                 info_message.send(sender=None, text='Reverse DNS matches\n')
             else:
                 info_message.send(sender=None,
-                                  text='Reverse DNS mismatch found: %s != %s\n'
-                                  % (self.hostname, self.reversedns))
+                                  text='Reverse DNS mismatch found: {0!s} != {1!s}\n'.format(self.hostname, self.reversedns))
         else:
             info_message.send(sender=None,
                               text='Reverse DNS check disabled\n')
@@ -159,7 +158,7 @@ class Host(models.Model):
         try:
             with transaction.atomic():
                 self.updates.add(update)
-            info_message.send(sender=None, text="%s\n" % update)
+            info_message.send(sender=None, text="{0!s}\n".format(update))
             return update.id
         except IntegrityError as e:
             print e
@@ -331,4 +330,4 @@ class HostRepo(models.Model):
         unique_together = ('host', 'repo')
 
     def __unicode__(self):
-        return '%s-%s' % (self.host, self.repo)
+        return '{0!s}-{1!s}'.format(self.host, self.repo)
