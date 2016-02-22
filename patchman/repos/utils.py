@@ -262,7 +262,7 @@ def mirrorlist_check(mirror_url):
                 return
             mirror_urls = re.findall('^http://.*$|^ftp://.*$',
                                      data, re.MULTILINE)
-            if len(mirror_urls) > 0:
+            if mirror_urls:
                 return mirror_urls
     return
 

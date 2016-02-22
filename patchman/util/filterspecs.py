@@ -52,7 +52,7 @@ class Filter(object):
         self.name = name
         self.filters = filters
         self.selected = None
-        if request.GET.has_key(name):
+        if name in request.GET:
             self.selected = request.GET[name]
 
 
@@ -171,7 +171,7 @@ class FilterBar(object):
                     qs[k] = v
 
             else:
-                if self.request.GET.has_key(f.name):
+                if name in self.request.GET:
                     qs[f.name] = self.request.GET[f.name]
 
         self.qs = qs

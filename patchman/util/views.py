@@ -57,7 +57,7 @@ def dashboard(request):
 
     # osgroup issues
     norepo_osgroups = None
-    if len(hosts.filter(host_repos_only=False)) > 0:
+    if hosts.filter(host_repos_only=False):
         norepo_osgroups = osgroups.filter(repos__isnull=True)
 
     # mirror issues
