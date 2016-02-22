@@ -72,14 +72,14 @@ class Package(models.Model):
 
     def __unicode__(self):
         if self.epoch:
-            epo = '%s:' % self.epoch
+            epo = '{0!s}:'.format(self.epoch)
         else:
             epo = ''
         if self.release:
-            rel = '-%s' % self.release
+            rel = '-{0!s}'.format(self.release)
         else:
             rel = ''
-        return '%s-%s%s%s-%s' % (self.name, epo, self.version, rel, self.arch)
+        return '{0!s}-{1!s}{2!s}{3!s}-{4!s}'.format(self.name, epo, self.version, rel, self.arch)
 
     def get_absolute_url(self):
         return self.name.get_absolute_url()
@@ -151,14 +151,14 @@ class PackageString(models.Model):
 
     def __unicode__(self):
         if self.epoch:
-            epo = '%s:' % self.epoch
+            epo = '{0!s}:'.format(self.epoch)
         else:
             epo = ''
         if self.release:
-            rel = '-%s' % self.release
+            rel = '-{0!s}'.format(self.release)
         else:
             rel = ''
-        return '%s-%s%s%s-%s' % (self.name, epo, self.version, rel, self.arch)
+        return '{0!s}-{1!s}{2!s}{3!s}-{4!s}'.format(self.name, epo, self.version, rel, self.arch)
 
     def __key(self):
         return (self.name, self.epoch, self.version, self.release, self.arch,
@@ -190,5 +190,5 @@ class PackageUpdate(models.Model):
             update_type = 'Security'
         else:
             update_type = 'Bugfix'
-        return '%s -> %s (%s)' % (self.oldpackage, self.newpackage,
+        return '{0!s} -> {1!s} ({2!s})'.format(self.oldpackage, self.newpackage,
                                   update_type)

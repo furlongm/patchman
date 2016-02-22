@@ -49,7 +49,7 @@ class Report(models.Model):
         ordering = ('-created',)
 
     def __unicode__(self):
-        return '%s %s' % (self.host, self.created)
+        return '{0!s} {1!s}'.format(self.host, self.created)
 
     @models.permalink
     def get_absolute_url(self):
@@ -134,7 +134,7 @@ class Report(models.Model):
             host.check_rdns()
 
             if verbose:
-                print 'Processing report %s - %s' % (self.id, self.host)
+                print 'Processing report {0!s} - {1!s}'.format(self.id, self.host)
 
             from patchman.reports.utils import process_packages, \
                 process_repos, process_updates
@@ -151,14 +151,12 @@ class Report(models.Model):
 
             if find_updates:
                 if verbose:
-                    print 'Finding updates for report %s - %s' % \
-                        (self.id, self.host)
+                    print 'Finding updates for report {0!s} - {1!s}'.format(self.id, self.host)
                 host.find_updates()
         else:
             if self.processed:
-                text = 'Report %s has already been processed\n' % (self.id)
+                text = 'Report {0!s} has already been processed\n'.format((self.id))
                 info_message.send(sender=None, text=text)
             else:
-                text = 'Error: OS, kernel or arch not sent with report %s\n' \
-                    % (self.id)
+                text = 'Error: OS, kernel or arch not sent with report {0!s}\n'.format((self.id))
                 error_message.send(sender=None, text=text)

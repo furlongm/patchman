@@ -32,9 +32,9 @@ def paginator_number(page, i, qs):
     if i == DOT:
         return u'... '
     elif i == page.number:
-        return mark_safe(u'<span class="this-page">%d</span> ' % (i))
+        return mark_safe(u'<span class="this-page">{0:d}</span> '.format((i)))
     else:
-        return mark_safe(u'<a href="%s"%s>%d</a> ' % ((get_query_string(qs)), (i == page.paginator.num_pages and ' class="end"' or ''), i))
+        return mark_safe(u'<a href="{0!s}"{1!s}>{2:d}</a> '.format((get_query_string(qs)), (i == page.paginator.num_pages and ' class="end"' or ''), i))
 paginator_number = register.simple_tag(paginator_number)
 
 def pagination(page, request, eitherside=10):
