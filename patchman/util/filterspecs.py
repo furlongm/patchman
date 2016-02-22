@@ -100,7 +100,7 @@ class DateFilter(object):
 
         self.field_generic = '%s__' % self.name
 
-        self.date_params = dict([(k, v) for k, v in params.items() if k.startswith(self.field_generic)])
+        self.date_params = {k: v for k, v in params.items() if k.startswith(self.field_generic)}
 
         today = datetime.date.today()
         one_week_ago = today - datetime.timedelta(days=7)
@@ -166,7 +166,7 @@ class FilterBar(object):
             if f.multi:
                 params = dict(request.GET.items())
                 field_generic = '%s__' % f.name
-                m_params = dict([(k, v) for k, v in params.items() if k.startswith(field_generic)])
+                m_params = {k: v for k, v in params.items() if k.startswith(field_generic)}
                 for k,v in m_params.items():
                     qs[k] = v
 
