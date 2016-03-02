@@ -124,7 +124,6 @@ class Mirror(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     packages = models.ManyToManyField(Package,
                                       blank=True,
-                                      null=True,
                                       through='MirrorPackage')
     mirrorlist = models.BooleanField(default=False)
     enabled = models.BooleanField(default=True)

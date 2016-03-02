@@ -17,7 +17,7 @@
 
 
 from django.utils.safestring import mark_safe
-from django.db.models.query import QuerySet, ValuesQuerySet
+from django.db.models.query import QuerySet
 import datetime
 from operator import itemgetter
 
@@ -37,7 +37,7 @@ class Filter(object):
         if isinstance(filters, tuple):
             filters = dict(filters)
 
-        if isinstance(filters, ValuesQuerySet):
+        if isinstance(filters, QuerySet):
             f = {}
             for i in filters:
                 f[str(i)] = str(i)

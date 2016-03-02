@@ -16,10 +16,10 @@
 
 from django.db import models, IntegrityError, DatabaseError, transaction
 from django.db.models import Q
+from django.utils import timezone
 
 from rpm import labelCompare
 from tagging.fields import TagField
-from datetime import datetime
 
 from patchman.packages.models import Package, PackageUpdate
 from patchman.domains.models import Domain
@@ -33,7 +33,7 @@ from patchman.hosts.utils import update_rdns, remove_reports
 class Host(models.Model):
 
     hostname = models.CharField(max_length=255, unique=True)
-    ipaddress = models.IPAddressField()
+    ipaddress = models.GenericIPAddressField()
     reversedns = models.CharField(max_length=255, blank=True, null=True)
     check_dns = models.BooleanField(default=True)
     os = models.ForeignKey(OS)
@@ -47,7 +47,7 @@ class Host(models.Model):
     reboot_required = models.BooleanField(default=False)
     host_repos_only = models.BooleanField(default=True)
     tags = TagField()
-    updated_at = models.DateTimeField(default=datetime.now())
+    updated_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         ordering = ('hostname',)

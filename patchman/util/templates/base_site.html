@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% load url from future %}
 {% block site_name_title %}Patchman{% endblock %}
 {% block site_name_header %}Patchman{% endblock %}
 {% block usertools %}
@@ -20,7 +19,6 @@
 <div id="footer">
     {% if debug %}
     <p>{{ sql_queries|length }} sql queries</p>
-    
     <table>
     {% for q in sql_queries %}
     <tr>
