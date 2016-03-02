@@ -22,7 +22,7 @@ from patchman.repos.models import Repository
 class OSGroup(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
-    repos = models.ManyToManyField(Repository, blank=True, null=True)
+    repos = models.ManyToManyField(Repository, blank=True)
 
     class Meta:
         verbose_name = 'Operating System Group'
@@ -38,10 +38,8 @@ class OSGroup(models.Model):
 class OS(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
-# Django 1.3+
-#    osgroup = models.ForeignKey(OSGroup, blank=True, null=True,
-#                                on_delete=models.SET_NULL)
-    osgroup = models.ForeignKey(OSGroup, blank=True, null=True)
+    osgroup = models.ForeignKey(OSGroup, blank=True, null=True,
+        on_delete=models.SET_NULL)
 
     class Meta:
         verbose_name = 'Operating System'
