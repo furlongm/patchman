@@ -95,7 +95,7 @@ class FormFieldNode(template.Node):
         context.push()
         context['class'] = class_str
         context['formfield'] = field
-        output = self.get_template(widget_class_name).render(context)
+        output = self.get_template(widget_class_name).render(context.flatten())
         context.pop()
         context.pop()
         return output
