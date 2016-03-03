@@ -18,6 +18,7 @@
 
 from django import template
 from django.conf import settings
+from django.utils.html import format_html, escape
 
 register = template.Library()
 
@@ -40,9 +41,9 @@ def yes_no_img(boolean, reversed=False, alt_true='Active', alt_false='Not Active
             boolean = True
 
     if boolean:
-        return """<img src="%simg/admin/icon-yes.gif" alt="%s" />""" % (settings.STATIC_URL, alt_true)
+        return format_html("<img src='{}/img/admin/icon-yes.gif' alt='{}' />", escape(settings.STATIC_URL), escape(alt_true))
     else:
-        return """<img src="%simg/admin/icon-no.gif" alt="%s"/>""" % (settings.STATIC_URL, alt_false)
+        return format_html("<img src='{}/img/admin/icon-no.gif' alt='{}' />", escape(settings.STATIC_URL), escape(alt_false))
 
 
 @register.tag
