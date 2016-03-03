@@ -87,7 +87,8 @@ def process_packages(report, host):
                 except DatabaseError as e:
                     print e
             else:
-                print 'No package returned for %s' % pkg_str
+                if pkg_str[0].lower() != 'gpg-pubkey':
+                    print 'No package returned for %s' % pkg_str
             progress_update_s.send(sender=None, index=i + 1)
 
         removals = old_packages.exclude(pk__in=package_ids)
