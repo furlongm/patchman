@@ -14,8 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.shortcuts import get_object_or_404, render_to_response
-from django.template import RequestContext
+from django.shortcuts import get_object_or_404, render
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.db.models import Q
@@ -64,18 +63,18 @@ def package_list(request):
     filter_list = []
     filter_list.append(
         Filter(request, 'arch', PackageArchitecture.objects.all()))
-#   Disable for speed, this is a huge slowdown
+#   Disabled due to being a huge slowdown
 #    filter_list.append(
 #        Filter(
 #            request, 'packagetype',
 #            Package.objects.values_list('packagetype', flat=True).distinct()))
     filter_bar = FilterBar(request, filter_list)
 
-    return render_to_response('packages/package_list.html',
-                              {'page': page,
-                               'filter_bar': filter_bar,
-                               'terms': terms},
-                              context_instance=RequestContext(request))
+    return render(request,
+                  'packages/package_list.html',
+                  {'page': page,
+                   'filter_bar': filter_bar,
+                   'terms': terms}, )
 
 
 @login_required
@@ -84,6 +83,7 @@ def package_detail(request, packagename):
     package = get_object_or_404(PackageName, name=packagename)
     allversions = Package.objects.select_related().filter(name=package.id)
 
-    return render_to_response('packages/package_detail.html',
-                              {'package': package, 'allversions': allversions},
-                              context_instance=RequestContext(request))
+    return render(request,
+                  'packages/package_detail.html',
+                  {'package': package,
+                   'allversions': allversions}, )

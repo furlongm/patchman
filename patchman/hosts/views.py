@@ -14,8 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.shortcuts import get_object_or_404, render_to_response
-from django.template import RequestContext
+from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
@@ -104,11 +103,11 @@ def host_list(request):
                               {False: 'No', True: 'Yes'}))
     filter_bar = FilterBar(request, filter_list)
 
-    return render_to_response('hosts/host_list.html',
-                              {'page': page,
-                               'filter_bar': filter_bar,
-                               'terms': terms},
-                              context_instance=RequestContext(request))
+    return render(request,
+                  'hosts/host_list.html',
+                  {'page': page,
+                   'filter_bar': filter_bar,
+                   'terms': terms}, )
 
 
 @login_required
@@ -120,11 +119,11 @@ def host_detail(request, hostname):
 
     hostrepos = HostRepo.objects.filter(host=host)
 
-    return render_to_response('hosts/host_detail.html',
-                              {'host': host,
-                               'reports': reports,
-                               'hostrepos': hostrepos},
-                              context_instance=RequestContext(request))
+    return render(request,
+                  'hosts/host_detail.html',
+                  {'host': host,
+                   'reports': reports,
+                   'hostrepos': hostrepos}, )
 
 
 @login_required
@@ -146,11 +145,11 @@ def host_edit(request, hostname):
     else:
         edit_form = EditHostForm(instance=host)
 
-    return render_to_response('hosts/host_edit.html',
-                              {'host': host,
-                               'reports': reports,
-                               'edit_form': edit_form},
-                              context_instance=RequestContext(request))
+    return render(request,
+                  'hosts/host_edit.html',
+                  {'host': host,
+                   'reports': reports,
+                   'edit_form': edit_form}, )
 
 
 @login_required
@@ -169,7 +168,7 @@ def host_delete(request, hostname):
 
     reports = Report.objects.filter(host=hostname).order_by('-created')[:3]
 
-    return render_to_response('hosts/host_delete.html',
-                              {'host': host,
-                               'reports': reports},
-                              context_instance=RequestContext(request))
+    return render(request,
+                  'hosts/host_delete.html',
+                  {'host': host,
+                   'reports': reports}, )
