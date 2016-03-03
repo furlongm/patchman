@@ -1,6 +1,6 @@
 {% extends "base_site.html" %}
 
-{% load paginator common %}
+{% load paginator common forms %}
 
 {% block stylesheet %}changelists{% endblock %}
 
@@ -13,11 +13,11 @@
 {% block content %}
 <div class="module  {% if filter_bar %}filtered{% endif %}" id="changelist">
   {% searchform %}
-  
+
   {% if filter_bar %}
   <div id="changelist-filter">
-    <h2>Filter</h2> 					
-    {{ filter_bar|safe }}	
+    <h2>Filter</h2>
+    {{ filter_bar|safe }}
   </div>
   {% endif %}
   {% gen_table page.object_list %}
