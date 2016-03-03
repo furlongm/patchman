@@ -7,7 +7,7 @@
         </thead>
     <tbody>
     {% for host in object_list %}
-                <tr class="{% cycle row1,row2 %}">
+                <tr class="{% cycle 'row1' 'row2' %}">
                     <td><a href="{{ host.get_absolute_url }}">{{ host }}</a></td>
                     <td style="color:red">{% with host.get_num_security_updates as tmp %}{% if tmp != 0 %}{{ tmp }}{% else %}&nbsp;{% endif %}{% endwith %}</td>
                     <td style="color:orange">{% with host.get_num_bugfix_updates as tmp %}{% if tmp != 0 %}{{ tmp }}{% else %}&nbsp;{% endif %}{% endwith %}</td>

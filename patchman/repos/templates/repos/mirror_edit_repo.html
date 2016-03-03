@@ -16,7 +16,7 @@
   </thead>
   <tbody>
   {% for mirror in object_list %}
-      <tr class="{% cycle row1,row2 %}">
+      <tr class="{% cycle 'row1' 'row2' %}">
       <td><a href="{{ mirror.repo.get_absolute_url }}">{{ mirror.repo }}</a></td>
       <td><a href="{{ mirror.url }}">{{ mirror.url }}</a></td>
       <td class="centered">{{ mirror.packages.count }}</td>

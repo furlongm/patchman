@@ -35,7 +35,7 @@
         <tr><td>Repos In Use</td><td>{% if host.host_repos_only %}Host Repos{% else %}Host and OS Group Repos{% endif %}</td></tr>
         <tr><td>Last 3 reports</td><td>
             {% for report in reports %}
-            <span class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
+            <span class="brick" style="{% cycle 'background:#bfdddd' 'background:#deeeee' %}">
                 <a class="dark" href="{{ report.get_absolute_url}}">{{ report.created }} </a>
             </span>
             {% endfor %}
@@ -89,7 +89,7 @@
       <tbody>
     {% if hostrepos %}
       {% for hostrepo in hostrepos %}
-        <tr class="{% cycle row1,row2 %}">
+        <tr class="{% cycle 'row1' 'row2' %}">
           <td> <a href="{{ hostrepo.repo.get_absolute_url }}">{{ hostrepo.repo.name }}</a> </td>
           <td>Host</td>
           <td>{{ hostrepo.priority }}</td>
@@ -102,7 +102,7 @@
     {% if osrepos and not host.host_repos_only %}
       {% for osrepo in osrepos %}
         {% if osrepo.arch == host.arch %}
-          <tr class="{% cycle row1,row2 %}">
+          <tr class="{% cycle 'row1' 'row2' %}">
             <td> <a href="{{ osrepo.get_absolute_url }}">{{ osrepo.name }}</a> </td>
             <td>OS Group</td>
             <td>N/A</td>
@@ -121,7 +121,7 @@
     <div class="resultslink" id="r1"><a href="#">Show/Hide Installed Packages</a></div>
         <div class="results" id="r1">
             {% for package in host.packages.select_related %}
-            <span class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
+            <span class="brick" style="{% cycle 'background:#bfdddd' 'background:#deeeee' %}">
             <a class="dark" href="{{ package.name.get_absolute_url }}"> {{ package }} </a></span>
             {% endfor %}
         </div>
