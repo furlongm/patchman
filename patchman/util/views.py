@@ -14,8 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.shortcuts import render_to_response
-from django.template import RequestContext
+from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.models import Site
 from django.db.models import F
@@ -99,7 +98,8 @@ def dashboard(request):
                 possible_mirrors[checksum] = checksums[checksum]
                 continue
 
-    return render_to_response(
+    return render(
+        request,
         'dashboard.html',
         {'site': site,
          'lonely_oses': lonely_oses, 'norepo_hosts': norepo_hosts,
@@ -116,5 +116,4 @@ def dashboard(request):
          'orphaned_packages': orphaned_packages,
          'failed_repos': failed_repos, 'nomirror_repos': nomirror_repos,
          'reboot_hosts': reboot_hosts,
-         'unprocessed_reports': unprocessed_reports},
-        context_instance=RequestContext(request))
+         'unprocessed_reports': unprocessed_reports}, )

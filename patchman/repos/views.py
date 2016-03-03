@@ -14,8 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.shortcuts import get_object_or_404, render_to_response
-from django.template import RequestContext
+from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
@@ -95,11 +94,11 @@ def repo_list(request):
     filter_list.append(Filter(request, 'osgroup', OSGroup.objects.all()))
     filter_bar = FilterBar(request, filter_list)
 
-    return render_to_response('repos/repo_list.html',
-                              {'page': page,
-                               'filter_bar': filter_bar,
-                               'terms': terms},
-                              context_instance=RequestContext(request))
+    return render(request,
+                  'repos/repo_list.html',
+                  {'page': page,
+                   'filter_bar': filter_bar,
+                   'terms': terms}, )
 
 
 @login_required
@@ -127,18 +126,17 @@ def mirror_list(request):
                 text = 'Not all mirror architectures are the same,'
                 text += ' cannot link to or create repos'
                 messages.info(request, text)
-                return render_to_response('repos/mirror_with_repo_list.html',
-                                          {'page': page, 'checksum': checksum},
-                                          context_instance=RequestContext(
-                                              request))
+                return render(request,
+                              'repos/mirror_with_repo_list.html',
+                              {'page': page, 'checksum': checksum}, )
+
             if mirror.repo.repotype != repotype:
                 text = 'Not all mirror repotypes are the same,'
                 text += ' cannot link to or create repos'
                 messages.info(request, text)
-                return render_to_response('repos/mirror_with_repo_list.html',
-                                          {'page': page, 'checksum': checksum},
-                                          context_instance=RequestContext(
-                                              request))
+                return render(request,
+                              'repos/mirror_with_repo_list.html',
+                              {'page': page, 'checksum': checksum}, )
         return True
 
     def move_mirrors(repo):
@@ -205,17 +203,15 @@ def mirror_list(request):
             else:
                 link_form = LinkRepoForm(prefix='link')
                 create_form = CreateRepoForm(prefix='create')
-                return render_to_response('repos/mirror_with_repo_list.html',
-                                          {'page': page,
-                                           'link_form': link_form,
-                                           'create_form': create_form,
-                                           'checksum': checksum},
-                                          context_instance=RequestContext(
-                                              request))
-
-    return render_to_response('repos/mirror_list.html',
-                              {'page': page},
-                              context_instance=RequestContext(request))
+                return render(request,
+                              'repos/mirror_with_repo_list.html',
+                              {'page': page,
+                               'link_form': link_form,
+                               'create_form': create_form,
+                               'checksum': checksum}, )
+    return render(request,
+                  'repos/mirror_list.html',
+                  {'page': page}, )
 
 
 @login_required
@@ -252,9 +248,9 @@ def mirror_edit(request, repo_id, mirror_id):
     else:
         edit_form = EditMirrorForm(instance=mirror)
 
-    return render_to_response('repos/mirror_edit.html',
-                              {'mirror': mirror, 'edit_form': edit_form},
-                              context_instance=RequestContext(request))
+    return render(request,
+                  'repos/mirror_edit.html',
+                  {'mirror': mirror, 'edit_form': edit_form}, )
 
 
 @login_required
@@ -262,9 +258,9 @@ def repo_detail(request, repo_id):
 
     repo = get_object_or_404(Repository, id=repo_id)
 
-    return render_to_response('repos/repo_detail.html',
-                              {'repo': repo},
-                              context_instance=RequestContext(request))
+    return render(request,
+                  'repos/repo_detail.html',
+                  {'repo': repo}, )
 
 
 @login_required
@@ -293,9 +289,9 @@ def repo_edit(request, repo_id):
         edit_form = EditRepoForm(instance=repo)
         edit_form.initial['mirrors'] = repo.mirror_set.all()
 
-    return render_to_response('repos/repo_edit.html',
-                              {'repo': repo, 'edit_form': edit_form},
-                              context_instance=RequestContext(request))
+    return render(request,
+                  'repos/repo_edit.html',
+                  {'repo': repo, 'edit_form': edit_form}, )
 
 
 @login_required
@@ -313,9 +309,9 @@ def repo_delete(request, repo_id):
         elif 'cancel' in request.REQUEST:
             return HttpResponseRedirect(reverse('repo_detail', args=[repo_id]))
 
-    return render_to_response('repos/repo_delete.html',
-                              {'repo': repo},
-                              context_instance=RequestContext(request))
+    return render(request,
+                  'repos/repo_delete.html',
+                  {'repo': repo}, )
 
 
 @login_required
@@ -338,9 +334,9 @@ def repo_enable(request, repo_id):
             return HttpResponseRedirect(reverse('repo_detail',
                                                 args=[repo_id]))
 
-    return render_to_response('repos/repo_endisable.html',
-                              {'repo': repo, 'enable': True},
-                              context_instance=RequestContext(request))
+    return render(request,
+                  'repos/repo_endisable.html',
+                  {'repo': repo, 'enable': True}, )
 
 
 @login_required
@@ -363,9 +359,9 @@ def repo_disable(request, repo_id):
             return HttpResponseRedirect(
                 reverse('repo_detail', args=[repo_id]))
 
-    return render_to_response('repos/repo_endisable.html',
-                              {'repo': repo, 'enable': False},
-                              context_instance=RequestContext(request))
+    return render(request,
+                  'repos/repo_endisable.html',
+                  {'repo': repo, 'enable': False}, )
 
 
 @login_required
@@ -389,9 +385,9 @@ def repo_enablesec(request, repo_id):
             return HttpResponseRedirect(reverse('repo_detail',
                                                 args=[repo_id]))
 
-    return render_to_response('repos/repo_endisablesec.html',
-                              {'repo': repo, 'enable': True},
-                              context_instance=RequestContext(request))
+    return render(request,
+                  'repos/repo_endisablesec.html',
+                  {'repo': repo, 'enable': True}, )
 
 
 @login_required
@@ -415,6 +411,6 @@ def repo_disablesec(request, repo_id):
             return HttpResponseRedirect(reverse('repo_detail',
                                                 args=[repo_id]))
 
-    return render_to_response('repos/repo_endisablesec.html',
-                              {'repo': repo, 'enable': False},
-                              context_instance=RequestContext(request))
+    return render(request,
+                  'repos/repo_endisablesec.html',
+                  {'repo': repo, 'enable': False}, )

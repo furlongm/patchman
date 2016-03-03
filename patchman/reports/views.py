@@ -16,9 +16,8 @@
 
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.shortcuts import get_object_or_404, render_to_response
+from django.shortcuts import get_object_or_404, render
 from django.contrib.auth.decorators import login_required
-from django.template import RequestContext
 from django.http import HttpResponseRedirect
 from django.http import Http404
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
@@ -58,12 +57,12 @@ def upload(request):
                     packages.append(p.replace('\'', '').split(' '))
             if 'repos' in data:
                 repos = data['repos']
-            return render_to_response('reports/report.txt',
-                                      {'data': data,
-                                       'packages': packages,
-                                       'repos': repos},
-                                      context_instance=RequestContext(request),
-                                      mimetype='text/plain')
+            return render(request,
+                          'reports/report.txt',
+                          {'data': data,
+                           'packages': packages,
+                           'repos': repos},
+                          mimetype='text/plain')
         else:
             # Should return HTTP 204
             response.status = 302
@@ -111,11 +110,11 @@ def report_list(request):
                               {False: 'No', True: 'Yes'}))
     filter_bar = FilterBar(request, filter_list)
 
-    return render_to_response('reports/report_list.html',
-                              {'page': page,
-                               'filter_bar': filter_bar,
-                               'terms': terms},
-                              context_instance=RequestContext(request))
+    return render(request,
+                  'reports/report_list.html',
+                  {'page': page,
+                   'filter_bar': filter_bar,
+                   'terms': terms}, )
 
 
 @login_required
@@ -123,9 +122,9 @@ def report_detail(request, report):
 
     report = get_object_or_404(Report, id=report)
 
-    return render_to_response('reports/report_detail.html',
-                              {'report': report},
-                              context_instance=RequestContext(request))
+    return render(request,
+                  'reports/report_detail.html',
+                  {'report': report}, )
 
 
 @login_required
@@ -133,9 +132,9 @@ def report_process(request, report):
 
     report = get_object_or_404(Report, id=report)
 
-    return render_to_response('reports/report_process.html',
-                              {'report': report},
-                              context_instance=RequestContext(request))
+    return render(request,
+                  'reports/report_process.html',
+                  {'report': report}, )
 
 
 @login_required
@@ -152,6 +151,6 @@ def report_delete(request, report):
             return HttpResponseRedirect(reverse('report_detail',
                                         args=[report.id]))
 
-    return render_to_response('reports/report_delete.html',
-                              {'report': report},
-                              context_instance=RequestContext(request))
+    return render(request,
+                  'reports/report_delete.html',
+                  {'report': report}, )
