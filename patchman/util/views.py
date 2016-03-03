@@ -86,7 +86,7 @@ def dashboard(request):
         if checksum is not None and checksum != 'yast':
             for mirror in Mirror.objects.filter(file_checksum=checksum):
                 if mirror.packages.count() > 0:
-                    if not checksum in checksums:
+                    if checksum not in checksums:
                         checksums[checksum] = []
                     checksums[checksum].append(mirror)
 
