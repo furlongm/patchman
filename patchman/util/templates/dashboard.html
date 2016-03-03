@@ -176,7 +176,7 @@
     <div class="resultslink" id="r31"><a href="#">{{ count }} Sets of mirrors have the same checksum and are not linked</a></div>
       <div class="results" id="r31">
         {% for checksum in possible_mirrors %}
-        <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
+        <div class="brick" style="{% cycle 'background:#bfdddd' 'background:#deeeee' %}">
         <a class="dark" href="repos/mirrors/?checksum={{ checksum }}">{{ checksum }}</a></div>
         {% endfor %}
         <div class="clearbrick"></div>
@@ -190,7 +190,7 @@
     <div class="resultslink" id="r33"><a href="#">{{ count }} Installed Packages are not from any repository</a></div>
       <div class="results" id="r33">
         {% for package in norepo_packages %}
-        <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
+        <div class="brick" style="{% cycle 'background:#bfdddd' 'background:#deeeee' %}">
         <a class="dark" href="{{ package.get_absolute_url }}">{{ package }}</a></div>
         {% endfor %}
         <div class="clearbrick"></div>
@@ -204,7 +204,7 @@
     <div class="resultslink" id="r35"><a href="#">{{ count }} Packages are orphaned (not from any repo, not installed anywhere)</a></div>
       <div class="results" id="r35">
         {% for package in orphaned_packages %}
-        <div class="brick" style="{% cycle background:#bfdddd,background:#deeeee %}">
+        <div class="brick" style="{% cycle 'background:#bfdddd' 'background:#deeeee' %}">
         <a class="dark" href="{{ package.get_absolute_url }}">{{ package }}</a></div>
         {% endfor %}
         <div class="clearbrick"></div>

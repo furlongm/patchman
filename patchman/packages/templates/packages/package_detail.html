@@ -24,7 +24,7 @@
 <p>No versions of this package exist.</p>
 {% endif %}
 {% for version in allversions %}
-<tr class="{% cycle row1,row2 %}">
+<tr class="{% cycle 'row1' 'row2' %}">
 <td> {{ version.epoch }} </td>
 <td> {{ version.version }} </td><td> {{ version.release }} </td>
 <td> {{ version.arch }} </td><td> {{ version.get_packagetype_display }} </td>

@@ -8,7 +8,7 @@
         </thead>
     <tbody>
     {% for report in object_list %}
-                <tr class="{% cycle row1,row2 %}">
+                <tr class="{% cycle 'row1' 'row2' %}">
                     <td><a href="{{ report.get_absolute_url }}"> {{ report.id }} </a></td>
                     <td> {{ report.host }} </td>
                     <td> {{ report.created }} </td>

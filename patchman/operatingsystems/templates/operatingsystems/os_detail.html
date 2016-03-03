@@ -47,7 +47,7 @@
                 </tr>
             </thead>
             {% for repo in os.osgroup.os_set.select_related %}
-            <tr class="{% cycle row1,row2 %}">
+            <tr class="{% cycle 'row1' 'row2' %}">
                  <td><a href="{{ repo.get_absolute_url }}">{{ repo }}</a></td>
             </tr>
             {% endfor %}

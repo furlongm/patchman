@@ -38,7 +38,7 @@
   <h2>Security Updates</h2>
   <table>
   {% for update in report.sec_updates.splitlines %}
-    <tr class="{% cycle row1,row2 %}">
+    <tr class="{% cycle 'row1' 'row2' %}">
       <td> {{ update }} </td>
     </tr>
   {% endfor %}
@@ -50,7 +50,7 @@
   <h2>Bugfix Updates</h2>
   <table>
   {% for update in report.bug_updates.splitlines %}
-    <tr class="{% cycle row1,row2 %}">
+    <tr class="{% cycle 'row1' 'row2' %}">
       <td> {{ update }} </td>
     </tr>
   {% endfor %}
@@ -61,7 +61,7 @@
   <h2>Repositories</h2>
   <table>
   {% for repo in report.repos.splitlines %}
-    <tr class="{% cycle row1,row2 %}">
+    <tr class="{% cycle 'row1' 'row2' %}">
       <td> {{ repo }} </td>
     </tr>
   {% endfor %}
@@ -71,7 +71,7 @@
   <h2>Packages</h2>
   <table>
   {% for package in report.packages.splitlines %}
-    <tr class="{% cycle row1,row2 %}">
+    <tr class="{% cycle 'row1' 'row2' %}">
       <td> {{ package }} </td>
     </tr>
   {% endfor %}

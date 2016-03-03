@@ -14,7 +14,7 @@
   </thead>
   <tbody>
     {% for repo in object_list %}
-      <tr class="{% cycle row1,row2 %}">
+      <tr class="{% cycle 'row1' 'row2' %}">
         <td><a href="{{ repo.get_absolute_url }}">{{ repo }}</a></td>
         <td>{% if repo.repo_id != None %} {{ repo.repo_id }} {% endif %}</td>
         <td class="centered">{{ repo.mirror_set.count }}</td>
