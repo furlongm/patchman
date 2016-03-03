@@ -81,6 +81,6 @@ class QuerySetTableNode(template.Node):
 
         context.push()
         context['object_list'] = queryset
-        output = template_obj.render(context)
+        output = template_obj.render(context.flatten())
         context.pop()
         return output
