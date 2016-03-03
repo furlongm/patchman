@@ -1,7 +1,6 @@
 # Django settings for patchman project.
 
 DEBUG = False
-TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
 #    ('Your Name', 'you@example.com'),
