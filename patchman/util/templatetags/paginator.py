@@ -25,20 +25,23 @@ register = template.Library()
 
 DOT = '.'
 
+
+@register.simple_tag
 def paginator_number(page, i, qs):
 
     qs['page'] = i
-    
+
     if i == DOT:
         return u'... '
     elif i == page.number:
         return mark_safe(u'<span class="this-page">%d</span> ' % (i))
     else:
         return mark_safe(u'<a href="%s"%s>%d</a> ' % ((get_query_string(qs)), (i == page.paginator.num_pages and ' class="end"' or ''), i))
-paginator_number = register.simple_tag(paginator_number)
 
+
+@register.inclusion_tag('pagination.html')
 def pagination(page, request, eitherside=10):
-    
+
     tqs = request.META['QUERY_STRING']
     qs = {}
     try:
@@ -51,7 +54,7 @@ def pagination(page, request, eitherside=10):
     pagination_required = False
     if page.paginator.num_pages > 1:
         pagination_required = True
-      
+
     if page.paginator.count == 1:
         object_name = 'object'
     else:
@@ -80,7 +83,7 @@ def pagination(page, request, eitherside=10):
             # ON_EACH_SIDE links at either end of the "current page" link.
             page_range = []
             page_num = page.number
-            if page_num > (ON_EACH_SIDE + ON_ENDS +1):
+            if page_num > (ON_EACH_SIDE + ON_ENDS + 1):
                 page_range.extend(range(1, ON_EACH_SIDE))
                 page_range.append(DOT)
                 page_range.extend(range(page_num - ON_EACH_SIDE, page_num + 1))
@@ -100,4 +103,3 @@ def pagination(page, request, eitherside=10):
         'qs': qs,
         'page_list': page_range,
     }
-pagination = register.inclusion_tag('pagination.html')(pagination)

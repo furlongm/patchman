@@ -23,21 +23,35 @@ from django import template
 register = Library()
 
 
-@register.inclusion_tag('inlineformfield.html')
-def inlineformfield(field1, field2, field3=False):
-    return locals()
+@register.tag
+def searchform(parser, token):
+    try:
+        tag_name, post_url = token.split_contents()
+    except:
+        try:
+            tag_name = token.split_contents()
+            post_url = '.'
+        except:
+            raise template.TemplateSyntaxError, "%r tag requires one or no arguments" % token.contents.split()[0]
+    return SearchFormNode(post_url)
 
-@register.inclusion_tag('checkbox_formfield.html')
-def checkbox_formfield(field):
-    return {'field': field, }
+
+class SearchFormNode(template.Node):
+    def __init__(self, post_url):
+        self.post_url = post_url
+
+    def render(self, context):
+        template_obj = template.loader.get_template('search_form.html')
+        context.push()
+        context['post_url'] = self.post_url
+        output = template_obj.render(context.flatten())
+        context.pop()
+        return output
+
 
 @register.inclusion_tag('form_as_div.html')
 def form_as_div(form):
     return {'form': form, }
-
-@register.inclusion_tag('search_form.html')
-def search_form(url='', terms=''):
-    return { 'url': url, 'terms': terms, 'STATIC_URL': settings.STATIC_URL }
 
 
 @register.tag
@@ -85,8 +99,3 @@ class FormFieldNode(template.Node):
         context.pop()
         context.pop()
         return output
-
-
-
-
-
