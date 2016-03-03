@@ -14,24 +14,28 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
-urlpatterns = patterns(
-    'patchman.repos.views',
-    url(r'^$', 'repo_list', name='repo_list'),
-    url(r'^mirrors/$', 'mirror_list', name='mirror_list'),
-    url(r'^(?P<repo_id>[-.\w]+)/$', 'repo_detail', name='repo_detail'),
-    url(r'^(?P<repo_id>[-.\w]+)/delete/$', 'repo_delete', name='repo_delete'),
-    url(r'^(?P<repo_id>[-.\w]+)/enable/$', 'repo_enable', name='repo_enable'),
-    url(r'^(?P<repo_id>[-.\w]+)/disable/$', 'repo_disable',
+from patchman.repos import views
+
+urlpatterns = [
+
+    url(r'^$', views.repo_list, name='repo_list'),
+    url(r'^mirrors/$', views.mirror_list, name='mirror_list'),
+    url(r'^(?P<repo_id>[-.\w]+)/$', views.repo_detail, name='repo_detail'),
+    url(r'^(?P<repo_id>[-.\w]+)/delete/$', views.repo_delete,
+        name='repo_delete'),
+    url(r'^(?P<repo_id>[-.\w]+)/enable/$', views.repo_enable,
+        name='repo_enable'),
+    url(r'^(?P<repo_id>[-.\w]+)/disable/$', views.repo_disable,
         name='repo_disable'),
-    url(r'^(?P<repo_id>[-.\w]+)/enablesec/$', 'repo_enablesec',
+    url(r'^(?P<repo_id>[-.\w]+)/enablesec/$', views.repo_enablesec,
         name='repo_enablesec'),
-    url(r'^(?P<repo_id>[-.\w]+)/disablesec/$', 'repo_disablesec',
+    url(r'^(?P<repo_id>[-.\w]+)/disablesec/$', views.repo_disablesec,
         name='repo_disablesec'),
-    url(r'^(?P<repo_id>[-.\w]+)/edit/$', 'repo_edit', name='repo_edit'),
+    url(r'^(?P<repo_id>[-.\w]+)/edit/$', views.repo_edit, name='repo_edit'),
     url(r'^(?P<repo_id>[-.\w]+)/mirror/(?P<mirror_id>[-.\w]+)/delete/$',
-        'mirror_delete', name='mirror_delete'),
+        views.mirror_delete, name='mirror_delete'),
     url(r'^(?P<repo_id>[-.\w]+)/mirror/(?P<mirror_id>[-.\w]+)/edit/$',
-        'mirror_edit', name='mirror_edit'),
-)
+        views.mirror_edit, name='mirror_edit'),
+]

@@ -14,17 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
-urlpatterns = patterns(
+from patchman.operatingsystems import views
 
-    'patchman.operatingsystems.views',
-    url(r'^$', 'os_list', name='os_list'),
-    url(r'^groups/$', 'osgroup_list', name='osgroup_list'),
-    url(r'^(?P<os_id>[-.\w]+)/$', 'os_detail', name='os_detail'),
-    url(r'^(?P<os_id>[-.\w]+)/delete/$', 'os_delete', name='os_delete'),
-    url(r'^groups/(?P<osgroup_id>[-.\w]+)/$', 'osgroup_detail',
+urlpatterns = [
+
+    url(r'^$', views.os_list, name='os_list'),
+    url(r'^groups/$', views.osgroup_list, name='osgroup_list'),
+    url(r'^(?P<os_id>[-.\w]+)/$', views.os_detail, name='os_detail'),
+    url(r'^(?P<os_id>[-.\w]+)/delete/$', views.os_delete, name='os_delete'),
+    url(r'^groups/(?P<osgroup_id>[-.\w]+)/$', views.osgroup_detail,
         name='osgroup_detail'),
-    url(r'^groups/(?P<osgroup_id>[-.\w]+)/delete/$', 'osgroup_delete',
+    url(r'^groups/(?P<osgroup_id>[-.\w]+)/delete/$', views.osgroup_delete,
         name='osgroup_delete'),
-)
+]

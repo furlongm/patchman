@@ -14,13 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
-urlpatterns = patterns(
+from patchman.hosts import views
 
-    'patchman.hosts.views',
-    url(r'^$', 'host_list', name='host_list'),
-    url(r'^(?P<hostname>[-.\w]+)/$', 'host_detail', name='host_detail'),
-    url(r'^(?P<hostname>[-.\w]+)/delete/$', 'host_delete', name='host_delete'),
-    url(r'^(?P<hostname>[-.\w]+)/edit/$', 'host_edit', name='host_edit'),
-)
+urlpatterns = [
+
+    url(r'^$', views.host_list, name='host_list'),
+    url(r'^(?P<hostname>[-.\w]+)/$', views.host_detail, name='host_detail'),
+    url(r'^(?P<hostname>[-.\w]+)/delete/$', views.host_delete,
+        name='host_delete'),
+    url(r'^(?P<hostname>[-.\w]+)/edit/$', views.host_edit, name='host_edit'),
+]

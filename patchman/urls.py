@@ -14,29 +14,28 @@
 # You should have received a copy of the GNU General Public License
 # along with  If not, see <http://www.gnu.org/licenses/>
 
-from django.conf.urls import patterns, url, include, handler404, handler500
+from django.conf.urls import url, include, handler404, handler500
 from django.conf import settings
 from django.contrib import admin
+from django.contrib.auth import views
+from django.views import static
 
 admin.autodiscover()
 
-urlpatterns = patterns('',
+urlpatterns = [
 
-    url(r'^$', 'patchman.util.views.dashboard', name='dashboard'),
+    url(r'^', include('patchman.util.urls')),
     url(r'^reports/', include('patchman.reports.urls')),
     url(r'^hosts/', include('patchman.hosts.urls')),
     url(r'^packages/', include('patchman.packages.urls')),
     url(r'^repos/', include('patchman.repos.urls')),
     url(r'^os/', include('patchman.operatingsystems.urls')),
-    # Uncomment the admin/doc line below to enable admin documentation:
-    #(r'^admin/doc/', include('django.contrib.admindocs.urls')),
-    url(r'^accounts/login/$', 'django.contrib.auth.views.login', name='login'),
-    url(r'^accounts/logout/$', 'django.contrib.auth.views.login', name='logout'),
-
-    (r'^admin/', include(admin.site.urls)),
-)
+    url(r'^accounts/login/$', views.login, name='login'),
+    url(r'^accounts/logout/$', views.login, name='logout'),
+    url(r'^admin/', include(admin.site.urls)),
+]
 
 if settings.DEBUG:
-    urlpatterns += patterns('',
-        (r'^patchman_media/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.STATIC_ROOT}),
-    )
+    urlpatterns += [
+        url(r'^patchman_media/(?P<path>.*)$', static.serve),
+    ]
