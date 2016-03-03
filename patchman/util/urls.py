@@ -16,16 +16,9 @@
 
 from django.conf.urls import url
 
-from patchman.reports import views
+from patchman.util import views
 
 urlpatterns = [
 
-    url(r'^$', views.report_list, name='report_list'),
-    url(r'^upload/$', views.upload),
-    url(r'^(?P<report>[-.\w]+)/$', views.report_detail,
-        name='report_detail'),
-    url(r'^(?P<report>[-.\w]+)/delete/$', views.report_delete,
-        name='report_delete'),
-    url(r'^(?P<report>[-.\w]+)/process/$', views.report_process,
-        name='report_process'),
+    url(r'^$', views.dashboard, name='dashboard'),
 ]
