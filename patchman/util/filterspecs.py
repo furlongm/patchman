@@ -41,21 +41,17 @@ class Filter(object):
         if isinstance(filters, QuerySet):
             f = {}
             for i in filters:
-                f[str(i)] = str(i)
-            filters = f
-
-        if isinstance(filters, QuerySet):
-            f = {}
-            for i in filters:
-                f[i.pk] = str(i)
+                if isinstance(i, unicode):
+                    f[str(i)] = str(i)
+                else:
+                    f[i.pk] = str(i)
             filters = f
 
         self.name = name
         self.filters = filters
         self.selected = None
-        if name in request.GET:
-            self.selected = request.GET[name]
-
+        if self.name in request.GET:
+            self.selected = request.GET[self.name]
 
     def output(self, qs):
 
@@ -110,7 +106,7 @@ class FilterBar(object):
                     qs[k] = v
 
             else:
-                if name in self.request.GET:
+                if f.name in self.request.GET:
                     qs[f.name] = self.request.GET[f.name]
 
         self.qs = qs
