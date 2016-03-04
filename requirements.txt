@@ -1,4 +1,4 @@
-Django==1.9.3
+Django==1.8.10
 django-tagging==0.4.1
 django-extensions==1.6.1
 progressbar==2.3
