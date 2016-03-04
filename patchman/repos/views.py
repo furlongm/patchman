@@ -299,13 +299,13 @@ def repo_delete(request, repo_id):
     repo = get_object_or_404(Repository, id=repo_id)
 
     if request.method == 'POST':
-        if 'delete' in request.REQUEST:
+        if 'delete' in request.POST:
             for mirror in repo.mirror_set.all():
                 mirror.delete()
             repo.delete()
             messages.info(request, 'Repository %s has been deleted' % repo)
             return HttpResponseRedirect(reverse('repo_list'))
-        elif 'cancel' in request.REQUEST:
+        elif 'cancel' in request.POST:
             return HttpResponseRedirect(reverse('repo_detail', args=[repo_id]))
 
     return render(request,
@@ -319,7 +319,7 @@ def repo_enable(request, repo_id):
     repo = get_object_or_404(Repository, id=repo_id)
 
     if request.method == 'POST':
-        if 'enable' in request.REQUEST:
+        if 'enable' in request.POST:
             repo.enable()
             repo.save()
             if request.is_ajax():
@@ -329,7 +329,7 @@ def repo_enable(request, repo_id):
                 messages.info(request, text)
                 return HttpResponseRedirect(reverse('repo_detail',
                                                     args=[repo_id]))
-        elif 'cancel' in request.REQUEST:
+        elif 'cancel' in request.POST:
             return HttpResponseRedirect(reverse('repo_detail',
                                                 args=[repo_id]))
 
@@ -344,7 +344,7 @@ def repo_disable(request, repo_id):
     repo = get_object_or_404(Repository, id=repo_id)
 
     if request.method == 'POST':
-        if 'disable' in request.REQUEST:
+        if 'disable' in request.POST:
             repo.disable()
             repo.save()
             if request.is_ajax():
@@ -354,7 +354,7 @@ def repo_disable(request, repo_id):
                 messages.info(request, text)
                 return HttpResponseRedirect(
                     reverse('repo_detail', args=[repo_id]))
-        elif 'cancel' in request.REQUEST:
+        elif 'cancel' in request.POST:
             return HttpResponseRedirect(
                 reverse('repo_detail', args=[repo_id]))
 
@@ -369,7 +369,7 @@ def repo_enablesec(request, repo_id):
     repo = get_object_or_404(Repository, id=repo_id)
 
     if request.method == 'POST':
-        if 'enablesec' in request.REQUEST:
+        if 'enablesec' in request.POST:
             repo.security = True
             repo.save()
             if request.is_ajax():
@@ -380,7 +380,7 @@ def repo_enablesec(request, repo_id):
                 messages.info(request, text)
                 return HttpResponseRedirect(reverse('repo_detail',
                                                     args=[repo_id]))
-        elif 'cancel' in request.REQUEST:
+        elif 'cancel' in request.POST:
             return HttpResponseRedirect(reverse('repo_detail',
                                                 args=[repo_id]))
 
@@ -395,7 +395,7 @@ def repo_disablesec(request, repo_id):
     repo = get_object_or_404(Repository, id=repo_id)
 
     if request.method == 'POST':
-        if 'disablesec' in request.REQUEST:
+        if 'disablesec' in request.POST:
             repo.security = False
             repo.save()
             if request.is_ajax():
@@ -406,7 +406,7 @@ def repo_disablesec(request, repo_id):
                 messages.info(request, text)
                 return HttpResponseRedirect(reverse('repo_detail',
                                                     args=[repo_id]))
-        elif 'cancel' in request.REQUEST:
+        elif 'cancel' in request.POST:
             return HttpResponseRedirect(reverse('repo_detail',
                                                 args=[repo_id]))
 
