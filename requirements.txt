@@ -5,4 +5,4 @@ progressbar==2.3
 python-debian==0.1.23
 lxml==3.5.0
 chardet==2.3.0
-
+djangorestframework==3.3.2

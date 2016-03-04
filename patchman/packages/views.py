@@ -1,4 +1,5 @@
 # Copyright 2012 VPAC, http://www.vpac.org
+# Copyright 2013-2016 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of Patchman.
 #
@@ -19,10 +20,13 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.db.models import Q
 
-from patchman.util.filterspecs import Filter, FilterBar
+from rest_framework import viewsets
 
-from patchman.packages.models import PackageName, Package
+from patchman.util.filterspecs import Filter, FilterBar
+from patchman.packages.models import PackageName, Package, PackageUpdate
 from patchman.arch.models import PackageArchitecture
+from patchman.packages.serializers import PackageNameSerializer, PackageSerializer, \
+        PackageUpdateSerializer
 
 
 @login_required
@@ -87,3 +91,30 @@ def package_detail(request, packagename):
                   'packages/package_detail.html',
                   {'package': package,
                    'allversions': allversions}, )
+
+
+#@login_required
+class PackageNameViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows package names to be viewed or edited.
+    """
+    queryset = PackageName.objects.all()
+    serializer_class = PackageNameSerializer
+
+
+#@login_required
+class PackageViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows packages to be viewed or edited.
+    """
+    queryset = Package.objects.all()
+    serializer_class = PackageSerializer
+
+
+#@login_required
+class PackageUpdateViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows packages updates to be viewed or edited.
+    """
+    queryset = PackageUpdate.objects.all()
+    serializer_class = PackageUpdateSerializer

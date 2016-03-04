@@ -1,4 +1,5 @@
 # Copyright 2012 VPAC, http://www.vpac.org
+# Copyright 2013-2016 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of Patchman.
 #
@@ -23,13 +24,17 @@ from django.db.models import Q
 from django.contrib import messages
 from django.db import IntegrityError
 
+from rest_framework import viewsets
+
 from patchman.util.filterspecs import Filter, FilterBar
 from patchman.hosts.models import HostRepo
-from patchman.repos.models import Repository, Mirror
+from patchman.repos.models import Repository, Mirror, MirrorPackage
 from patchman.operatingsystems.models import OSGroup
 from patchman.arch.models import MachineArchitecture
 from patchman.repos.forms import EditRepoForm, LinkRepoForm, CreateRepoForm, \
     EditMirrorForm
+from patchman.repos.serializers import RepositorySerializer, \
+    MirrorSerializer, MirrorPackageSerializer
 
 
 @login_required
@@ -413,3 +418,30 @@ def repo_disablesec(request, repo_id):
     return render(request,
                   'repos/repo_endisablesec.html',
                   {'repo': repo, 'enable': False}, )
+
+
+#@login_required
+class RepositoryViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows repositories to be viewed or edited.
+    """
+    queryset = Repository.objects.all()
+    serializer_class = RepositorySerializer
+
+
+#@login_required
+class MirrorViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows mirrors to be viewed or edited.
+    """
+    queryset = Mirror.objects.all()
+    serializer_class = MirrorSerializer
+
+
+#@login_required
+class MirrorPackageViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows mirror packages to be viewed or edited.
+    """
+    queryset = MirrorPackage.objects.all()
+    serializer_class = MirrorPackageSerializer
