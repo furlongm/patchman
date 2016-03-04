@@ -27,7 +27,8 @@ register = Library()
 @register.simple_tag
 def active(request, pattern):
     import re
-    if re.search('^%s/%s' % (request.META['SCRIPT_NAME'], pattern), request.path):
+    if re.search('^%s/%s' % (request.META['SCRIPT_NAME'], pattern),
+                 request.path):
         return 'active'
     return ''
 
@@ -42,9 +43,11 @@ def yes_no_img(boolean, reversed=False, alt_true='Active', alt_false='Not Active
             boolean = True
 
     if boolean:
-        return format_html("<img src='{}/img/admin/icon-yes.gif' alt='{}' />", escape(settings.STATIC_URL), escape(alt_true))
+        return format_html("<img src='{}/img/admin/icon-yes.gif' alt='{}' />",
+                           escape(settings.STATIC_URL), escape(alt_true))
     else:
-        return format_html("<img src='{}/img/admin/icon-no.gif' alt='{}' />", escape(settings.STATIC_URL), escape(alt_false))
+        return format_html("<img src='{}/img/admin/icon-no.gif' alt='{}' />",
+                           escape(settings.STATIC_URL), escape(alt_false))
 
 
 @register.tag
