@@ -158,11 +158,11 @@ def host_delete(request, hostname):
     host = get_object_or_404(Host, hostname=hostname)
 
     if request.method == 'POST':
-        if 'delete' in request.REQUEST:
+        if 'delete' in request.POST:
             host.delete()
             messages.info(request, 'Host %s has been deleted' % hostname)
             return HttpResponseRedirect(reverse('host_list'))
-        elif 'cancel' in request.REQUEST:
+        elif 'cancel' in request.POST:
             return HttpResponseRedirect(reverse('host_detail',
                                                 args=[hostname]))
 

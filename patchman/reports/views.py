@@ -142,12 +142,15 @@ def report_delete(request, report):
 
     report = get_object_or_404(Report, id=report)
 
+    import pprint
+    pprint.pprint(request.__dict__)
+
     if request.method == 'POST':
-        if 'delete' in request.REQUEST:
+        if 'delete' in request.POST:
             report.delete()
             messages.info(request, 'Report %s has been deleted' % report)
             return HttpResponseRedirect(reverse('report_list'))
-        elif 'cancel' in request.REQUEST:
+        elif 'cancel' in request.POST:
             return HttpResponseRedirect(reverse('report_detail',
                                         args=[report.id]))
 

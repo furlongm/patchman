@@ -98,7 +98,7 @@ def os_delete(request, os_id):
         oses = False
 
     if request.method == 'POST':
-        if 'delete' in request.REQUEST:
+        if 'delete' in request.POST:
             if os:
                 os.delete()
                 messages.info(request, 'OS %s has been deleted' % os)
@@ -109,7 +109,7 @@ def os_delete(request, os_id):
                 text = '%s OS\'s have been deleted' % len(oses)
                 messages.info(request, text)
                 return HttpResponseRedirect(reverse('os_list'))
-        elif 'cancel' in request.REQUEST:
+        elif 'cancel' in request.POST:
             if os_id == 'empty_oses':
                 return HttpResponseRedirect(reverse('os_list'))
             else:
@@ -177,11 +177,11 @@ def osgroup_delete(request, osgroup_id):
     osgroup = get_object_or_404(OSGroup, id=osgroup_id)
 
     if request.method == 'POST':
-        if 'delete' in request.REQUEST:
+        if 'delete' in request.POST:
             osgroup.delete()
             messages.info(request, 'OS Group %s has been deleted' % osgroup)
             return HttpResponseRedirect(reverse('os_list'))
-        elif 'cancel' in request.REQUEST:
+        elif 'cancel' in request.POST:
             oid = osgroup_id
             return HttpResponseRedirect(reverse('osgroup_detail', args=[oid]))
 
