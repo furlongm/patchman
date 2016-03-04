@@ -37,8 +37,8 @@ def os_list(request):
     except ValueError:
         page_no = 1
 
-    if 'search' in request.REQUEST:
-        terms = request.REQUEST['search'].lower()
+    if 'search' in request.GET:
+        terms = request.GET['search'].lower()
         query = Q()
         for term in terms.split(' '):
             q = Q(name__icontains=term)
@@ -130,8 +130,8 @@ def osgroup_list(request):
     except ValueError:
         page_no = 1
 
-    if 'search' in request.REQUEST:
-        terms = request.REQUEST['search'].lower()
+    if 'search' in request.GET:
+        terms = request.GET['search'].lower()
         query = Q()
         for term in terms.split(' '):
             q = Q(name__icontains=term)

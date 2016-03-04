@@ -37,29 +37,29 @@ def repo_list(request):
 
     repos = Repository.objects.select_related().order_by('name')
 
-    if 'repotype' in request.REQUEST:
-        repos = repos.filter(repotype=request.REQUEST['repotype'])
+    if 'repotype' in request.GET:
+        repos = repos.filter(repotype=request.GET['repotype'])
 
-    if 'arch' in request.REQUEST:
-        repos = repos.filter(arch=request.REQUEST['arch'])
+    if 'arch' in request.GET:
+        repos = repos.filter(arch=request.GET['arch'])
 
-    if 'osgroup' in request.REQUEST:
-        repos = repos.filter(osgroup=request.REQUEST['osgroup'])
+    if 'osgroup' in request.GET:
+        repos = repos.filter(osgroup=request.GET['osgroup'])
 
-    if 'security' in request.REQUEST:
-        security = request.REQUEST['security'] == 'True'
+    if 'security' in request.GET:
+        security = request.GET['security'] == 'True'
         repos = repos.filter(security=security)
 
-    if 'enabled' in request.REQUEST:
-        enabled = request.REQUEST['enabled'] == 'True'
+    if 'enabled' in request.GET:
+        enabled = request.GET['enabled'] == 'True'
         repos = repos.filter(enabled=enabled)
 
-    if 'package_id' in request.REQUEST:
+    if 'package_id' in request.GET:
         repos = repos.filter(
-            mirror__packages=int(request.REQUEST['package_id']))
+            mirror__packages=int(request.GET['package_id']))
 
-    if 'search' in request.REQUEST:
-        terms = request.REQUEST['search'].lower()
+    if 'search' in request.GET:
+        terms = request.GET['search'].lower()
         query = Q()
         for term in terms.split(' '):
             q = Q(name__icontains=term)
@@ -106,8 +106,8 @@ def mirror_list(request):
 
     mirrors = Mirror.objects.select_related().order_by('file_checksum')
 
-    if 'checksum' in request.REQUEST:
-        checksum = request.REQUEST['checksum']
+    if 'checksum' in request.GET:
+        checksum = request.GET['checksum']
         mirrors = mirrors.filter(file_checksum=checksum)
     else:
         # Only show mirrors with more than 0 packages. Thiis is a hack but
@@ -192,9 +192,8 @@ def mirror_list(request):
             move_mirrors(repo)
             messages.info(request, 'Mirrors linked to Repository %s' % repo)
             return HttpResponseRedirect(repo.get_absolute_url())
-
     else:
-        if 'checksum' in request.REQUEST:
+        if 'checksum' in request.GET:
             arch = mirrors[0].repo.arch
             repotype = mirrors[0].repo.repotype
             prereqs = pre_reqs(arch, repotype)

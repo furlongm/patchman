@@ -39,36 +39,36 @@ def host_list(request):
 
     hosts = Host.objects.select_related()
 
-    if 'domain' in request.REQUEST:
-        hosts = hosts.filter(domain=int(request.REQUEST['domain']))
+    if 'domain' in request.GET:
+        hosts = hosts.filter(domain=int(request.GET['domain']))
 
-    if 'package_id' in request.REQUEST:
-        hosts = hosts.filter(packages=int(request.REQUEST['package_id']))
+    if 'package_id' in request.GET:
+        hosts = hosts.filter(packages=int(request.GET['package_id']))
 
-    if 'package' in request.REQUEST:
-        hosts = hosts.filter(packages__name__name=request.REQUEST['package'])
+    if 'package' in request.GET:
+        hosts = hosts.filter(packages__name__name=request.GET['package'])
 
-    if 'repo' in request.REQUEST:
-        hosts = hosts.filter(repos=int(request.REQUEST['repo']))
+    if 'repo' in request.GET:
+        hosts = hosts.filter(repos=int(request.GET['repo']))
 
-    if 'arch' in request.REQUEST:
-        hosts = hosts.filter(arch=int(request.REQUEST['arch']))
+    if 'arch' in request.GET:
+        hosts = hosts.filter(arch=int(request.GET['arch']))
 
-    if 'os' in request.REQUEST:
-        hosts = hosts.filter(os=int(request.REQUEST['os']))
+    if 'os' in request.GET:
+        hosts = hosts.filter(os=int(request.GET['os']))
 
-    if 'osgroup' in request.REQUEST:
-        hosts = hosts.filter(os__osgroup=int(request.REQUEST['osgroup']))
+    if 'osgroup' in request.GET:
+        hosts = hosts.filter(os__osgroup=int(request.GET['osgroup']))
 
-    if 'tag' in request.REQUEST:
-        hosts = TaggedItem.objects.get_by_model(hosts, request.REQUEST['tag'])
+    if 'tag' in request.GET:
+        hosts = TaggedItem.objects.get_by_model(hosts, request.GET['tag'])
 
-    if 'reboot_required' in request.REQUEST:
-        reboot_required = request.REQUEST['reboot_required'] == 'True'
+    if 'reboot_required' in request.GET:
+        reboot_required = request.GET['reboot_required'] == 'True'
         hosts = hosts.filter(reboot_required=reboot_required)
 
-    if 'search' in request.REQUEST:
-        terms = request.REQUEST['search'].lower()
+    if 'search' in request.GET:
+        terms = request.GET['search'].lower()
         query = Q()
         for term in terms.split(' '):
             q = Q(hostname__icontains=term)

@@ -30,16 +30,16 @@ def package_list(request):
 
     packages = PackageName.objects.select_related()
 
-    if 'arch' in request.REQUEST:
+    if 'arch' in request.GET:
         packages = packages.filter(
-            package__arch=int(request.REQUEST['arch'])).distinct()
+            package__arch=int(request.GET['arch'])).distinct()
 
-    if 'packagetype' in request.REQUEST:
+    if 'packagetype' in request.GET:
         packages = packages.filter(
-            package__packagetype=request.REQUEST['packagetype']).distinct()
+            package__packagetype=request.GET['packagetype']).distinct()
 
-    if 'search' in request.REQUEST:
-        terms = request.REQUEST['search'].lower()
+    if 'search' in request.GET:
+        terms = request.GET['search'].lower()
         query = Q()
         for term in terms.split(' '):
             q = Q(name__icontains=term)

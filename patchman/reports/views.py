@@ -76,15 +76,15 @@ def report_list(request):
 
     reports = Report.objects.select_related()
 
-    if 'host_id' in request.REQUEST:
-        reports = reports.filter(hostname=int(request.REQUEST['host_id']))
+    if 'host_id' in request.GET:
+        reports = reports.filter(hostname=int(request.GET['host_id']))
 
-    if 'processed' in request.REQUEST:
-        processed = request.REQUEST['processed'] == 'True'
+    if 'processed' in request.GET:
+        processed = request.GET['processed'] == 'True'
         reports = reports.filter(processed=processed)
 
-    if 'search' in request.REQUEST:
-        terms = request.REQUEST['search'].lower()
+    if 'search' in request.GET:
+        terms = request.GET['search'].lower()
         query = Q()
         for term in terms.split(' '):
             q = Q(host__icontains=term)
