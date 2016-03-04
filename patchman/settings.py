@@ -81,6 +81,7 @@ DEFAULT_APPS = (
 THIRD_PARTY_APPS = (
     'django_extensions',
     'tagging',
+    'rest_framework',
 )
 
 LOCAL_APPS = (
@@ -93,6 +94,11 @@ LOCAL_APPS = (
     'patchman.reports',
     'patchman.util',
 )
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAdminUser',),
+    'PAGE_SIZE': 10
+}
 
 BROKER_HOST = "localhost"
 BROKER_PORT = 5672

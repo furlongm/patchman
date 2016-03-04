@@ -14,17 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.contrib.auth.decorators import login_required
-from rest_framework import viewsets
+from rest_framework import serializers
 
-from patchman.domains.models import Domain
-from patchman.domains.serializers import DomainSerializer
+from patchman.operatingsystems.models import OS, OSGroup
 
 
-#@login_required
-class DomainViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows package architectures to be viewed or edited.
-    """
-    queryset = Domain.objects.all()
-    serializer_class = DomainSerializer
+class OSSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = OS
+        fields = '__all__'
+
+
+class OSGroupSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = OSGroup
+        fields = '__all__'
