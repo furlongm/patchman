@@ -15,12 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with django-andsome  If not, see <http://www.gnu.org/licenses/>.
 
-
-from django import template
-from django.conf import settings
+from django.template import Library, Node, Variable, VariableDoesNotExist, \
+    TemplateSyntaxError
+from django.template.loader import get_template
 from django.utils.html import format_html, escape
+from django.conf import settings
 
-register = template.Library()
+register = Library()
 
 
 @register.simple_tag
@@ -55,32 +56,32 @@ def gen_table(parser, token):
             tag_name, queryset = token.split_contents()
             template_name = None
         except:
-            raise template.TemplateSyntaxError, "%r tag requires one or two arguments" % token.contents.split()[0]
+            raise (TemplateSyntaxError,
+                   "%r tag requires one or two arguments" %
+                   token.contents.split()[0])
     return QuerySetTableNode(queryset, template_name)
 
 
-class QuerySetTableNode(template.Node):
+class QuerySetTableNode(Node):
 
     def __init__(self, queryset, template_name):
-        self.queryset = template.Variable(queryset)
+        self.queryset = Variable(queryset)
         self.template_name = template_name
 
     def render(self, context):
         try:
             queryset = self.queryset.resolve(context)
-        except template.VariableDoesNotExist:
+        except VariableDoesNotExist:
             return ''
 
         if not self.template_name:
             app_label = queryset.model._meta.app_label
             model_name = queryset.model._meta.verbose_name
-            template_name = '%s/%s_table.html' % (app_label, model_name.lower().replace(' ', ''))
+            template_name = '%s/%s_table.html' % \
+                (app_label, model_name.lower().replace(' ', ''))
         else:
             template_name = self.template_name
-        template_obj = template.loader.get_template(template_name)
 
-        context.push()
-        context['object_list'] = queryset
-        output = template_obj.render(context.flatten())
-        context.pop()
-        return output
+        template = get_template(template_name)
+        html = template.render({'object_list': queryset})
+        return html
