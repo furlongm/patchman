@@ -16,9 +16,9 @@
 # along with django-andsome  If not, see <http://www.gnu.org/licenses/>.
 
 
-from django.template import Library
-from django.conf import settings
-from django import template
+from django.template import Library, Node, Variable, VariableDoesNotExist, \
+    TemplateDoesNotExist, TemplateSyntaxError
+from django.template.loader import get_template
 
 register = Library()
 
@@ -32,21 +32,20 @@ def searchform(parser, token):
             tag_name = token.split_contents()
             post_url = '.'
         except:
-            raise template.TemplateSyntaxError, "%r tag requires one or no arguments" % token.contents.split()[0]
+            raise (TemplateSyntaxError,
+                   "%r tag requires one or no arguments" %
+                   token.contents.split()[0])
     return SearchFormNode(post_url)
 
 
-class SearchFormNode(template.Node):
+class SearchFormNode(Node):
     def __init__(self, post_url):
         self.post_url = post_url
 
     def render(self, context):
-        template_obj = template.loader.get_template('search_form.html')
-        context.push()
-        context['post_url'] = self.post_url
-        output = template_obj.render(context.flatten())
-        context.pop()
-        return output
+        template = get_template('search_form.html')
+        html = template.render({'post_url': self.post_url})
+        return html
 
 
 @register.inclusion_tag('form_as_div.html')
@@ -59,25 +58,27 @@ def formfield(parser, token):
     try:
         tag_name, field = token.split_contents()
     except:
-        raise template.TemplateSyntaxError, "%r tag requires exactly one argument" % token.contents.split()[0]
+        raise (TemplateSyntaxError,
+               "%r tag requires exactly one argument" %
+               token.contents.split()[0])
     return FormFieldNode(field)
 
 
-class FormFieldNode(template.Node):
+class FormFieldNode(Node):
     def __init__(self, field):
-        self.field = template.Variable(field)
+        self.field = Variable(field)
 
-    def get_template(self, class_name):
+    def get_formfield_template(self, class_name):
         try:
             template_name = 'formfield/%s.html' % class_name
-            return template.loader.get_template(template_name)
-        except template.TemplateDoesNotExist:
-            return template.loader.get_template('formfield/default.html')
+            return get_template(template_name)
+        except TemplateDoesNotExist:
+            return get_template('formfield/default.html')
 
     def render(self, context):
         try:
             field = self.field.resolve(context)
-        except template.VariableDoesNotExist:
+        except VariableDoesNotExist:
             return ''
 
         label_class_names = []
@@ -88,14 +89,9 @@ class FormFieldNode(template.Node):
         if widget_class_name == 'checkboxinput':
             label_class_names.append('vCheckboxLabel')
 
+        class_str = label_class_names and u' class="%s"' % \
+            u' '.join(label_class_names) or u''
 
-        class_str = label_class_names and u' class="%s"' % u' '.join(label_class_names) or u''
-
-        context.push()
-        context.push()
-        context['class'] = class_str
-        context['formfield'] = field
-        output = self.get_template(widget_class_name).render(context.flatten())
-        context.pop()
-        context.pop()
-        return output
+        template = self.get_formfield_template(widget_class_name)
+        html = template.render({'class': class_str, 'formfield': field})
+        return html
