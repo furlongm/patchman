@@ -1,12 +1,13 @@
 {% extends "base_site.html" %}
 {% load	forms %}
+{% load static from staticfiles %}
 
 {% block title %}Login{% endblock %}
 {% block stylesheet %}base{% endblock %}
 {% block bodyclass %}login{% endblock %}
 
 {% block extrastyle %}
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/login.css"/>
+<link rel="stylesheet" type="text/css" href="{% static 'css/login.css' %}"/>
 {% endblock %}
 
 {% block usertools %}{% endblock %}
