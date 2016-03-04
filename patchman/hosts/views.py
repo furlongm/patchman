@@ -21,7 +21,7 @@ from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.contrib import messages
-from tagging.models import Tag
+from tagging.models import Tag, TaggedItem
 
 from patchman.util.filterspecs import Filter, FilterBar
 from patchman.hosts.models import Host, HostRepo
@@ -30,8 +30,6 @@ from patchman.arch.models import MachineArchitecture
 from patchman.operatingsystems.models import OS, OSGroup
 from patchman.reports.models import Report
 from patchman.hosts.forms import EditHostForm
-
-from tagging.models import TaggedItem
 
 
 @login_required
