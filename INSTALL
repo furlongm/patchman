@@ -23,8 +23,14 @@ $ patchman-manage migrate
 $ patchman-manage createsuperuser
 
 
-# Installation from git on Ubuntu 14.04 and Debian 8.0
+# Installation from git on Ubuntu 14.04 and Debian 8
 # ----------------------------------------------------
+
+Django 1.8 is the minimum version required to run the latest git version of
+patchman. Django 1.8 is in the jessie-backports apt repository for Debian 8. To
+add this repo, run the following command:
+
+# echo "deb http://http.debian.net/debian jessie-backports main" >> /etc/apt/sources.list.d/jessie-backports.list
 
 # 1. Install dependencies.
 apt-get install python-django-tagging python-django \
