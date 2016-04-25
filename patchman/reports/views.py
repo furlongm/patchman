@@ -62,7 +62,7 @@ def upload(request):
                           {'data': data,
                            'packages': packages,
                            'repos': repos},
-                          mimetype='text/plain')
+                          content_type='text/plain')
         else:
             # Should return HTTP 204
             response.status = 302
