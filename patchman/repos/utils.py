@@ -276,6 +276,7 @@ def mirrorlists_check(repo):
         if mirror_urls:
             mirror.mirrorlist = True
             mirror.last_access_ok = True
+            mirror.save()
             text = 'Found mirrorlist - %s\n' % mirror.url
             info_message.send(sender=None, text=text)
             for mirror_url in mirror_urls:
