@@ -441,7 +441,7 @@ def process_reports(host=None, force=False):
         print message
 
     for report in reports:
-        report.process(False)
+        report.process(find_updates=False)
 
 
 def clean_updates():
