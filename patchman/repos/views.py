@@ -352,8 +352,7 @@ def repo_enablesec(request, repo_id):
     if request.is_ajax():
         return HttpResponse(status=204)
     else:
-        text = 'Repository %s has been marked as a security' % repo
-        text += ' repo'
+        text = 'Repository %s has been marked as a security repo' % repo
         messages.info(request, text)
         return HttpResponseRedirect(reverse('repo_detail',
                                             args=[repo_id]))
@@ -369,8 +368,7 @@ def repo_disablesec(request, repo_id):
     if request.is_ajax():
         return HttpResponse(status=204)
     else:
-        text = 'Repository %s has been marked as a non-security' % repo
-        text += ' repo'
+        text = 'Repository %s has been marked as a non-security repo' % repo
         messages.info(request, text)
         return HttpResponseRedirect(reverse('repo_detail',
                                             args=[repo_id]))
