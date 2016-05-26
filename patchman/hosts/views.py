@@ -132,14 +132,18 @@ def host_edit(request, hostname):
     reports = Report.objects.filter(host=hostname).order_by('-created')[:3]
 
     if request.method == 'POST':
-        edit_form = EditHostForm(request.POST, instance=host)
-        if edit_form.is_valid():
-            host = edit_form.save()
-            host.save()
-            messages.info(request, 'Saved changes to Host %s' % host)
-            return HttpResponseRedirect(host.get_absolute_url())
-        else:
-            host = get_object_or_404(Host, hostname=hostname)
+        if 'save' in request.POST:
+            edit_form = EditHostForm(request.POST, instance=host)
+            if edit_form.is_valid():
+                host = edit_form.save()
+                host.save()
+                messages.info(request, 'Saved changes to Host %s' % host)
+                return HttpResponseRedirect(host.get_absolute_url())
+            else:
+                host = get_object_or_404(Host, hostname=hostname)
+        elif 'cancel' in request.POST:
+            return HttpResponseRedirect(reverse('host_detail',
+                                                args=[hostname]))
     else:
         edit_form = EditHostForm(instance=host)
 
