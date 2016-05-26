@@ -15,8 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with django-andsome  If not, see <http://www.gnu.org/licenses/>.
 
-from django.template import Library, Node, Variable, VariableDoesNotExist, \
-    TemplateSyntaxError
+from django.template import Library
 from django.template.loader import get_template
 from django.utils.html import format_html, escape
 from django.conf import settings
@@ -53,41 +52,13 @@ def no_yes_img(boolean, alt_yes='Not Required', alt_no='Required'):
                            escape(settings.STATIC_URL), escape(alt_no))
 
 
-@register.tag
-def gen_table(parser, token):
-    try:
-        tag_name, queryset, template_name = token.split_contents()
-    except:
-        try:
-            tag_name, queryset = token.split_contents()
-            template_name = None
-        except:
-            raise (TemplateSyntaxError,
-                   "%r tag requires one or two arguments" %
-                   token.contents.split()[0])
-    return QuerySetTableNode(queryset, template_name)
-
-
-class QuerySetTableNode(Node):
-
-    def __init__(self, queryset, template_name):
-        self.queryset = Variable(queryset)
-        self.template_name = template_name
-
-    def render(self, context):
-        try:
-            queryset = self.queryset.resolve(context)
-        except VariableDoesNotExist:
-            return ''
-
-        if not self.template_name:
-            app_label = queryset.model._meta.app_label
-            model_name = queryset.model._meta.verbose_name
-            template_name = '%s/%s_table.html' % \
-                (app_label, model_name.lower().replace(' ', ''))
-        else:
-            template_name = self.template_name
-
-        template = get_template(template_name)
-        html = template.render({'object_list': queryset})
-        return html
+@register.simple_tag
+def gen_table(queryset, template_name=None):
+    if not template_name:
+        app_label = queryset.model._meta.app_label
+        model_name = queryset.model._meta.verbose_name
+        template_name = '%s/%s_table.html' % \
+            (app_label, model_name.lower().replace(' ', ''))
+    template = get_template(template_name)
+    html = template.render({'object_list': queryset})
+    return html
