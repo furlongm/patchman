@@ -34,20 +34,23 @@ def active(request, pattern):
 
 
 @register.simple_tag
-def yes_no_img(boolean, reversed=False, alt_true='Active', alt_false='Not Active'):
-
-    if reversed == 'reversed':
-        if boolean:
-            boolean = False
-        else:
-            boolean = True
-
+def yes_no_img(boolean, alt_yes='Active', alt_no='Not Active'):
     if boolean:
         return format_html("<img src='{}img/admin/icon-yes.gif' alt='{}' />",
-                           escape(settings.STATIC_URL), escape(alt_true))
+                           escape(settings.STATIC_URL), escape(alt_yes))
     else:
         return format_html("<img src='{}img/admin/icon-no.gif' alt='{}' />",
-                           escape(settings.STATIC_URL), escape(alt_false))
+                           escape(settings.STATIC_URL), escape(alt_no))
+
+
+@register.simple_tag
+def no_yes_img(boolean, alt_yes='Not Required', alt_no='Required'):
+    if not boolean:
+        return format_html("<img src='{}img/admin/icon-yes.gif' alt='{}' />",
+                           escape(settings.STATIC_URL), escape(alt_yes))
+    else:
+        return format_html("<img src='{}img/admin/icon-no.gif' alt='{}' />",
+                           escape(settings.STATIC_URL), escape(alt_no))
 
 
 @register.tag

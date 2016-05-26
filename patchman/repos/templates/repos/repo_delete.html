@@ -18,8 +18,8 @@
         <tr><td>ID</td><td> {% if repo.repo_id != None %} {{ repo.repo_id }} {% endif %}</td></tr>
         <tr><td>Type</td><td> {{ repo.get_repotype_display }} </td></tr>
         <tr><td>Architecture</td><td> {{ repo.arch }} </td></tr>
-        <tr><td>Security</td><td> {% yes_no_img repo.security 'False' 'Security' 'Not Security' %} </td></tr>
-        <tr><td>Enabled</td><td> {% yes_no_img repo.enabled 'False' 'Enabled' 'Not Enabled' %} </td></tr>
+        <tr><td>Security</td><td> {% yes_no_img repo.security 'Security' 'Not Security' %} </td></tr>
+        <tr><td>Enabled</td><td> {% yes_no_img repo.enabled 'Enabled' 'Not Enabled' %} </td></tr>
         <tr><td>Mirrors</td><td> {{ repo.mirror_set.count }} </td></tr>
         <tr><td>Requires Authentication</td><td> {{ repo.auth_required }} </td></tr>
     </table>
