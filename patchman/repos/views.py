@@ -317,76 +317,46 @@ def repo_delete(request, repo_id):
 def repo_enable(request, repo_id):
 
     repo = get_object_or_404(Repository, id=repo_id)
-
-    if request.method == 'POST':
-        if 'enable' in request.POST:
-            repo.enable()
-            repo.save()
-            if request.is_ajax():
-                return HttpResponse(status=204)
-            else:
-                text = 'Repository %s has been enabled' % repo
-                messages.info(request, text)
-                return HttpResponseRedirect(reverse('repo_detail',
-                                                    args=[repo_id]))
-        elif 'cancel' in request.POST:
-            return HttpResponseRedirect(reverse('repo_detail',
-                                                args=[repo_id]))
-
-    return render(request,
-                  'repos/repo_endisable.html',
-                  {'repo': repo, 'enable': True}, )
+    repo.enable()
+    repo.save()
+    if request.is_ajax():
+        return HttpResponse(status=204)
+    else:
+        text = 'Repository %s has been enabled' % repo
+        messages.info(request, text)
+        return HttpResponseRedirect(reverse('repo_detail',
+                                            args=[repo_id]))
 
 
 @login_required
 def repo_disable(request, repo_id):
 
     repo = get_object_or_404(Repository, id=repo_id)
-
-    if request.method == 'POST':
-        if 'disable' in request.POST:
-            repo.disable()
-            repo.save()
-            if request.is_ajax():
-                return HttpResponse(status=204)
-            else:
-                text = 'Repository %s has been disabled' % repo
-                messages.info(request, text)
-                return HttpResponseRedirect(
-                    reverse('repo_detail', args=[repo_id]))
-        elif 'cancel' in request.POST:
-            return HttpResponseRedirect(
-                reverse('repo_detail', args=[repo_id]))
-
-    return render(request,
-                  'repos/repo_endisable.html',
-                  {'repo': repo, 'enable': False}, )
+    repo.disable()
+    repo.save()
+    if request.is_ajax():
+        return HttpResponse(status=204)
+    else:
+        text = 'Repository %s has been disabled' % repo
+        messages.info(request, text)
+        return HttpResponseRedirect(
+            reverse('repo_detail', args=[repo_id]))
 
 
 @login_required
 def repo_enablesec(request, repo_id):
 
     repo = get_object_or_404(Repository, id=repo_id)
-
-    if request.method == 'POST':
-        if 'enablesec' in request.POST:
-            repo.security = True
-            repo.save()
-            if request.is_ajax():
-                return HttpResponse(status=204)
-            else:
-                text = 'Repository %s has been marked as a security' % repo
-                text += ' repo'
-                messages.info(request, text)
-                return HttpResponseRedirect(reverse('repo_detail',
-                                                    args=[repo_id]))
-        elif 'cancel' in request.POST:
-            return HttpResponseRedirect(reverse('repo_detail',
-                                                args=[repo_id]))
-
-    return render(request,
-                  'repos/repo_endisablesec.html',
-                  {'repo': repo, 'enable': True}, )
+    repo.security = True
+    repo.save()
+    if request.is_ajax():
+        return HttpResponse(status=204)
+    else:
+        text = 'Repository %s has been marked as a security' % repo
+        text += ' repo'
+        messages.info(request, text)
+        return HttpResponseRedirect(reverse('repo_detail',
+                                            args=[repo_id]))
 
 
 @login_required
@@ -394,22 +364,13 @@ def repo_disablesec(request, repo_id):
 
     repo = get_object_or_404(Repository, id=repo_id)
 
-    if request.method == 'POST':
-        if 'disablesec' in request.POST:
-            repo.security = False
-            repo.save()
-            if request.is_ajax():
-                return HttpResponse(status=204)
-            else:
-                text = 'Repository %s has been marked as a non-security' % repo
-                text += ' repo'
-                messages.info(request, text)
-                return HttpResponseRedirect(reverse('repo_detail',
-                                                    args=[repo_id]))
-        elif 'cancel' in request.POST:
-            return HttpResponseRedirect(reverse('repo_detail',
-                                                args=[repo_id]))
-
-    return render(request,
-                  'repos/repo_endisablesec.html',
-                  {'repo': repo, 'enable': False}, )
+    repo.security = False
+    repo.save()
+    if request.is_ajax():
+        return HttpResponse(status=204)
+    else:
+        text = 'Repository %s has been marked as a non-security' % repo
+        text += ' repo'
+        messages.info(request, text)
+        return HttpResponseRedirect(reverse('repo_detail',
+                                            args=[repo_id]))
