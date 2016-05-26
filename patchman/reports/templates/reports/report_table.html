@@ -8,13 +8,13 @@
         </thead>
     <tbody>
     {% for report in object_list %}
-                <tr class="{% cycle 'row1' 'row2' %}">
-                    <td><a href="{{ report.get_absolute_url }}"> {{ report.id }} </a></td>
-                    <td> {{ report.host }} </td>
-                    <td> {{ report.created }} </td>
-                    <td> {{ report.report_ip }} </td>
-                    <td class="centered"> {% yes_no_img report.processed 'False' 'Processed' 'Not Processed' %}</td>
-                </tr>
+      <tr class="{% cycle 'row1' 'row2' %}">
+        <td><a href="{{ report.get_absolute_url }}"> {{ report.id }} </a></td>
+        <td> {{ report.host }} </td>
+        <td> {{ report.created }} </td>
+        <td> {{ report.report_ip }} </td>
+        <td class="centered"> {% yes_no_img report.processed 'Processed' 'Not Processed' %}</td>
+      </tr>
     {% endfor %}
-    </tbody>
+  </tbody>
 </table>
