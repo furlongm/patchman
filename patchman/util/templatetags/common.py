@@ -43,10 +43,10 @@ def yes_no_img(boolean, reversed=False, alt_true='Active', alt_false='Not Active
             boolean = True
 
     if boolean:
-        return format_html("<img src='{}/img/admin/icon-yes.gif' alt='{}' />",
+        return format_html("<img src='{}img/admin/icon-yes.gif' alt='{}' />",
                            escape(settings.STATIC_URL), escape(alt_true))
     else:
-        return format_html("<img src='{}/img/admin/icon-no.gif' alt='{}' />",
+        return format_html("<img src='{}img/admin/icon-no.gif' alt='{}' />",
                            escape(settings.STATIC_URL), escape(alt_false))
 
 
