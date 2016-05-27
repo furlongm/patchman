@@ -57,11 +57,11 @@ def get_hosts(hosts=None, action='Performing action'):
     host_objs = []
 
     if hosts:
-        if type(hosts) == str:
+        if isinstance(hosts, str):
             host_obj = get_host(hosts, action)
             if host_obj is not None:
                 host_objs.append(host_obj)
-        elif type(hosts) == list:
+        elif isinstance(hosts, list):
             for host in hosts:
                 host_obj = get_host(host, action)
                 if host_obj is not None:
