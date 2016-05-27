@@ -285,10 +285,10 @@ def mirrorlists_check(repo):
                 mirror_url = mirror_url.replace('$ARCH', repo.arch.name)
                 mirror_url = mirror_url.replace('$basearch', repo.arch.name)
                 if hasattr(settings, 'MAX_MIRRORS') and \
-                        type(settings.MAX_MIRRORS) == int:
+                        isinstance(settings.MAX_MIRRORS, int):
                     max_mirrors = settings.MAX_MIRRORS
                     # only add X mirrors, where X = max_mirrors
-                    q = Q(mirrorlist=False, refresh=True)
+                    q = Q(mirrorlist=False, refresh=True, file_checksum__isnull=False)
                     existing = mirror.repo.mirror_set.filter(q).count()
                     if existing >= max_mirrors:
                         text = '%s mirrors already exist, not adding %s\n' \
