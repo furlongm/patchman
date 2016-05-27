@@ -54,6 +54,8 @@ def no_yes_img(boolean, alt_yes='Not Required', alt_no='Required'):
 
 @register.simple_tag
 def gen_table(queryset, template_name=None):
+    if queryset == '':
+        return ''
     if not template_name:
         app_label = queryset.model._meta.app_label
         model_name = queryset.model._meta.verbose_name
