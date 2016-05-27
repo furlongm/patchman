@@ -231,16 +231,18 @@ def find_mirror_url(stored_mirror_url, formats):
                 mirror_url = mirror_url[:-len(f)]
         mirror_url = mirror_url.rstrip('/') + '/' + fmt
         res = get_url(mirror_url)
-        if type(res) != int:
+        if response_is_valid(res):
             break
     if fmt == 'content':
         yast = True
     return mirror_url, res, yast
 
 
-def check_response(res):
-
-    if type(res) == int:
+def response_is_valid(res):
+    """ Check the reponse code of an http request. If the response is an
+        integer there has been an error (see get_url).
+    """
+    if isinstance(res, int):
         return False
     else:
         return True
@@ -253,7 +255,7 @@ def mirrorlist_check(mirror_url):
     """
 
     res = get_url(mirror_url)
-    if type(res) != int:
+    if response_is_valid(res):
         headers = dict(res.headers.items())
         if 'content-type' in headers and \
                 re.match('text/plain', headers['content-type']) is not None:
@@ -424,7 +426,7 @@ def refresh_yum_repo(mirror, data, repo_url, ts):
         return
 
     res = get_url(primary_url)
-    mirror.last_access_ok = check_response(res)
+    mirror.last_access_ok = response_is_valid(res)
     if mirror.last_access_ok:
         data = download_url(res, 'Downloading repo info (2/2):')
         if data is None:
@@ -485,7 +487,7 @@ def refresh_yast_repo(mirror, data, repo_url):
     package_dir = re.findall('DESCRDIR *(.*)', data)[0]
     package_url = '%s/%s/packages.gz' % (mirror.url, package_dir)
     res = get_url(package_url)
-    mirror.last_access_ok = check_response(res)
+    mirror.last_access_ok = response_is_valid(res)
     if mirror.last_access_ok:
         data = download_url(res, 'Downloading repo info (2/2):')
         if data is None:
@@ -522,7 +524,7 @@ def refresh_rpm_repo(repo):
     for mirror in repo.mirror_set.filter(mirrorlist=False, refresh=True):
 
         repo_url, res, yast = find_mirror_url(mirror.url, formats)
-        mirror.last_access_ok = check_response(res)
+        mirror.last_access_ok = response_is_valid(res)
 
         if mirror.last_access_ok:
             data = download_url(res, 'Downloading repo info (1/2):')
@@ -553,7 +555,7 @@ def refresh_deb_repo(repo):
 
     for mirror in repo.mirror_set.filter(refresh=True):
         repo_url, res, unused = find_mirror_url(mirror.url, formats)
-        mirror.last_access_ok = check_response(res)
+        mirror.last_access_ok = response_is_valid(res)
 
         if mirror.last_access_ok:
             text = 'Found deb repo - %s\n' % repo_url
