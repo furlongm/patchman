@@ -434,11 +434,16 @@ def refresh_yum_repo(mirror, data, repo_url, ts):
             return
 
         valid = checksum_is_valid(mirror, checksum, checksum_type, data)
-        if valid and hasattr(settings, 'MAX_MIRRORS') and \
-                type(settings.MAX_MIRRORS) == int:
+        if valid:
+            mirror.file_checksum = checksum
+        else:
+            mirror.fail()
+            return
+        if hasattr(settings, 'MAX_MIRRORS') and \
+                isinstance(settings.MAX_MIRRORS, int):
             max_mirrors = settings.MAX_MIRRORS
             # only refresh X mirrors, where X = max_mirrors
-            checksum_q = Q(mirrorlist=False, refresh=True, timestamp=ts)
+            checksum_q = Q(mirrorlist=False, refresh=True, timestamp=ts, file_checksum=checksum)
             have_checksum = mirror.repo.mirror_set.filter(checksum_q).count()
             if have_checksum >= max_mirrors:
                 text = '%s mirrors already have this checksum, ' % max_mirrors
