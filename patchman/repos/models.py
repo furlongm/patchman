@@ -43,6 +43,7 @@ class Repository(models.Model):
     auth_required = models.BooleanField(default=False)
 
     class Meta:
+        verbose_name_plural = 'Repository'
         verbose_name_plural = 'Repositories'
 
     def __unicode__(self):
@@ -129,6 +130,10 @@ class Mirror(models.Model):
     enabled = models.BooleanField(default=True)
     refresh = models.BooleanField(default=True)
     fail_count = models.IntegerField(default=0)
+
+    class Meta:
+        verbose_name_plural = 'Mirror'
+        verbose_name_plural = 'Mirrors'
 
     def __unicode__(self):
         return self.url

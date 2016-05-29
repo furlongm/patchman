@@ -26,6 +26,7 @@ class OSGroup(models.Model):
 
     class Meta:
         verbose_name = 'Operating System Group'
+        verbose_name_plural = 'Operating System Groups'
 
     def __unicode__(self):
         return self.name
@@ -43,6 +44,7 @@ class OS(models.Model):
 
     class Meta:
         verbose_name = 'Operating System'
+        verbose_name_plural = 'Operating Systems'
 
     def __unicode__(self):
         return self.name

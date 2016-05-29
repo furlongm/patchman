@@ -28,7 +28,8 @@ class PackageName(models.Model):
     name = models.CharField(unique=True, max_length=255)
 
     class Meta:
-        verbose_name = 'Package Name'
+        verbose_name = 'Package'
+        verbose_name_plural = 'Packages'
         ordering = ('name',)
 
     def __unicode__(self):
