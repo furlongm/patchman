@@ -17,7 +17,7 @@
 from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator, InvalidPage, EmptyPage
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.contrib import messages
@@ -67,18 +67,18 @@ def repo_list(request):
         repos = repos.filter(query)
     else:
         terms = ''
+
     repos = repos.distinct()
-    try:
-        page_no = int(request.GET.get('page', 1))
-    except ValueError:
-        page_no = 1
 
-    p = Paginator(repos, 50)
+    page_no = request.GET.get('page')
+    paginator = Paginator(repos, 50)
 
     try:
-        page = p.page(page_no)
-    except (EmptyPage, InvalidPage):
-        page = p.page(p.num_pages)
+        page = paginator.page(page_no)
+    except PageNotAnInteger:
+        page = paginator.page(1)
+    except EmptyPage:
+        page = paginator.page(paginator.num_pages)
 
     filter_list = []
     filter_list.append(
@@ -153,17 +153,15 @@ def mirror_list(request):
             if oldrepo.mirror_set.count() == 0:
                 oldrepo.delete()
 
-    try:
-        page_no = int(request.GET.get('page', 1))
-    except ValueError:
-        page_no = 1
-
-    p = Paginator(mirrors, 50)
+    page_no = request.GET.get('page')
+    paginator = Paginator(mirrors, 50)
 
     try:
-        page = p.page(page_no)
-    except (EmptyPage, InvalidPage):
-        page = p.page(p.num_pages)
+        page = paginator.page(page_no)
+    except PageNotAnInteger:
+        page = paginator.page(1)
+    except EmptyPage:
+        page = paginator.page(paginator.num_pages)
 
     if request.method == 'POST':
         arch = mirrors[0].repo.arch
@@ -362,7 +360,6 @@ def repo_enablesec(request, repo_id):
 def repo_disablesec(request, repo_id):
 
     repo = get_object_or_404(Repository, id=repo_id)
-
     repo.security = False
     repo.save()
     if request.is_ajax():

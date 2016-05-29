@@ -17,7 +17,7 @@
 from django.shortcuts import get_object_or_404, get_list_or_404, render
 from django.http import HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator, InvalidPage, EmptyPage
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q
 from django.contrib import messages
 from django.core.urlresolvers import reverse
@@ -32,11 +32,6 @@ def os_list(request):
 
     oses = OS.objects.select_related()
 
-    try:
-        page_no = int(request.GET.get('page', 1))
-    except ValueError:
-        page_no = 1
-
     if 'search' in request.GET:
         terms = request.GET['search'].lower()
         query = Q()
@@ -46,16 +41,22 @@ def os_list(request):
         oses = oses.filter(query)
     else:
         terms = ''
-    p = Paginator(oses, 50)
+
+    page_no = request.GET.get('page')
+    paginator = Paginator(oses, 50)
 
     try:
-        page = p.page(page_no)
-    except (EmptyPage, InvalidPage):
-        page = p.page(p.num_pages)
+        page = paginator.page(page_no)
+    except PageNotAnInteger:
+        page = paginator.page(1)
+    except EmptyPage:
+        page = paginator.page(paginator.num_pages)
+
+    empty_oses = list(OS.objects.filter(host__isnull=True))
 
     return render(request,
                   'operatingsystems/os_list.html',
-                  {'page': page, 'terms': terms}, )
+                  {'page': page, 'terms': terms, 'empty_oses': empty_oses}, )
 
 
 @login_required
@@ -125,11 +126,6 @@ def osgroup_list(request):
 
     osgroups = OSGroup.objects.select_related()
 
-    try:
-        page_no = int(request.GET.get('page', 1))
-    except ValueError:
-        page_no = 1
-
     if 'search' in request.GET:
         terms = request.GET['search'].lower()
         query = Q()
@@ -140,16 +136,19 @@ def osgroup_list(request):
     else:
         terms = ''
 
-    p = Paginator(osgroups, 50)
+    page_no = request.GET.get('page')
+    paginator = Paginator(osgroups, 50)
 
     try:
-        page = p.page(page_no)
-    except (EmptyPage, InvalidPage):
-        page = p.page(p.num_pages)
+        page = paginator.page(page_no)
+    except PageNotAnInteger:
+        page = paginator.page(1)
+    except EmptyPage:
+        page = paginator.page(paginator.num_pages)
 
     return render(request,
                   'operatingsystems/osgroup_list.html',
-                  {'page': page}, )
+                  {'page': page, 'terms': terms}, )
 
 
 @login_required
