@@ -20,7 +20,7 @@ from django.shortcuts import get_object_or_404, render
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
 from django.http import Http404
-from django.core.paginator import Paginator, InvalidPage, EmptyPage
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.db.models import Q
@@ -93,17 +93,15 @@ def report_list(request):
     else:
         terms = ''
 
-    try:
-        page_no = int(request.GET.get('page', 1))
-    except ValueError:
-        page_no = 1
-
-    p = Paginator(reports, 50)
+    page_no = request.GET.get('page')
+    paginator = Paginator(reports, 50)
 
     try:
-        page = p.page(page_no)
-    except (EmptyPage, InvalidPage):
-        page = p.page(p.num_pages)
+        page = paginator.page(page_no)
+    except PageNotAnInteger:
+        page = paginator.page(1)
+    except EmptyPage:
+        page = paginator.page(paginator.num_pages)
 
     filter_list = []
     filter_list.append(Filter(request, 'processed',
