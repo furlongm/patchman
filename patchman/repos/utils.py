@@ -288,7 +288,7 @@ def mirrorlists_check(repo):
                         isinstance(settings.MAX_MIRRORS, int):
                     max_mirrors = settings.MAX_MIRRORS
                     # only add X mirrors, where X = max_mirrors
-                    q = Q(mirrorlist=False, refresh=True, file_checksum__isnull=False)
+                    q = Q(mirrorlist=False, refresh=True)
                     existing = mirror.repo.mirror_set.filter(q).count()
                     if existing >= max_mirrors:
                         text = '%s mirrors already exist, not adding %s\n' \
