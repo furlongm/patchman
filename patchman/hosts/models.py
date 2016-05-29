@@ -50,6 +50,8 @@ class Host(models.Model):
     updated_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
+        verbose_name = 'Host'
+        verbose_name_plural = 'Hosts'
         ordering = ('hostname',)
 
     def __unicode__(self):
