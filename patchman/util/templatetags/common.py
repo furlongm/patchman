@@ -85,3 +85,10 @@ def get_querystring(request):
     if 'page' in get:
         del get['page']
     return urlencode(get)
+
+
+@register.simple_tag
+def searchform(post_url="."):
+    template = get_template('search_form.html')
+    html = template.render({'post_url': post_url})
+    return html
