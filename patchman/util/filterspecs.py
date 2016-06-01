@@ -56,10 +56,8 @@ class Filter(object):
 
     def output(self, qs):
 
-        try:
+        if self.name in qs:
             del(qs[self.name])
-        except:
-            pass
 
         output = ''
         output += '<div class="panel panel-default">\n'
