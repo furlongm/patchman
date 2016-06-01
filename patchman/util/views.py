@@ -47,7 +47,7 @@ def dashboard(request):
     norepo_hosts = hosts.filter(repos__isnull=True, os__osgroup__repos__isnull=True)
     reboot_hosts = hosts.filter(reboot_required=True)
     secupdate_hosts = hosts.filter(updates__security=True, updates__isnull=False).distinct()
-    update_hosts = hosts.exclude(updates__security=True, updates__isnull=False).distinct().filter(updates__security=False, updates__isnull=False).distinct()
+    bugupdate_hosts = hosts.exclude(updates__security=True, updates__isnull=False).distinct().filter(updates__security=False, updates__isnull=False).distinct()
     diff_rdns_hosts = hosts.exclude(reversedns=F('hostname')).filter(check_dns=True)
 
     # os issues
@@ -108,7 +108,7 @@ def dashboard(request):
          'norepo_packages': norepo_packages,
          'nohost_repos': nohost_repos,
          'secupdate_hosts': secupdate_hosts,
-         'update_hosts': update_hosts,
+         'bugupdate_hosts': bugupdate_hosts,
          'norepo_osgroups': norepo_osgroups, 'unused_repos': unused_repos,
          'disabled_mirrors': disabled_mirrors,
          'norefresh_mirrors': norefresh_mirrors,

@@ -25,15 +25,15 @@ register = template.Library()
 def yes_no_button_repo_en(repo):
 
     if repo.enabled:
-        return format_html('<button onclick="repo_endisable(0, \'' + escape(repo.get_absolute_url()) + '\', this)"><img src="{}img/admin/icon-yes.gif" alt="Enabled" /></button>', escape(settings.STATIC_URL))
+        return format_html('<button onclick="repo_toggle_enabled(\'' + escape(repo.get_absolute_url()) + '\', this, event)"><img src="{}img/icon-yes.gif" alt="Enabled" /></button>', escape(settings.STATIC_URL))
     else:
-        return format_html('<button onclick="repo_endisable(1, \'' + escape(repo.get_absolute_url()) + '\', this)"><img src="{}img/admin/icon-no.gif" alt="Disabled" /></button>', escape(settings.STATIC_URL))
+        return format_html('<button onclick="repo_toggle_enabled(\'' + escape(repo.get_absolute_url()) + '\', this, event)"><img src="{}img/icon-no.gif" alt="Disabled" /></button>', escape(settings.STATIC_URL))
 
 
 @register.simple_tag
 def yes_no_button_repo_sec(repo):
 
     if repo.security:
-        return format_html('<button onclick="repo_endisablesec(0, \'' + escape(repo.get_absolute_url()) + '\', this)"><img src="{}img/admin/icon-yes.gif" alt="Security" /></button>', escape(settings.STATIC_URL))
+        return format_html('<button onclick="repo_toggle_security(\'' + escape(repo.get_absolute_url()) + '\', this, event)"><img src="{}img/icon-yes.gif" alt="Security" /></button>', escape(settings.STATIC_URL))
     else:
-        return format_html('<button onclick="repo_endisablesec(1, \'' + escape(repo.get_absolute_url()) + '\', this)"><img src="{}img/admin/icon-no.gif" alt="Non-Security" /></button>', escape(settings.STATIC_URL))
+        return format_html('<button onclick="repo_toggle_security(\'' + escape(repo.get_absolute_url()) + '\', this, event)"><img src="{}img/icon-no.gif" alt="Non-Security" /></button>', escape(settings.STATIC_URL))

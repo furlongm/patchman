@@ -1,33 +1,21 @@
-function repo_endisable(enable, id, element) {
-
-    if (enable == 1) {
-        var url = id+"enable/";
-        $.post(url, {"enable" : "true"});
-        var newHTML = element.innerHTML.replace("icon-no.gif", "icon-yes.gif");
-        element.innerHTML = newHTML;
-        element.setAttribute('onclick', 'repo_endisable(0, '+id+', this)');
-    } else {
-        var url = id+"disable/";
-        $.post(url, {"disable" : "true"});
-        var newHTML = element.innerHTML.replace("icon-yes.gif", "icon-no.gif");
-        element.innerHTML = newHTML;
-        element.setAttribute('onclick', 'repo_endisable(1, '+id+', this)');
-    }
+function repo_toggle_enabled(id, element, e) {
+    e.preventDefault();
+    var url = id + "toggle_enabled/";
+    $.post(url);
+    if (element.innerHTML.indexOf("icon-no.gif") > -1)
+        var newHTML = element.innerHTML.replace("icon-no.gif", "icon-yes.gif").replace('Disabled', 'Enabled');
+    else
+        var newHTML = element.innerHTML.replace("icon-yes.gif", "icon-no.gif").replace('Enabled', 'Disabled');
+    element.innerHTML = newHTML;
 }
 
-function repo_endisablesec(enable, id, element) {
-
-    if (enable == 1) {
-        var url = id+"enablesec/";
-        $.post(url, {"enablesec" : "true"});
-        var newHTML = element.innerHTML.replace("icon-no.gif", "icon-yes.gif");
-        element.innerHTML = newHTML;
-        element.setAttribute('onclick', 'repo_endisablesec(0, '+id+', this)');
-    } else {
-        var url = id+"disablesec/";
-        $.post(url, {"disablesec" : "true"});
-        var newHTML = element.innerHTML.replace("icon-yes.gif", "icon-no.gif");
-        element.innerHTML = newHTML;
-        element.setAttribute('onclick', 'repo_endisablesec(1, '+id+', this)');
-    }
+function repo_toggle_security(id, element, e) {
+    e.preventDefault();
+    var url = id + "toggle_security/";
+    $.post(url);
+    if (element.innerHTML.indexOf("icon-no.gif") > -1)
+        var newHTML = element.innerHTML.replace("icon-no.gif", "icon-yes.gif").replace('Non-Security', 'Security');
+    else
+        var newHTML = element.innerHTML.replace("icon-yes.gif", "icon-no.gif").replace('Security', 'Non-Security');
+    element.innerHTML = newHTML;
 }

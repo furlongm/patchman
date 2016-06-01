@@ -24,14 +24,13 @@ admin.autodiscover()
 
 urlpatterns = [
 
+    url(r'^', include('django.contrib.auth.urls')),
     url(r'^', include('patchman.util.urls')),
     url(r'^reports/', include('patchman.reports.urls')),
     url(r'^hosts/', include('patchman.hosts.urls')),
     url(r'^packages/', include('patchman.packages.urls')),
     url(r'^repos/', include('patchman.repos.urls')),
     url(r'^os/', include('patchman.operatingsystems.urls')),
-    url(r'^accounts/login/$', views.login, name='login'),
-    url(r'^accounts/logout/$', views.login, name='logout'),
     url(r'^admin/', include(admin.site.urls)),
 ]
 

@@ -1,21 +1,26 @@
 {% load common %}
-<table cellspacing="0">
-        <thead>
-                <tr>
-                   <th>Hostname</th><th colspan="2">Updates</th><th>Running Kernel</th><th>OS</th><th>Last Report</th><th>Reboot Status</th>
-                </tr>
-        </thead>
-    <tbody>
-    {% for host in object_list %}
-                <tr class="{% cycle 'row1' 'row2' %}">
-                    <td><a href="{{ host.get_absolute_url }}">{{ host }}</a></td>
-                    <td style="color:red">{% with host.get_num_security_updates as tmp %}{% if tmp != 0 %}{{ tmp }}{% else %}&nbsp;{% endif %}{% endwith %}</td>
-                    <td style="color:orange">{% with host.get_num_bugfix_updates as tmp %}{% if tmp != 0 %}{{ tmp }}{% else %}&nbsp;{% endif %}{% endwith %}</td>
-                    <td>{{ host.kernel }}</td>
-                    <td><a href="{{ host.os.get_absolute_url }}">{{ host.os }}</a></td>
-                    <td>{{ host.lastreport }}</td>
-                    <td class="centered">{% no_yes_img host.reboot_required %}</td>
-                </tr>
-    {% endfor %}
-    </tbody>
+<table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+  <thead>
+    <tr>
+      <th class="col-sm-3">Hostname</th>
+      <th class="col-sm-1" colspan="2">Updates</th>
+      <th class="col-sm-2">Running Kernel</th>
+      <th class="col-sm-3">OS</th>
+      <th class="col-sm-2">Last Report</th>
+      <th class="col-sm-1">Reboot Status</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for host in object_list %}
+    <tr>
+      <td><a href="{{ host.get_absolute_url }}">{{ host }}</a></td>
+      <td class="centered" style="color:red">{% with count=host.get_num_security_updates %}{% if count != 0 %}{{ count }}{% else %}&nbsp;{% endif %}{% endwith %}</td>
+      <td class="centered" style="color:orange">{% with count=host.get_num_bugfix_updates %}{% if count != 0 %}{{ count }}{% else %}&nbsp;{% endif %}{% endwith %}</td>
+      <td>{{ host.kernel }}</td>
+      <td><a href="{{ host.os.get_absolute_url }}">{{ host.os }}</a></td>
+      <td>{{ host.lastreport }}</td>
+      <td class="centered">{% no_yes_img host.reboot_required %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
 </table>

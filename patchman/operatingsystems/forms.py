@@ -21,11 +21,11 @@ from patchman.operatingsystems.models import OS, OSGroup
 from patchman.repos.models import Repository
 
 
-class LinkOSGroupForm(ModelForm):
+class AddOSToOSGroupForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
-        super(LinkOSGroupForm, self).__init__(*args, **kwargs)
-        self.fields['osgroup'].label = 'Link to an existing OS Group'
+        super(AddOSToOSGroupForm, self).__init__(*args, **kwargs)
+        self.fields['osgroup'].label = 'OS Groups'
 
     class Meta:
         model = OS
@@ -36,7 +36,7 @@ class CreateOSGroupForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(CreateOSGroupForm, self).__init__(*args, **kwargs)
-        self.fields['name'].label = ' or create a new OS Group'
+        self.fields['name'].label = 'New OS Group'
 
     class Meta:
         model = OSGroup
@@ -50,6 +50,10 @@ class AddReposToOSGroupForm(ModelForm):
         required=False,
         label=None,
         widget=FilteredSelectMultiple('Repos', False))
+
+    def __init__(self, *args, **kwargs):
+        super(AddReposToOSGroupForm, self).__init__(*args, **kwargs)
+        self.fields['repos'].label = ''
 
     class Meta:
         model = OSGroup

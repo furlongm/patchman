@@ -138,6 +138,10 @@ class Mirror(models.Model):
     def __unicode__(self):
         return self.url
 
+    @models.permalink
+    def get_absolute_url(self):
+        return ('mirror_detail', [self.id])
+
     def show(self):
         """ Show info about this mirror
         """

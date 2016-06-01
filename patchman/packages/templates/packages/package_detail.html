@@ -1,37 +1,34 @@
-{% extends "main.html" %}
+{% extends "base.html" %}
 
-{% block title %}Package {{ package }} {% endblock %}
+{% block page_title %}Package - {{ package }} {% endblock %}
 
-{% block content_title %}Package Information{% endblock %}
+{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'package_list' %}">Packages</a></li><li class="active">{{ package }}</li>{% endblock %}
 
-{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url 'package_list' %}">Packages</a> &rsaquo; {{ package }} {% endblock %}
+{% block content_title %} Package - {{ package }} {% endblock %}
 
 {% block content %}
-<div class="module">
-<h2>{{package}}</h2>
-<table>
-<tr><td>Package</td><td> {{ package.name }} </td></tr>
-</table>
-</div>
-<div class="module">
-<h2>Versions</h2>
-<table>
-{% if allversions %}
-<tr><th>&nbsp;Epoch&nbsp;</th><th>&nbsp;Version&nbsp;</th><th>&nbsp;Release&nbsp;</th>
-<th>&nbsp;Arch&nbsp;</th><th>&nbsp;Type&nbsp;</th><th>&nbsp;Repositories&nbsp;</th>
-<th>&nbsp;Hosts&nbsp;</th></tr>
-{% else %}
-<p>No versions of this package exist.</p>
-{% endif %}
-{% for version in allversions %}
-<tr class="{% cycle 'row1' 'row2' %}">
-<td> {{ version.epoch }} </td>
-<td> {{ version.version }} </td><td> {{ version.release }} </td>
-<td> {{ version.arch }} </td><td> {{ version.get_packagetype_display }} </td>
-<td> <a href="{% url 'repo_list' %}?package_id={{ version.id }}">Available from {{ version.repo_count }} repositories</a> </td>
-<td> <a href="{% url 'host_list' %}?package_id={{ version.id }}">Installed on {{ version.host_set.count }} hosts</a> </td>
-{% endfor %}
-</table>
-</div>
-{% endblock %}
 
+<div class="well well-sm">
+  {% if allversions %}
+    <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+      <tr>
+        <th>&nbsp;Epoch&nbsp;</th><th>&nbsp;Version&nbsp;</th><th>&nbsp;Release&nbsp;</th>
+        <th>&nbsp;Arch&nbsp;</th><th>&nbsp;Type&nbsp;</th><th>&nbsp;Repositories&nbsp;</th>
+        <th>&nbsp;Hosts&nbsp;</th>
+      </tr>
+      {% for version in allversions %}
+        <tr>
+          <td> {{ version.epoch }} </td>
+          <td> {{ version.version }} </td><td> {{ version.release }} </td>
+          <td> {{ version.arch }} </td><td> {{ version.get_packagetype_display }} </td>
+          <td> <a href="{% url 'repo_list' %}?package_id={{ version.id }}">Available from {{ version.repo_count }} Repositories</a> </td>
+          <td> <a href="{% url 'host_list' %}?package_id={{ version.id }}">Installed on {{ version.host_set.count }} Hosts</a> </td>
+        </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    No versions of this Package exist.
+  {% endif %}
+</div>
+
+{% endblock %}

@@ -1,94 +1,38 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en-au" xml:lang="en-au">
-<head>
-{% load static from staticfiles %}
-<link rel="stylesheet" type="text/css" href="{% static 'css/' %}{% block stylesheet %}base{% endblock %}.css"/>
-{% block extrastyle %}{% endblock %}
-<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-<title>{% block title %}{% endblock %}&nbsp;|&nbsp;{% block site_name_title %}{% endblock %}</title>
-<meta name="author" content="{% block author %}Marcus Furlong{% endblock %}" />
-{% block favicon %}{% endblock %}
-<link href="{% static 'css/jquery-ui.css' %}" rel="stylesheet" type="text/css" />
-<script type="text/javascript" src="{% static 'js/jquery.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'js/show-hide.js' %}"></script>
-<script type="text/javascript" src="{% static 'js/button-post.js' %}"></script>
-<script type="text/javascript" src="{% static 'js/ajax-jquery.js' %}"></script>
-<script type="text/javascript" src="{% static 'js/jquery-ui.min.js' %}"></script>
-{% block site_extrahead %}{% endblock %}
-{% block extrahead %}{% endblock %}
-</head>
-
-<body class="{% if is_popup %}popup {% endif %}{% block bodyclass %}{% endblock %}" {% block bodyextra %}{% endblock %} >
-
-<!-- Container -->
-<div id="container">
-
- <!-- Header -->
-    <div id="header">
-        <div id="branding">
-                 {% block site_logo %}{% endblock %}
-                 <h1 id="site-name">{% block site_name_header %}{% endblock %}</h1>
-        </div>
-        {% block usertools %}
-        {% if not is_popup %}
-        <div id="user-tools">
-        {% if user.is_authenticated %}
-        Welcome, <strong>{{ user.first_name }}</strong> 
-        / <a href="{% url 'logout' %}">Log out</a>
-            {% else %}
-            Welcome, <strong>Guest</strong> / 
-        <a href="{% url 'login' %}">Log In</a>
-            {% endif %}
-        </div>
-        {% endif %}
+<!DOCTYPE html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="author" content="{% block author %}Marcus Furlong{% endblock %}">
+    {% load bootstrap3 %}
+    {% bootstrap_css %}
+    {% bootstrap_javascript jquery=1 %}
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/base.css' %}" />
+    <title>{% block page_title %}{% endblock %}</title>
+    <script type="text/javascript" src="{% static 'js/ajax-jquery.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/button-post.js' %}"></script>
+    {% block extrahead %}{% endblock %}
+  </head>
+  <body>
+    <div>
+      {% include "navbar.html" with user=user %}
+      <ul class="breadcrumb">
+        {% block breadcrumbs %}
+          <li class="active"><a href="{{ base_url|default:"/" }}">Home</a></li>
         {% endblock %}
-    </div>
-    <!-- END Header -->
-
-    <div class="breadcrumbs">{% block breadcrumbs %}<a href="{{ base_url|default:"/" }}">Home</a>{% block bread_crumbs_1 %}{% endblock %}{% endblock %}</div>
-
-    {% block messagelist %}
-    {% if messages %}
-    <ul class="messagelist">
-        {% for message in messages %}
-    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-        {% endfor %}
-    </ul>
-    {% endif %}
-    {% endblock %}
-
-    <!-- Content -->
-    <div id="content" class="{% block coltype %}colM{% endblock %}">
-        {% block pretitle %}{% endblock %}
-        <h1>{% block content_title %}{% endblock %}</h1>
-        <div id="content-main">
-        {% block objecttools %}{% endblock %}
-        {% block sidebar %}{% endblock %}
-        {% block content %}{{ content }}{% endblock %}
+      </ul>
+      {% bootstrap_messages %}
+      <div class="well well-sm">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <strong>{% block content_title %}{% endblock %}</strong>
+          </div>
+          <div class="panel-body">
+            {% block content %}{{ content }}{% endblock %}
+          </div>
+          {% block footer %}{% endblock %}
         </div>
-        <br class="clear" />
+      </div>
     </div>
-    <!-- END Content -->
-
-    {% block footer %}
-    <div id="footer">
-    {% if debug %}
-    <p>{{ sql_queries|length }} sql queries</p>
-    <table>
-    {% for q in sql_queries %}
-    <tr>
-    <td>{{ q.time }}</td>
-    <td>{{ q.sql }}</td>
-    </tr>
-    {% endfor %}
-    </table>
-    {% endif %}
-    </div>
-    {% endblock %}
-</div>
-<!-- END Container -->
-
-{% block google_analytics %}{% endblock %}
-</body>
+    {% block google_analytics %}{% endblock %}
+  </body>
 </html>
-

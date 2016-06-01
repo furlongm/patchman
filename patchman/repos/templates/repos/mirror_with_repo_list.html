@@ -1,39 +1,30 @@
 {% extends "repos/mirror_list.html" %}
 
-{% load common paginator %}
+{% load common bootstrap3 %}
 
 {% block content %}
-<div class="module  {% if filter_bar %}filtered{% endif %}" id="changelist">
 
-  {% if filter_bar %}
-  <div id="changelist-filter">
-    <h2>Filter</h2>
-    {{ filter_bar|safe }}
-  </div>
+{% gen_table page.object_list 'repos/mirror_edit_repo.html' %}
+
+{% if user.is_authenticated and perms.is_admin %}
+  {% if link_form and create_form %}
+    <div class="well well-sm">
+      <form action={{ request.path }} method="post">
+        {% csrf_token %}
+        <input type="hidden" name="checksum" value="{{ checksum }}" />
+        {% bootstrap_form link_form size='small' %}
+        <button name="link" type="submit" class="btn btn-primary btn-sm">{% bootstrap_icon "link" %} Link all Mirrors above to an existing Repository</button>
+      </form>
+    </div>
+    <div class="well well-sm">
+      <form action={{ request.path }} method="post">
+        {% csrf_token %}
+        <input type="hidden" name="checksum" value="{{ checksum }}" />
+        {% bootstrap_form create_form size='small' %}
+        <button name="create" type="submit" class="btn btn-primary btn-sm">{% bootstrap_icon "flash" %} Create a new Repository and link all Mirrors above to it</button>
+      </form>
+    </div>
   {% endif %}
-  {% gen_table page.object_list repos/mirror_edit_repo.html %}
-  {% pagination page request %}
-
-{% if user.is_authenticated %}
-    {% if perms.is_admin %}
-        {% if link_form and create_form %}
-        <br /><br />
-        <div class="module">
-            <h2>Actions</h2>
-                <div>
-                <form action={{ request.path }} method="post">{% csrf_token %}
-                    <input type="hidden" name="checksum" value="{{ checksum }}" />
-                        {{ link_form }}
-                    <input type="submit" value="Link" /><br />
-                        {{ create_form }}
-                    <input type="submit" value="Create" />
-                </form>
-            </div>
-        </div>
-        {% endif %}
-    {% endif %}
 {% endif %}
-
-</div>
 
 {% endblock %}

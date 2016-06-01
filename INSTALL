@@ -42,6 +42,9 @@ apache2
 # newer version. E.g. to upgrade to the latest pip version:
 pip install --upgrade django-tagging
 
+# Install django-bootstrap3
+pip install django-bootstrap3
+
 # 2. Check out current git to e.g. /srv/patchman
 cd /srv
 git clone https://github.com/furlongm/patchman.git

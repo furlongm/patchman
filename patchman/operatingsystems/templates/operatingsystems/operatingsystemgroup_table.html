@@ -1,15 +1,17 @@
-<table cellspacing="0">
-        <thead>
-                <tr>
-                   <th>OS Group</th><th>Repos</th>
-                </tr>
-        </thead>
-    <tbody>
+{% load common %}
+<table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+  <thead>
+    <tr>
+      <th class="col-sm-6">OS Group</th>
+      <th class="col-sm-6">Repos</th>
+    </tr>
+  </thead>
+  <tbody>
     {% for osgroup in object_list %}
-                <tr class="{% cycle 'row1' 'row2' %}">
-                    <td><a href="{% url 'osgroup_detail' osgroup.id %}">{{ osgroup }}</a></td>
-                    <td>{{ osgroup.repos.count }}</td>
-                </tr>
+      <tr>
+        <td><a href="{{ osgroup.get_absolute_url }}">{{ osgroup }}</a></td>
+        <td>{% if osgroup.repos.count != None %}{{ osgroup.repos.count }}{% else %}0{% endif %}</td>
+      </tr>
     {% endfor %}
-    </tbody>
+  </tbody>
 </table>

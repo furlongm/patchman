@@ -1,9 +1,0 @@
-{% load paginator humanize %}
-<p class="paginator">
-  {% if pagination_required %}
-    {% for i in page_list %}
-      {% paginator_number page i qs %}
-    {% endfor %}
-  {% endif %}
-  {{ page.paginator.count|intcomma }} {{ object_name }}
-</p>

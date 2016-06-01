@@ -1,63 +1,28 @@
-{% extends "forms-side.html" %}
+{% extends "base.html" %}
 
-{% load forms common %}
+{% load forms common bootstrap3 %}
 
-{% block extrahead %}
-{{ edit_form.media }}
-{% endblock %}
+{% block extrahead %} {{ edit_form.media }} {% endblock %}
 
-{% block title %}Host {{ host }} {% endblock %}
+{% block page_title %}Host - {{ host }} {% endblock %}
 
-{% block content_title %}Host Information{% endblock %}
+{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'host_list' %}">Hosts</a></li><li class="active">{{ host }}</li>{% endblock %}
 
-{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url 'host_list' %}">Hosts</a> &rsaquo; {{ host }} {% endblock %}
+{% block content_title %} Host - {{ host }} {% endblock %}
 
 {% block content %}
 
-<div class="module">
-    <h2>{{host}}</h2>
-    <table>
-        <tr><td>Hostname</td><td> {{ host.hostname }} </td></tr>
-        <tr><td>Domain</td><td> <a href="{% url 'host_list' %}?domain={{ host.domain.id }}">{{ host.domain }}</a> </td></tr>
-        <tr><td>Reporting IP Address</td><td> {{ host.ipaddress }} </td></tr>
-        <tr><td>Reverse DNS</td><td> {{ host.reversedns }} </td></tr>
-        <tr><td>OS</td><td> <a href="{{ host.os.get_absolute_url }}">{{ host.os }}</a> </td></tr>
-        <tr><td>OS Group</td><td> <a href="{{ host.os.osgroup.get_absolute_url }}">{{ host.os.osgroup }}</a> </td></tr>
-        <tr><td>Kernel</td><td> {{ host.kernel }} </td></tr>
-        <tr><td>Architecture</td><td> {{ host.arch }} </td></tr>
-        <tr><td>Tags</td><td>
-            {% load tagging_tags %}
-            {% tags_for_object host as tags %}
-            {% for tag in tags %}
-                <a href="{% url 'host_list' %}?tag={{ tag }}">{{ tag }}</a>
-            {% endfor %}
-        </td></tr>
-        <tr><td>Last Update</td><td> {{ host.lastreport }} </td></tr>
-        <tr><td>Updates Available</td><td> <a href="{{ host.get_absolute_url }}#updates">{{ host.updates.count }}</a> </td></tr>
-        <tr><td>Reboot Required</td><td> {{ host.reboot_required }} </td></tr>
-        <tr><td>Packages Installed</td><td> <a href="{{ host.get_absolute_url }}#installedpackages">{{ host.packages.count}}</a> </td></tr>
-        <tr><td>Repos In Use</td><td>{% if host.host_repos_only %}Host Repos{% else %}Host and OS Group Repos{% endif %}</td></tr>
-        <tr><td>Last 3 reports</td><td>
-            {% for report in reports %}
-            <span class="brick" style="{% cycle 'background:#bfdddd' 'background:#deeeee' %}">
-                <a class="dark" href="{{ report.get_absolute_url}}">{{ report.created }} </a>
-            </span>
-            {% endfor %}
-        </td></tr>
-    </table>
-</div>
-{% if user.is_authenticated %}
-  {% if perms.is_admin %}
-    <div class="module">
-      <h2>Edit</h2>
-        <form action={{ request.path }} method="post">{% csrf_token %}
-          {% form_as_div edit_form %}
-          <br /><input type="submit" value="Save" />
-        </form>
-    </div>
+<div class="well well-sm">
+  {% if user.is_authenticated and perms.is_admin %}
+    <form action={{ request.path }} method="post">
+      {% csrf_token %}
+      {% bootstrap_form edit_form size='small' %}
+      <button name="save" type="submit" class="btn btn-primary btn-sm">{% bootstrap_icon "floppy-disk" %} Save</button>
+      <button name="cancel" type="submit" class="btn btn-primary btn-sm">{% bootstrap_icon "stop" %} Cancel</button>
+    </form>
   {% else %}
-    <p>No permission to edit this Host.</p>
+    You do not have permission to edit this Host.
   {% endif %}
-{% endif %}
+</div>
 
 {% endblock %}
