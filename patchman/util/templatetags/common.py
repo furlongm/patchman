@@ -17,7 +17,7 @@
 
 from django.template import Library
 from django.template.loader import get_template
-from django.utils.html import format_html, escape
+from django.utils.html import format_html
 from django.contrib.staticfiles.templatetags.staticfiles import static
 from django.core.paginator import QuerySetPaginator
 
@@ -75,10 +75,10 @@ def gen_table(object_list, template_name=None):
 def object_count(page):
     if isinstance(page.paginator, QuerySetPaginator):
         if page.paginator.count == 1:
-            object_name = page.paginator.object_list.model._meta.verbose_name
+            name = page.paginator.object_list.model._meta.verbose_name
         else:
-            object_name = page.paginator.object_list.model._meta.verbose_name_plural
-    return '%s %s' % (page.paginator.count, object_name)
+            name = page.paginator.object_list.model._meta.verbose_name_plural
+    return '%s %s' % (page.paginator.count, name)
 
 
 @register.assignment_tag

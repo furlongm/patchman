@@ -22,7 +22,8 @@ from operator import itemgetter
 
 
 def get_query_string(qs):
-    return '?' + '&amp;'.join([u'%s=%s' % (k, v) for k, v in qs.items()]).replace(' ', '%20')
+    newqs = [u'%s=%s' % (k, v) for k, v in qs.items()]
+    return '?' + '&amp;'.join(newqs).replace(' ', '%20')
 
 
 class Filter(object):
@@ -62,25 +63,28 @@ class Filter(object):
 
         output = ''
         output += '<div class="panel panel-default">\n'
-        output += '<div class="panel-heading">%s</div>\n' % self.header.replace('_', ' ')
+        output += '<div class="panel-heading">%s</div>\n' \
+                  % self.header.replace('_', ' ')
         output += '<div class="panel-body">\n'
         output += '<div class="list-group list-group-info">\n'
         filters = sorted(self.filters.iteritems(), key=itemgetter(1))
 
         if self.selected is not None:
-            output += """<a href="%s" class="list-group-item">all</a>\n""" % get_query_string(qs)
+            output += '<a href="%s" class="list-group-item">all</a>\n' \
+                      % get_query_string(qs)
         else:
-            output += """<a href="%s" class="list-group-item list-group-item-success">all</a>\n""" % get_query_string(qs)
+            output += '<a href="%s" class="list-group-item ' \
+                      % get_query_string(qs)
+            output += 'list-group-item-success">all</a>\n'
         for k, v in filters:
             if str(self.selected) == str(k):
                 style = "list-group-item-success"
             else:
-                style = ""
+                style = ''
             qs[self.name] = k
-            output += """<a href="%s" class="list-group-item %s">%s</a>\n""" % (get_query_string(qs), style, v)
-
+            output += '<a href="%s" class="list-group-item %s">%s</a>\n' \
+                      % (get_query_string(qs), style, v)
         output += '</div></div></div>'
-
         return output
 
 
@@ -102,8 +106,9 @@ class FilterBar(object):
         for f in self.filter_list:
             if f.multi:
                 params = dict(request.GET.items())
-                field_generic = '%s__' % f.name
-                m_params = {k: v for k, v in params.items() if k.startswith(field_generic)}
+                generic = '%s__' % f.name
+                m_params = \
+                {k: v for k, v in params.items() if k.startswith(generic)}
                 for k, v in m_params.items():
                     qs[k] = v
 
