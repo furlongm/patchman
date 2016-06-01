@@ -37,8 +37,8 @@ def active(request, pattern):
 
 @register.simple_tag
 def yes_no_img(boolean, alt_yes='Active', alt_no='Not Active'):
-    yes_icon = static('img/icon-yes.gif')
-    no_icon = static('img/icon-no.gif')
+    yes_icon = static('admin/img/icon-yes.gif')
+    no_icon = static('admin/img/icon-no.gif')
     if boolean:
         html = "<img src='%s' alt='%s' />" % (yes_icon, alt_yes)
     else:
@@ -48,8 +48,8 @@ def yes_no_img(boolean, alt_yes='Active', alt_no='Not Active'):
 
 @register.simple_tag
 def no_yes_img(boolean, alt_yes='Not Required', alt_no='Required'):
-    yes_icon = static('img/icon-yes.gif')
-    no_icon = static('img/icon-no.gif')
+    yes_icon = static('admin/img/icon-yes.gif')
+    no_icon = static('admin/img/icon-no.gif')
     if not boolean:
         html = "<img src='%s' alt='%s' />" % (yes_icon, alt_yes)
     else:

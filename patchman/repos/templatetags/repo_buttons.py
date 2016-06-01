@@ -25,8 +25,8 @@ register = Library()
 def yes_no_button_repo_en(repo):
 
     repo_url = repo.get_absolute_url()
-    yes_icon = static('img/icon-yes.gif')
-    no_icon = static('img/icon-no.gif')
+    yes_icon = static('admin/img/icon-yes.gif')
+    no_icon = static('admin/img/icon-no.gif')
     if repo.enabled:
         html = '<button onclick="repo_toggle_enabled(\'%s\', this, event)">' \
                '<img src="%s" alt="Enabled" /></button>' \
@@ -42,8 +42,8 @@ def yes_no_button_repo_en(repo):
 def yes_no_button_repo_sec(repo):
 
     repo_url = repo.get_absolute_url()
-    yes_icon = static('img/icon-yes.gif')
-    no_icon = static('img/icon-no.gif')
+    yes_icon = static('admin/img/icon-yes.gif')
+    no_icon = static('admin/img/icon-no.gif')
     if repo.security:
         html = '<button onclick="repo_toggle_security(\'%s\', this, event)">' \
                '<img src="%s" alt="Security" /></button>' \
