@@ -14,26 +14,42 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django import template
-from django.conf import settings
-from django.utils.html import format_html, escape
+from django.template import Library
+from django.contrib.staticfiles.templatetags.staticfiles import static
+from django.utils.html import format_html
 
-register = template.Library()
+register = Library()
 
 
 @register.simple_tag
 def yes_no_button_repo_en(repo):
 
+    repo_url = repo.get_absolute_url()
+    yes_icon = static('img/icon-yes.gif')
+    no_icon = static('img/icon-no.gif')
     if repo.enabled:
-        return format_html('<button onclick="repo_toggle_enabled(\'' + escape(repo.get_absolute_url()) + '\', this, event)"><img src="{}img/icon-yes.gif" alt="Enabled" /></button>', escape(settings.STATIC_URL))
+        html = '<button onclick="repo_toggle_enabled(\'%s\', this, event)">' \
+               '<img src="%s" alt="Enabled" /></button>' \
+               % (repo_url, yes_icon)
     else:
-        return format_html('<button onclick="repo_toggle_enabled(\'' + escape(repo.get_absolute_url()) + '\', this, event)"><img src="{}img/icon-no.gif" alt="Disabled" /></button>', escape(settings.STATIC_URL))
+        html = '<button onclick="repo_toggle_enabled(\'%s\', this, event)">' \
+               '<img src="%s" alt="Disabled" /></button>' \
+               % (repo_url, no_icon)
+    return format_html(html)
 
 
 @register.simple_tag
 def yes_no_button_repo_sec(repo):
 
+    repo_url = repo.get_absolute_url()
+    yes_icon = static('img/icon-yes.gif')
+    no_icon = static('img/icon-no.gif')
     if repo.security:
-        return format_html('<button onclick="repo_toggle_security(\'' + escape(repo.get_absolute_url()) + '\', this, event)"><img src="{}img/icon-yes.gif" alt="Security" /></button>', escape(settings.STATIC_URL))
+        html = '<button onclick="repo_toggle_security(\'%s\', this, event)">' \
+               '<img src="%s" alt="Security" /></button>' \
+               % (repo_url, yes_icon)
     else:
-        return format_html('<button onclick="repo_toggle_security(\'' + escape(repo.get_absolute_url()) + '\', this, event)"><img src="{}img/icon-no.gif" alt="Non-Security" /></button>', escape(settings.STATIC_URL))
+        html = '<button onclick="repo_toggle_security(\'%s\', this, event)">' \
+               '<img src="%s" alt="Non-Security" /></button>' \
+               % (repo_url, no_icon)
+    return format_html(html)

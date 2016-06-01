@@ -18,7 +18,7 @@
 from django.template import Library
 from django.template.loader import get_template
 from django.utils.html import format_html, escape
-from django.conf import settings
+from django.contrib.staticfiles.templatetags.staticfiles import static
 from django.core.paginator import QuerySetPaginator
 
 from urllib import urlencode
@@ -37,22 +37,24 @@ def active(request, pattern):
 
 @register.simple_tag
 def yes_no_img(boolean, alt_yes='Active', alt_no='Not Active'):
+    yes_icon = static('img/icon-yes.gif')
+    no_icon = static('img/icon-no.gif')
     if boolean:
-        return format_html("<img src='{}img/icon-yes.gif' alt='{}' />",
-                           escape(settings.STATIC_URL), escape(alt_yes))
+        html = "<img src='%s' alt='%s' />" % (yes_icon, alt_yes)
     else:
-        return format_html("<img src='{}img/icon-no.gif' alt='{}' />",
-                           escape(settings.STATIC_URL), escape(alt_no))
+        html = "<img src='%s' alt='%s' />" % (no_icon, alt_no)
+    return format_html(html)
 
 
 @register.simple_tag
 def no_yes_img(boolean, alt_yes='Not Required', alt_no='Required'):
+    yes_icon = static('img/icon-yes.gif')
+    no_icon = static('img/icon-no.gif')
     if not boolean:
-        return format_html("<img src='{}img/icon-yes.gif' alt='{}' />",
-                           escape(settings.STATIC_URL), escape(alt_yes))
+        html = "<img src='%s' alt='%s' />" % (yes_icon, alt_yes)
     else:
-        return format_html("<img src='{}img/icon-no.gif' alt='{}' />",
-                           escape(settings.STATIC_URL), escape(alt_no))
+        html = "<img src='%s' alt='%s' />" % (no_icon, alt_no)
+    return format_html(html)
 
 
 @register.simple_tag
