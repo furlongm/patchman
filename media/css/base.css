@@ -1,16 +1,13 @@
-/*
-    DJANGO Admin
-    by Wilson Miner wilson@lawrence.com
-*/
-
-/* Block IE 5 */
-/*@import "null?\"\{";*/
-
-/* Import other styles */
-@import url('global.css');
-@import url('layout.css');
-@import url('custom.css');
-
-/* Import patch for IE 6 Windows */
-/*\*/ @import "patch-iewin.css"; /**/
-
+.secupdate { border-radius: 4px; display:block; background:#ff5555; }
+.bugupdate { border-radius: 4px; display:block; background:#ff9933; }
+.list-group { margin-bottom: 2px; }
+.list-group-item { padding: 5px; font-size: 12px; }
+.panel-body { padding: 5px; font-size: 12px; }
+.panel { margin-bottom: 5px; font-size: 12px; }
+.panel-heading { padding: 5px; font-size: 13px; }
+.brick { border-radius: 5px; margin: 3px 3px; padding: 2px 5px; height:25px; border-style:solid; border-width:thin; }
+.label-brick { font-size: 12px; font-weight: normal; margin-bottom: 3px; padding-top: 5px; border-radius: 4px; height:25px; border-style:solid; border-width:thin; border-color: #222; white-space: normal; display: inline-block; }
+.breadcrumb { font-size: 12px; background-color: #222; border-radius: 0px; margin-bottom: 3px; }
+.navbar { margin-bottom: 0px; padding-bottom: 0px; border-radius: 0px; }
+.well-sm { margin-bottom: 0px; }
+.centered { text-align: center; }

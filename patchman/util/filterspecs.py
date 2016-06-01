@@ -61,23 +61,25 @@ class Filter(object):
             pass
 
         output = ''
-        output += '<h3>By %s</h3>\n' % self.header.replace('_', ' ')
-        output += '<ul>\n'
+        output += '<div class="panel panel-default">\n'
+        output += '<div class="panel-heading">%s</div>\n' % self.header.replace('_', ' ')
+        output += '<div class="panel-body">\n'
+        output += '<div class="list-group list-group-info">\n'
         filters = sorted(self.filters.iteritems(), key=itemgetter(1))
 
         if self.selected is not None:
-            output += """<li><a href="%s">All</a></li>\n""" % get_query_string(qs)
+            output += """<a href="%s" class="list-group-item">all</a>\n""" % get_query_string(qs)
         else:
-            output += """<li class="selected"><a href="%s">All</a></li>\n""" % get_query_string(qs)
+            output += """<a href="%s" class="list-group-item list-group-item-success">all</a>\n""" % get_query_string(qs)
         for k, v in filters:
             if str(self.selected) == str(k):
-                style = """class="selected" """
+                style = "list-group-item-success"
             else:
                 style = ""
             qs[self.name] = k
-            output += """<li %s><a href="%s">%s</a></li>\n""" % (style, get_query_string(qs), v)
+            output += """<a href="%s" class="list-group-item %s">%s</a>\n""" % (get_query_string(qs), style, v)
 
-        output += '</ul>'
+        output += '</div></div></div>'
 
         return output
 

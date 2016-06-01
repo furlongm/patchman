@@ -1,26 +1,37 @@
-{% extends "base_site.html" %}
+{% extends "base.html" %}
 
-{% load paginator common forms %}
-
-{% block stylesheet %}changelists{% endblock %}
-
-{% block bodyclass %}change-list{% endblock %}
-
-{% block coltype %}colSM{% endblock %}
-
-{% block sidebar %}{% include "sidebar.html" %}{% endblock %}
+{% load common forms bootstrap3 %}
 
 {% block content %}
-<div class="module  {% if filter_bar %}filtered{% endif %}" id="changelist">
-  {% searchform %}
+
+<div class="row">
+  <div class="col-sm-10">
+    {% searchform %}
+    {% gen_table page.object_list %}
+    <div class="centered">
+      {% object_count page %}
+    </div>
+    <div class="centered">
+      {% get_querystring request as querystring %}
+      {% bootstrap_pagination page size='small' extra=querystring %}
+    </div>
+    <div class="centered">
+      Page {{ page.number }} of {{ page.paginator.num_pages }}
+    </div>
+  </div>
 
   {% if filter_bar %}
-  <div id="changelist-filter">
-    <h2>Filter</h2>
-    {{ filter_bar|safe }}
-  </div>
+    <div class="col-sm-2">
+      <div class="panel panel-primary">
+        <div class="panel-heading">Filter by...</div>
+        <div class="panel-body">
+        {{ filter_bar|safe }}
+        </div>
+      </div>
+    </div>
   {% endif %}
-  {% gen_table page.object_list %}
-  {% pagination page request %}
 </div>
+
+{% block changelist_actions %}{% endblock %}
+
 {% endblock %}

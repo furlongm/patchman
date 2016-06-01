@@ -23,7 +23,7 @@ from django.contrib import messages
 from django.core.urlresolvers import reverse
 
 from patchman.operatingsystems.models import OS, OSGroup
-from patchman.operatingsystems.forms import LinkOSGroupForm, \
+from patchman.operatingsystems.forms import AddOSToOSGroupForm, \
     AddReposToOSGroupForm, CreateOSGroupForm
 
 
@@ -70,21 +70,21 @@ def os_detail(request, os_id):
             osgroup = create_form.save()
             os.osgroup = osgroup
             os.save()
-            messages.info(request, 'Created and linked to new OS Group')
+            messages.info(request, 'Created OS Group %s and added OS %s to it' % (osgroup, os))
             return HttpResponseRedirect(os.get_absolute_url())
-        link_form = LinkOSGroupForm(request.POST, instance=os, prefix='link')
-        if link_form.is_valid():
-            link_form.save()
-            messages.info(request, 'Link to OS Group successful')
+        add_form = AddOSToOSGroupForm(request.POST, instance=os, prefix='add')
+        if add_form.is_valid():
+            add_form.save()
+            messages.info(request, 'OS %s added to OS Group %s' % (os, os.osgroup))
             return HttpResponseRedirect(os.get_absolute_url())
     else:
-        link_form = LinkOSGroupForm(instance=os, prefix='link')
+        add_form = AddOSToOSGroupForm(instance=os, prefix='add')
         create_form = CreateOSGroupForm(prefix='create')
 
     return render(request,
                   'operatingsystems/os_detail.html',
                   {'os': os,
-                   'link_form': link_form,
+                   'add_form': add_form,
                    'create_form': create_form}, )
 
 
@@ -93,7 +93,7 @@ def os_delete(request, os_id):
 
     if os_id == 'empty_oses':
         os = False
-        oses = get_list_or_404(OS.objects.filter(host__isnull=True))
+        oses = list(OS.objects.filter(host__isnull=True))
     else:
         os = get_object_or_404(OS, id=os_id)
         oses = False
@@ -104,7 +104,11 @@ def os_delete(request, os_id):
                 os.delete()
                 messages.info(request, 'OS %s has been deleted' % os)
                 return HttpResponseRedirect(reverse('os_list'))
-            if oses:
+            else:
+                if not oses:
+                    text = 'There are no OS\'s with no Hosts'
+                    messages.info(request, text)
+                    return HttpResponseRedirect(reverse('os_list'))
                 for os in oses:
                     os.delete()
                 text = '%s OS\'s have been deleted' % len(oses)
@@ -157,17 +161,17 @@ def osgroup_detail(request, osgroup_id):
     osgroup = get_object_or_404(OSGroup, id=osgroup_id)
 
     if request.method == 'POST':
-        form = AddReposToOSGroupForm(request.POST, instance=osgroup)
-        if form.is_valid():
-            form.save()
+        repos_form = AddReposToOSGroupForm(request.POST, instance=osgroup)
+        if repos_form.is_valid():
+            repos_form.save()
             messages.info(request, 'Modified Repositories')
             return HttpResponseRedirect(osgroup.get_absolute_url())
 
-    form = AddReposToOSGroupForm(instance=osgroup)
+    repos_form = AddReposToOSGroupForm(instance=osgroup)
 
     return render(request,
                   'operatingsystems/osgroup_detail.html',
-                  {'osgroup': osgroup, 'form': form}, )
+                  {'osgroup': osgroup, 'repos_form': repos_form}, )
 
 
 @login_required

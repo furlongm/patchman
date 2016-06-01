@@ -1,12 +1,11 @@
-{% extends "main.html" %}
+{% extends "base.html" %}
 
-{% block title %}Error 404{% endblock %}
+{% block page_title %}404 - Page not found{% endblock %}
 
-{% block content_title %}{% endblock %}
+{% block content_title %}404 - Page not found{% endblock %}
 
 {% block content %}
-<div id="content-main">
-    <h3>Error 404</h3>
-    <p>Document Not Found</p>
-</div>
+  <div class="well well-sm">
+    Sorry, but the requested page could not be found.
+  </div>
 {% endblock %}

@@ -1,14 +1,17 @@
 {% load common %}
-
-<table cellspacing="0">
-        <thead>
-                <tr>
-                   <th>ID</th><th>Host</th><th>Time</th><th>IP Address</th><th>Processed</th>
-                </tr>
-        </thead>
-    <tbody>
+<table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+  <thead>
+    <tr>
+      <th class="col-sm-2">ID</th>
+      <th class="col-sm-3">Host</th>
+      <th class="col-sm-3">Time</th>
+      <th class="col-sm-3">IP Address</th>
+      <th class="col-sm-1">Processed</th>
+    </tr>
+  </thead>
+  <tbody>
     {% for report in object_list %}
-      <tr class="{% cycle 'row1' 'row2' %}">
+      <tr>
         <td><a href="{{ report.get_absolute_url }}"> {{ report.id }} </a></td>
         <td> {{ report.host }} </td>
         <td> {{ report.created }} </td>

@@ -22,12 +22,17 @@ from patchman.repos.models import Repository, Mirror
 
 
 class EditRepoForm(ModelForm):
+    class Media:
+        css = {
+            'all': ('admin/css/widgets.css',)
+        }
+        js = ('animations.js', 'actions.js')
 
     mirrors = ModelMultipleChoiceField(
         queryset=Mirror.objects.select_related(),
         required=False,
         label=None,
-        widget=FilteredSelectMultiple('Mirrors', True))
+        widget=FilteredSelectMultiple('Mirrors', is_stacked=False))
 
     def __init__(self, *args, **kwargs):
         super(EditRepoForm, self).__init__(*args, **kwargs)
@@ -44,7 +49,7 @@ class LinkRepoForm(Form):
 
     name = ModelChoiceField(
         queryset=Repository.objects.order_by('name'),
-        label='Link all mirrors above to an existing Repository')
+        label='Repositories')
 
 
 class CreateRepoForm(ModelForm):
@@ -55,7 +60,7 @@ class CreateRepoForm(ModelForm):
         super(CreateRepoForm, self).__init__(*args, **kwargs)
         self.arch = arch
         self.repotype = repotype
-        self.fields['name'].label = 'Or create a new Repository named'
+        self.fields['name'].label = 'New Repository'
 
     class Meta:
         model = Repository
@@ -64,19 +69,24 @@ class CreateRepoForm(ModelForm):
     def clean_arch(self):
         data = self.cleaned_data['arch']
         if data != self.arch:
-            text = 'Not all mirror architectures are the same, cannot proceed'
+            text = 'Not all Mirror architectures are the same, cannot proceed'
             raise ValidationError(text)
         return data
 
     def clean_repotype(self):
         data = self.cleaned_data['repotype']
         if data != self.repotype:
-            text = 'Not all mirror repotypes are the same, cannot proceed'
+            text = 'Not all Mirror repotypes are the same, cannot proceed'
             raise ValidationError(text)
         return data
 
 
 class EditMirrorForm(ModelForm):
+    class Media:
+        css = {
+            'all': ('admin/css/widgets.css',)
+        }
+        js = ('animations.js', 'actions.js')
 
     def __init__(self, *args, **kwargs):
         super(EditMirrorForm, self).__init__(*args, **kwargs)

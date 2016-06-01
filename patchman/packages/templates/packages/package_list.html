@@ -1,12 +1,7 @@
 {% extends "changelist.html" %}
 
-{% block title %}Packages{% endblock %}
+{% block page_title %}Packages{% endblock %}
 
-{% block content_title %}Packages{% endblock %}
+{% block breadcrumbs %} {{ block.super }} <li class="active"><a href="{% url 'package_list' %}">Packages</a></li>{% endblock %}
 
-{% block breadcrumbs %}{{ block.super }} &rsaquo; Packages{% endblock %}   
-
-{% block objecttools %}
-
-{% endblock %}
-
+{% block content_title %} Packages {% endblock %}

@@ -1,48 +1,28 @@
-{% extends "forms-side.html" %}
+{% extends "base.html" %}
 
-{% load forms common %}
+{% load forms common bootstrap3 %}
 
-{% block extrahead %}
-<script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
-<script type="text/javascript" src="/patchman_media/admin/js/actions.js"></script>
-{{ edit_form.media }}
-{% endblock %}
+{% block extrahead %} {{ edit_form.media }} {% endblock %}
 
-{% block title %}Repositories {{ repo }} {% endblock %}
+{% block page_title %}Repository - {{ repo }} {% endblock %}
 
-{% block content_title %}Repository Information{% endblock %}
+{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'repo_list' %}">Repositories</a></li><li class="active">{{ repo }}</li>{% endblock %}
 
-{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url 'repo_list' %}">Repositories</a> &rsaquo; {{ repo }} {% endblock %}
+{% block content_title %} Repository - {{ repo }} {% endblock %}
 
 {% block content %}
 
-<div class="module">
-    <h2>{{repo}} Details</h2>
-    <table>
-        <tr><td>Name</td><td> {{ repo.name }} </td></tr>
-        <tr><td>ID</td><td> {% if repo.repo_id != None %} {{ repo.repo_id }} {% endif %}</td></tr>
-        <tr><td>Type</td><td> {{ repo.get_repotype_display }} </td></tr>
-        <tr><td>Architecture</td><td> {{ repo.arch }} </td></tr>
-        <tr><td>Security</td><td> {% yes_no_img repo.security 'Security' 'Not Security' %} </td></tr>
-        <tr><td>Enabled</td><td> {% yes_no_img repo.enabled 'Enabled' 'Not Enabled' %} </td></tr>
-        <tr><td>Mirrors</td><td> {{ repo.mirror_set.count }} </td></tr>
-        <tr><td>Requires Authentication</td><td> {{ repo.auth_required }} </td></tr>
-    </table>
+<div class="well well-sm">
+  {% if user.is_authenticated and perms.is_admin %}
+    <form action={{ request.path }} method="post">
+      {% csrf_token %}
+      {% bootstrap_form edit_form size='small' %}
+      <button name="save" type="submit" class="btn btn-primary btn-sm">{% bootstrap_icon "floppy-disk" %} Save</button>
+      <button name="cancel" type="submit" class="btn btn-primary btn-sm">{% bootstrap_icon "stop" %} Cancel</button>
+    </form>
+  {% else %}
+    You do not have permission to edit this Repository.
+  {% endif %}
 </div>
 
-{% if user.is_authenticated %}
-  {% if perms.is_admin %}
-    <div class="module">
-      <h2>Edit</h2>
-        <form action={{ request.path }} method="post">{% csrf_token %}
-          {% form_as_div edit_form %}
-          <br /><input type="submit" value="Save" />
-        </form>
-    </div>
-  {% else %}
-    <p>No permission to edit this Repository.</p>
-  {% endif %}
-{% endif %}
-
 {% endblock %}
-

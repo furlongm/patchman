@@ -1,50 +1,28 @@
-{% extends "forms-side.html" %}
+{% extends "base.html" %}
 
-{% load forms common %}
+{% load forms common bootstrap3 %}
 
-{% block extrahead %}
-<script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
-<script type="text/javascript" src="/patchman_media/admin/js/actions.js"></script>
-{{ edit_form.media }}
-{% endblock %}
+{% block extrahead %} {{ edit_form.media }} {% endblock %}
 
-{% block title %} Mirror {{ mirror }} {% endblock %}
+{% block page_title %}Mirror - {{ mirror }}{% endblock %}
 
-{% block content_title %}Mirror Information{% endblock %}
+{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'repo_list' %}">Repositories</a></li><li><a href="{% url 'mirror_list' %}">Mirrors</a></li><li class="active">{{ mirror }}</li>{% endblock %}
 
-{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url 'repo_list' %}">Repositories</a> &rsaquo; <a href="{% url 'mirror_list' %}">Mirrors</a> &rsaquo; {{ mirror }} {% endblock %}
+{% block content_title %} Mirror - {{ mirror }} {% endblock %}
 
 {% block content %}
 
-<div class="module">
-    <h2>{{mirror}} Details</h2>
-    <table>
-        <tr><td>Repo</td><td> <a href="{{ mirror.repo.get_absolute_url }}">{{ mirror.repo }}</a> </td></tr>
-        <tr><td>URL</td><td> <a href="{{ mirror.url }}">{{ mirror.url }}</a> </td></tr>
-        <tr><td>Packages</td><td> {{ mirror.packages.count }} </td></tr>
-        <tr><td>Enabled</td><td> {% yes_no_img mirror.enabled 'Enabled' 'Not Enabled' %} </td></tr>
-        <tr><td>Refresh</td><td> {% yes_no_img mirror.refresh 'True' 'False' %} </td></tr>
-        <tr><td>Mirrorlist</td><td> {% yes_no_img mirror.mirrorlist 'True' 'False' %} </td></tr>
-        <tr><td>Last Access Ok</td><td> {% yes_no_img mirror.last_access_ok 'True' 'False' %} </td></tr>
-        <tr><td>Fail Count</td><td> {{ mirror.fail_count }} </td></tr>
-        <tr><td>Timestamp</td><td> {{ mirror.timestamp }} </td></tr>
-        <tr><td>Checksum</td><td> {{ mirror.file_checksum }} </td></tr>
-    </table>
+<div class="well well-sm">
+  {% if user.is_authenticated and perms.is_admin %}
+    <form action={{ request.path }} method="post">
+      {% csrf_token %}
+      {% bootstrap_form edit_form size='small' %}
+      <button name="save" type="submit" class="btn btn-primary btn-sm">{% bootstrap_icon "floppy-disk" %} Save</button>
+      <button name="cancel" type="submit" class="btn btn-primary btn-sm">{% bootstrap_icon "stop" %} Cancel</button>
+    </form>
+  {% else %}
+    You do not have permission to edit this Mirror.
+  {% endif %}
 </div>
 
-{% if user.is_authenticated %}
-  {% if perms.is_admin %}
-    <div class="module">
-      <h2>Edit</h2>
-        <form action={{ request.path }} method="post">{% csrf_token %}
-          {% form_as_div edit_form %}
-          <br /><input type="submit" value="Save" />
-        </form>
-    </div>
-  {% else %}
-    <p>No permission to edit this Repository.</p>
-  {% endif %}
-{% endif %}
-
 {% endblock %}
-

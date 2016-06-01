@@ -15,10 +15,12 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from django.conf.urls import url
+from django.views.generic import RedirectView
 
 from patchman.util import views
 
 urlpatterns = [
 
-    url(r'^$', views.dashboard, name='dashboard'),
+    url(r'^$', RedirectView.as_view(pattern_name='dashboard', permanent=True)),
+    url(r'^dashboard/$', views.dashboard, name='dashboard'),
 ]

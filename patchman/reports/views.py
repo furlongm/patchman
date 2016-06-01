@@ -140,9 +140,6 @@ def report_delete(request, report):
 
     report = get_object_or_404(Report, id=report)
 
-    import pprint
-    pprint.pprint(request.__dict__)
-
     if request.method == 'POST':
         if 'delete' in request.POST:
             report.delete()

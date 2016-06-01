@@ -1,10 +1,13 @@
-{% load static from staticfiles %}
-<div id="toolbar">
-<form id="changelist-search" action="" method="get">
+{% load bootstrap3 %}
 <div>
-<label for="searchbar"><img src="{% static 'admin/img/icon_searchbox.png' %}" alt="Search" /></label>
-<input type="text" size="40" name="search" value="{{ terms }}" id="search" />
-<input type="submit" value="Go" />
+  <form method="get">
+    <div class="input-group">
+      <input type="text" class="form-control input-sm" placeholder="Search" name="search" value="{{ terms }}" id="search">
+      <div class="input-group-btn">
+        <button class="btn btn-primary btn-sm" type="submit">{% bootstrap_icon "search" %}</button>
+      </div>
+    </div>
+  </form>
 </div>
-</form></div>
+<br />
 <script type="text/javascript">document.getElementById("search").focus();</script>

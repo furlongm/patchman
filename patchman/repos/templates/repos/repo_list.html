@@ -1,12 +1,7 @@
 {% extends "changelist.html" %}
 
-{% block title %}Repositories{% endblock %}
+{% block page_title %}Repositories{% endblock %}
 
-{% block content_title %}Repositories{% endblock %}
+{% block breadcrumbs %} {{ block.super }} <li class="active"><a href="{% url 'repo_list' %}">Repositories</a></li>{% endblock %}
 
-{% block breadcrumbs %}{{ block.super }} &rsaquo; Repositories{% endblock %}   
-
-{% block objecttools %}
-
-{% endblock %}
-
+{% block content_title %} Repositories {% endblock %}

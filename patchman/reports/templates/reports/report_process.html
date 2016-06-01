@@ -1,44 +1,33 @@
-{% extends "main.html" %}
+{% extends "base.html" %}
 
-{% block title %}Reports {{ repo }} {% endblock %}
+{% load bootstrap3 %}
 
-{% block extrahead %}
-<script type="text/javascript" src="{{ STATIC_URL }}js/progressbar.js"></script>
-{% endblock %}
+{% block page_title %}Report - {{ report }} {% endblock %}
 
-{% block content_title %}Report Information{% endblock %}
+{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'report_list' %}">Reports</a></li><li class="active">{{ report }}</li>{% endblock %}
 
-{% block breadcrumbs %}{{ block.super }} &rsaquo; <a href="{% url 'repo_list' %}">Reports</a> &rsaquo; {{ report }} {% endblock %}
+{% block content_title %}Report - {{ report }} {% endblock %}
 
 {% block content %}
-<div class="module">
-  <h2>{{report}}</h2>
-  <table>
-    <tr><td>Host</td><td> {{ report.host }} </td></tr>
-    <tr><td>Reporting IP Address</td><td> {{ report.report_ip }} </td></tr>
-    <tr><td>Domain</td><td> {{ report.domain }} </td></tr>
-    <tr><td>Running Kernel</td><td> {{ report.kernel }} </td></tr>
-    <tr><td>Reboot Required?</td><td> {{ report.reboot }} </td></tr>
-    <tr><td>OS</td><td> {{ report.os }} </td></tr>
-    <tr><td>Arch</td><td> {{ report.arch }} </td></tr>
-    <tr><td>Tags</td><td> {{ report.tags }} </td></tr>
-    <tr><td>Client Protocol</td><td> {{ report.protocol }} </td></tr>
-    <tr><td>User Agent</td><td> {{ report.useragent }} </td></tr>
-    <tr><td>Has Been Processed?</td><td> {{ report.processed }} </td></tr>
-    </table>
-</div>
-{% if user.is_authenticated %}
-  {% if perms.is_admin %}
-  <div class="module">
-    <h2>Progress</h2>
-      <div>Processing reports via the web interface currently does not work, this page is just a placeholder. Please use the patchman command line tool, or celery to process reports.</div>
-      <br />
-      Packages
-      <div id="progressbar_packages"></div>
-      Repos
-      <div id="progressbar_repos"</div>
- </div>
-  {% endif %}
-{% endif %}
-{% endblock %}
 
+<div class="well well-sm">
+  <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+    <tr><th>Host</th><td> {{ report.host }} </td></tr>
+    <tr><th>Reporting IP Address</th><td> {{ report.report_ip }} </td></tr>
+    <tr><th>Domain</th><td> {{ report.domain }} </td></tr>
+    <tr><th>Running Kernel</th><td> {{ report.kernel }} </td></tr>
+    <tr><th>Reboot Required?</th><td> {{ report.reboot }} </td></tr>
+    <tr><th>OS</th><td> {{ report.os }} </td></tr>
+    <tr><th>Arch</th><td> {{ report.arch }} </td></tr>
+    <tr><th>Tags</th><td> {{ report.tags }} </td></tr>
+    <tr><th>Client Protocol</th><td> {{ report.protocol }} </td></tr>
+    <tr><th>User Agent</th><td> {{ report.useragent }} </td></tr>
+    <tr><th>Has Been Processed?</th><td> {{ report.processed }} </td></tr>
+  </table>
+</div>
+
+<div class="well well-sm">
+  Processing reports via the web interface currently does not work, this page is just a placeholder. Please use the patchman command line tool, or celery to process reports.
+</div>
+
+{% endblock %}

@@ -81,6 +81,7 @@ DEFAULT_APPS = (
 THIRD_PARTY_APPS = (
     'django_extensions',
     'tagging',
+    'bootstrap3',
 )
 
 LOCAL_APPS = (
@@ -109,8 +110,9 @@ else:
     USE_ASYNC_PROCESSING = True
     djcelery.setup_loader()
 
-LOGIN_REDIRECT_URL = '/patchman/'
-LOGIN_URL = '/patchman/accounts/login/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/login/'
+LOGIN_URL = '/login/'
 
 # URL prefix for static files.
 STATIC_URL = '/patchman_media/'

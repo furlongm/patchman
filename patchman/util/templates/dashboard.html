@@ -1,226 +1,245 @@
-{% extends "main.html" %}
+{% extends "base.html" %}
+
 {% load common %}
 
-{% block title %}Patchman Dashboard{% endblock %}
+{% block page_title %}Patchman Dashboard{% endblock %}
 
-{% block content_title %}{{ site.name }} Patch Management Dashboard{% endblock %}
-
-{% block breadcrumbs %}<a href="/">Home</a>{% endblock %}
+{% block content_title %} Patch Management Dashboard for {{ site.name }} {% endblock %}
 
 {% block content %}
-<div id="content-main">
-{% with lonely_oses.count as count %}
+
+{% with count=lonely_oses.count %}
   {% if lonely_oses.count > 0 %}
-  <div class="module">
-    <div class="resultslink" id="r1"><a href="#">{{ count }} Operating Systems are not linked to any OS Group</a></div>
-      <div class="results" id="r1">
+    <div class="well well-sm">
+      <button class="btn btn-sm" data-toggle="collapse" data-target="#lonely_oses"><span class="badge">{{ count }}</span> Operating Systems are not linked to any OS Group</button>
+      <div class="collapse" id="lonely_oses">
         {% gen_table lonely_oses %}
       </div>
-  </div>
+    </div>
   {% endif %}
 {% endwith %}
-<div id="content-main">
-{% with nohost_oses.count as count %}
+
+{% with count=nohost_oses.count %}
   {% if nohost_oses.count > 0 %}
-  <div class="module">
-    <div class="resultslink" id="r3"><a href="#">{{ count }} Operating Systems are not installed on any Host</a></div>
-      <div class="results" id="r3">
-        {% gen_table nohost_oses %}
-      </div>
-  </div>
+    <div class="well well-sm">
+      <button class="btn btn-sm" data-toggle="collapse" data-target="#nohost_oses"><span class="badge">{{ count }}</span> Operating Systems are not installed on any Host</button>
+        <div class="collapse" id="nohost_oses">
+          {% gen_table nohost_oses %}
+        </div>
+    </div>
   {% endif %}
 {% endwith %}
-{% with norepo_osgroups.count as count %}
+
+{% with count=norepo_osgroups.count %}
   {% if count > 0 and norepo_osgroups != None %}
-  <div class="module">
-    <div class="resultslink" id="r5"><a href="#">{{ count }} OS Groups have no repositories</a></div>
-      <div class="results" id="r5">
-        {% gen_table norepo_osgroups %}
-      </div>
+    <div class="well well-sm">
+      <button class="btn btn-sm" data-toggle="collapse" data-target="#norepo_osgroups"><span class="badge">{{ count }}</span> OS Groups have no associated Repositories</button>
+        <div class="collapse" id="norepo_osgroups">
+          {% gen_table norepo_osgroups %}
+        </div>
+    </div>
+  {% endif %}
+{% endwith %}
+
+{% with count=stale_hosts.count %}
+  {% if count > 0 %}
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#stale_hosts"><span class="badge">{{ count }}</span> Hosts have not reported in 2 weeks</button>
+    <div class="collapse" id="stale_hosts">
+      {% gen_table stale_hosts %}
+    </div>
   </div>
   {% endif %}
 {% endwith %}
-{% with stale_hosts.count as count %}
+
+{% with count=reboot_hosts.count %}
   {% if count > 0 %}
-  <div class="module">
-    <div class="resultslink" id="r7"><a href="#">{{ count }} Hosts have not reported in 2 weeks</a></div>
-      <div class="results" id="r7">
-        {% gen_table stale_hosts %}
-      </div>
-  </div>
-  {% endif %}
-{% endwith %}
-{% with reboot_hosts.count as count %}
-  {% if count > 0 %}
-  <div class="module">
-    <div class="resultslink" id="r9"><a href="#">{{ count }} Hosts require a reboot for security reasons (e.g. kernel update)</a></div>
-      <div class="results" id="r9">
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#reboot_hosts"><span class="badge">{{ count }}</span> Hosts require a reboot for security reasons (e.g. kernel update)</button>
+      <div class="collapse" id="reboot_hosts">
         {% gen_table reboot_hosts %}
       </div>
   </div>
   {% endif %}
 {% endwith %}
-{% with secupdate_hosts.count as count %}
+
+{% with count=secupdate_hosts.count %}
   {% if count > 0 %}
-  <div class="module">
-    <div class="resultslink" id="r11"><a href="#">{{ count }} Hosts have security updates pending</a></div>
-      <div class="results" id="r11">
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#secupdate_hosts"><span class="badge">{{ count }}</span> Hosts have security updates pending</button>
+      <div class="collapse" id="secupdate_hosts">
         {% gen_table secupdate_hosts %}
       </div>
   </div>
   {% endif %}
 {% endwith %}
-{% with update_hosts.count as count %}
+
+{% with count=bugupdate_hosts.count %}
   {% if count > 0 %}
-  <div class="module">
-    <div class="resultslink" id="r13"><a href="#">{{ count }} Hosts have bugfix-only updates pending</a></div>
-      <div class="results" id="r13">
-        {% gen_table update_hosts %}
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#bugupdate_hosts"><span class="badge">{{ count }}</span> Hosts have bugfix-only updates pending</button>
+      <div class="collapse" id="bugupdate_hosts">
+        {% gen_table bugupdate_hosts %}
       </div>
   </div>
   {% endif %}
 {% endwith %}
-{% with norepo_hosts.count as count %}
+
+{% with count=norepo_hosts.count %}
   {% if count > 0 %}
-  <div class="module">
-    <div class="resultslink" id="r15"><a href="#">{{ count }} Hosts have no associated repositories</a></div>
-      <div class="results" id="r15">
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#norepo_hosts"><span class="badge">{{ count }}</span> Hosts have no associated Repositories</button>
+      <div class="collapse" id="norepo_hosts">
         {% gen_table norepo_hosts %}
       </div>
   </div>
   {% endif %}
 {% endwith %}
-{% with diff_rdns_hosts.count as count %}
+
+{% with count=diff_rdns_hosts.count %}
   {% if count > 0 %}
-  <div class="module">
-    <div class="resultslink" id="r16"><a href="#">{{ count }} Hosts a different rDNS entry (and have rDNS checking enabled)</a></div>
-      <div class="results" id="r16">
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#diff_rdns_hosts"><span class="badge">{{ count }}</span> Hosts have a different rDNS entry (and have rDNS checking enabled)</button>
+      <div class="collapse" id="diff_rdns_hosts">
         {% gen_table diff_rdns_hosts %}
       </div>
   </div>
   {% endif %}
 {% endwith %}
-{% with failed_mirrors.count as count %}
+
+{% with count=failed_mirrors.count %}
   {% if count > 0 %}
-  <div class="module">
-    <div class="resultslink" id="r17"><a href="#">{{ count }} Repositories have some mirrors that are failing</a></div>
-      <div class="results" id="r17">
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#failed_mirrors"><span class="badge">{{ count }}</span> Repositories have some Mirrors that are failing</button>
+      <div class="collapse" id="failed_mirrors">
         {% gen_table failed_mirrors %}
       </div>
   </div>
   {% endif %}
 {% endwith %}
-{% with disabled_mirrors.count as count %}
+
+{% with count=disabled_mirrors.count %}
   {% if count > 0 %}
-  <div class="module">
-    <div class="resultslink" id="r19"><a href="#">{{ count }} Repositories have some mirrors that are disabled</a></div>
-      <div class="results" id="r19">
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#disabled_mirrors"><span class="badge">{{ count }}</span> Repositories have some Mirrors that are disabled</button>
+      <div class="collapse" id="disabled_mirrors">
         {% gen_table disabled_mirrors %}
       </div>
   </div>
   {% endif %}
 {% endwith %}
-{% with norefresh_mirrors.count as count %}
+
+{% with count=norefresh_mirrors.count %}
   {% if count > 0 %}
-  <div class="module">
-    <div class="resultslink" id="r21"><a href="#">{{ count }} Repositories have some mirrors that are not set to refresh (possibly failed too many times)</a></div>
-      <div class="results" id="r21">
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#norefresh_mirrors"><span class="badge">{{ count }}</span> Repositories have some Mirrors that are not set to refresh (possibly failed too many times)</button>
+      <div class="collapse" id="norefresh_mirrors">
         {% gen_table norefresh_mirrors %}
       </div>
   </div>
   {% endif %}
 {% endwith %}
-{% with failed_repos.count as count %}
+
+{% with count=failed_repos.count %}
   {% if count > 0 %}
-  <div class="module">
-    <div class="resultslink" id="r23"><a href="#">{{ count }} Repositories where all mirrors are failing</a></div>
-      <div class="results" id="r23">
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#failed_repos"><span class="badge">{{ count }}</span> Repositories where all Mirrors are failing</button>
+      <div class="collapse" id="failed_repos">
         {% gen_table failed_repos %}
       </div>
   </div>
   {% endif %}
 {% endwith %}
-{% with unused_repos.count as count %}
+
+{% with count=unused_repos.count %}
   {% if count > 0 %}
-  <div class="module">
-    <div class="resultslink" id="r25"><a href="#">{{ count }} Repositories are unused (no associated hosts or os groups)</a></div>
-      <div class="results" id="r25">
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#unused_repos"><span class="badge">{{ count }}</span> Repositories are unused (no associated Hosts or OS Groups)</button>
+      <div class="collapse" id="unused_repos">
         {% gen_table unused_repos %}
       </div>
   </div>
   {% endif %}
 {% endwith %}
-{% with nomirror_repos.count as count %}
+
+{% with count=nomirror_repos.count %}
   {% if count > 0 %}
-  <div class="module">
-    <div class="resultslink" id="r27"><a href="#">{{ count }} Repositories have no mirrors</a></div>
-      <div class="results" id="r27">
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#nomirror_repos"><span class="badge">{{ count }}</span> Repositories have no Mirrors</button>
+      <div class="collapse" id="nomirror_repos">
         {% gen_table nomirror_repos %}
       </div>
   </div>
   {% endif %}
 {% endwith %}
-{% with nohost_repos.count as count %}
+
+{% with count=nohost_repos.count %}
   {% if count > 0 %}
-  <div class="module">
-    <div class="resultslink" id="r29"><a href="#">{{ count }} Repositories are not used by any hosts</a></div>
-      <div class="results" id="r29">
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#nohost_repos"><span class="badge">{{ count }}</span> Repositories are not used by any Hosts</button>
+      <div class="collapse" id="nohost_repos">
         {% gen_table nohost_repos %}
       </div>
   </div>
   {% endif %}
 {% endwith %}
-{% with possible_mirrors|length as count %}
+
+{% with count=possible_mirrors|length %}
   {% if count > 0 %}
-  <div class="module">
-    <div class="resultslink" id="r31"><a href="#">{{ count }} Sets of mirrors have the same checksum and are not linked</a></div>
-      <div class="results" id="r31">
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#possible_mirrors"><span class="badge">{{ count }}</span> Sets of Mirrors have the same checksum and are not linked</button>
+      <div class="collapse" id="possible_mirrors">
         {% for checksum in possible_mirrors %}
-        <div class="brick" style="{% cycle 'background:#bfdddd' 'background:#deeeee' %}">
-        <a class="dark" href="repos/mirrors/?checksum={{ checksum }}">{{ checksum }}</a></div>
+        <span class="label label-brick {% cycle 'bg-info' 'bg-success' %}">
+          <a href="repos/mirrors/?checksum={{ checksum }}">{{ checksum }}</a>
+        </span>
         {% endfor %}
-        <div class="clearbrick"></div>
       </div>
   </div>
   {% endif %}
 {% endwith %}
-{% with norepo_packages.count as count %}
+
+{% with count=norepo_packages.count %}
   {% if count > 0 %}
-  <div class="module">
-    <div class="resultslink" id="r33"><a href="#">{{ count }} Installed Packages are not from any repository</a></div>
-      <div class="results" id="r33">
-        {% for package in norepo_packages %}
-        <div class="brick" style="{% cycle 'background:#bfdddd' 'background:#deeeee' %}">
-        <a class="dark" href="{{ package.get_absolute_url }}">{{ package }}</a></div>
-        {% endfor %}
-        <div class="clearbrick"></div>
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#norepo_packages"><span class="badge">{{ count }}</span> Installed Packages are not from any Repository</button>
+      <div class="collapse" id="norepo_packages">
+        <div class="well">
+          {% for package in norepo_packages %}
+            <span class="label label-brick {% cycle 'bg-info' 'bg-success' %}">
+              <a href="{{ package.get_absolute_url }}">{{ package }}</a>
+            </span>
+          {% endfor %}
+        </div>
      </div>
   </div>
   {% endif %}
 {% endwith %}
-{% with orphaned_packages.count as count %}
-  {% if count > 0 %}
-  <div class="module">
-    <div class="resultslink" id="r35"><a href="#">{{ count }} Packages are orphaned (not from any repo, not installed anywhere)</a></div>
-      <div class="results" id="r35">
+
+{% with count=orphaned_packages.count %}
+  {% if count < 0 %}
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#orphaned_packages"><span class="badge">{{ count }}</span> Packages are orphaned (not from any Repository, not installed on any Host)</button>
+      <div class="collapse" id="orphaned_packages">
         {% for package in orphaned_packages %}
-        <div class="brick" style="{% cycle 'background:#bfdddd' 'background:#deeeee' %}">
-        <a class="dark" href="{{ package.get_absolute_url }}">{{ package }}</a></div>
+          <span class="label label-brick {% cycle 'bg-info' 'bg-success' %}">
+            <a href="{{ package.get_absolute_url }}">{{ package }}</a>
+          </span>
         {% endfor %}
-        <div class="clearbrick"></div>
      </div>
   </div>
   {% endif %}
 {% endwith %}
-{% with unprocessed_reports.count as count %}
-  {% if count > 0 %}
-  <div class="module">
-    <div class="resultslink" id="r37"><a href="#">{{ count }} Reports have not yet been processed</a></div>
-      <div class="results" id="r37">
+
+{% with count=unprocessed_reports.count %}
+  {% if count < 0 %}
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#unprocessed_reports"><span class="badge">{{ count }}</span> Reports have not yet been processed</button>
+      <div class="collapse" id="unprocessed_reports">
         {% gen_table unprocessed_reports %}
      </div>
   </div>
   {% endif %}
 {% endwith %}
-</div>
+
 {% endblock %}
