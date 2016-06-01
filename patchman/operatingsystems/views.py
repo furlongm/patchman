@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.shortcuts import get_object_or_404, get_list_or_404, render
+from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -70,12 +70,14 @@ def os_detail(request, os_id):
             osgroup = create_form.save()
             os.osgroup = osgroup
             os.save()
-            messages.info(request, 'Created OS Group %s and added OS %s to it' % (osgroup, os))
+            text = 'Created OS Group %s and added OS %s to it' % (osgroup, os)
+            messages.info(request, text)
             return HttpResponseRedirect(os.get_absolute_url())
         add_form = AddOSToOSGroupForm(request.POST, instance=os, prefix='add')
         if add_form.is_valid():
             add_form.save()
-            messages.info(request, 'OS %s added to OS Group %s' % (os, os.osgroup))
+            text = 'OS %s added to OS Group %s' % (os, os.osgroup)
+            messages.info(request, text)
             return HttpResponseRedirect(os.get_absolute_url())
     else:
         add_form = AddOSToOSGroupForm(instance=os, prefix='add')

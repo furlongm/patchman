@@ -225,7 +225,8 @@ def mirror_delete(request, mirror_id):
             messages.info(request, 'Mirror %s has been deleted' % mirror)
             return HttpResponseRedirect(reverse('mirror_list'))
         elif 'cancel' in request.POST:
-            return HttpResponseRedirect(reverse('mirror_detail', args=[mirror_id]))
+            return HttpResponseRedirect(reverse('mirror_detail',
+                                                args=[mirror_id]))
 
     return render(request,
                   'repos/mirror_delete.html',
@@ -357,7 +358,8 @@ def repo_toggle_security(request, repo_id):
     if request.is_ajax():
         return HttpResponse(status=204)
     else:
-        text = 'Repository %s has been marked as a %s update repo' % (repo, sectype)
+        text = 'Repository %s has been marked as a %s update repo' \
+               % (repo, sectype)
         messages.info(request, text)
         return HttpResponseRedirect(reverse('repo_detail',
                                             args=[repo_id]))

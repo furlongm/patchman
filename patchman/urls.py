@@ -17,7 +17,6 @@
 from django.conf.urls import url, include, handler404, handler500
 from django.conf import settings
 from django.contrib import admin
-from django.contrib.auth import views
 from django.views import static
 
 admin.autodiscover()
