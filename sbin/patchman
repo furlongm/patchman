@@ -530,7 +530,7 @@ def collect_args():
         help='Convenience flag for -r -A -p -c -d -n')
     parser.add_argument(
         '-D', '--diff', metavar=('hostA', 'hostB'), nargs=2,
-        help='Show differences between two hosts in difflike output')
+        help='Show differences between two hosts in diff-like output')
     return parser
 
 
