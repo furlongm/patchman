@@ -34,19 +34,28 @@
 <h2>
 <a id="summary" class="anchor" href="#summary" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Summary</h2>
 
-<p>Patchman is a django-based patch status monitoring tool for linux systems. Patchman provides a web interface for monitoring the package updates available for linux hosts.</p>
+<p>Patchman is a Django-based patch status monitoring tool for linux systems.
+Patchman provides a web interface for monitoring the package updates available
+for linux hosts.</p>
 
 <h2>
 <a id="how-does-it-work" class="anchor" href="#how-does-it-work" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>How does it work?</h2>
 
-<p>Patchman clients send a list of installed packages and enabled repositories to the Patchman server. The Patchman server updates its package list for each repository and determines which hosts require updates, and whether those updates
-are normal or security updates. The web interface also gives information on potential issues, such as installed packages that are not from any repository.</p>
+<p>Patchman clients send a list of installed packages and enabled repositories to
+the Patchman server. The Patchman server updates its package list for each
+repository and determines which hosts require updates, and whether those updates
+are normal or security updates. The web interface also gives information on
+potential issues, such as installed packages that are not from any repository.</p>
 
-<p>Hosts, packages, repositories and operating systems can all be filtered. For example, it is possible to find out which hosts have a certain version of a package installed, and which repository it comes from.</p>
+<p>Hosts, packages, repositories and operating systems can all be filtered. For
+example, it is possible to find out which hosts have a certain version of a
+package installed, and which repository it comes from.</p>
 
-<p>Patchman does not install update packages on hosts, it determines and displays what updates are available for each host.</p>
+<p>Patchman does not install update packages on hosts, it determines and displays
+what updates are available for each host.</p>
 
-<p><code>yum</code> and <code>apt</code> plugins can send reports to the Patchman server every time packages are installed or removed on a host.</p>
+<p><code>yum</code> and <code>apt</code> plugins can send reports to the Patchman server every time
+packages are installed or removed on a host.</p>
 
 <h2>
 <a id="source" class="anchor" href="#source" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Source</h2>
@@ -59,9 +68,10 @@ are normal or security updates. The web interface also gives information on pote
 <a id="dependencies" class="anchor" href="#dependencies" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Dependencies</h2>
 
 <h3>
-<a id="server-side-dependencies" class="anchor" href="#server-side-dependencies" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Server-side Dependencies</h3>
+<a id="server-side-dependencies" class="anchor" href="#server-side-dependencies" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Server-side dependencies</h3>
 
-<pre><code>python-django-tagging
+<pre><code>python-django
+python-django-tagging
 python-django-extensions
 python-django-bootstrap3
 python-debian
@@ -71,32 +81,80 @@ python-lxml
 python-argparse
 </code></pre>
 
-<p>The server can optionally make use of celery to asynchronously process the reports sent by hosts.</p>
+<p>The server can optionally make use of celery to asynchronously process the
+reports sent by hosts.</p>
 
 <h3>
 <a id="client-side-dependencies" class="anchor" href="#client-side-dependencies" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Client-side dependencies</h3>
 
-<p>The client-side dependencies are kept to a minimum. <code>rpm</code> and <code>dpkg</code> are required to report packages, <code>yum</code> and <code>apt</code> are required to report repositories. These packages are normally installed by default on most systems.</p>
+<p>The client-side dependencies are kept to a minimum. <code>rpm</code> and <code>dpkg</code> are
+required to report packages, <code>yum</code>, <code>zypper</code> and <code>apt</code> are required to report
+repositories. These packages are normally installed by default on most systems.
+<code>dnf</code> is not yet supported.</p>
 
-<p>rpm-based OS's can tell if a reboot is required to install a new kernel by looking at <code>uname -r</code> and comparing it to the highest installed kernel version.</p>
+<p>rpm-based OS's can tell if a reboot is required to install a new kernel by
+looking at <code>uname -r</code> and comparing it to the highest installed kernel version.</p>
 
-<p>deb-based OS's do not always change the kernel version when a kernel update is installed, so the <code>update-notifier-common</code> package needs to be installed to enable this functionality.</p>
+<p>deb-based OS's do not always change the kernel version when a kernel update is
+installed, so the <code>update-notifier-common</code> package needs to be installed to
+enable this functionality.</p>
 
 <h2>
 <a id="usage" class="anchor" href="#usage" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Usage</h2>
 
-<p>The web interface contains a dashboard with items that need attention, and various pages to manipulate hosts, repositories, packages, operating systems and reports.</p>
+<p>The web interface contains a dashboard with items that need attention, and
+various pages to manipulate hosts, repositories, packages, operating systems and
+reports.</p>
 
-<p>To populate the database, simply run the client on some hosts - <code>patchman-client -s http://patchman.example.org</code>. This should provide some initial data to work with.</p>
+<p>To populate the database, simply run the client on some hosts:</p>
 
-<p>On the server, the <code>patchman</code> command line utility can be used to run certain maintenance tasks, e.g. processing the reports sent from hosts, downloading repository update information from the web. Run <code>patchman -h</code> for a rundown of the usage.</p>
+<div class="highlight highlight-source-shell"><pre>$ patchman-client -s http://patchman.example.org</pre></div>
+
+<p>This should provide some initial data to work with.</p>
+
+<p>On the server, the <code>patchman</code> command line utility can be used to run certain
+maintenance tasks, e.g. processing the reports sent from hosts, downloading
+repository update information from the web. Run <code>patchman -h</code> for a rundown of
+the usage:</p>
+
+<div class="highlight highlight-source-shell"><pre>$ sbin/patchman -h
+usage: patchman [-h] [-f] [-q] [-r] [-R REPO] [-lr] [-lh] [-u] [-A] [-H HOST]
+                [-p] [-c] [-d] [-n] [-a] [-D hostA hostB]
+
+Patchman CLI tool
+
+optional arguments:
+  -h, --help            show this <span class="pl-c1">help</span> message and <span class="pl-c1">exit</span>
+  -f, --force           Ignore stored checksums and force-refresh all mirrors
+  -q, --quiet           Quiet mode (e.g. <span class="pl-k">for</span> cronjobs)
+  -r, --refresh-repos   Refresh repositories
+  -R REPO, --repo REPO  Only perform action on a specific repository (repo_id)
+  -lr, --list-repos     List all repositories
+  -lh, --list-hosts     List all hosts
+  -u, --host-updates    Find host updates
+  -A, --host-updates-alt
+                        Find host updates (alternative algorithm that may be
+                        faster when there are many homogeneous hosts)
+  -H HOST, --host HOST  Only perform action on a specific host (fqdn)
+  -p, --process-reports
+                        Process pending reports
+  -c, --clean-reports   Remove all but the last three reports
+  -d, --dbcheck         Perform some sanity checks and clean unused db entries
+  -n, --dns-checks      Perform reverse DNS checks <span class="pl-k">if</span> enabled <span class="pl-k">for</span> that host
+  -a, --all             Convenience flag <span class="pl-k">for</span> -r -A -p -c -d -n
+  -D hostA hostB, --diff hostA hostB
+                        Show differences between two hosts <span class="pl-k">in</span> diff-like output</pre></div>
 
 <h2>
 <a id="concepts" class="anchor" href="#concepts" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Concepts</h2>
 
-<p>The default settings will be fine for most people but depending on your setup, there may be some initial work required to logically organise the data sent in the host reports. The following explanations may help in this case.</p>
+<p>The default settings will be fine for most people but depending on your setup,
+there may be some initial work required to logically organise the data sent in
+the host reports. The following explanations may help in this case.</p>
 
-<p>There are a number of basic objects - Hosts, Repositories, Packages, Operating Systems and Reports. There are also Operating System Groups (which are optional) and Mirrors.</p>
+<p>There are a number of basic objects - Hosts, Repositories, Packages, Operating
+Systems and Reports. There are also Operating System Groups (which are optional)
+and Mirrors.</p>
 
 <h3>
 <a id="host" class="anchor" href="#host" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Host</h3>
@@ -111,44 +169,60 @@ python-argparse
 <h3>
 <a id="package" class="anchor" href="#package" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Package</h3>
 
-<p>A Package is a package that is either installed on a Host, or is available to download from a Repository mirror, e.g. <code>strace-4.8-11.el7.x86_64</code>, <code>grub2-tools-2.02-0.34.el7.centos.x86_64</code>, etc.</p>
+<p>A Package is a package that is either installed on a Host, or is available to
+download from a Repository mirror, e.g. <code>strace-4.8-11.el7.x86_64</code>,
+<code>grub2-tools-2.02-0.34.el7.centos.x86_64</code>, etc.</p>
 
 <h3>
 <a id="mirror" class="anchor" href="#mirror" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Mirror</h3>
 
-<p>A Mirror is a collection of Packages available on the web, e.g. a <code>yum</code> or <code>apt</code> repo.</p>
+<p>A Mirror is a collection of Packages available on the web, e.g. a <code>yum</code>, <code>yast</code>
+or <code>apt</code> repo.</p>
 
 <h3>
 <a id="repository" class="anchor" href="#repository" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Repository</h3>
 
-<p>A Repository is a collection of Mirrors. Typically all the Mirrors will contain the same Packages. For Red Hat-based Hosts, Repositories automatically link their Mirrors together. For Debian-based hosts, you may need to link all Mirrors that form a Repository using the web interface in order to reduce the time to find updates.</p>
+<p>A Repository is a collection of Mirrors. Typically all the Mirrors will contain
+the same Packages. For Red Hat-based Hosts, Repositories automatically link
+their Mirrors together. For Debian-based hosts, you may need to link all
+Mirrors that form a Repository using the web interface. This may reduce the
+time required to find updates.</p>
 
 <h3>
 <a id="report" class="anchor" href="#report" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Report</h3>
 
-<p>A Host creates a Report using <code>patchman-client</code>. This Report is sent to the Patchman server. The Report contains the Host's Operating System, and lists of the installed Packages and enabled Repositories on a Host. The Patchman server processes and records the list of Packages and Repositories contained in the Report.</p>
+<p>A Host creates a Report using <code>patchman-client</code>. This Report is sent to the
+Patchman server. The Report contains the Host's Operating System, and lists
+of the installed Packages and enabled Repositories on a Host. The Patchman
+server processes and records the list of Packages and Repositories contained in
+the Report.</p>
 
 <h3>
 <a id="operating-system-group-optional" class="anchor" href="#operating-system-group-optional" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Operating System Group (optional)</h3>
 
-<p>An OSGroup is a collection of OS's. For example, an OSGroup named "Debian 8" OSGroup would be comprised of the following OS's:</p>
+<p>An OSGroup is a collection of OS's. For example, an OSGroup named "Debian 8"
+would be comprised of the following OS's:</p>
 
 <pre><code>Debian 8.0
 Debian 8.1
 Debian 8.4
-``
-
-Likewise, an OSGroup named "CentOS 7" OSGroup could be made up of the following OS's:
-
-``
-CentOS 7.0
-CentOS 7.2.1511
-``
-
-Repositories can be associated with an OSGroup, or with the Host itself. If the `use_host_repos variable` is set to True for a Host, then updates are found by looking only at the Repositories that belong to that Host. This is the default behaviour and does not require OSGroups to be configured.
-
-If `use_host_repos` is set to False, the update-finding process looks at the OSGroup that the Host's Operating System is in, and uses the OSGroup's Repositories to determine the applicable updates. This is useful in environments where many hosts are homogeneous (e.g. cloud/cluster environments).
 </code></pre>
+
+<p>Likewise, an OSGroup named "CentOS 7" could be made up of the following OS's:</p>
+
+<pre><code>CentOS 7.0
+CentOS 7.2.1511
+</code></pre>
+
+<p>Repositories can be associated with an OSGroup, or with the Host itself. If the
+<code>use_host_repos variable</code> is set to True for a Host, then updates are found by
+looking only at the Repositories that belong to that Host. This is the default
+behaviour and does not require OSGroups to be configured.</p>
+
+<p>If <code>use_host_repos</code> is set to False, the update-finding process looks at the
+OSGroup that the Host's Operating System is in, and uses the OSGroup's
+Repositories to determine the applicable updates. This is useful in environments
+where many hosts are homogeneous (e.g. cloud/cluster environments).</p>
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/furlongm">furlongm</a></p>
