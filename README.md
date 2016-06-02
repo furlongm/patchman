@@ -3,7 +3,7 @@
 
 ## Summary
 
-Patchman is a django-based patch status monitoring tool for linux systems.
+Patchman is a Django-based patch status monitoring tool for linux systems.
 Patchman provides a web interface for monitoring the package updates available
 for linux hosts.
 
@@ -36,9 +36,11 @@ The current source code is available on github:
 
 ## Dependencies
 
-### Server-side Dependencies
+### Server-side dependencies
+
 
 ```
+python-django
 python-django-tagging
 python-django-extensions
 python-django-bootstrap3
@@ -56,8 +58,9 @@ reports sent by hosts.
 ### Client-side dependencies
 
 The client-side dependencies are kept to a minimum. `rpm` and `dpkg` are
-required to report packages, `yum` and `apt` are required to report
+required to report packages, `yum`, `zypper` and `apt` are required to report
 repositories. These packages are normally installed by default on most systems.
+`dnf` is not yet supported.
 
 rpm-based OS's can tell if a reboot is required to install a new kernel by
 looking at `uname -r` and comparing it to the highest installed kernel version.
@@ -75,8 +78,8 @@ reports.
 
 To populate the database, simply run the client on some hosts:
 
-```
-patchman-client -s http://patchman.example.org
+```shell
+$ patchman-client -s http://patchman.example.org
 ```
 
 This should provide some initial data to work with.
@@ -86,8 +89,8 @@ maintenance tasks, e.g. processing the reports sent from hosts, downloading
 repository update information from the web. Run `patchman -h` for a rundown of
 the usage:
 
-```
-sbin/patchman -h
+```shell
+$ sbin/patchman -h
 usage: patchman [-h] [-f] [-q] [-r] [-R REPO] [-lr] [-lh] [-u] [-A] [-H HOST]
                 [-p] [-c] [-d] [-n] [-a] [-D hostA hostB]
 
@@ -113,7 +116,7 @@ optional arguments:
   -n, --dns-checks      Perform reverse DNS checks if enabled for that host
   -a, --all             Convenience flag for -r -A -p -c -d -n
   -D hostA hostB, --diff hostA hostB
-                        Show differences between two hosts in difflike output
+                        Show differences between two hosts in diff-like output
 ```
 
 
@@ -139,14 +142,14 @@ download from a Repository mirror, e.g. `strace-4.8-11.el7.x86_64`,
 `grub2-tools-2.02-0.34.el7.centos.x86_64`, etc.
 
 ### Mirror
-A Mirror is a collection of Packages available on the web, e.g. a `yum` or
-`apt` repo.
+A Mirror is a collection of Packages available on the web, e.g. a `yum`, `yast`
+or `apt` repo.
 
 ### Repository
 A Repository is a collection of Mirrors. Typically all the Mirrors will contain
 the same Packages. For Red Hat-based Hosts, Repositories automatically link
 their Mirrors together. For Debian-based hosts, you may need to link all
-Mirrors that form a Repository using the web interface in order to reduce the
+Mirrors that form a Repository using the web interface. This may reduce the
 time required to find updates.
 
 ### Report
@@ -156,9 +159,9 @@ of the installed Packages and enabled Repositories on a Host. The Patchman
 server processes and records the list of Packages and Repositories contained in
 the Report.
 
-### Operating System Group
-(optional) An OSGroup is a collection of OS's. For example, an OSGroup named
-"Debian 8" would be comprised of the following OS's:
+### Operating System Group (optional)
+An OSGroup is a collection of OS's. For example, an OSGroup named "Debian 8"
+would be comprised of the following OS's:
 
 ```
 Debian 8.0
@@ -166,8 +169,7 @@ Debian 8.1
 Debian 8.4
 ```
 
-Likewise, an OSGroup named "CentOS 7" OSGroup could be made up of the following
-OS's:
+Likewise, an OSGroup named "CentOS 7" could be made up of the following OS's:
 
 ```
 CentOS 7.0
