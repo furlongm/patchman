@@ -287,7 +287,7 @@ function get_repos {
     fi
 
     # Debian
-    if [ ! -z "`/usr/bin/which apt-get 2>/dev/null`" -a -x "`/usr/bin/which apt-get 2>/dev/null`" ] ; then
+    if [ ! -z "`/usr/bin/which apt-cache 2>/dev/null`" -a -x "`/usr/bin/which apt-cache 2>/dev/null`" ] ; then
         if [ ${verbose} -eq 1 ] ; then
             echo 'Finding apt repos...'
         fi
