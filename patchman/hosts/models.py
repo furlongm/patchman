@@ -175,7 +175,7 @@ class Host(models.Model):
         kernels_q = Q(name__name='kernel') | Q(name__name='kernel-devel') | \
             Q(name__name='kernel-pae') | Q(name__name='kernel-pae-devel') | \
             Q(name__name='kernel-xen') | Q(name__name='kernel-xen-devel') | \
-            Q(name__name='kernel-headers')
+            Q(name__name='kernel-headers') | Q(name__name='kernel-default')
         repo_packages = self.get_host_repo_packages()
         host_packages = self.packages.exclude(kernels_q).distinct()
         kernel_packages = self.packages.filter(kernels_q)
@@ -276,9 +276,12 @@ class Host(models.Model):
 
     def check_if_reboot_required(self, host_highest):
 
-        ver, rel = self.kernel.rsplit('-')
-        rel = rel.rstrip('xen')
-        rel = rel.rstrip('PAE')
+        to_strip = ['xen', '-xen', 'PAE', '-pae', '-default', 'vanilla', '-pv']
+        kernel = self.kernel
+        for s in to_strip:
+            if kernel.endswith(s):
+                kernel = kernel[:-len(s)]
+        ver, rel = kernel.rsplit('-')
         kernel_ver = ('', str(ver), str(rel))
         host_highest_ver = ('', host_highest.version, host_highest.release)
         if labelCompare(kernel_ver, host_highest_ver) == -1:
