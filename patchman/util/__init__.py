@@ -17,8 +17,6 @@
 import os
 import sys
 import string
-import math
-import socket
 
 from progressbar import Bar, ETA, Percentage, ProgressBar
 
@@ -64,27 +62,19 @@ def update_pbar(index, **kwargs):
 def download_url(res, text=''):
 
     global verbose
-    headers = dict(res.headers.items())
-    if verbose and 'content-length' in headers:
-        clen = int(headers['content-length'])
-        chunk_size = 16384.0
+    if verbose and 'content-length' in res.headers:
+        clen = int(res.headers['content-length'])
         create_pbar(text, clen)
+        chunk_size = 16384
         i = 0
-        chunks = int(math.ceil(clen / chunk_size))
         data = ''
-        chunk = ''
-        for x in range(1, chunks + 1):
-            try:
-                chunk = res.read(int(chunk_size))
-            except socket.timeout as e:
-                print 'socket.timeout: %s' % e
-                return
+        for chunk in res.iter_content(chunk_size):
             i += len(chunk)
             update_pbar(i)
             data += chunk
         return data
     else:
-        return res.read()
+        return res.content
 
 
 def print_nocr(text):

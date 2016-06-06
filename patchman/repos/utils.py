@@ -18,12 +18,11 @@ import os
 import re
 import bz2
 import gzip
-import httplib
+import requests
 from datetime import datetime
 from hashlib import sha1, sha256
 from StringIO import StringIO
 from lxml import etree
-from urllib2 import Request, urlopen
 from debian.debian_support import Version
 from debian.deb822 import Sources
 
@@ -139,7 +138,6 @@ def gunzip(contents):
         warnings.filterwarnings('ignore', category=DeprecationWarning)
         if e.message == 'Not a gzipped file':
             pass
-
     return contents.getvalue()
 
 
@@ -156,15 +154,16 @@ def bunzip2(contents):
             pass
 
 
-def extract(data):
+def extract(data, fmt):
 
-    extracted = bunzip2(data)
-    if not extracted:
-        extracted = gunzip(StringIO(data))
-    return extracted
+    if fmt.endswith('bz2'):
+        return bunzip2(data)
+    elif fmt.endswith('gz'):
+        return gunzip(StringIO(data))
+    return data
 
 
-def get_primary_url(repo_url, data):
+def get_primary_url(mirror_url, data):
 
     if data.startswith('Bad repo - not in list'):
         return None, None, None
@@ -176,53 +175,47 @@ def get_primary_url(repo_url, data):
                              namespaces={'ns': ns})[0].text
     csum_type = context.xpath("//ns:data[@type='primary']/ns:checksum/@type",
                               namespaces={'ns': ns})[0]
-    primary_url = str(repo_url.rsplit('/', 2)[0]) + '/' + location
+    primary_url = str(mirror_url.rsplit('/', 2)[0]) + '/' + location
     return primary_url, checksum, csum_type
 
 
 def get_sha1(data):
-
     return sha1(data).hexdigest()
 
 
 def get_sha256(data):
-
     return sha256(data).hexdigest()
 
 
-def get_url(url):
+def get_sha(checksum_type, data):
+    """ Returns the checksum of the data. Returns None otherwise.
+    """
 
-    try:
-        res = urlopen(url=Request(url), timeout=10)
-        # don't blindly succeed with http 200 (e.g. sourceforge)
-        headers = dict(res.headers.items())
-        if 'content-type' in headers and \
-                not re.match('text/html', headers['content-type']):
-            return res
-        else:
-            return -1
-    except IOError, e:
-        if hasattr(e, 'reason'):
-            debug_message.send(sender=None, text='%s - %s\n' % (url, e.reason))
-            return -1
-        elif hasattr(e, 'code'):
-            debug_message.send(sender=None, text='%s - %s\n' % (url, e))
-            return e.code
-        else:
-            text = 'Unknown error: %s - %s\n' % (url, e)
-            error_message.send(sender=None, text=text)
-            return -1
-    except httplib.BadStatusLine, e:
-        text = 'http bad status line: %s - %s\n' % (url, e.line)
+    if checksum_type == 'sha':
+        sha = get_sha1(data)
+    elif checksum_type == 'sha256':
+        sha = get_sha256(data)
+    else:
+        text = 'Unknown checksum type: %s\n' % checksum_type
         error_message.send(sender=None, text=text)
-        return -1
+    return sha
+
+
+def get_url(url):
+    try:
+        res = requests.get(url, stream=True)
+    except requests.exceptions.Timeout:
+        info_message.send(sender=None, text='Timeout - %s\n' % url)
+    except requests.exceptions.TooManyRedirects:
+        info_message.send(sender=None, text='Too many redirects - %s\n' % url)
+    except requests.exceptions.RequestException as e:
+        info_message.send(sender=None, text='Error (%s) - %s\n' % (e, url))
+    return res
 
 
 def find_mirror_url(stored_mirror_url, formats):
     """ Find the actual URL of the mirror by trying predefined paths
     """
-
-    yast = False
 
     for fmt in formats:
         mirror_url = stored_mirror_url
@@ -231,21 +224,9 @@ def find_mirror_url(stored_mirror_url, formats):
                 mirror_url = mirror_url[:-len(f)]
         mirror_url = mirror_url.rstrip('/') + '/' + fmt
         res = get_url(mirror_url)
-        if response_is_valid(res):
+        if res.ok:
             break
-    if fmt == 'content':
-        yast = True
-    return mirror_url, res, yast
-
-
-def response_is_valid(res):
-    """ Check the reponse code of an http request. If the response is an
-        integer there has been an error (see get_url).
-    """
-    if isinstance(res, int):
-        return False
-    else:
-        return True
+    return res
 
 
 def mirrorlist_check(mirror_url):
@@ -255,10 +236,9 @@ def mirrorlist_check(mirror_url):
     """
 
     res = get_url(mirror_url)
-    if response_is_valid(res):
-        headers = dict(res.headers.items())
-        if 'content-type' in headers and \
-                re.match('text/plain', headers['content-type']) is not None:
+    if res.ok:
+        if 'content-type' in res.headers and \
+           'text/plain' in res.headers['content-type']:
             data = download_url(res, 'Downloading repo info:')
             if data is None:
                 return
@@ -302,18 +282,18 @@ def mirrorlists_check(repo):
                     info_message.send(sender=None, text=text)
 
 
-def extract_yum_packages(data):
+def extract_yum_packages(data, url):
     """ Extract package metadata from a yum primary.xml file
     """
 
-    extracted = extract(data)
+    extracted = extract(data, url)
     ns = 'http://linux.duke.edu/metadata/common'
     context = etree.iterparse(StringIO(extracted), tag='{%s}metadata' % ns)
     plen = int(context.next()[1].get('packages'))
     context = etree.iterparse(StringIO(extracted), tag='{%s}package' % ns)
+    packages = set()
 
     if plen > 0:
-        packages = set()
         ptext = 'Extracting packages: '
         progress_info_s.send(sender=None, ptext=ptext, plen=plen)
 
@@ -343,19 +323,19 @@ def extract_yum_packages(data):
                                         arch=arch,
                                         packagetype='R')
                 packages.add(package)
-        return packages
     else:
         info_message.send(sender=None, text='No packages found in repo\n')
-    return
+    return packages
 
 
-def extract_deb_packages(data, packages):
+def extract_deb_packages(data, url):
     """ Extract package metadata from debian Packages file
     """
 
-    extracted = extract(data)
+    extracted = extract(data, url)
     package_re = re.compile('^Package: ', re.M)
     plen = len(package_re.findall(extracted))
+    packages = set()
 
     if plen > 0:
         ptext = 'Extracting packages: '
@@ -383,18 +363,19 @@ def extract_deb_packages(data, packages):
             packages.add(package)
     else:
         info_message.send(sender=None, text='No packages found in repo\n')
+    return packages
 
 
 def extract_yast_packages(data):
     """ Extract package metadata from yast metadata file
     """
 
-    extracted = extract(data)
+    extracted = extract(data, 'gz')
     pkgs = re.findall('=Pkg: (.*)', extracted)
     plen = len(pkgs)
+    packages = set()
 
     if plen > 0:
-        packages = set()
         ptext = 'Extracting packages: '
         progress_info_s.send(sender=None, ptext=ptext, plen=plen)
 
@@ -408,84 +389,83 @@ def extract_yast_packages(data):
                                     arch=arch,
                                     packagetype='R')
             packages.add(package)
-        return packages
     else:
         info_message.send(sender=None, text='No packages found in repo\n')
-    return
+    return packages
 
 
-def refresh_yum_repo(mirror, data, repo_url, ts):
+def refresh_yum_repo(mirror, data, mirror_url, ts):
     """ Refresh package metadata for a yum-style rpm mirror
         and add the packages to the mirror
     """
 
-    primary_url, checksum, checksum_type = get_primary_url(repo_url, data)
+    primary_url, checksum, checksum_type = get_primary_url(mirror_url, data)
 
     if not primary_url:
         mirror.fail()
         return
 
     res = get_url(primary_url)
-    mirror.last_access_ok = response_is_valid(res)
-    if mirror.last_access_ok:
-        data = download_url(res, 'Downloading repo info (2/2):')
-        if data is None:
-            mirror.fail()
-            return
-
-        valid = checksum_is_valid(mirror, checksum, checksum_type, data)
-        if valid:
-            mirror.file_checksum = checksum
-        else:
-            mirror.fail()
-            return
-        if hasattr(settings, 'MAX_MIRRORS') and \
-                isinstance(settings.MAX_MIRRORS, int):
-            max_mirrors = settings.MAX_MIRRORS
-            # only refresh X mirrors, where X = max_mirrors
-            checksum_q = Q(mirrorlist=False, refresh=True, timestamp=ts,
-                           file_checksum=checksum)
-            have_checksum = mirror.repo.mirror_set.filter(checksum_q).count()
-            if have_checksum >= max_mirrors:
-                text = '%s mirrors already have this checksum, ' % max_mirrors
-                text += 'ignoring refresh to save time\n'
-                info_message.send(sender=None, text=text)
-            else:
-                packages = extract_yum_packages(data)
-                if packages:
-                    update_mirror_packages(mirror, packages)
-    else:
+    mirror.last_access_ok = res.ok
+    if not mirror.last_access_ok:
         mirror.fail()
+        return
+
+    data = download_url(res, 'Downloading repo info (2/2):')
+    if data is None:
+        mirror.fail()
+        return
+
+    sha = get_sha(checksum_type, data)
+    if sha is None:
+        mirror.fail()
+        return
+
+    if not checksum_is_valid(sha, checksum, mirror):
+        mirror.fail()
+        return
+
+    if mirror.file_checksum == checksum:
+        text = 'Mirror checksum has not changed, '
+        text += 'not refreshing package metadata\n'
+        info_message.send(sender=None, text=text)
+        return
+
+    mirror.file_checksum = checksum
+
+    if hasattr(settings, 'MAX_MIRRORS') and \
+            isinstance(settings.MAX_MIRRORS, int):
+        max_mirrors = settings.MAX_MIRRORS
+        # only refresh X mirrors, where X = max_mirrors
+        checksum_q = Q(mirrorlist=False, refresh=True, timestamp=ts,
+                       file_checksum=checksum)
+        have_checksum = mirror.repo.mirror_set.filter(checksum_q).count()
+        if have_checksum >= max_mirrors:
+            text = '%s mirrors already have this checksum, ' % max_mirrors
+            text += 'ignoring refresh to save time\n'
+            info_message.send(sender=None, text=text)
+        else:
+            packages = extract_yum_packages(data, primary_url)
+            if packages:
+                update_mirror_packages(mirror, packages)
 
 
-def checksum_is_valid(mirror, checksum, checksum_type, data):
-    """ Check the checksum of the data, returns True if checksum is valid, or
-        False if it is invalid or if it has not changed.
+def checksum_is_valid(sha, checksum, mirror):
+    """ Compares the computed checksum and the provided checksum. Returns True
+        if both match.
     """
 
-    if checksum_type == 'sha':
-        sha = get_sha1(data)
-    elif checksum_type == 'sha256':
-        sha = get_sha256(data)
+    if sha == checksum:
+        return True
     else:
-        text = 'Unknown checksum type: %s\n' % checksum_type
-        error_message.send(sender=None, text=text)
-
-    if sha != checksum:
-        text = '%s checksum failed for mirror %s' % (checksum_type, mirror.id)
+        text = 'Checksum failed for mirror %s' % mirror.id
         text += ', not refreshing package metadata\n'
         error_message.send(sender=None, text=text)
         mirror.last_access_ok = False
         return False
-    elif mirror.file_checksum == sha:
-        text = 'Mirror checksum has not changed, '
-        text += 'not refreshing package metadata\n'
-        info_message.send(sender=None, text=text)
-        return False
-    return True
 
 
-def refresh_yast_repo(mirror, data, repo_url):
+def refresh_yast_repo(mirror, data):
     """ Refresh package metadata for a yast-style rpm mirror
         and add the packages to the mirror
     """
@@ -493,7 +473,7 @@ def refresh_yast_repo(mirror, data, repo_url):
     package_dir = re.findall('DESCRDIR *(.*)', data)[0]
     package_url = '%s/%s/packages.gz' % (mirror.url, package_dir)
     res = get_url(package_url)
-    mirror.last_access_ok = response_is_valid(res)
+    mirror.last_access_ok = res.ok
     if mirror.last_access_ok:
         data = download_url(res, 'Downloading repo info (2/2):')
         if data is None:
@@ -521,7 +501,7 @@ def refresh_rpm_repo(repo):
         'suse/repodata/repomd.xml.bz2',
         'suse/repodata/repomd.xml.gz',
         'suse/repodata/repomd.xml',
-        'content'
+        'content',
     ]
 
     mirrorlists_check(repo)
@@ -529,22 +509,23 @@ def refresh_rpm_repo(repo):
 
     for mirror in repo.mirror_set.filter(mirrorlist=False, refresh=True):
 
-        repo_url, res, yast = find_mirror_url(mirror.url, formats)
-        mirror.last_access_ok = response_is_valid(res)
+        res = find_mirror_url(mirror.url, formats)
+        mirror.last_access_ok = res.ok
+        mirror_url = res.url
 
         if mirror.last_access_ok:
             data = download_url(res, 'Downloading repo info (1/2):')
             if data is None:
                 mirror.fail()
                 return
-            if not yast:
-                text = 'Found yum rpm repo - %s\n' % repo_url
+            if res.url.endswith('content'):
+                text = 'Found yast rpm repo - %s\n' % mirror_url
                 info_message.send(sender=None, text=text)
-                refresh_yum_repo(mirror, data, repo_url, ts)
+                refresh_yast_repo(mirror, data)
             else:
-                text = 'Found yast rpm repo - %s\n' % repo_url
+                text = 'Found yum rpm repo - %s\n' % mirror_url
                 info_message.send(sender=None, text=text)
-                refresh_yast_repo(mirror, data, repo_url)
+                refresh_yum_repo(mirror, data, mirror_url, ts)
             mirror.timestamp = ts
         else:
             mirror.fail()
@@ -560,11 +541,12 @@ def refresh_deb_repo(repo):
     formats = ['Packages.bz2', 'Packages.gz', 'Packages']
 
     for mirror in repo.mirror_set.filter(refresh=True):
-        repo_url, res, unused = find_mirror_url(mirror.url, formats)
-        mirror.last_access_ok = response_is_valid(res)
+        res = find_mirror_url(mirror.url, formats)
+        mirror.last_access_ok = res.ok
+        mirror_url = res.url
 
         if mirror.last_access_ok:
-            text = 'Found deb repo - %s\n' % repo_url
+            text = 'Found deb repo - %s\n' % mirror_url
             info_message.send(sender=None, text=text)
             data = download_url(res, 'Downloading repo info:')
             if data is None:
@@ -576,8 +558,7 @@ def refresh_deb_repo(repo):
                 text += 'not refreshing package metadata\n'
                 info_message.send(sender=None, text=text)
             else:
-                packages = set()
-                extract_deb_packages(data, packages)
+                packages = extract_deb_packages(data, mirror_url)
                 mirror.last_access_ok = True
                 mirror.timestamp = datetime.now()
                 update_mirror_packages(mirror, packages)
