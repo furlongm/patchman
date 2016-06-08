@@ -33,7 +33,7 @@ add this repo, run the following command:
 # echo "deb http://http.debian.net/debian jessie-backports main" >> /etc/apt/sources.list.d/jessie-backports.list
 
 # 1. Install dependencies.
-apt-get install python-django-tagging python-django \
+apt-get install python-django-tagging python-django python-requests \
 python-django-extensions python-argparse python-lxml python-rpm python-debian \
 python-pygooglechart python-cracklib python-progressbar libapache2-mod-wsgi \
 apache2
