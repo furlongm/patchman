@@ -147,6 +147,16 @@ def mirror_list(request):
     if checksum is not None:
         mirrors = mirrors.filter(file_checksum=checksum)
 
+    if 'search' in request.GET:
+        terms = request.GET['search'].lower()
+        query = Q()
+        for term in terms.split(' '):
+            q = Q(url__icontains=term)
+            query = query & q
+        mirrors = mirrors.filter(query)
+    else:
+        terms = ''
+
     mirrors = mirrors.distinct()
 
     page_no = request.GET.get('page')
