@@ -49,6 +49,7 @@ python-rpm
 python-progressbar
 python-lxml
 python-argparse
+python-requests
 ```
 
 The server can optionally make use of celery to asynchronously process the
