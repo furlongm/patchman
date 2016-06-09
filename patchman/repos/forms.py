@@ -26,7 +26,6 @@ class EditRepoForm(ModelForm):
         css = {
             'all': ('admin/css/widgets.css',)
         }
-        js = ('animations.js', 'actions.js')
 
     mirrors = ModelMultipleChoiceField(
         queryset=Mirror.objects.select_related(),
