@@ -190,7 +190,6 @@ def get_sha256(data):
 def get_sha(checksum_type, data):
     """ Returns the checksum of the data. Returns None otherwise.
     """
-
     if checksum_type == 'sha':
         sha = get_sha1(data)
     elif checksum_type == 'sha256':
@@ -202,6 +201,9 @@ def get_sha(checksum_type, data):
 
 
 def get_url(url):
+    """ Perform a http GET on a URL. Return None on error.
+    """
+    res = None
     try:
         res = requests.get(url, stream=True)
     except requests.exceptions.Timeout:
@@ -211,6 +213,15 @@ def get_url(url):
     except requests.exceptions.RequestException as e:
         info_message.send(sender=None, text='Error (%s) - %s\n' % (e, url))
     return res
+
+
+def response_is_valid(res):
+    """ Check if a http response is valid
+    """
+    if res is not None:
+        return res.ok
+    else:
+        return False
 
 
 def find_mirror_url(stored_mirror_url, formats):
@@ -224,9 +235,8 @@ def find_mirror_url(stored_mirror_url, formats):
                 mirror_url = mirror_url[:-len(f)]
         mirror_url = mirror_url.rstrip('/') + '/' + fmt
         res = get_url(mirror_url)
-        if res.ok:
-            break
-    return res
+        if res is not None and res.ok:
+            return res
 
 
 def mirrorlist_check(mirror_url):
@@ -236,7 +246,7 @@ def mirrorlist_check(mirror_url):
     """
 
     res = get_url(mirror_url)
-    if res.ok:
+    if response_is_valid(res):
         if 'content-type' in res.headers and \
            'text/plain' in res.headers['content-type']:
             data = download_url(res, 'Downloading repo info:')
@@ -406,7 +416,8 @@ def refresh_yum_repo(mirror, data, mirror_url, ts):
         return
 
     res = get_url(primary_url)
-    mirror.last_access_ok = res.ok
+    mirror.last_access_ok = response_is_valid(res)
+
     if not mirror.last_access_ok:
         mirror.fail()
         return
@@ -473,7 +484,7 @@ def refresh_yast_repo(mirror, data):
     package_dir = re.findall('DESCRDIR *(.*)', data)[0]
     package_url = '%s/%s/packages.gz' % (mirror.url, package_dir)
     res = get_url(package_url)
-    mirror.last_access_ok = res.ok
+    mirror.last_access_ok = response_is_valid(res)
     if mirror.last_access_ok:
         data = download_url(res, 'Downloading repo info (2/2):')
         if data is None:
@@ -510,14 +521,14 @@ def refresh_rpm_repo(repo):
     for mirror in repo.mirror_set.filter(mirrorlist=False, refresh=True):
 
         res = find_mirror_url(mirror.url, formats)
-        mirror.last_access_ok = res.ok
-        mirror_url = res.url
+        mirror.last_access_ok = response_is_valid(res)
 
         if mirror.last_access_ok:
             data = download_url(res, 'Downloading repo info (1/2):')
             if data is None:
                 mirror.fail()
                 return
+            mirror_url = res.url
             if res.url.endswith('content'):
                 text = 'Found yast rpm repo - %s\n' % mirror_url
                 info_message.send(sender=None, text=text)
@@ -542,7 +553,7 @@ def refresh_deb_repo(repo):
 
     for mirror in repo.mirror_set.filter(refresh=True):
         res = find_mirror_url(mirror.url, formats)
-        mirror.last_access_ok = res.ok
+        mirror.last_access_ok = response_is_valid(res)
         mirror_url = res.url
 
         if mirror.last_access_ok:
