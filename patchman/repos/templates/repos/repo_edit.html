@@ -1,8 +1,14 @@
 {% extends "base.html" %}
 
-{% load common bootstrap3 %}
+{% load common bootstrap3 staticfiles %}
 
-{% block extrahead %} {{ edit_form.media }} {% endblock %}
+{% block extrahead %}
+<script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/jquery.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/jquery.init.js' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/actions.js' %}"></script>
+{{ edit_form.media }}
+{% endblock %}
 
 {% block page_title %}Repository - {{ repo }} {% endblock %}
 
