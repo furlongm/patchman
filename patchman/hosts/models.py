@@ -222,7 +222,7 @@ class Host(models.Model):
         for package in host_packages:
             highest_package = package
             best_repo = self.find_best_repo(package, hostrepos)
-            priority = 0
+            priority = None
             if best_repo is not None:
                 priority = best_repo.priority
 
@@ -235,12 +235,15 @@ class Host(models.Model):
                 if highest_package.compare_version(potential_update) == -1 \
                         and package.compare_version(potential_update) == -1:
 
-                    pu_best_repo = self.find_best_repo(potential_update,
-                                                       hostrepos)
-                    pu_priority = pu_best_repo.priority
-
-                    # proceed if that repo has a greater or equal priority
-                    if pu_priority >= priority:
+                    if priority is not None:
+                        # proceed only if the package is from a repo with a
+                        # priority and that priority is >= the repo priority
+                        pu_best_repo = self.find_best_repo(potential_update,
+                                                           hostrepos)
+                        pu_priority = pu_best_repo.priority
+                        if priority >= pu_priority:
+                            highest_package = potential_update
+                    else:
                         highest_package = potential_update
 
             if highest_package != package:
