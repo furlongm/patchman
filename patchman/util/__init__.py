@@ -70,7 +70,8 @@ def download_url(res, text=''):
         data = ''
         for chunk in res.iter_content(chunk_size):
             i += len(chunk)
-            update_pbar(i)
+            if i <= clen:
+                update_pbar(i)
             data += chunk
         return data
     else:
