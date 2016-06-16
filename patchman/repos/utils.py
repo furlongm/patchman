@@ -19,12 +19,13 @@ import re
 import bz2
 import gzip
 try:
+    HAVE_LZMA=True
     import lzma
 except ImportError:
     try:
         from backports import lzma
     except ImportError:
-        NO_LZMA = True
+        HAVE_LZMA = False
 import requests
 from datetime import datetime
 from hashlib import sha1, sha256
@@ -177,7 +178,7 @@ def extract(data, fmt):
     """ Extract the contents based on the file ending. Return the untouched
         data if no file ending matches, else return the extracted contents.
     """
-    if fmt.endswith('xz') and not NO_LZMA:
+    if fmt.endswith('xz') and HAVE_LZMA:
         return unxz(data)
     elif fmt.endswith('bz2'):
         return bunzip2(data)
@@ -574,7 +575,9 @@ def refresh_deb_repo(repo):
         are and then downloads and extracts packages from those files.
     """
 
-    formats = ['Packages.xz', 'Packages.bz2', 'Packages.gz', 'Packages']
+    formats = ['Packages.bz2', 'Packages.gz', 'Packages']
+    if HAVE_LZMA:
+        formats.insert(0, 'Packages.xz')
 
     for mirror in repo.mirror_set.filter(refresh=True):
         res = find_mirror_url(mirror.url, formats)
