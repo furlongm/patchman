@@ -529,16 +529,18 @@ def refresh_rpm_repo(repo):
     """
 
     formats = [
-        'repodata/repomd.xml.xz',
         'repodata/repomd.xml.bz2',
         'repodata/repomd.xml.gz',
         'repodata/repomd.xml',
-        'suse/repodata/repomd.xml.xz',
         'suse/repodata/repomd.xml.bz2',
         'suse/repodata/repomd.xml.gz',
         'suse/repodata/repomd.xml',
         'content',
     ]
+
+    if lzma is not None:
+       formats.insert(0, 'repodata/repomd.xml.xz')
+       formats.insert(4, 'suse/repodata/repomd.xml.xz')
 
     mirrorlists_check(repo)
     ts = datetime.now().replace(microsecond=0)
