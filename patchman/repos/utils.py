@@ -18,6 +18,13 @@ import os
 import re
 import bz2
 import gzip
+try:
+    import lzma
+except ImportError:
+    try:
+        from backports import lzma
+    except ImportError:
+        NO_LZMA = True
 import requests
 from datetime import datetime
 from hashlib import sha1, sha256
@@ -128,21 +135,23 @@ def update_mirror_packages(mirror, packages):
 
 
 def gunzip(contents):
-
+    """ gunzip contents in memory and return the data
+    """
     try:
         gzipdata = gzip.GzipFile(fileobj=contents)
         gzipdata = gzipdata.read()
         contents = StringIO(gzipdata)
+        return contents.getvalue()
     except IOError, e:
         import warnings
         warnings.filterwarnings('ignore', category=DeprecationWarning)
         if e.message == 'Not a gzipped file':
             pass
-    return contents.getvalue()
 
 
 def bunzip2(contents):
-
+    """ bunzip2 contents in memory and return the data
+    """
     try:
         bzip2data = bz2.decompress(contents)
         return bzip2data
@@ -154,9 +163,23 @@ def bunzip2(contents):
             pass
 
 
-def extract(data, fmt):
+def unxz(contents):
+    """ unxz contents in memory and return the data
+    """
+    try:
+        xzdata = lzma.decompress(contents)
+        return xzdata
+    except lzma.LZMAError:
+        pass
 
-    if fmt.endswith('bz2'):
+
+def extract(data, fmt):
+    """ Extract the contents based on the file ending. Return the untouched
+        data if no file ending matches, else return the extracted contents.
+    """
+    if fmt.endswith('xz') and not NO_LZMA:
+        return unxz(data)
+    elif fmt.endswith('bz2'):
         return bunzip2(data)
     elif fmt.endswith('gz'):
         return gunzip(StringIO(data))
@@ -506,9 +529,11 @@ def refresh_rpm_repo(repo):
     """
 
     formats = [
+        'repodata/repomd.xml.xz',
         'repodata/repomd.xml.bz2',
         'repodata/repomd.xml.gz',
         'repodata/repomd.xml',
+        'suse/repodata/repomd.xml.xz',
         'suse/repodata/repomd.xml.bz2',
         'suse/repodata/repomd.xml.gz',
         'suse/repodata/repomd.xml',
@@ -549,7 +574,7 @@ def refresh_deb_repo(repo):
         are and then downloads and extracts packages from those files.
     """
 
-    formats = ['Packages.bz2', 'Packages.gz', 'Packages']
+    formats = ['Packages.xz', 'Packages.bz2', 'Packages.gz', 'Packages']
 
     for mirror in repo.mirror_set.filter(refresh=True):
         res = find_mirror_url(mirror.url, formats)
