@@ -70,13 +70,13 @@ def os_detail(request, os_id):
             osgroup = create_form.save()
             os.osgroup = osgroup
             os.save()
-            text = 'Created OS Group %s and added OS %s to it' % (osgroup, os)
+            text = 'Created OS Group {0!s} and added OS {1!s} to it'.format(osgroup, os)
             messages.info(request, text)
             return HttpResponseRedirect(os.get_absolute_url())
         add_form = AddOSToOSGroupForm(request.POST, instance=os, prefix='add')
         if add_form.is_valid():
             add_form.save()
-            text = 'OS %s added to OS Group %s' % (os, os.osgroup)
+            text = 'OS {0!s} added to OS Group {1!s}'.format(os, os.osgroup)
             messages.info(request, text)
             return HttpResponseRedirect(os.get_absolute_url())
     else:
@@ -104,7 +104,7 @@ def os_delete(request, os_id):
         if 'delete' in request.POST:
             if os:
                 os.delete()
-                messages.info(request, 'OS %s has been deleted' % os)
+                messages.info(request, 'OS {0!s} has been deleted'.format(os))
                 return HttpResponseRedirect(reverse('os_list'))
             else:
                 if not oses:
@@ -113,7 +113,7 @@ def os_delete(request, os_id):
                     return HttpResponseRedirect(reverse('os_list'))
                 for os in oses:
                     os.delete()
-                text = '%s OS\'s have been deleted' % len(oses)
+                text = '{0!s} OS\'s have been deleted'.format(len(oses))
                 messages.info(request, text)
                 return HttpResponseRedirect(reverse('os_list'))
         elif 'cancel' in request.POST:
@@ -184,7 +184,7 @@ def osgroup_delete(request, osgroup_id):
     if request.method == 'POST':
         if 'delete' in request.POST:
             osgroup.delete()
-            messages.info(request, 'OS Group %s has been deleted' % osgroup)
+            messages.info(request, 'OS Group {0!s} has been deleted'.format(osgroup))
             return HttpResponseRedirect(reverse('os_list'))
         elif 'cancel' in request.POST:
             oid = osgroup_id

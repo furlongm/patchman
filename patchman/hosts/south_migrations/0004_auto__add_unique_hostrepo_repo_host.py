@@ -15,7 +15,7 @@ class Migration(SchemaMigration):
             # Remove existing duplicates
             hostrepos = []
             for hostrepo in orm.HostRepo.objects.all():
-                hr_string = '%s-%s' % (hostrepo.host.id, hostrepo.repo.id)
+                hr_string = '{0!s}-{1!s}'.format(hostrepo.host.id, hostrepo.repo.id)
                 if hr_string in hostrepos:
                     hostrepo.delete()
                 else:

@@ -29,7 +29,7 @@ register = Library()
 @register.simple_tag
 def active(request, pattern):
     import re
-    if re.search('^%s/%s' % (request.META['SCRIPT_NAME'], pattern),
+    if re.search('^{0!s}/{1!s}'.format(request.META['SCRIPT_NAME'], pattern),
                  request.path):
         return 'active'
     return ''
@@ -40,9 +40,9 @@ def yes_no_img(boolean, alt_yes='Active', alt_no='Not Active'):
     yes_icon = static('img/icon-yes.gif')
     no_icon = static('img/icon-no.gif')
     if boolean:
-        html = "<img src='%s' alt='%s' />" % (yes_icon, alt_yes)
+        html = "<img src='{0!s}' alt='{1!s}' />".format(yes_icon, alt_yes)
     else:
-        html = "<img src='%s' alt='%s' />" % (no_icon, alt_no)
+        html = "<img src='{0!s}' alt='{1!s}' />".format(no_icon, alt_no)
     return format_html(html)
 
 
@@ -51,9 +51,9 @@ def no_yes_img(boolean, alt_yes='Not Required', alt_no='Required'):
     yes_icon = static('img/icon-yes.gif')
     no_icon = static('img/icon-no.gif')
     if not boolean:
-        html = "<img src='%s' alt='%s' />" % (yes_icon, alt_yes)
+        html = "<img src='{0!s}' alt='{1!s}' />".format(yes_icon, alt_yes)
     else:
-        html = "<img src='%s' alt='%s' />" % (no_icon, alt_no)
+        html = "<img src='{0!s}' alt='{1!s}' />".format(no_icon, alt_no)
     return format_html(html)
 
 
@@ -64,8 +64,7 @@ def gen_table(object_list, template_name=None):
     if not template_name:
         app_label = object_list.model._meta.app_label
         model_name = object_list.model._meta.verbose_name
-        template_name = '%s/%s_table.html' % \
-            (app_label, model_name.lower().replace(' ', ''))
+        template_name = '{0!s}/{1!s}_table.html'.format(app_label, model_name.lower().replace(' ', ''))
     template = get_template(template_name)
     html = template.render({'object_list': object_list})
     return html
@@ -78,7 +77,7 @@ def object_count(page):
             name = page.paginator.object_list.model._meta.verbose_name
         else:
             name = page.paginator.object_list.model._meta.verbose_name_plural
-    return '%s %s' % (page.paginator.count, name)
+    return '{0!s} {1!s}'.format(page.paginator.count, name)
 
 
 @register.assignment_tag
