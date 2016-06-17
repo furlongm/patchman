@@ -130,13 +130,14 @@ class Report(models.Model):
                 with transaction.atomic():
                     host.save()
             except IntegrityError as e:
-                print e
+                error_message.send(sender=None, text=e)
             except DatabaseError as e:
-                print e
+                error_message.send(sender=None, text=e)
             host.check_rdns()
 
             if verbose:
-                print 'Processing report %s - %s' % (self.id, self.host)
+                text = 'Processing report %s - %s' % (self.id, self.host)
+                info_message.send(sender=None, text=text)
 
             from patchman.reports.utils import process_packages, \
                 process_repos, process_updates
@@ -153,8 +154,9 @@ class Report(models.Model):
 
             if find_updates:
                 if verbose:
-                    print 'Finding updates for report %s - %s' % \
-                        (self.id, self.host)
+                    text = 'Finding updates for report %s - %s' % (self.id,
+                                                                   self.host)
+                    info_message.send(sender=None, text=text)
                 host.find_updates()
         else:
             if self.processed:

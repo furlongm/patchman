@@ -23,7 +23,8 @@ from patchman.arch.models import MachineArchitecture, PackageArchitecture
 from patchman.repos.models import Repository, Mirror, MirrorPackage
 from patchman.packages.models import Package, PackageName, PackageUpdate
 from patchman.packages.utils import find_versions
-from patchman.signals import progress_info_s, progress_update_s
+from patchman.signals import progress_info_s, progress_update_s, \
+    error_message, info_message
 
 
 def process_repos(report, host):
@@ -48,7 +49,7 @@ def process_repos(report, host):
                         hostrepo, c = host_repos.get_or_create(host=host,
                                                                repo=repo)
                 except IntegrityError as e:
-                    print e
+                    error_message.send(sender=None, text=e)
                     hostrepo = host_repos.get(host=host, repo=repo)
                 try:
                     if hostrepo.priority != priority:
@@ -56,7 +57,7 @@ def process_repos(report, host):
                         with transaction.atomic():
                             hostrepo.save()
                 except IntegrityError as e:
-                    print e
+                    error_message.send(sender=None, text=e)
             progress_update_s.send(sender=None, index=i + 1)
 
         removals = old_repos.exclude(pk__in=repo_ids)
@@ -83,12 +84,13 @@ def process_packages(report, host):
                     with transaction.atomic():
                         host.packages.add(package)
                 except IntegrityError as e:
-                    print e
+                    error_message.send(sender=None, text=e)
                 except DatabaseError as e:
-                    print e
+                    error_message.send(sender=None, text=e)
             else:
                 if pkg_str[0].lower() != 'gpg-pubkey':
-                    print 'No package returned for %s' % pkg_str
+                    text = 'No package returned for %s' % pkg_str
+                    info_message.send(sender=None, text=text)
             progress_update_s.send(sender=None, index=i + 1)
 
         removals = old_packages.exclude(pk__in=package_ids)
@@ -253,12 +255,12 @@ def process_repo(repo, arch):
                                                            arch=r_arch,
                                                            repotype=r_type)
         except IntegrityError as e:
-            print e
+            error_message.send(sender=None, text=e)
             repository = repositories.get(name=r_name,
                                           arch=r_arch,
                                           repotype=r_type)
         except DatabaseError as e:
-            print e
+            error_message.send(sender=None, text=e)
 
     if r_id and repository.repo_id != r_id:
         repository.repo_id = r_id
@@ -300,10 +302,10 @@ def process_package(pkg, protocol):
                 package_names = PackageName.objects.all()
                 p_name, c = package_names.get_or_create(name=name)
         except IntegrityError as e:
-            print e
+            error_message.send(sender=None, text=e)
             p_name = package_names.get(name=name)
         except DatabaseError as e:
-            print e
+            error_message.send(sender=None, text=e)
 
         if pkg[4] != '':
             arch = pkg[4]
@@ -343,7 +345,7 @@ def process_package(pkg, protocol):
                                                     packagetype=p_type)
                 return package
         except IntegrityError as e:
-            print e
+            error_message.send(sender=None, text=e)
             package = packages.get(name=p_name,
                                    arch=p_arch,
                                    epoch=p_epoch,
@@ -352,4 +354,4 @@ def process_package(pkg, protocol):
                                    packagetype=p_type)
             return package
         except DatabaseError as e:
-            print e
+            error_message.send(sender=None, text=e)
