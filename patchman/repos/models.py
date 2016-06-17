@@ -21,7 +21,7 @@ from patchman.packages.models import Package
 
 from patchman.repos.utils import refresh_deb_repo, refresh_rpm_repo, \
     update_mirror_packages
-from patchman.signals import error_message, info_message
+from patchman.signals import info_message, warning_message, error_message
 
 
 class Repository(models.Model):
@@ -57,7 +57,7 @@ class Repository(models.Model):
         """ Show info about this repo, including mirrors
         """
         text = '{0!s} : {1!s}\n'.format(self.id, self.name)
-        text += 'security: {0!s}  arch: {1!s}\n'.format(self.security, self.arch)
+        text += 'security: {0!s}    arch: {1!s}\n'.format(self.security, self.arch)
         text += 'Mirrors:'
 
         info_message.send(sender=None, text=text)
@@ -81,11 +81,11 @@ class Repository(models.Model):
             elif self.repotype == Repository.RPM:
                 refresh_rpm_repo(self)
             else:
-                text = 'Error: unknown repo type for repo {0!s}: {1!s}\n'.format(self.id, self.repotype)
+                text = 'Error: unknown repo type for repo {0!s}: {1!s}'.format(self.id, self.repotype)
                 error_message.send(sender=None, text=text)
         else:
-            text = 'Repo requires certificate authentication, not updating\n'
-            info_message.send(sender=None, text=text)
+            text = 'Repo requires certificate authentication, not updating'
+            warning_message.send(sender=None, text=text)
 
     def disable(self):
         """ Disable a repo. This involves disabling each mirror, which stops it
@@ -153,12 +153,12 @@ class Mirror(models.Model):
             Disables refresh on a mirror if it fails more than 28 times
         """
 
-        text = 'No usable mirror found at {0!s}\n'.format(self.url)
+        text = 'No usable mirror found at {0!s}'.format(self.url)
         error_message.send(sender=None, text=text)
         self.fail_count = self.fail_count + 1
         if self.fail_count > 28:
             self.refresh = False
-            text = 'Mirror has failed more than 28 times, disabling refresh\n'
+            text = 'Mirror has failed more than 28 times, disabling refresh'
             error_message.send(sender=None, text=text)
 
     def update_packages(self, packages):
