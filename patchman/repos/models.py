@@ -56,17 +56,14 @@ class Repository(models.Model):
     def show(self):
         """ Show info about this repo, including mirrors
         """
-        text = ['%s : %s\n' % (self.id, self.name),
-                'security: %s  arch: %s\n' % (self.security, self.arch),
-                'Mirrors:\n']
+        text = '%s : %s\n' % (self.id, self.name)
+        text += 'security: %s  arch: %s\n' % (self.security, self.arch)
+        text += 'Mirrors:'
 
-        for line in text:
-            info_message.send(sender=None, text=line)
+        info_message.send(sender=None, text=text)
 
         for mirror in self.mirror_set.all():
             mirror.show()
-
-        info_message.send(sender=None, text='\n')
 
     def refresh(self, force=False):
         """ Refresh all of a repos mirror metadata,
@@ -146,12 +143,11 @@ class Mirror(models.Model):
         """ Show info about this mirror
         """
 
-        text = [' %s : %s\n' % (self.id, self.url),
-                ' last updated: %s    checksum: %s\n' %
-                (self.timestamp, self.file_checksum)]
+        text = ' %s : %s\n' % (self.id, self.url)
+        text += ' last updated: %s    checksum: %s\n' % (self.timestamp,
+                                                         self.file_checksum)
 
-        for line in text:
-            info_message.send(sender=None, text=line)
+        info_message.send(sender=None, text=text)
 
     def fail(self):
         """ Records that the mirror has failed

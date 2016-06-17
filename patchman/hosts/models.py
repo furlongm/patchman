@@ -26,7 +26,7 @@ from patchman.domains.models import Domain
 from patchman.repos.models import Repository
 from patchman.operatingsystems.models import OS
 from patchman.arch.models import MachineArchitecture
-from patchman.signals import info_message
+from patchman.signals import info_message, error_message
 from patchman.hosts.utils import update_rdns, remove_reports
 
 
@@ -60,26 +60,23 @@ class Host(models.Model):
     def show(self):
         """ Show info about this host
         """
-        text = []
-        text.append('%s:\n' % self)
-        text.append('IP address   : %s\n' % self.ipaddress)
-        text.append('Reverse DNS  : %s\n' % self.reversedns)
-        text.append('Domain       : %s\n' % self.domain)
-        text.append('OS           : %s\n' % self.os)
-        text.append('Kernel       : %s\n' % self.kernel)
-        text.append('Architecture : %s\n' % self.arch)
-        text.append('Last report  : %s\n' % self.lastreport)
-        text.append('Packages     : %s\n' % self.get_num_packages())
-        text.append('Repos        : %s\n' % self.get_num_repos())
-        text.append('Updates      : %s\n' % self.get_num_updates())
-        text.append('Tags         : %s\n' % self.tags)
-        text.append('Needs reboot : %s\n' % self.reboot_required)
-        text.append('Updated at   : %s\n' % self.updated_at)
-        text.append('Host repos   : %s\n' % self.host_repos_only)
-        text.append('\n')
+        text = '%s:\n' % self
+        text += 'IP address   : %s\n' % self.ipaddress
+        text += 'Reverse DNS  : %s\n' % self.reversedns
+        text += 'Domain       : %s\n' % self.domain
+        text += 'OS           : %s\n' % self.os
+        text += 'Kernel       : %s\n' % self.kernel
+        text += 'Architecture : %s\n' % self.arch
+        text += 'Last report  : %s\n' % self.lastreport
+        text += 'Packages     : %s\n' % self.get_num_packages()
+        text += 'Repos        : %s\n' % self.get_num_repos()
+        text += 'Updates      : %s\n' % self.get_num_updates()
+        text += 'Tags         : %s\n' % self.tags
+        text += 'Needs reboot : %s\n' % self.reboot_required
+        text += 'Updated at   : %s\n' % self.updated_at
+        text += 'Host repos   : %s\n' % self.host_repos_only
 
-        for line in text:
-            info_message.send(sender=None, text=line)
+        info_message.send(sender=None, text=text)
 
     @models.permalink
     def get_absolute_url(self):
@@ -104,14 +101,14 @@ class Host(models.Model):
         if self.check_dns:
             update_rdns(self)
             if self.hostname == self.reversedns:
-                info_message.send(sender=None, text='Reverse DNS matches\n')
+                info_message.send(sender=None, text='Reverse DNS matches')
             else:
                 info_message.send(sender=None,
-                                  text='Reverse DNS mismatch found: %s != %s\n'
+                                  text='Reverse DNS mismatch found: %s != %s'
                                   % (self.hostname, self.reversedns))
         else:
             info_message.send(sender=None,
-                              text='Reverse DNS check disabled\n')
+                              text='Reverse DNS check disabled')
 
     def clean_reports(self, timestamp):
         remove_reports(self, timestamp)
@@ -152,21 +149,21 @@ class Host(models.Model):
                     newpackage=highest_package,
                     security=security)
         except IntegrityError as e:
-            print e
+            error_message.send(sender=None, text=e)
             update = updates.get(oldpackage=package,
                                  newpackage=highest_package,
                                  security=security)
         except DatabaseError as e:
-            print e
+            error_message.send(sender=None, text=e)
         try:
             with transaction.atomic():
                 self.updates.add(update)
-            info_message.send(sender=None, text="%s\n" % update)
+            info_message.send(sender=None, text="%s" % update)
             return update.id
         except IntegrityError as e:
-            print e
+            error_message.send(sender=None, text=e)
         except DatabaseError as e:
-            print e
+            error_message.send(sender=None, text=e)
 
     def find_updates(self):
 
@@ -324,7 +321,7 @@ class Host(models.Model):
             with transaction.atomic():
                 self.save()
         except DatabaseError as e:
-            print e
+            error_message.send(sender=None, text=e)
 
         return update_ids
 

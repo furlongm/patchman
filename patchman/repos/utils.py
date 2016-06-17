@@ -41,8 +41,8 @@ from django.db.models import Q
 from patchman.packages.models import Package, PackageName, PackageString
 from patchman.arch.models import PackageArchitecture
 from patchman.util import download_url
-from patchman.signals import info_message, error_message, debug_message, \
-    progress_info_s, progress_update_s
+from patchman.signals import progress_info_s, progress_update_s, \
+    info_message, warning_message, error_message, debug_message
 
 
 def update_mirror_packages(mirror, packages):
@@ -142,11 +142,11 @@ def gunzip(contents):
         gzipdata = gzipdata.read()
         contents = StringIO(gzipdata)
         return contents.getvalue()
-    except IOError, e:
+    except IOError as e:
         import warnings
         warnings.filterwarnings('ignore', category=DeprecationWarning)
         if e.message == 'Not a gzipped file':
-            pass
+            error_message.send(sender=None, text='gunzip: ' + e.message)
 
 
 def bunzip2(contents):
@@ -155,12 +155,12 @@ def bunzip2(contents):
     try:
         bzip2data = bz2.decompress(contents)
         return bzip2data
-    except IOError, e:
+    except IOError as e:
         if e == 'invalid data stream':
-            pass
-    except ValueError, e:
+            error_message.send(sender=None, text='bunzip2: ' + e)
+    except ValueError as e:
         if e == 'couldn\'t find end of stream':
-            pass
+            error_message.send(sender=None, text='bunzip2: ' + e)
 
 
 def unxz(contents):
@@ -169,8 +169,8 @@ def unxz(contents):
     try:
         xzdata = lzma.decompress(contents)
         return xzdata
-    except lzma.LZMAError:
-        pass
+    except lzma.LZMAError as e:
+        error_message.send(sender=None, text='lzma: ' + e)
 
 
 def extract(data, fmt):
@@ -218,7 +218,7 @@ def get_sha(checksum_type, data):
     elif checksum_type == 'sha256':
         sha = get_sha256(data)
     else:
-        text = 'Unknown checksum type: %s\n' % checksum_type
+        text = 'Unknown checksum type: %s' % checksum_type
         error_message.send(sender=None, text=text)
     return sha
 
@@ -230,11 +230,11 @@ def get_url(url):
     try:
         res = requests.get(url, stream=True)
     except requests.exceptions.Timeout:
-        info_message.send(sender=None, text='Timeout - %s\n' % url)
+        error_message.send(sender=None, text='Timeout - %s' % url)
     except requests.exceptions.TooManyRedirects:
-        info_message.send(sender=None, text='Too many redirects - %s\n' % url)
+        error_message.send(sender=None, text='Too many redirects - %s' % url)
     except requests.exceptions.RequestException as e:
-        info_message.send(sender=None, text='Error (%s) - %s\n' % (e, url))
+        error_message.send(sender=None, text='Error (%s) - %s' % (e, url))
     return res
 
 
@@ -292,7 +292,7 @@ def mirrorlists_check(repo):
             mirror.mirrorlist = True
             mirror.last_access_ok = True
             mirror.save()
-            text = 'Found mirrorlist - %s\n' % mirror.url
+            text = 'Found mirrorlist - %s' % mirror.url
             info_message.send(sender=None, text=text)
             for mirror_url in mirror_urls:
                 mirror_url = mirror_url.replace('$ARCH', repo.arch.name)
@@ -304,14 +304,14 @@ def mirrorlists_check(repo):
                     q = Q(mirrorlist=False, refresh=True)
                     existing = mirror.repo.mirror_set.filter(q).count()
                     if existing >= max_mirrors:
-                        text = '%s mirrors already exist, not adding %s\n' \
+                        text = '%s mirrors already exist, not adding %s' \
                             % (max_mirrors, mirror_url)
-                        info_message.send(sender=None, text=text)
+                        warning_message.send(sender=None, text=text)
                         continue
                 from patchman.repos.models import Mirror
                 m, c = Mirror.objects.get_or_create(repo=repo, url=mirror_url)
                 if c:
-                    text = 'Added mirror - %s\n' % mirror_url
+                    text = 'Added mirror - %s' % mirror_url
                     info_message.send(sender=None, text=text)
 
 
@@ -357,7 +357,7 @@ def extract_yum_packages(data, url):
                                         packagetype='R')
                 packages.add(package)
     else:
-        info_message.send(sender=None, text='No packages found in repo\n')
+        info_message.send(sender=None, text='No packages found in repo')
     return packages
 
 
@@ -395,7 +395,7 @@ def extract_deb_packages(data, url):
                                     packagetype='D')
             packages.add(package)
     else:
-        info_message.send(sender=None, text='No packages found in repo\n')
+        info_message.send(sender=None, text='No packages found in repo')
     return packages
 
 
@@ -423,7 +423,7 @@ def extract_yast_packages(data):
                                     packagetype='R')
             packages.add(package)
     else:
-        info_message.send(sender=None, text='No packages found in repo\n')
+        info_message.send(sender=None, text='No packages found in repo')
     return packages
 
 
@@ -461,8 +461,8 @@ def refresh_yum_repo(mirror, data, mirror_url, ts):
 
     if mirror.file_checksum == checksum:
         text = 'Mirror checksum has not changed, '
-        text += 'not refreshing package metadata\n'
-        info_message.send(sender=None, text=text)
+        text += 'not refreshing package metadata'
+        warning_message.send(sender=None, text=text)
         return
 
     mirror.file_checksum = checksum
@@ -476,7 +476,7 @@ def refresh_yum_repo(mirror, data, mirror_url, ts):
         have_checksum = mirror.repo.mirror_set.filter(checksum_q).count()
         if have_checksum >= max_mirrors:
             text = '%s mirrors already have this checksum, ' % max_mirrors
-            text += 'ignoring refresh to save time\n'
+            text += 'ignoring refresh to save time'
             info_message.send(sender=None, text=text)
         else:
             packages = extract_yum_packages(data, primary_url)
@@ -493,7 +493,7 @@ def checksum_is_valid(sha, checksum, mirror):
         return True
     else:
         text = 'Checksum failed for mirror %s' % mirror.id
-        text += ', not refreshing package metadata\n'
+        text += ', not refreshing package metadata'
         error_message.send(sender=None, text=text)
         mirror.last_access_ok = False
         return False
@@ -557,11 +557,11 @@ def refresh_rpm_repo(repo):
                 return
             mirror_url = res.url
             if res.url.endswith('content'):
-                text = 'Found yast rpm repo - %s\n' % mirror_url
+                text = 'Found yast rpm repo - %s' % mirror_url
                 info_message.send(sender=None, text=text)
                 refresh_yast_repo(mirror, data)
             else:
-                text = 'Found yum rpm repo - %s\n' % mirror_url
+                text = 'Found yum rpm repo - %s' % mirror_url
                 info_message.send(sender=None, text=text)
                 refresh_yum_repo(mirror, data, mirror_url, ts)
             mirror.timestamp = ts
@@ -586,7 +586,7 @@ def refresh_deb_repo(repo):
         mirror_url = res.url
 
         if mirror.last_access_ok:
-            text = 'Found deb repo - %s\n' % mirror_url
+            text = 'Found deb repo - %s' % mirror_url
             info_message.send(sender=None, text=text)
             data = download_url(res, 'Downloading repo info:')
             if data is None:
@@ -595,7 +595,7 @@ def refresh_deb_repo(repo):
             sha1 = get_sha1(data)
             if mirror.file_checksum == sha1:
                 text = 'Mirror checksum has not changed, '
-                text += 'not refreshing package metadata\n'
+                text += 'not refreshing package metadata'
                 info_message.send(sender=None, text=text)
             else:
                 packages = extract_deb_packages(data, mirror_url)

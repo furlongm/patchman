@@ -7,3 +7,4 @@ python-debian==0.1.23
 lxml==3.5.0
 chardet==2.3.0
 requests==2.10.0
+colorama==0.3.7

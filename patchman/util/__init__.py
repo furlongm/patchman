@@ -17,6 +17,7 @@
 import os
 import sys
 import string
+from colorama import Fore, Style
 
 from progressbar import Bar, ETA, Percentage, ProgressBar
 
@@ -28,39 +29,47 @@ verbose = None
 
 
 def get_verbosity():
-
+    """ Get the global verbosity level
+    """
     global verbose
     return verbose
 
 
 def set_verbosity(value):
-
+    """ Set the global verbosity level
+    """
     global verbose
     verbose = value
 
 
 def create_pbar(ptext, plength, **kwargs):
-
+    """ Create a global progress bar if global verbose is True
+    """
     global pbar, verbose
     if verbose and plength > 0:
         jtext = string.ljust(ptext, 35)
-        pbar = ProgressBar(widgets=[jtext, Percentage(), Bar(), ETA()],
+        pbar = ProgressBar(widgets=[Style.RESET_ALL + Fore.YELLOW + jtext,
+                                    Percentage(), Bar(), ETA()],
                            maxval=plength).start()
         return pbar
 
 
 def update_pbar(index, **kwargs):
-
+    """ Update the global progress bar if global verbose is True
+    """
     global pbar, verbose
     if verbose and pbar:
         pbar.update(index)
         if index == pbar.maxval:
             pbar.finish()
+            print_nocr(Fore.RESET)
             pbar = None
 
 
 def download_url(res, text=''):
-
+    """ Display a progress bar to download the request content if verbose is
+        True. Otherwise, just return the request content
+    """
     global verbose
     if verbose and 'content-length' in res.headers:
         clen = int(res.headers['content-length'])
@@ -79,5 +88,7 @@ def download_url(res, text=''):
 
 
 def print_nocr(text):
+    """ Print text without a carriage return
+    """
     print text,
     sys.stdout.softspace = False

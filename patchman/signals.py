@@ -19,5 +19,6 @@ from django.dispatch import Signal
 progress_info_s = Signal(providing_args=['ptext', 'plength'])
 progress_update_s = Signal(providing_args=['index'])
 info_message = Signal(providing_args=['text'])
+warning_message = Signal(providing_args=['text'])
 error_message = Signal(providing_args=['text'])
 debug_message = Signal(providing_args=['text'])
