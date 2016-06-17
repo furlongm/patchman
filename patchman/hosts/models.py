@@ -60,21 +60,21 @@ class Host(models.Model):
     def show(self):
         """ Show info about this host
         """
-        text = '%s:\n' % self
-        text += 'IP address   : %s\n' % self.ipaddress
-        text += 'Reverse DNS  : %s\n' % self.reversedns
-        text += 'Domain       : %s\n' % self.domain
-        text += 'OS           : %s\n' % self.os
-        text += 'Kernel       : %s\n' % self.kernel
-        text += 'Architecture : %s\n' % self.arch
-        text += 'Last report  : %s\n' % self.lastreport
-        text += 'Packages     : %s\n' % self.get_num_packages()
-        text += 'Repos        : %s\n' % self.get_num_repos()
-        text += 'Updates      : %s\n' % self.get_num_updates()
-        text += 'Tags         : %s\n' % self.tags
-        text += 'Needs reboot : %s\n' % self.reboot_required
-        text += 'Updated at   : %s\n' % self.updated_at
-        text += 'Host repos   : %s\n' % self.host_repos_only
+        text = '{0!s}:\n'.format(self)
+        text += 'IP address   : {0!s}\n'.format(self.ipaddress)
+        text += 'Reverse DNS  : {0!s}\n'.format(self.reversedns)
+        text += 'Domain       : {0!s}\n'.format(self.domain)
+        text += 'OS           : {0!s}\n'.format(self.os)
+        text += 'Kernel       : {0!s}\n'.format(self.kernel)
+        text += 'Architecture : {0!s}\n'.format(self.arch)
+        text += 'Last report  : {0!s}\n'.format(self.lastreport)
+        text += 'Packages     : {0!s}\n'.format(self.get_num_packages())
+        text += 'Repos        : {0!s}\n'.format(self.get_num_repos())
+        text += 'Updates      : {0!s}\n'.format(self.get_num_updates())
+        text += 'Tags         : {0!s}\n'.format(self.tags)
+        text += 'Needs reboot : {0!s}\n'.format(self.reboot_required)
+        text += 'Updated at   : {0!s}\n'.format(self.updated_at)
+        text += 'Host repos   : {0!s}\n'.format(self.host_repos_only)
 
         info_message.send(sender=None, text=text)
 
@@ -104,8 +104,7 @@ class Host(models.Model):
                 info_message.send(sender=None, text='Reverse DNS matches')
             else:
                 info_message.send(sender=None,
-                                  text='Reverse DNS mismatch found: %s != %s'
-                                  % (self.hostname, self.reversedns))
+                                  text='Reverse DNS mismatch found: {0!s} != {1!s}'.format(self.hostname, self.reversedns))
         else:
             info_message.send(sender=None,
                               text='Reverse DNS check disabled')
@@ -158,7 +157,7 @@ class Host(models.Model):
         try:
             with transaction.atomic():
                 self.updates.add(update)
-            info_message.send(sender=None, text="%s" % update)
+            info_message.send(sender=None, text="{0!s}".format(update))
             return update.id
         except IntegrityError as e:
             error_message.send(sender=None, text=e)
@@ -336,4 +335,4 @@ class HostRepo(models.Model):
         unique_together = ('host', 'repo')
 
     def __unicode__(self):
-        return '%s-%s' % (self.host, self.repo)
+        return '{0!s}-{1!s}'.format(self.host, self.repo)
