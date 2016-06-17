@@ -56,8 +56,8 @@ class Repository(models.Model):
     def show(self):
         """ Show info about this repo, including mirrors
         """
-        text = '%s : %s\n' % (self.id, self.name)
-        text += 'security: %s  arch: %s\n' % (self.security, self.arch)
+        text = '{0!s} : {1!s}\n'.format(self.id, self.name)
+        text += 'security: {0!s}  arch: {1!s}\n'.format(self.security, self.arch)
         text += 'Mirrors:'
 
         info_message.send(sender=None, text=text)
@@ -81,8 +81,7 @@ class Repository(models.Model):
             elif self.repotype == Repository.RPM:
                 refresh_rpm_repo(self)
             else:
-                text = 'Error: unknown repo type for repo %s: %s\n' % \
-                    (self.id, self.repotype)
+                text = 'Error: unknown repo type for repo {0!s}: {1!s}\n'.format(self.id, self.repotype)
                 error_message.send(sender=None, text=text)
         else:
             text = 'Repo requires certificate authentication, not updating\n'
@@ -143,8 +142,8 @@ class Mirror(models.Model):
         """ Show info about this mirror
         """
 
-        text = ' %s : %s\n' % (self.id, self.url)
-        text += ' last updated: %s    checksum: %s\n' % (self.timestamp,
+        text = ' {0!s} : {1!s}\n'.format(self.id, self.url)
+        text += ' last updated: {0!s}    checksum: {1!s}\n'.format(self.timestamp,
                                                          self.file_checksum)
 
         info_message.send(sender=None, text=text)
@@ -154,7 +153,7 @@ class Mirror(models.Model):
             Disables refresh on a mirror if it fails more than 28 times
         """
 
-        text = 'No usable mirror found at %s\n' % self.url
+        text = 'No usable mirror found at {0!s}\n'.format(self.url)
         error_message.send(sender=None, text=text)
         self.fail_count = self.fail_count + 1
         if self.fail_count > 28:

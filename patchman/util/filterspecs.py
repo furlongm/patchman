@@ -22,7 +22,7 @@ from operator import itemgetter
 
 
 def get_query_string(qs):
-    newqs = [u'%s=%s' % (k, v) for k, v in qs.items()]
+    newqs = [u'{0!s}={1!s}'.format(k, v) for k, v in qs.items()]
     return '?' + '&amp;'.join(newqs).replace(' ', '%20')
 
 
@@ -61,18 +61,15 @@ class Filter(object):
 
         output = ''
         output += '<div class="panel panel-default">\n'
-        output += '<div class="panel-heading">%s</div>\n' \
-                  % self.header.replace('_', ' ')
+        output += '<div class="panel-heading">{0!s}</div>\n'.format(self.header.replace('_', ' '))
         output += '<div class="panel-body">\n'
         output += '<div class="list-group list-group-info">\n'
         filters = sorted(self.filters.iteritems(), key=itemgetter(1))
 
         if self.selected is not None:
-            output += '<a href="%s" class="list-group-item">all</a>\n' \
-                      % get_query_string(qs)
+            output += '<a href="{0!s}" class="list-group-item">all</a>\n'.format(get_query_string(qs))
         else:
-            output += '<a href="%s" class="list-group-item ' \
-                      % get_query_string(qs)
+            output += '<a href="{0!s}" class="list-group-item '.format(get_query_string(qs))
             output += 'list-group-item-success">all</a>\n'
         for k, v in filters:
             if str(self.selected) == str(k):
@@ -80,8 +77,7 @@ class Filter(object):
             else:
                 style = ''
             qs[self.name] = k
-            output += '<a href="%s" class="list-group-item %s">%s</a>\n' \
-                      % (get_query_string(qs), style, v)
+            output += '<a href="{0!s}" class="list-group-item {1!s}">{2!s}</a>\n'.format(get_query_string(qs), style, v)
         output += '</div></div></div>'
         return output
 
@@ -104,7 +100,7 @@ class FilterBar(object):
         for f in self.filter_list:
             if f.multi:
                 params = dict(request.GET.items())
-                generic = '%s__' % f.name
+                generic = '{0!s}__'.format(f.name)
                 m_params = \
                 {k: v for k, v in params.items() if k.startswith(generic)}
                 for k, v in m_params.items():
