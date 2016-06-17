@@ -257,6 +257,7 @@ def host_updates_alt(host=None):
         if host not in updated_hosts:
             host.updated_at = ts
             host.find_updates()
+            info_message.send(sender=None, text='')
             host.save()
 
             # only include hosts with the same number of packages
@@ -305,6 +306,7 @@ def host_updates(host=None):
     for host in hosts:
         info_message.send(sender=None, text='%s' % host)
         host.find_updates()
+        info_message.send(sender=None, text='')
 
 
 def diff_hosts(hosts):

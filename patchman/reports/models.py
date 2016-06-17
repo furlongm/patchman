@@ -160,8 +160,8 @@ class Report(models.Model):
                 host.find_updates()
         else:
             if self.processed:
-                text = 'Report {0!s} has already been processed\n'.format((self.id))
+                text = 'Report {0!s} has already been processed'.format((self.id))
                 info_message.send(sender=None, text=text)
             else:
-                text = 'Error: OS, kernel or arch not sent with report {0!s}\n'.format((self.id))
+                text = 'Error: OS, kernel or arch not sent with report {0!s}'.format((self.id))
                 error_message.send(sender=None, text=text)
