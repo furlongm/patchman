@@ -45,6 +45,9 @@ pip install --upgrade django-tagging
 # Install django-bootstrap3
 pip install django-bootstrap3
 
+# Optionally install backports.lzma
+pip install backports.lzma
+
 # 2. Check out current git to e.g. /srv/patchman
 cd /srv
 git clone https://github.com/furlongm/patchman.git
