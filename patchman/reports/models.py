@@ -25,7 +25,7 @@ from patchman.operatingsystems.models import OS
 from patchman.domains.models import Domain
 from patchman.signals import error_message, info_message
 
-from socket import gethostbyaddr
+from socket import gethostbyaddr, herror
 
 
 @python_2_unicode_compatible
@@ -104,7 +104,7 @@ class Report(models.Model):
             if not self.host:
                 try:
                     self.host = str(gethostbyaddr(self.report_ip)[0])
-                except:
+                except herror:
                     self.host = self.report_ip
 
             hosts = Host.objects.all()
