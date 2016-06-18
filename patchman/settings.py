@@ -126,9 +126,9 @@ STATIC_ROOT = '/var/lib/patchman/media/'
 TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
 try:
-    from local_settings import *
+    from .local_settings import *
 except ImportError:
-    execfile("/etc/patchman/settings.py")
+    exec(compile(open("/etc/patchman/settings.py").read(), "/etc/patchman/settings.py", 'exec'))
 
 MANAGERS = ADMINS
 INSTALLED_APPS = DEFAULT_APPS + THIRD_PARTY_APPS + LOCAL_APPS

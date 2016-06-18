@@ -211,7 +211,7 @@ def clean_reports(s_host=None):
     timestamp = date.today()
 
     for host in hosts:
-        info_message.send(sender=None, text=host.__unicode__())
+        info_message.send(sender=None, text=str(host))
         host.clean_reports(timestamp)
 
     if s_host is None:
@@ -378,7 +378,7 @@ def dns_checks(host=None):
     """
     hosts = get_hosts(host, 'Checking rDNS')
     for host in hosts:
-        text = '%s:\t' % host.__unicode__()[0:25].ljust(25)
+        text = '%s:\t' % str(host)[0:25].ljust(25)
         info_message.send(sender=None, text=text)
         host.check_rdns()
 

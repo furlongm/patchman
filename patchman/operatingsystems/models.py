@@ -14,11 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+from __future__ import unicode_literals
+
+from django.utils.encoding import python_2_unicode_compatible
 from django.db import models
 
 from patchman.repos.models import Repository
 
 
+@python_2_unicode_compatible
 class OSGroup(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
@@ -28,7 +32,7 @@ class OSGroup(models.Model):
         verbose_name = 'Operating System Group'
         verbose_name_plural = 'Operating System Groups'
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     @models.permalink
@@ -36,6 +40,7 @@ class OSGroup(models.Model):
         return ('osgroup_detail', [self.id])
 
 
+@python_2_unicode_compatible
 class OS(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
@@ -46,7 +51,7 @@ class OS(models.Model):
         verbose_name = 'Operating System'
         verbose_name_plural = 'Operating Systems'
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     @models.permalink

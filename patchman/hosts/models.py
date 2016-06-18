@@ -14,6 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+from __future__ import unicode_literals
+
+from django.utils.encoding import python_2_unicode_compatible
 from django.db import models, IntegrityError, DatabaseError, transaction
 from django.db.models import Q
 from django.utils import timezone
@@ -30,6 +33,7 @@ from patchman.signals import info_message, error_message
 from patchman.hosts.utils import update_rdns, remove_reports
 
 
+@python_2_unicode_compatible
 class Host(models.Model):
 
     hostname = models.CharField(max_length=255, unique=True)
@@ -54,7 +58,7 @@ class Host(models.Model):
         verbose_name_plural = 'Hosts'
         ordering = ('hostname',)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.hostname
 
     def show(self):
@@ -325,6 +329,7 @@ class Host(models.Model):
         return update_ids
 
 
+@python_2_unicode_compatible
 class HostRepo(models.Model):
     host = models.ForeignKey(Host)
     repo = models.ForeignKey(Repository)
@@ -334,5 +339,5 @@ class HostRepo(models.Model):
     class Meta:
         unique_together = ('host', 'repo')
 
-    def __unicode__(self):
+    def __str__(self):
         return '{0!s}-{1!s}'.format(self.host, self.repo)
