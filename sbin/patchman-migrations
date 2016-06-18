@@ -7,8 +7,7 @@ trap "rm -rf -- '$TMPDIR'" EXIT HUP INT TERM
 virtualenv --system-site-packages "$TMPDIR"
 . "$TMPDIR/bin/activate"
 
-pip install django==1.6.5
-pip install south
+pip install django
 
 CMD="$(command -v patchman-manage)"
 python "$CMD" migrate "$@"

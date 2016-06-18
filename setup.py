@@ -67,5 +67,5 @@ setup(
     scripts=['sbin/patchman',
              'sbin/patchman-set-secret-key',
              'sbin/patchman-manage',
-             'sbin/patchman-south-migrations', ],
+             'sbin/patchman-migrations', ],
 )
