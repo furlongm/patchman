@@ -20,7 +20,7 @@ from patchman.packages.models import Package, PackageName, PackageUpdate
 from patchman.repos.models import Repository
 from patchman.arch.models import PackageArchitecture, MachineArchitecture
 from patchman.reports.models import Report
-from patchman.util import create_pbar, update_pbar, set_verbosity
+from patchman.util import print_nocr, create_pbar, update_pbar, set_verbosity
 from patchman.signals import \
     info_message, warning_message, error_message, debug_message, \
     progress_info_s, progress_update_s
@@ -378,8 +378,8 @@ def dns_checks(host=None):
     """
     hosts = get_hosts(host, 'Checking rDNS')
     for host in hosts:
-        text = '%s:\t' % str(host)[0:25].ljust(25)
-        info_message.send(sender=None, text=text)
+        text = '%s: ' % str(host)[0:25].ljust(25)
+        print_nocr(text)
         host.check_rdns()
 
 

@@ -62,7 +62,7 @@ class Repository(models.Model):
         """
         text = '{0!s} : {1!s}\n'.format(self.id, self.name)
         text += 'security: {0!s}    '.format(self.security)
-        text += 'arch: {1!s}\n'.format(self.arch)
+        text += 'arch: {0!s}\n'.format(self.arch)
         text += 'Mirrors:'
 
         info_message.send(sender=None, text=text)
