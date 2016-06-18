@@ -29,7 +29,7 @@ def yes_no_button_repo_en(repo):
     no_icon = static('img/icon-no.gif')
     html = '<button onclick="repo_toggle_enabled'
     html += '(\'{0!s}\', this, event)">'.format(repo_url)
-   if repo.enabled:
+    if repo.enabled:
         html += '<img src="{0!s}" alt="Enabled" />'.format(yes_icon)
     else:
         html += '<img src="{0!s}" alt="Disabled" />'.format(no_icon)
