@@ -38,7 +38,7 @@ class EditRepoForm(ModelForm):
         self.fields['name'].widget = TextInput(attrs={'size': 100})
         self.fields['repo_id'].widget = TextInput(attrs={'size': 100})
 
-    class Meta:
+    class Meta(object):
         model = Repository
         fields = ('name', 'repo_id', 'repotype', 'arch', 'security', 'enabled',
                   'mirrors', 'auth_required')
@@ -61,7 +61,7 @@ class CreateRepoForm(ModelForm):
         self.repotype = repotype
         self.fields['name'].label = 'New Repository'
 
-    class Meta:
+    class Meta(object):
         model = Repository
         fields = ('name',)
 
@@ -92,7 +92,7 @@ class EditMirrorForm(ModelForm):
         self.fields['url'].widget = TextInput(attrs={'size': 150},)
         self.fields['file_checksum'].widget = TextInput(attrs={'size': 100},)
 
-    class Meta:
+    class Meta(object):
         model = Mirror
         fields = ('repo', 'url', 'enabled', 'refresh', 'mirrorlist',
                   'last_access_ok', 'fail_count', 'file_checksum')

@@ -27,7 +27,7 @@ class AddOSToOSGroupForm(ModelForm):
         super(AddOSToOSGroupForm, self).__init__(*args, **kwargs)
         self.fields['osgroup'].label = 'OS Groups'
 
-    class Meta:
+    class Meta(object):
         model = OS
         fields = ('osgroup',)
 
@@ -38,7 +38,7 @@ class CreateOSGroupForm(ModelForm):
         super(CreateOSGroupForm, self).__init__(*args, **kwargs)
         self.fields['name'].label = 'New OS Group'
 
-    class Meta:
+    class Meta(object):
         model = OSGroup
         fields = ('name',)
 
@@ -55,6 +55,6 @@ class AddReposToOSGroupForm(ModelForm):
         super(AddReposToOSGroupForm, self).__init__(*args, **kwargs)
         self.fields['repos'].label = ''
 
-    class Meta:
+    class Meta(object):
         model = OSGroup
         fields = ('repos',)
