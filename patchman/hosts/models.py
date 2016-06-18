@@ -224,8 +224,8 @@ class Host(models.Model):
                     if priority is not None:
                         # proceed only if the package is from a repo with a
                         # priority and that priority is >= the repo priority
-                        pu_best_repo = self.find_best_repo(potential_update,
-                                                           hostrepos)
+                        pu_best_repo = find_best_repo(potential_update,
+                                                      hostrepos)
                         pu_priority = pu_best_repo.priority
                         if priority >= pu_priority:
                             highest_package = potential_update
