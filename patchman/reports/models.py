@@ -140,7 +140,8 @@ class Report(models.Model):
             host.check_rdns()
 
             if verbose:
-                text = 'Processing report {0!s} - {1!s}'.format(self.id, self.host)
+                text = 'Processing report '
+                text += '{0!s} - {1!s}'.format(self.id, self.host)
                 info_message.send(sender=None, text=text)
 
             from patchman.reports.utils import process_packages, \
@@ -158,14 +159,16 @@ class Report(models.Model):
 
             if find_updates:
                 if verbose:
-                    text = 'Finding updates for report {0!s} - {1!s}'.format(self.id,
-                                                                   self.host)
+                    text = 'Finding updates for report '
+                    text += '{0!s} - {1!s}'.format(self.id, self.host)
                     info_message.send(sender=None, text=text)
                 host.find_updates()
         else:
             if self.processed:
-                text = 'Report {0!s} has already been processed'.format((self.id))
+                text = 'Report {0!s} '.format(self.id)
+                text += 'has already been processed'
                 info_message.send(sender=None, text=text)
             else:
-                text = 'Error: OS, kernel or arch not sent with report {0!s}'.format((self.id))
+                text = 'Error: OS, kernel or arch not sent '
+                text += 'with report {0!s}'.format(self.id)
                 error_message.send(sender=None, text=text)

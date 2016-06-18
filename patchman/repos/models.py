@@ -61,7 +61,8 @@ class Repository(models.Model):
         """ Show info about this repo, including mirrors
         """
         text = '{0!s} : {1!s}\n'.format(self.id, self.name)
-        text += 'security: {0!s}    arch: {1!s}\n'.format(self.security, self.arch)
+        text += 'security: {0!s}    '.format(self.security)
+        text += 'arch: {1!s}\n'.format(self.arch)
         text += 'Mirrors:'
 
         info_message.send(sender=None, text=text)
@@ -85,7 +86,8 @@ class Repository(models.Model):
             elif self.repotype == Repository.RPM:
                 refresh_rpm_repo(self)
             else:
-                text = 'Error: unknown repo type for repo {0!s}: {1!s}'.format(self.id, self.repotype)
+                text = 'Error: unknown repo type for repo '
+                text += '{0!s}: {1!s}'.format(self.id, self.repotype)
                 error_message.send(sender=None, text=text)
         else:
             text = 'Repo requires certificate authentication, not updating'
@@ -146,18 +148,16 @@ class Mirror(models.Model):
     def show(self):
         """ Show info about this mirror
         """
-
         text = ' {0!s} : {1!s}\n'.format(self.id, self.url)
-        text += ' last updated: {0!s}    checksum: {1!s}\n'.format(self.timestamp,
-                                                         self.file_checksum)
-
+        text += ' last updated: '
+        text += '{0!s}    checksum: {1!s}\n'.format(self.timestamp,
+                                                    self.file_checksum)
         info_message.send(sender=None, text=text)
 
     def fail(self):
         """ Records that the mirror has failed
             Disables refresh on a mirror if it fails more than 28 times
         """
-
         text = 'No usable mirror found at {0!s}'.format(self.url)
         error_message.send(sender=None, text=text)
         self.fail_count = self.fail_count + 1
@@ -169,7 +169,6 @@ class Mirror(models.Model):
     def update_packages(self, packages):
         """ Update the packages associated with a mirror
         """
-
         update_mirror_packages(self, packages)
 
 

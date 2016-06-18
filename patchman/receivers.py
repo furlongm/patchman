@@ -21,14 +21,15 @@ from colorama import init, Fore, Style
 
 from django.dispatch import receiver
 
-from patchman.util import create_pbar, update_pbar, print_nocr, get_verbosity
+from patchman.util import create_pbar, update_pbar, get_verbosity
 from patchman.signals import progress_info_s, progress_update_s, \
     info_message, warning_message, error_message, debug_message
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "patchman.settings")
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')
 from django.conf import settings
 
 init(autoreset=True)
+
 
 @receiver(progress_info_s)
 def progress_info_r(**kwargs):

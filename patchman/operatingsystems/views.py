@@ -70,7 +70,8 @@ def os_detail(request, os_id):
             osgroup = create_form.save()
             os.osgroup = osgroup
             os.save()
-            text = 'Created OS Group {0!s} and added OS {1!s} to it'.format(osgroup, os)
+            text = 'Created OS Group {0!s} '.format(osgroup)
+            text += 'and added OS {0!s} to it'.format(os)
             messages.info(request, text)
             return HttpResponseRedirect(os.get_absolute_url())
         add_form = AddOSToOSGroupForm(request.POST, instance=os, prefix='add')
@@ -184,7 +185,8 @@ def osgroup_delete(request, osgroup_id):
     if request.method == 'POST':
         if 'delete' in request.POST:
             osgroup.delete()
-            messages.info(request, 'OS Group {0!s} has been deleted'.format(osgroup))
+            text = 'OS Group {0!s} has been deleted'.format(osgroup)
+            messages.info(request, text)
             return HttpResponseRedirect(reverse('os_list'))
         elif 'cancel' in request.POST:
             oid = osgroup_id

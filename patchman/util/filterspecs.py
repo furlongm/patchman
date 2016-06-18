@@ -54,29 +54,28 @@ class Filter(object):
             self.selected = request.GET[self.name]
 
     def output(self, qs):
-
         if self.name in qs:
             del(qs[self.name])
 
-        output = ''
-        output += '<div class="panel panel-default">\n'
-        output += '<div class="panel-heading">{0!s}</div>\n'.format(self.header.replace('_', ' '))
+        output = '<div class="panel panel-default">\n'
+        output += '<div class="panel-heading">'
+        output += '{0!s}</div>\n'.format(self.header.replace('_', ' '))
         output += '<div class="panel-body">\n'
         output += '<div class="list-group list-group-info">\n'
-        filters = sorted(iter(self.filters.items()), key=itemgetter(1))
+        output += '<a href="{0!s}" '.format(get_query_string(qs))
+        output += 'class="list-group-item'
+        if self.selected is None:
+            output += ' list-group-item-success'
+        output += '">all</a>\n'
 
-        if self.selected is not None:
-            output += '<a href="{0!s}" class="list-group-item">all</a>\n'.format(get_query_string(qs))
-        else:
-            output += '<a href="{0!s}" class="list-group-item '.format(get_query_string(qs))
-            output += 'list-group-item-success">all</a>\n'
+        filters = sorted(iter(self.filters.items()), key=itemgetter(1))
         for k, v in filters:
+            style = ''
             if str(self.selected) == str(k):
-                style = "list-group-item-success"
-            else:
-                style = ''
+                style = 'list-group-item-success'
             qs[self.name] = k
-            output += '<a href="{0!s}" class="list-group-item {1!s}">{2!s}</a>\n'.format(get_query_string(qs), style, v)
+            output += '<a href="{0!s}" class='.format(get_query_string(qs))
+            output += '"list-group-item {0!s}">{1!s}</a>\n'.format(style, v)
         output += '</div></div></div>'
         return output
 
