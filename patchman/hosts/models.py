@@ -30,6 +30,7 @@ from patchman.repos.models import Repository
 from patchman.operatingsystems.models import OS
 from patchman.arch.models import MachineArchitecture
 from patchman.signals import info_message, error_message
+from patchman.repos.utils import find_best_repo
 from patchman.hosts.utils import update_rdns, remove_reports
 
 
@@ -197,22 +198,6 @@ class Host(models.Model):
         for update in removals:
             self.updates.remove(update)
 
-    def find_best_repo(self, package, hostrepos):
-
-        best_repo = None
-        package_repos = hostrepos.filter(repo__mirror__packages=package)
-
-        if package_repos:
-            best_repo = package_repos[0]
-        if package_repos.count() > 1:
-            for hostrepo in package_repos:
-                if hostrepo.repo.security:
-                    best_repo = hostrepo
-                else:
-                    if hostrepo.priority > best_repo.priority:
-                        best_repo = hostrepo
-        return best_repo
-
     def find_host_repo_updates(self, host_packages, repo_packages):
 
         update_ids = []
@@ -222,7 +207,7 @@ class Host(models.Model):
 
         for package in host_packages:
             highest_package = package
-            best_repo = self.find_best_repo(package, hostrepos)
+            best_repo = find_best_repo(package, hostrepos)
             priority = None
             if best_repo is not None:
                 priority = best_repo.priority
