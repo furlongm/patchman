@@ -257,6 +257,7 @@ def find_mirror_url(stored_mirror_url, formats):
             if mirror_url.endswith(f):
                 mirror_url = mirror_url[:-len(f)]
         mirror_url = mirror_url.rstrip('/') + '/' + fmt
+        debug_message.send(sender=None, text='Checking {0!s}'.format(mirror_url))
         res = get_url(mirror_url)
         if res is not None and res.ok:
             return res
