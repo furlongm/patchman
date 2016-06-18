@@ -23,3 +23,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')
 
 from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
+
+from django.conf import settings
+if settings.RUN_GUNICORN:
+    from whitenoise.django import DjangoWhiteNoise
+    application = DjangoWhiteNoise(application)
