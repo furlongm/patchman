@@ -28,7 +28,7 @@ except ImportError:
 import requests
 from datetime import datetime
 from hashlib import sha1, sha256
-from StringIO import StringIO
+from io import BytesIO
 from lxml import etree
 from debian.debian_support import Version
 from debian.deb822 import Sources
@@ -140,7 +140,7 @@ def gunzip(contents):
     try:
         gzipdata = gzip.GzipFile(fileobj=contents)
         gzipdata = gzipdata.read()
-        contents = StringIO(gzipdata)
+        contents = BytesIO(gzipdata)
         return contents.getvalue()
     except IOError as e:
         import warnings
@@ -182,7 +182,7 @@ def extract(data, fmt):
     elif fmt.endswith('bz2'):
         return bunzip2(data)
     elif fmt.endswith('gz'):
-        return gunzip(StringIO(data))
+        return gunzip(BytesIO(data))
     return data
 
 
@@ -191,7 +191,7 @@ def get_primary_url(mirror_url, data):
     if data.startswith('Bad repo - not in list'):
         return None, None, None
     ns = 'http://linux.duke.edu/metadata/repo'
-    context = etree.parse(StringIO(data), etree.XMLParser())
+    context = etree.parse(BytesIO(data), etree.XMLParser())
     location = context.xpath("//ns:data[@type='primary']/ns:location/@href",
                              namespaces={'ns': ns})[0]
     checksum = context.xpath("//ns:data[@type='primary']/ns:checksum",
@@ -276,7 +276,7 @@ def mirrorlist_check(mirror_url):
             data = download_url(res, 'Downloading repo info:')
             if data is None:
                 return
-            mirror_urls = re.findall('^http://.*$|^ftp://.*$',
+            mirror_urls = re.findall(b'^http://.*$|^ftp://.*$',
                                      data, re.MULTILINE)
             if mirror_urls:
                 return mirror_urls
@@ -296,6 +296,7 @@ def mirrorlists_check(repo):
             text = 'Found mirrorlist - {0!s}'.format(mirror.url)
             info_message.send(sender=None, text=text)
             for mirror_url in mirror_urls:
+                mirror_url = mirror_url.decode('ascii')
                 mirror_url = mirror_url.replace('$ARCH', repo.arch.name)
                 mirror_url = mirror_url.replace('$basearch', repo.arch.name)
                 if hasattr(settings, 'MAX_MIRRORS') and \
@@ -321,9 +322,9 @@ def extract_yum_packages(data, url):
 
     extracted = extract(data, url)
     ns = 'http://linux.duke.edu/metadata/common'
-    context = etree.iterparse(StringIO(extracted), tag='{{{0!s}}}metadata'.format(ns))
-    plen = int(context.next()[1].get('packages'))
-    context = etree.iterparse(StringIO(extracted), tag='{{{0!s}}}package'.format(ns))
+    context = etree.iterparse(BytesIO(extracted), tag='{{{0!s}}}metadata'.format(ns))
+    plen = int(next(context)[1].get('packages'))
+    context = etree.iterparse(BytesIO(extracted), tag='{{{0!s}}}package'.format(ns))
     packages = set()
 
     if plen > 0:
@@ -366,7 +367,7 @@ def extract_deb_packages(data, url):
     """
 
     extracted = extract(data, url)
-    package_re = re.compile('^Package: ', re.M)
+    package_re = re.compile(b'^Package: ', re.M)
     plen = len(package_re.findall(extracted))
     packages = set()
 
@@ -374,8 +375,8 @@ def extract_deb_packages(data, url):
         ptext = 'Extracting packages: '
         progress_info_s.send(sender=None, ptext=ptext, plen=plen)
 
-        sio = StringIO(extracted)
-        for i, stanza in enumerate(Sources.iter_paragraphs(sio)):
+        bio = BytesIO(extracted)
+        for i, stanza in enumerate(Sources.iter_paragraphs(bio)):
             fullversion = Version(stanza['version'])
             arch = stanza['architecture']
             name = stanza['package']
@@ -404,7 +405,7 @@ def extract_yast_packages(data):
     """
 
     extracted = extract(data, 'gz')
-    pkgs = re.findall('=Pkg: (.*)', extracted)
+    pkgs = re.findall(b'=Pkg: (.*)', extracted)
     plen = len(pkgs)
     packages = set()
 
@@ -414,7 +415,7 @@ def extract_yast_packages(data):
 
         for i, pkg in enumerate(pkgs):
             progress_update_s.send(sender=None, index=i + 1)
-            name, version, release, arch = pkg.split()
+            name, version, release, arch = str(pkg).split()
             package = PackageString(name=name.lower(),
                                     epoch='',
                                     version=version,
@@ -504,7 +505,7 @@ def refresh_yast_repo(mirror, data):
         and add the packages to the mirror
     """
 
-    package_dir = re.findall('DESCRDIR *(.*)', data)[0]
+    package_dir = re.findall(b'DESCRDIR *(.*)', data)[0].decode('ascii')
     package_url = '{0!s}/{1!s}/packages.gz'.format(mirror.url, package_dir)
     res = get_url(package_url)
     mirror.last_access_ok = response_is_valid(res)
