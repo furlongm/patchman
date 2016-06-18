@@ -28,10 +28,8 @@ def get_query_string(qs):
 
 
 class Filter(object):
-    multi = False
 
     def __init__(self, request, name, filters, header=''):
-
         if header == '':
             self.header = name
         else:
@@ -86,7 +84,6 @@ class Filter(object):
 class FilterBar(object):
 
     def __init__(self, request, filter_list):
-
         self.request = request
         self.filter_list = filter_list
         raw_qs = request.META.get('QUERY_STRING', '')
@@ -97,29 +94,15 @@ class FilterBar(object):
                     k, v = i.split('=')
                     if k != 'page':
                         qs[k] = v
-
         for f in self.filter_list:
-            if f.multi:
-                params = dict(list(request.GET.items()))
-                generic = '{0!s}__'.format(f.name)
-                m_params = \
-                {k: v for k, v in list(params.items()) if k.startswith(generic)}
-                for k, v in list(m_params.items()):
-                    qs[k] = v
-
-            else:
-                if f.name in self.request.GET:
-                    qs[f.name] = self.request.GET[f.name]
-
+            if f.name in self.request.GET:
+                qs[f.name] = self.request.GET[f.name]
         self.qs = qs
 
     def output(self):
-
         output = ''
-
         for f in self.filter_list:
             output += f.output(self.qs.copy())
-
         return output
 
     def __str__(self):
