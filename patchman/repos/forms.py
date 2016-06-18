@@ -22,7 +22,7 @@ from patchman.repos.models import Repository, Mirror
 
 
 class EditRepoForm(ModelForm):
-    class Media:
+    class Media(object):
         css = {
             'all': ('admin/css/widgets.css',)
         }
@@ -81,7 +81,7 @@ class CreateRepoForm(ModelForm):
 
 
 class EditMirrorForm(ModelForm):
-    class Media:
+    class Media(object):
         css = {
             'all': ('admin/css/widgets.css',)
         }
