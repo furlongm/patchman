@@ -49,7 +49,7 @@ class Report(models.Model):
     repos = models.TextField(null=True, blank=True)
     reboot = models.TextField(null=True, blank=True)
 
-    class Meta:
+    class Meta(object):
         verbose_name_plural = 'Report'
         verbose_name_plural = 'Reports'
         ordering = ('-created',)

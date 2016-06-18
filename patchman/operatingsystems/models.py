@@ -28,7 +28,7 @@ class OSGroup(models.Model):
     name = models.CharField(max_length=255, unique=True)
     repos = models.ManyToManyField(Repository, blank=True)
 
-    class Meta:
+    class Meta(object):
         verbose_name = 'Operating System Group'
         verbose_name_plural = 'Operating System Groups'
 
@@ -47,7 +47,7 @@ class OS(models.Model):
     osgroup = models.ForeignKey(OSGroup, blank=True, null=True,
                                 on_delete=models.SET_NULL)
 
-    class Meta:
+    class Meta(object):
         verbose_name = 'Operating System'
         verbose_name_plural = 'Operating Systems'
 

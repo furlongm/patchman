@@ -31,7 +31,7 @@ class PackageName(models.Model):
 
     name = models.CharField(unique=True, max_length=255)
 
-    class Meta:
+    class Meta(object):
         verbose_name = 'Package'
         verbose_name_plural = 'Packages'
         ordering = ('name',)
@@ -71,7 +71,7 @@ class Package(models.Model):
 
     objects = PackageManager()
 
-    class Meta:
+    class Meta(object):
         ordering = ('name', 'epoch', 'version', 'release', 'arch')
         unique_together = (
             'name', 'epoch', 'version', 'release', 'arch', 'packagetype',)
@@ -148,7 +148,7 @@ class Package(models.Model):
 @python_2_unicode_compatible
 class PackageString(models.Model):
 
-    class Meta:
+    class Meta(object):
         managed = False
 
     name = models.CharField(max_length=255)
@@ -198,7 +198,7 @@ class PackageUpdate(models.Model):
     newpackage = models.ForeignKey(Package, related_name='newpackage')
     security = models.BooleanField(default=False)
 
-    class Meta:
+    class Meta(object):
         unique_together = (('oldpackage', 'newpackage', 'security'))
 
     def __str__(self):
