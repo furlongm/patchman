@@ -76,7 +76,7 @@ def download_url(res, text=''):
         create_pbar(text, clen)
         chunk_size = 16384
         i = 0
-        data = ''
+        data = b''
         for chunk in res.iter_content(chunk_size):
             i += len(chunk)
             if i <= clen:
