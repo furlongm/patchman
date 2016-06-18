@@ -108,7 +108,7 @@ class Host(models.Model):
             if self.hostname == self.reversedns:
                 info_message.send(sender=None, text='Reverse DNS matches')
             else:
-                text = 'Reverse DNS mismatch found:'
+                text = 'Reverse DNS mismatch found: '
                 text += '{0!s} != {1!s}'.format(self.hostname, self.reversedns)
                 info_message.send(sender=None, text=text)
         else:
