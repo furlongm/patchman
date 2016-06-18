@@ -24,7 +24,7 @@ from django.core.paginator import QuerySetPaginator
 try:
     from urllib.parse import urlencode
 except ImportError:
-     from urllib import urlencode
+    from urllib import urlencode
 
 register = Library()
 
@@ -43,9 +43,9 @@ def yes_no_img(boolean, alt_yes='Active', alt_no='Not Active'):
     yes_icon = static('img/icon-yes.gif')
     no_icon = static('img/icon-no.gif')
     if boolean:
-        html = "<img src='{0!s}' alt='{1!s}' />".format(yes_icon, alt_yes)
+        html = '<img src="{0!s}" alt="{1!s}" />'.format(yes_icon, alt_yes)
     else:
-        html = "<img src='{0!s}' alt='{1!s}' />".format(no_icon, alt_no)
+        html = '<img src="{0!s}" alt="{1!s}" />'.format(no_icon, alt_no)
     return format_html(html)
 
 
@@ -54,9 +54,9 @@ def no_yes_img(boolean, alt_yes='Not Required', alt_no='Required'):
     yes_icon = static('img/icon-yes.gif')
     no_icon = static('img/icon-no.gif')
     if not boolean:
-        html = "<img src='{0!s}' alt='{1!s}' />".format(yes_icon, alt_yes)
+        html = '<img src="{0!s}" alt="{1!s}" />'.format(yes_icon, alt_yes)
     else:
-        html = "<img src='{0!s}' alt='{1!s}' />".format(no_icon, alt_no)
+        html = '<img src="{0!s}" alt="{1!s}" />'.format(no_icon, alt_no)
     return format_html(html)
 
 
@@ -66,8 +66,9 @@ def gen_table(object_list, template_name=None):
         return ''
     if not template_name:
         app_label = object_list.model._meta.app_label
-        model_name = object_list.model._meta.verbose_name
-        template_name = '{0!s}/{1!s}_table.html'.format(app_label, model_name.lower().replace(' ', ''))
+        model_name = object_list.model._meta.verbose_name.replace(' ', '')
+        template_name = '{0!s}/{1!s}_table.html'.format(app_label,
+                                                        model_name.lower())
     template = get_template(template_name)
     html = template.render({'object_list': object_list})
     return html
@@ -92,7 +93,7 @@ def get_querystring(request):
 
 
 @register.simple_tag
-def searchform(post_url="."):
+def searchform():
     template = get_template('searchbar.html')
-    html = template.render({'post_url': post_url})
+    html = template.render({'post_url': '.'})
     return html

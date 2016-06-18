@@ -33,7 +33,7 @@ from lxml import etree
 from debian.debian_support import Version
 from debian.deb822 import Sources
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "patchman.settings")
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
@@ -50,7 +50,6 @@ def update_mirror_packages(mirror, packages):
     """ Updates the packages contained on a mirror, and
         removes obsolete packages.
     """
-
     new = set()
     old = set()
     removals = set()
@@ -191,8 +190,8 @@ def get_primary_url(mirror_url, data):
 
     if isinstance(data, text_type):
         if data.startswith('Bad repo - not in list') or \
-            data.startswith('Invalid repo'):
-                return None, None, None
+                data.startswith('Invalid repo'):
+            return None, None, None
     ns = 'http://linux.duke.edu/metadata/repo'
     context = etree.parse(BytesIO(data), etree.XMLParser())
     location = context.xpath("//ns:data[@type='primary']/ns:location/@href",
@@ -235,9 +234,11 @@ def get_url(url):
     except requests.exceptions.Timeout:
         error_message.send(sender=None, text='Timeout - {0!s}'.format(url))
     except requests.exceptions.TooManyRedirects:
-        error_message.send(sender=None, text='Too many redirects - {0!s}'.format(url))
+        error_message.send(sender=None,
+                           text='Too many redirects - {0!s}'.format(url))
     except requests.exceptions.RequestException as e:
-        error_message.send(sender=None, text='Error ({0!s}) - {1!s}'.format(e, url))
+        error_message.send(sender=None,
+                           text='Error ({0!s}) - {1!s}'.format(e, url))
     return res
 
 
@@ -260,7 +261,8 @@ def find_mirror_url(stored_mirror_url, formats):
             if mirror_url.endswith(f):
                 mirror_url = mirror_url[:-len(f)]
         mirror_url = mirror_url.rstrip('/') + '/' + fmt
-        debug_message.send(sender=None, text='Checking {0!s}'.format(mirror_url))
+        debug_message.send(sender=None,
+                           text='Checking {0!s}'.format(mirror_url))
         res = get_url(mirror_url)
         if res is not None and res.ok:
             return res
@@ -309,7 +311,8 @@ def mirrorlists_check(repo):
                     q = Q(mirrorlist=False, refresh=True)
                     existing = mirror.repo.mirror_set.filter(q).count()
                     if existing >= max_mirrors:
-                        text = '{0!s} mirrors already exist, not adding {1!s}'.format(max_mirrors, mirror_url)
+                        text = '{0!s} mirrors already '.format(max_mirrors)
+                        text += 'exist, not adding {0!s}'.format(mirror_url)
                         warning_message.send(sender=None, text=text)
                         continue
                 from patchman.repos.models import Mirror
@@ -325,9 +328,11 @@ def extract_yum_packages(data, url):
 
     extracted = extract(data, url)
     ns = 'http://linux.duke.edu/metadata/common'
-    context = etree.iterparse(BytesIO(extracted), tag='{{{0!s}}}metadata'.format(ns))
+    context = etree.iterparse(BytesIO(extracted),
+                              tag='{{{0!s}}}metadata'.format(ns))
     plen = int(next(context)[1].get('packages'))
-    context = etree.iterparse(BytesIO(extracted), tag='{{{0!s}}}package'.format(ns))
+    context = etree.iterparse(BytesIO(extracted),
+                              tag='{{{0!s}}}package'.format(ns))
     packages = set()
 
     if plen > 0:
@@ -479,8 +484,8 @@ def refresh_yum_repo(mirror, data, mirror_url, ts):
                        file_checksum=checksum)
         have_checksum = mirror.repo.mirror_set.filter(checksum_q).count()
         if have_checksum >= max_mirrors:
-            text = '{0!s} mirrors already have this checksum, '.format(max_mirrors)
-            text += 'ignoring refresh to save time'
+            text = '{0!s} mirrors already have this '.format(max_mirrors)
+            text += 'checksum, ignoring refresh to save time'
             info_message.send(sender=None, text=text)
         else:
             packages = extract_yum_packages(data, primary_url)

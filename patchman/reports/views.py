@@ -143,12 +143,12 @@ def report_delete(request, report):
     if request.method == 'POST':
         if 'delete' in request.POST:
             report.delete()
-            messages.info(request, 'Report {0!s} has been deleted'.format(report))
+            text = 'Report {0!s} has been deleted'.format(report)
+            messages.info(request, text)
             return HttpResponseRedirect(reverse('report_list'))
         elif 'cancel' in request.POST:
             return HttpResponseRedirect(reverse('report_detail',
                                         args=[report.id]))
-
     return render(request,
                   'reports/report_delete.html',
                   {'report': report}, )

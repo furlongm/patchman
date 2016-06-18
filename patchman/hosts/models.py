@@ -107,8 +107,9 @@ class Host(models.Model):
             if self.hostname == self.reversedns:
                 info_message.send(sender=None, text='Reverse DNS matches')
             else:
-                info_message.send(sender=None,
-                                  text='Reverse DNS mismatch found: {0!s} != {1!s}'.format(self.hostname, self.reversedns))
+                text = 'Reverse DNS mismatch found:'
+                text += '{0!s} != {1!s}'.format(self.hostname, self.reversedns)
+                info_message.send(sender=None, text=text)
         else:
             info_message.send(sender=None,
                               text='Reverse DNS check disabled')
@@ -161,7 +162,7 @@ class Host(models.Model):
         try:
             with transaction.atomic():
                 self.updates.add(update)
-            info_message.send(sender=None, text="{0!s}".format(update))
+            info_message.send(sender=None, text='{0!s}'.format(update))
             return update.id
         except IntegrityError as e:
             error_message.send(sender=None, text=e)

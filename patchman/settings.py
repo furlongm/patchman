@@ -95,11 +95,11 @@ LOCAL_APPS = (
     'patchman.util',
 )
 
-BROKER_HOST = "localhost"
+BROKER_HOST = 'localhost'
 BROKER_PORT = 5672
-BROKER_USER = "guest"
-BROKER_PASSWORD = "guest"
-BROKER_VHOST = "/"
+BROKER_USER = 'guest'
+BROKER_PASSWORD = 'guest'
+BROKER_VHOST = '/'
 
 try:
     import djcelery
@@ -128,7 +128,8 @@ TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 try:
     from .local_settings import *
 except ImportError:
-    exec(compile(open("/etc/patchman/settings.py").read(), "/etc/patchman/settings.py", 'exec'))
+    exec(compile(open('/etc/patchman/settings.py').read(),
+                 '/etc/patchman/settings.py', 'exec'))
 
 MANAGERS = ADMINS
 INSTALLED_APPS = DEFAULT_APPS + THIRD_PARTY_APPS + LOCAL_APPS

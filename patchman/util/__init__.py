@@ -21,7 +21,7 @@ import sys
 from colorama import Fore, Style
 from progressbar import Bar, ETA, Percentage, ProgressBar
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "patchman.settings")
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')
 from django.conf import settings
 
 pbar = None

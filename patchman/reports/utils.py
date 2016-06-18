@@ -38,7 +38,7 @@ def process_repos(report, host):
 
         repos = parse_repos(report.repos)
         progress_info_s.send(sender=None,
-                             ptext='{0!s} repos'.format(host.__unicode__()[0:25]),
+                             ptext='{0!s} repos'.format(str(host)[0:25]),
                              plen=len(repos))
         for i, repo_str in enumerate(repos):
             repo, priority = process_repo(repo_str, report.arch)
@@ -74,7 +74,7 @@ def process_packages(report, host):
 
         packages = parse_packages(report.packages)
         progress_info_s.send(sender=None,
-                             ptext='{0!s} packages'.format(host.__unicode__()[0:25]),
+                             ptext='{0!s} packages'.format(str(host)[0:25]),
                              plen=len(packages))
         for i, pkg_str in enumerate(packages):
             package = process_package(pkg_str, report.protocol)
@@ -120,7 +120,7 @@ def add_updates(updates, host, security):
         extra = 'bug'
 
     if ulen > 0:
-        ptext = '{0!s} {1!s} updates'.format(host.__unicode__()[0:25], extra)
+        ptext = '{0!s} {1!s} updates'.format(str(host)[0:25], extra)
         progress_info_s.send(sender=None, ptext=ptext, plen=ulen)
         for i, u in enumerate(updates):
             update = process_update(host, u, security)
@@ -134,8 +134,10 @@ def parse_updates(updates_string):
 
     updates = []
     ulist = updates_string.split()
-    while ulist != []:
-        updates.append('{0!s} {1!s} {2!s}\n'.format(ulist[0], ulist[1], ulist[2]))
+    while ulist:
+        updates.append('{0!s} {1!s} {2!s}\n'.format(ulist[0],
+                                                    ulist[1],
+                                                    ulist[2]))
         ulist.pop(0)
         ulist.pop(0)
         ulist.pop(0)
