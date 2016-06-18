@@ -14,6 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+from __future__ import unicode_literals
+
+from django.utils.encoding import python_2_unicode_compatible
 from django.db import models
 
 from patchman.arch.models import MachineArchitecture
@@ -24,6 +27,7 @@ from patchman.repos.utils import refresh_deb_repo, refresh_rpm_repo, \
 from patchman.signals import info_message, warning_message, error_message
 
 
+@python_2_unicode_compatible
 class Repository(models.Model):
 
     RPM = 'R'
@@ -46,7 +50,7 @@ class Repository(models.Model):
         verbose_name_plural = 'Repository'
         verbose_name_plural = 'Repositories'
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     @models.permalink
@@ -112,6 +116,7 @@ class Repository(models.Model):
             mirror.save()
 
 
+@python_2_unicode_compatible
 class Mirror(models.Model):
 
     repo = models.ForeignKey(Repository)
@@ -131,7 +136,7 @@ class Mirror(models.Model):
         verbose_name_plural = 'Mirror'
         verbose_name_plural = 'Mirrors'
 
-    def __unicode__(self):
+    def __str__(self):
         return self.url
 
     @models.permalink

@@ -14,6 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+from __future__ import unicode_literals
+
+from django.utils.encoding import python_2_unicode_compatible
 from django.db import models, IntegrityError, DatabaseError, transaction
 
 from patchman.hosts.models import Host
@@ -25,6 +28,7 @@ from patchman.signals import error_message, info_message
 from socket import gethostbyaddr
 
 
+@python_2_unicode_compatible
 class Report(models.Model):
 
     created = models.DateTimeField(auto_now_add=True)
@@ -50,7 +54,7 @@ class Report(models.Model):
         verbose_name_plural = 'Reports'
         ordering = ('-created',)
 
-    def __unicode__(self):
+    def __str__(self):
         return '{0!s} {1!s}'.format(self.host, self.created)
 
     @models.permalink

@@ -37,6 +37,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "patchman.settings")
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
+from django.utils.six import text_type
 
 from patchman.packages.models import Package, PackageName, PackageString
 from patchman.arch.models import PackageArchitecture
@@ -188,8 +189,10 @@ def extract(data, fmt):
 
 def get_primary_url(mirror_url, data):
 
-    if data.startswith('Bad repo - not in list'):
-        return None, None, None
+    if isinstance(data, text_type):
+        if data.startswith('Bad repo - not in list') or \
+            data.startswith('Invalid repo'):
+                return None, None, None
     ns = 'http://linux.duke.edu/metadata/repo'
     context = etree.parse(BytesIO(data), etree.XMLParser())
     location = context.xpath("//ns:data[@type='primary']/ns:location/@href",

@@ -21,7 +21,10 @@ from django.utils.html import format_html
 from django.contrib.staticfiles.templatetags.staticfiles import static
 from django.core.paginator import QuerySetPaginator
 
-from urllib import urlencode
+try:
+    from urllib.parse import urlencode
+except ImportError:
+     from urllib import urlencode
 
 register = Library()
 

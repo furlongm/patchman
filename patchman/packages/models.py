@@ -14,6 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+from __future__ import unicode_literals
+
+from django.utils.encoding import python_2_unicode_compatible
 from django.db import models
 
 from rpm import labelCompare
@@ -23,6 +26,7 @@ from patchman.arch.models import PackageArchitecture
 from patchman.packages.managers import PackageManager
 
 
+@python_2_unicode_compatible
 class PackageName(models.Model):
 
     name = models.CharField(unique=True, max_length=255)
@@ -32,7 +36,7 @@ class PackageName(models.Model):
         verbose_name_plural = 'Packages'
         ordering = ('name',)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     @models.permalink
@@ -40,6 +44,7 @@ class PackageName(models.Model):
         return ('package_detail', [self.name])
 
 
+@python_2_unicode_compatible
 class Package(models.Model):
 
     RPM = 'R'
@@ -71,7 +76,7 @@ class Package(models.Model):
         unique_together = (
             'name', 'epoch', 'version', 'release', 'arch', 'packagetype',)
 
-    def __unicode__(self):
+    def __str__(self):
         if self.epoch:
             epo = '{0!s}:'.format(self.epoch)
         else:
@@ -135,7 +140,7 @@ class Package(models.Model):
         return Repository.objects.filter(
             mirror__packages=self).distinct().count()
 
-
+@python_2_unicode_compatible
 class PackageString(models.Model):
 
     class Meta:
@@ -150,7 +155,7 @@ class PackageString(models.Model):
     description = models.TextField(blank=True, null=True)
     url = models.URLField(max_length=255, blank=True, null=True)
 
-    def __unicode__(self):
+    def __str__(self):
         if self.epoch:
             epo = '{0!s}:'.format(self.epoch)
         else:
@@ -177,6 +182,7 @@ class PackageString(models.Model):
         return hash(self.__key())
 
 
+@python_2_unicode_compatible
 class PackageUpdate(models.Model):
 
     oldpackage = models.ForeignKey(Package, related_name='oldpackage')
@@ -186,7 +192,7 @@ class PackageUpdate(models.Model):
     class Meta:
         unique_together = (('oldpackage', 'newpackage', 'security'))
 
-    def __unicode__(self):
+    def __str__(self):
         if self.security:
             update_type = 'Security'
         else:

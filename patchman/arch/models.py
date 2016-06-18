@@ -14,9 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+from __future__ import unicode_literals
+
+from django.utils.encoding import python_2_unicode_compatible
 from django.db import models
 
 
+@python_2_unicode_compatible
 class Architecture(models.Model):
 
     name = models.CharField(unique=True, max_length=255)
@@ -24,7 +28,7 @@ class Architecture(models.Model):
     class Meta:
         abstract = True
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 
