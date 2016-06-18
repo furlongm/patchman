@@ -1,7 +1,0 @@
-patchman/arch/south_migrations/*
-patchman/domains/south_migrations/*
-patchman/hosts/south_migrations/*
-patchman/operatingsystems/south_migrations/*
-patchman/packages/south_migrations/*
-patchman/reports/south_migrations/*
-patchman/repos/south_migrations/*
