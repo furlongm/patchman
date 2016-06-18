@@ -60,12 +60,6 @@ Configuration of patchman under Ubuntu/Debian
 
 3.  Set up a default superuser, database, and run migrations:
 
-        Django 1.6
-        ----------
-        $ patchman-manage syncdb
-
-        Django 1.7
-        ----------
         $ patchman-manage migrate
         $ patchman-manage createsuperuser
 
