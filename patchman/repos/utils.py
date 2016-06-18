@@ -616,3 +616,22 @@ def refresh_deb_repo(repo):
         else:
             mirror.fail()
         mirror.save()
+
+
+def find_best_repo(package, hostrepos):
+    """ Given a package and a set of HostRepos, determine the best
+        repo. Returns the best repo.
+    """
+    best_repo = None
+    package_repos = hostrepos.filter(repo__mirror__packages=package)
+
+    if package_repos:
+        best_repo = package_repos[0]
+    if package_repos.count() > 1:
+        for hostrepo in package_repos:
+            if hostrepo.repo.security:
+                best_repo = hostrepo
+            else:
+                if hostrepo.priority > best_repo.priority:
+                    best_repo = hostrepo
+    return best_repo
