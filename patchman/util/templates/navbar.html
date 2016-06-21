@@ -22,7 +22,11 @@
           </ul>
           <div class="pull-right navbar-text">
             {% if user.is_authenticated %}
-              Welcome, {{ user }}
+              {% if user.first_name %}
+                Welcome, {{ user.first_name }}
+              {% else %}
+                Welcome, {{ user }}
+              {% endif %}
               / <a href="{% url 'logout' %}?next=/">Log out</a>
             {% else %}
               Welcome, Guest
