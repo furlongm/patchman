@@ -7,6 +7,8 @@ Patchman is a Django-based patch status monitoring tool for linux systems.
 Patchman provides a web interface for monitoring the package updates available
 for linux hosts.
 
+[![](https://raw.githubusercontent.com/furlongm/patchman/gh-pages/screenshots/dashboard.png)](https://github.com/furlongm/patchman/tree/gh-pages/screenshots)
+
 
 ## How does it work?
 
