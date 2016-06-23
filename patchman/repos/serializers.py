@@ -1,4 +1,4 @@
-# Copyright 2012 VPAC, http://www.vpac.org
+# Copyright 2016 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of Patchman.
 #
@@ -14,17 +14,24 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.contrib.auth.decorators import login_required
-from rest_framework import viewsets
+from rest_framework import serializers
 
-from patchman.domains.models import Domain
-from patchman.domains.serializers import DomainSerializer
+from patchman.repos.models import Repository, Mirror, MirrorPackage
 
 
-#@login_required
-class DomainViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows package architectures to be viewed or edited.
-    """
-    queryset = Domain.objects.all()
-    serializer_class = DomainSerializer
+class RepositorySerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Repository
+        fields = '__all__'
+
+
+class MirrorSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Mirror
+        fields = '__all__'
+
+
+class MirrorPackageSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = MirrorPackage
+        fields = '__all__'
