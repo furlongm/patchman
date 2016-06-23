@@ -20,7 +20,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q
 
-from rest_framework import viewsets
+from rest_framework import viewsets, permissions
 
 from patchman.util.filterspecs import Filter, FilterBar
 from patchman.packages.models import PackageName, Package, PackageUpdate
@@ -91,28 +91,28 @@ def package_detail(request, packagename):
                    'allversions': allversions}, )
 
 
-#@login_required
 class PackageNameViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows package names to be viewed or edited.
     """
     queryset = PackageName.objects.all()
     serializer_class = PackageNameSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
 
-#@login_required
 class PackageViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows packages to be viewed or edited.
     """
     queryset = Package.objects.all()
     serializer_class = PackageSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
 
-#@login_required
 class PackageUpdateViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows packages updates to be viewed or edited.
     """
     queryset = PackageUpdate.objects.all()
     serializer_class = PackageUpdateSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)

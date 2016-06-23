@@ -23,7 +23,7 @@ from django.db.models import Q
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 
-from rest_framework import viewsets
+from rest_framework import viewsets, permissions
 
 from patchman.operatingsystems.models import OS, OSGroup
 from patchman.operatingsystems.forms import AddOSToOSGroupForm, \
@@ -201,19 +201,20 @@ def osgroup_delete(request, osgroup_id):
                   'operatingsystems/osgroup_delete.html',
                   {'osgroup': osgroup}, )
 
-#@login_required
+
 class OSViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows operating systems to be viewed or edited.
     """
     queryset = OS.objects.all()
     serializer_class = OSSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
 
-#@login_required
 class OSGroupViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows operating system groups to be viewed or edited.
     """
     queryset = OSGroup.objects.all()
     serializer_class = OSGroupSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)

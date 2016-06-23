@@ -24,7 +24,7 @@ from django.db.models import Q
 from django.contrib import messages
 from django.db import IntegrityError
 
-from rest_framework import viewsets
+from rest_framework import viewsets, permissions
 
 from patchman.util.filterspecs import Filter, FilterBar
 from patchman.hosts.models import HostRepo
@@ -385,28 +385,28 @@ def repo_toggle_security(request, repo_id):
                                             args=[repo_id]))
 
 
-#@login_required
 class RepositoryViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows repositories to be viewed or edited.
     """
     queryset = Repository.objects.all()
     serializer_class = RepositorySerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
 
-#@login_required
 class MirrorViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows mirrors to be viewed or edited.
     """
     queryset = Mirror.objects.all()
     serializer_class = MirrorSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
 
-#@login_required
 class MirrorPackageViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows mirror packages to be viewed or edited.
     """
     queryset = MirrorPackage.objects.all()
     serializer_class = MirrorPackageSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
