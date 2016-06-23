@@ -20,12 +20,12 @@ from patchman.operatingsystems.models import OS, OSGroup
 
 
 class OSSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
+    class Meta(object):
         model = OS
         fields = '__all__'
 
 
 class OSGroupSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
+    class Meta(object):
         model = OSGroup
         fields = '__all__'

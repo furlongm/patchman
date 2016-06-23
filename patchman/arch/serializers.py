@@ -20,12 +20,12 @@ from patchman.arch.models import PackageArchitecture, MachineArchitecture
 
 
 class PackageArchitectureSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
+    class Meta(object):
         model = PackageArchitecture
         fields = '__all__'
 
 
 class MachineArchitectureSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
+    class Meta(object):
         model = MachineArchitecture
         fields = '__all__'

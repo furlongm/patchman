@@ -20,18 +20,18 @@ from patchman.packages.models import PackageName, Package, PackageUpdate
 
 
 class PackageNameSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
+    class Meta(object):
         model = PackageName
         fields = '__all__'
 
 
 class PackageSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
+    class Meta(object):
         model = Package
         fields = '__all__'
 
 
 class PackageUpdateSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
+    class Meta(object):
         model = PackageUpdate
         fields = '__all__'

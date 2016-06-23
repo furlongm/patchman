@@ -20,18 +20,18 @@ from patchman.repos.models import Repository, Mirror, MirrorPackage
 
 
 class RepositorySerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
+    class Meta(object):
         model = Repository
         fields = '__all__'
 
 
 class MirrorSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
+    class Meta(object):
         model = Mirror
         fields = '__all__'
 
 
 class MirrorPackageSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
+    class Meta(object):
         model = MirrorPackage
         fields = '__all__'

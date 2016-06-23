@@ -20,12 +20,12 @@ from patchman.hosts.models import Host, HostRepo
 
 
 class HostSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
+    class Meta(object):
         model = Host
         fields = '__all__'
 
 
 class HostRepoSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
+    class Meta(object):
         model = HostRepo
         fields = '__all__'
