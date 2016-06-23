@@ -22,10 +22,10 @@ from patchman.arch.models import PackageArchitecture, MachineArchitecture
 class PackageArchitectureSerializer(serializers.HyperlinkedModelSerializer):
     class Meta(object):
         model = PackageArchitecture
-        fields = '__all__'
+        fields = ('name', )
 
 
 class MachineArchitectureSerializer(serializers.HyperlinkedModelSerializer):
     class Meta(object):
         model = MachineArchitecture
-        fields = '__all__'
+        fields = ('name', )
