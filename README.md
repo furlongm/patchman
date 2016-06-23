@@ -46,6 +46,7 @@ python-django
 python-django-tagging
 python-django-extensions
 python-django-bootstrap3
+python-djangorestframework
 python-debian
 python-rpm
 python-progressbar
