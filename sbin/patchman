@@ -6,7 +6,7 @@ import argparse
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.core.exceptions import MultipleObjectsReturned
 from django.db.models import Count
 from django import setup as django_setup
 
@@ -35,10 +35,10 @@ def get_host(host=None, action='Performing action'):
 
     try:
         host_obj = Host.objects.get(hostname__startswith=hostdot)
-    except ObjectDoesNotExist:
+    except Host.DoesNotExist:
         try:
             host_obj = Host.objects.get(hostname__startswith=host)
-        except ObjectDoesNotExist:
+        except Host.DoesNotExist:
             message = 'Host %s does not exist' % host
     except MultipleObjectsReturned:
         matches = Host.objects.filter(hostname__startswith=host).count()
@@ -77,7 +77,7 @@ def get_repos(repo=None, action='Performing action', only_enabled=False):
         try:
             repos.append(Repository.objects.get(id=repo))
             message = '%s for Repo %s' % (action, repo)
-        except:
+        except Repository.DoesNotExist:
             message = 'Repo %s does not exist' % repo
     else:
         message = '%s for all Repos\n' % action
@@ -235,7 +235,7 @@ def clean_tags():
         try:
             # tags are only used for hosts for now
             Host.objects.get(pk=hostid)
-        except ObjectDoesNotExist:
+        except Host.DoesNotExist:
             to_delete.append(t)
 
     tlen = len(to_delete)
@@ -395,7 +395,7 @@ def process_reports(host=None, force=False):
             reports = Report.objects.filter(
                 processed=force, host=host).order_by('created')
             message = 'Processing Reports for Host %s' % host
-        except:
+        except Report.DoesNotExist:
             message = 'No Reports exist for Host %s' % host
     else:
         message = 'Processing Reports for all Hosts'
