@@ -22,8 +22,9 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.contrib import messages
+
 from tagging.models import Tag, TaggedItem
-from rest_framework import viewsets
+from rest_framework import viewsets, permissions
 
 from patchman.util.filterspecs import Filter, FilterBar
 from patchman.hosts.models import Host, HostRepo
@@ -179,19 +180,19 @@ def host_delete(request, hostname):
                    'reports': reports}, )
 
 
-#@login_required
 class HostViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows hosts to be viewed or edited.
     """
     queryset = Host.objects.all()
     serializer_class = HostSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
 
-#@login_required
 class HostRepoViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows host repos to be viewed or edited.
     """
     queryset = HostRepo.objects.all()
     serializer_class = HostRepoSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
