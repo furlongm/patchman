@@ -31,7 +31,7 @@ def get_host(host=None, action='Performing action'):
 
     host_obj = None
     hostdot = host + '.'
-    message = '%s for host %s' % (action, host)
+    message = '{0!s} for host {1!s}'.format(action, host)
 
     try:
         host_obj = Host.objects.get(hostname__startswith=hostdot)
@@ -39,10 +39,10 @@ def get_host(host=None, action='Performing action'):
         try:
             host_obj = Host.objects.get(hostname__startswith=host)
         except ObjectDoesNotExist:
-            message = 'Host %s does not exist' % host
+            message = 'Host {0!s} does not exist'.format(host)
     except MultipleObjectsReturned:
         matches = Host.objects.filter(hostname__startswith=host).count()
-        message = '%s hosts match hostname "%s"' % (matches, host)
+        message = '{0!s} hosts match hostname "{1!s}"'.format(matches, host)
 
     if verbose:
         print message
@@ -68,7 +68,7 @@ def get_hosts(hosts=None, action='Performing action'):
                     host_objs.append(host_obj)
     else:
         if verbose:
-            print '%s for all hosts' % action
+            print '{0!s} for all hosts'.format(action)
         host_objs = Host.objects.all()
 
     return host_objs
@@ -83,11 +83,11 @@ def get_repos(repo=None, action='Performing action', only_enabled=False):
     if repo:
         try:
             repos.append(Repository.objects.get(id=repo))
-            message = '%s for repo %s' % (action, repo)
+            message = '{0!s} for repo {1!s}'.format(action, repo)
         except:
-            message = 'Repo %s does not exist' % repo
+            message = 'Repo {0!s} does not exist'.format(repo)
     else:
-        message = '%s for all repos' % action
+        message = '{0!s} for all repos'.format(action)
         if only_enabled:
             repos = Repository.objects.filter(enabled=True)
         else:
@@ -108,7 +108,7 @@ def refresh_repos(repo=None, force=False):
 
     for repo in repos:
         if verbose:
-            print '%s' % repo
+            print '{0!s}'.format(repo)
         repo.refresh(force)
         if verbose:
             print '\n'
@@ -146,7 +146,7 @@ def clean_packages():
         if verbose:
             print 'No orphaned packages found.'
     else:
-        create_pbar('Removing %s orphaned packages:' % plen, plen)
+        create_pbar('Removing {0!s} orphaned packages:'.format(plen), plen)
         for i, o in enumerate(packages):
             p = Package.objects.get(name=o.name,
                                     epoch=o.epoch,
@@ -169,7 +169,7 @@ def clean_arches():
         if verbose:
             print 'No orphaned package architectures found.'
     else:
-        create_pbar('Removing %s orphaned p arches:' % plen, plen)
+        create_pbar('Removing {0!s} orphaned p arches:'.format(plen), plen)
         for i, p in enumerate(parches):
             a = PackageArchitecture.objects.get(name=p.name)
             a.delete()
@@ -183,7 +183,7 @@ def clean_arches():
         if verbose:
             print 'No orphaned machine architectures found.'
     else:
-        create_pbar('Removing %s orphaned m arches:' % mlen, mlen)
+        create_pbar('Removing {0!s} orphaned m arches:'.format(mlen), mlen)
         for i, m in enumerate(marches):
             a = MachineArchitecture.objects.get(name=m.name)
             a.delete()
@@ -201,7 +201,7 @@ def clean_package_names():
         if verbose:
             print 'No orphaned package names found.'
     else:
-        create_pbar('Removing %s unused package names:' % nlen, nlen)
+        create_pbar('Removing {0!s} unused package names:'.format(nlen), nlen)
         for i, packagename in enumerate(names):
             packagename.delete()
             update_pbar(i + 1)
@@ -218,7 +218,7 @@ def clean_repos():
         if verbose:
             print 'No repositories with zero mirrors found.'
     else:
-        create_pbar('Removing %s empty repos:' % rlen, rlen)
+        create_pbar('Removing {0!s} empty repos:'.format(rlen), rlen)
         for i, repo in enumerate(repos):
             repo.delete()
             update_pbar(i + 1)
@@ -244,7 +244,7 @@ def clean_reports(s_host=None):
         rlen = reports.count()
 
         if rlen != 0:
-            create_pbar('Removing %s extraneous reports:' % rlen, rlen)
+            create_pbar('Removing {0!s} extraneous reports:'.format(rlen), rlen)
             for i, report in enumerate(reports):
                 report.delete()
                 update_pbar(i + 1)
@@ -268,7 +268,7 @@ def clean_tags():
     tlen = len(to_delete)
 
     if tlen != 0:
-        create_pbar('Removing %s unused tagged items' % tlen, tlen)
+        create_pbar('Removing {0!s} unused tagged items'.format(tlen), tlen)
         for i, t in enumerate(to_delete):
             t.delete()
             update_pbar(i + 1)
@@ -283,7 +283,7 @@ def host_updates_alt(host=None):
     ts = datetime.now().replace(microsecond=0)
     for host in hosts:
         if verbose:
-            print '\n%s' % host
+            print '\n{0!s}'.format(host)
         if host not in updated_hosts:
             host.updated_at = ts
             host.find_updates()
@@ -322,7 +322,7 @@ def host_updates_alt(host=None):
                 phost.save()
                 updated_hosts.append(phost)
                 if verbose:
-                    print 'Added the same updates to %s' % phost
+                    print 'Added the same updates to {0!s}'.format(phost)
         else:
             if verbose:
                 print 'Updates already added in this run'
@@ -336,7 +336,7 @@ def host_updates(host=None):
 
     for host in hosts:
         if verbose:
-            print '\n%s' % host
+            print '\n{0!s}'.format(host)
         host.find_updates()
 
 
@@ -361,45 +361,45 @@ def diff_hosts(hosts):
     repo_diff_BA = reposB.difference(reposA)
 
     print
-    print '+ %s' % hostA.hostname
-    print '- %s' % hostB.hostname
+    print '+ {0!s}'.format(hostA.hostname)
+    print '- {0!s}'.format(hostB.hostname)
 
     if hostA.os != hostB.os:
         print '\nOperating Systems'
-        print '+ %s' % hostA.os
-        print '- %s' % hostB.os
+        print '+ {0!s}'.format(hostA.os)
+        print '- {0!s}'.format(hostB.os)
     else:
         print '\nNo OS differences'
 
     if hostA.arch != hostB.arch:
         print '\nArchitecture'
-        print '+ %s' % hostA.arch
-        print '- %s' % hostB.arch
+        print '+ {0!s}'.format(hostA.arch)
+        print '- {0!s}'.format(hostB.arch)
     else:
         print '\nNo architecture differences'
 
     if hostA.kernel != hostB.kernel:
         print '\nKernels'
-        print '+ %s' % hostA.kernel
-        print '- %s' % hostB.kernel
+        print '+ {0!s}'.format(hostA.kernel)
+        print '- {0!s}'.format(hostB.kernel)
     else:
         print '\nNo kernel differences'
 
     if len(package_diff_AB) != 0 or len(package_diff_BA) != 0:
         print '\nPackages'
         for package in package_diff_AB:
-            print '+ %s' % package
+            print '+ {0!s}'.format(package)
         for package in package_diff_BA:
-            print '- %s' % package
+            print '- {0!s}'.format(package)
     else:
         print '\nNo package differences'
 
     if len(repo_diff_AB) != 0 or len(repo_diff_BA) != 0:
         print '\nRepositories'
         for repo in repo_diff_AB:
-            print '+ %s' % repo
+            print '+ {0!s}'.format(repo)
         for repo in repo_diff_BA:
-            print '- %s' % repo
+            print '- {0!s}'.format(repo)
     else:
         print '\nNo repo differences'
 
@@ -413,7 +413,7 @@ def dns_checks(host=None):
 
     for host in hosts:
         if verbose:
-            print '%s:\t' % host.__unicode__()[0:25].ljust(25),
+            print '{0!s}:\t'.format(host.__unicode__()[0:25].ljust(25)),
             sys.stdout.softspace = False
         host.check_rdns()
 
@@ -430,9 +430,9 @@ def process_reports(host=None, force=False):
         try:
             reports = Report.objects.filter(
                 processed=force, host=host).order_by('created')
-            message = 'Processing reports for host %s' % host
+            message = 'Processing reports for host {0!s}'.format(host)
         except:
-            message = 'No reports exist for host %s' % host
+            message = 'No reports exist for host {0!s}'.format(host)
     else:
         message = 'Processing reports for all hosts'
         reports = Report.objects.filter(processed=force).order_by('created')
@@ -454,7 +454,7 @@ def clean_updates():
     for update in package_updates:
         if update.host_set.count() == 0:
             if verbose:
-                print 'Removing unused update %s' % update
+                print 'Removing unused update {0!s}'.format(update)
             update.delete()
         for duplicate in package_updates:
             if update.oldpackage == duplicate.oldpackage and \
@@ -462,7 +462,7 @@ def clean_updates():
                     update.security == duplicate.security and \
                     update.id != duplicate.id:
                 if verbose:
-                    print "Removing duplicate update: %s" % (update)
+                    print "Removing duplicate update: {0!s}".format((update))
                 for host in duplicate.host_set.all():
                     host.updates.remove(duplicate)
                     host.updates.add(update)
