@@ -22,10 +22,12 @@ from patchman.hosts.models import Host, HostRepo
 class HostSerializer(serializers.HyperlinkedModelSerializer):
     class Meta(object):
         model = Host
-        fields = '__all__'
+        fields = ('hostname', 'ipaddress', 'reversedns', 'check_dns', 'os',
+                  'kernel', 'arch', 'domain', 'lastreport', 'repos', 'updates',
+                  'reboot_required', 'host_repos_only', 'tags', 'updated_at')
 
 
 class HostRepoSerializer(serializers.HyperlinkedModelSerializer):
     class Meta(object):
         model = HostRepo
-        fields = '__all__'
+        fields = ('host', 'repo', 'enabled', 'priority')

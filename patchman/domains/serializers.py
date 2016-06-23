@@ -22,4 +22,4 @@ from patchman.domains.models import Domain
 class DomainSerializer(serializers.HyperlinkedModelSerializer):
     class Meta(object):
         model = Domain
-        fields = '__all__'
+        fields = ('name', )
