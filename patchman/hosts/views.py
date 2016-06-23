@@ -22,6 +22,7 @@ from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.contrib import messages
 from tagging.models import Tag, TaggedItem
+from rest_framework import viewsets
 
 from patchman.util.filterspecs import Filter, FilterBar
 from patchman.hosts.models import Host, HostRepo
@@ -30,6 +31,7 @@ from patchman.arch.models import MachineArchitecture
 from patchman.operatingsystems.models import OS, OSGroup
 from patchman.reports.models import Report
 from patchman.hosts.forms import EditHostForm
+from patchman.hosts.serializers import HostSerializer, HostRepoSerializer
 
 
 @login_required
@@ -174,3 +176,21 @@ def host_delete(request, hostname):
                   'hosts/host_delete.html',
                   {'host': host,
                    'reports': reports}, )
+
+
+#@login_required
+class HostViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows hosts to be viewed or edited.
+    """
+    queryset = Host.objects.all()
+    serializer_class = HostSerializer
+
+
+#@login_required
+class HostRepoViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows host repos to be viewed or edited.
+    """
+    queryset = HostRepo.objects.all()
+    serializer_class = HostRepoSerializer

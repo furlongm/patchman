@@ -14,4 +14,26 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-# Create your views here.
+from django.contrib.auth.decorators import login_required
+
+from rest_framework import viewsets
+from patchman.arch.models import PackageArchitecture, MachineArchitecture
+from patchman.arch.serializers import PackageArchitectureSerializer, MachineArchitectureSerializer
+
+
+#@login_required
+class PackageArchitectureViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows package architectures to be viewed or edited.
+    """
+    queryset = PackageArchitecture.objects.all()
+    serializer_class = PackageArchitectureSerializer
+
+
+#@login_required
+class MachineArchitectureViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows machine architectures to be viewed or edited.
+    """
+    queryset = MachineArchitecture.objects.all()
+    serializer_class = MachineArchitectureSerializer
