@@ -49,7 +49,7 @@ class Host(models.Model):
     lastreport = models.DateTimeField()
     packages = models.ManyToManyField(Package)
     repos = models.ManyToManyField(Repository, through='HostRepo')
-    updates = models.ManyToManyField(PackageUpdate)
+    updates = models.ManyToManyField(PackageUpdate, blank=True)
     reboot_required = models.BooleanField(default=False)
     host_repos_only = models.BooleanField(default=True)
     tags = TagField()
