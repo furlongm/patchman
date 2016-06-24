@@ -22,10 +22,10 @@ from patchman.operatingsystems.models import OS, OSGroup
 class OSSerializer(serializers.HyperlinkedModelSerializer):
     class Meta(object):
         model = OS
-        fields = ( 'name', 'osgroup' )
+        fields = ('id', 'name', 'osgroup')
 
 
 class OSGroupSerializer(serializers.HyperlinkedModelSerializer):
     class Meta(object):
         model = OSGroup
-        fields = ( 'name', 'repos' )
+        fields = ('id', 'name', 'repos')

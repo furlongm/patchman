@@ -22,14 +22,14 @@ from patchman.repos.models import Repository, Mirror, MirrorPackage
 class RepositorySerializer(serializers.HyperlinkedModelSerializer):
     class Meta(object):
         model = Repository
-        fields = ('name', 'arch', 'security', 'repotype', 'enabled',
+        fields = ('id', 'name', 'arch', 'security', 'repotype', 'enabled',
                   'auth_required')
 
 
 class MirrorSerializer(serializers.HyperlinkedModelSerializer):
     class Meta(object):
         model = Mirror
-        fields = ('repo', 'url', 'last_access_ok', 'file_checksum',
+        fields = ('id', 'repo', 'url', 'last_access_ok', 'file_checksum',
                   'timestamp', 'mirrorlist', 'enabled', 'refresh',
                   'fail_count')
 
@@ -37,4 +37,4 @@ class MirrorSerializer(serializers.HyperlinkedModelSerializer):
 class MirrorPackageSerializer(serializers.HyperlinkedModelSerializer):
     class Meta(object):
         model = MirrorPackage
-        fields = ('mirror', 'package', 'enabled')
+        fields = ('id', 'mirror', 'package', 'enabled')

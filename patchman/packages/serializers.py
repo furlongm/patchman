@@ -22,16 +22,16 @@ from patchman.packages.models import PackageName, Package, PackageUpdate
 class PackageNameSerializer(serializers.HyperlinkedModelSerializer):
     class Meta(object):
         model = PackageName
-        fields = ('name', )
+        fields = ('id', 'name')
 
 
 class PackageSerializer(serializers.HyperlinkedModelSerializer):
     class Meta(object):
         model = Package
-        fields = ('name', 'epoch', 'version', 'release', 'arch')
+        fields = ('id', 'name', 'epoch', 'version', 'release', 'arch')
 
 
 class PackageUpdateSerializer(serializers.HyperlinkedModelSerializer):
     class Meta(object):
         model = PackageUpdate
-        fields = ('oldpackage', 'newpackage', 'security')
+        fields = ('id', 'oldpackage', 'newpackage', 'security')
