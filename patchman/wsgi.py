@@ -25,6 +25,6 @@ from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
 
 from django.conf import settings
-if settings.RUN_GUNICORN:
+if hasattr(settings, 'RUN_GUNICORN') and settings.RUN_GUNICORN:
     from whitenoise.django import DjangoWhiteNoise
     application = DjangoWhiteNoise(application)
