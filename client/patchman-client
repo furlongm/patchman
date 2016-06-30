@@ -150,8 +150,8 @@ function get_installed_debs {
                             | sed -e 's/^\(install\|hold\) ok installed|//g')
         for i in ${dpkg_query_output} ; do
             IFS=${OLDIFS}
-            read name fullversion arch <<<$(echo "${i}" | cut -d " " -f 1,2,3)
-            read remaining release <<<$(echo "${fullversion}" | sed -e "s/\(.*\)-\(.*\)/\1 \2/")
+            read -r name fullversion arch <<<$(echo "${i}" | cut -d " " -f 1,2,3)
+            read -r remaining release <<<$(echo "${fullversion}" | sed -e "s/\(.*\)-\(.*\)/\1 \2/")
             epoch=$(echo "${remaining}" | cut -d ":" -f 1 -s)
             version=$(echo "${remaining}" | sed -e "s/.*:\(.*\)/\1/")
             echo \'${name}\' \'${epoch}\' \'${version}\' \'${release}\' \'${arch}\' \'deb\'>> "${tmpfile_pkg}"
@@ -265,7 +265,7 @@ function get_repos {
         fi
         releasever=$(rpm -q --qf "%{version}\n" --whatprovides redhat-release)
         let numrepos=$(ls /etc/yum.repos.d/*.repo | wc -l)
-        if [ ${numrepos} > 0 ] ; then
+        if [ ${numrepos} -gt 0 ] ; then
             priorities=$(sed -n -e "/^name/h; /priority *=/{ G; s/\n/ /; s/ity *= *\(.*\)/ity=\1/ ; s/\\$releasever/${releasever}/ ; s/name=\(.*\)/'\1 ${host_arch}'/ ; p }" /etc/yum.repos.d/*.repo)
         fi
         # replace this with a dedicated awk or simple python script?
@@ -299,7 +299,7 @@ function get_repos {
         if [ ${verbose} == 1 ] ; then
             echo 'Finding apt repos...'
         fi
-        IFS=$OLDIFS read osname shortversion <<<$(echo "${os}" | awk '{print $1,$2}' | cut -d . -f 1,2)
+        IFS=$OLDIFS read -r osname shortversion <<<$(echo "${os}" | awk '{print $1,$2}' | cut -d . -f 1,2)
         repo_string="'deb\' \'${osname} ${shortversion} ${host_arch} repo at"
         repos=$(apt-cache policy | grep http: | grep -v Translation | sed -e "s/^ *//g" -e "s/ *$//g" | cut -d " " -f 1,2,3,4)
         dist_repos=$(echo "${repos}" | grep -v -e "Packages$")
@@ -409,7 +409,7 @@ if [ ! -d "${lock_dir}" ] ; then
     exit 1
 fi
 
-parseopts $@
+parseopts "$@"
 
 if [ ${verbose} == 1 ] ; then
     echo "Attempting to obtain lock: ${lock_dir}/patchman.lock"
