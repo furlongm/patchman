@@ -505,6 +505,8 @@ def checksum_is_valid(sha, checksum, mirror):
         text = 'Checksum failed for mirror {0!s}'.format(mirror.id)
         text += ', not refreshing package metadata'
         error_message.send(sender=None, text=text)
+        text = 'Found sha = {0!s}\nExpected  = {1!s}'.format(sha, checksum)
+        error_message.send(sender=None, text=text)
         mirror.last_access_ok = False
         return False
 
