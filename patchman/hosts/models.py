@@ -228,7 +228,7 @@ class Host(models.Model):
                         pu_best_repo = find_best_repo(potential_update,
                                                       hostrepos)
                         pu_priority = pu_best_repo.priority
-                        if priority >= pu_priority:
+                        if pu_priority >= priority:
                             highest_package = potential_update
                     else:
                         highest_package = potential_update
