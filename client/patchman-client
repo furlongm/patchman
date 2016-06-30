@@ -120,7 +120,7 @@ function check_conf {
 function get_installed_rpms {
 
     rpm=$(/usr/bin/which rpm 2>/dev/null)
-    if [ ! -z "${rpm}" ] && [ -x "${rpm}" ]; then
+    if [ ! -z "${rpm}" ] && [ -x "${rpm}" ] ; then
         if [ ${verbose} == 1 ] ; then
             echo 'Finding installed rpms...'
         fi
