@@ -273,10 +273,15 @@ def process_repo(repo, arch):
     for url in unknown:
         Mirror.objects.create(repo=repository, url=url)
 
-    for url_d in Mirror.objects.filter(repo=repository).values('url'):
-        if url_d['url'].find('cdn.redhat.com') != -1 or \
-                url_d['url'].find('nu.novell.com') != -1:
+    for mirror in Mirror.objects.filter(repo=repository).values('url'):
+        if mirror['url'].find('cdn.redhat.com') != -1 or \
+                mirror['url'].find('nu.novell.com') != -1:
             repository.auth_required = True
+            with transaction.atomic():
+                repository.save()
+        if mirror['url'].startswith('http://security') or \
+                mirror['url'].startswith('https://security'):
+            repository.security = True
             with transaction.atomic():
                 repository.save()
 
