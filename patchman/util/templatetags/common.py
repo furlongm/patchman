@@ -16,6 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+from humanize import naturaldelta
+from datetime import datetime, timedelta
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')
+from django.conf import settings
 from django.template import Library
 from django.template.loader import get_template
 from django.utils.html import format_html
@@ -98,3 +104,13 @@ def searchform():
     template = get_template('searchbar.html')
     html = template.render({'post_url': '.'})
     return html
+
+
+@register.simple_tag
+def reports_timedelta():
+    if hasattr(settings, 'DAYS_WITHOUT_REPORT') and \
+            isinstance(settings.DAYS_WITHOUT_REPORT, int):
+        days = settings.DAYS_WITHOUT_REPORT
+    else:
+        days = 14
+    return naturaldelta(timedelta(days=days))

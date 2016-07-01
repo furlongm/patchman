@@ -53,6 +53,7 @@ python-progressbar
 python-lxml
 python-argparse
 python-requests
+python-humanize
 ```
 
 The server can optionally make use of celery to asynchronously process the

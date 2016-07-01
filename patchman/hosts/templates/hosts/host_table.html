@@ -1,4 +1,4 @@
-{% load common %}
+{% load common report_alert %}
 <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
   <thead>
     <tr>
@@ -18,7 +18,7 @@
       <td class="centered" style="color:orange">{% with count=host.get_num_bugfix_updates %}{% if count != 0 %}{{ count }}{% else %}&nbsp;{% endif %}{% endwith %}</td>
       <td>{{ host.kernel }}</td>
       <td><a href="{{ host.os.get_absolute_url }}">{{ host.os }}</a></td>
-      <td>{{ host.lastreport }}</td>
+      <td>{{ host.lastreport }}{% report_alert host.lastreport %}</td>
       <td class="centered">{% no_yes_img host.reboot_required %}</td>
     </tr>
   {% endfor %}

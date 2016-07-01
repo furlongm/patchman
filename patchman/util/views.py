@@ -15,12 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+import os
+from datetime import datetime, timedelta
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')
+from django.conf import settings
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.models import Site
 from django.db.models import F
-
-from datetime import datetime, timedelta
 
 from patchman.hosts.models import Host
 from patchman.operatingsystems.models import OS, OSGroup
@@ -44,7 +47,13 @@ def dashboard(request):
     packages = Package.objects.all()
 
     # host issues
-    stale_hosts = hosts.filter(lastreport__lt=(datetime.now() + timedelta(-14)))
+    if hasattr(settings, 'DAYS_WITHOUT_REPORT') and \
+            isinstance(settings.DAYS_WITHOUT_REPORT, int):
+        days = settings.DAYS_WITHOUT_REPORT
+    else:
+        days = 14
+    last_report_delta = datetime.now() - timedelta(days=days)
+    stale_hosts = hosts.filter(lastreport__lt=last_report_delta)
     norepo_hosts = hosts.filter(repos__isnull=True, os__osgroup__repos__isnull=True)
     reboot_hosts = hosts.filter(reboot_required=True)
     secupdate_hosts = hosts.filter(updates__security=True, updates__isnull=False).distinct()
