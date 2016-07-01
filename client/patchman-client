@@ -2,8 +2,6 @@
 
 conf='/etc/patchman/patchman-client.conf'
 protocol=1
-curl_bin=$(which curl)
-mktemp_bin=$(which mktemp)
 verbose=0
 debug=0
 report=0
@@ -117,10 +115,18 @@ function check_conf {
     fi
 }
 
+function check_command_exists {
+    cmd=$(/usr/bin/which ${1} 2>/dev/null)
+    if [ ! -z "${cmd}" ] && [ -x "${cmd}" ] ; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 function get_installed_rpms {
 
-    rpm=$(/usr/bin/which rpm 2>/dev/null)
-    if [ ! -z "${rpm}" ] && [ -x "${rpm}" ] ; then
+    if check_command_exists rpm ; then
         if [ ${verbose} == 1 ] ; then
             echo 'Finding installed rpms...'
         fi
@@ -137,8 +143,7 @@ function get_installed_rpms {
 
 function get_installed_debs {
 
-    dpkg_query=$(/usr/bin/which dpkg-query 2>/dev/null)
-    if [ ! -z "${dpkg_query}" ] && [ -x "${dpkg_query}" ] ; then
+    if check_command_exists dpkg-query ; then
         if [ ${verbose} == 1 ] ; then
             echo 'Finding installed debs...'
         fi
@@ -258,8 +263,7 @@ function get_repos {
 "
 
     # Red Hat / CentOS
-    yum=$(/usr/bin/which yum 2>/dev/null)
-    if [ ! -z "${yum}" ] && [ -x "${yum}" ] ; then
+    if check_command_exists yum ; then
         if [ ${verbose} == 1 ] ; then
             echo 'Finding yum repos...'
         fi
@@ -294,8 +298,7 @@ function get_repos {
     fi
 
     # Debian
-    apt_cache=$(/usr/bin/which apt-cache 2>/dev/null)
-    if [ ! -z "${apt_cache}" ] && [ -x "${apt_cache}" ] ; then
+    if check_command_exists apt-cache ; then
         if [ ${verbose} == 1 ] ; then
             echo 'Finding apt repos...'
         fi
@@ -309,8 +312,7 @@ function get_repos {
     fi
 
     # SUSE
-    zypper=$(/usr/bin/which zypper 2>/dev/null)
-    if [ ! -z "${zypper}" ] && [ -x "${zypper}" ] ; then
+    if check_command_exists zypper ; then
         if [ ${verbose} == 1 ] ; then
             echo 'Finding zypper repos...'
         fi
@@ -397,7 +399,7 @@ function post_data {
     fi
 }
 
-if [ -z "${mktemp_bin}" -o -z "${curl_bin}" ] ; then
+if ! check_command_exists mktemp || ! check_command_exists curl ; then
     echo "Either mktemp or curl was not found, exiting."
     exit 1
 fi
