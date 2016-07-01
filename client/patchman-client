@@ -380,7 +380,7 @@ function post_data {
     curl_opts="${curl_opts} -F sec_updates=\<${tmpfile_sec}"
     curl_opts="${curl_opts} -F bug_updates=\<${tmpfile_bug}"
     curl_opts="${curl_opts} -F reboot=\"${reboot}\""
-    post_command="${curl_bin} ${curl_opts} ${server}/reports/upload/"
+    post_command="curl ${curl_opts} ${server}/reports/upload/"
 
     sed -i -e 's/%2b/\+/g' "${tmpfile_pkg}"
 
@@ -423,10 +423,10 @@ flock -xn 200 || exit 1
 check_conf
 
 trap cleanup EXIT
-tmpfile_pkg=$(${mktemp_bin})
-tmpfile_rep=$(${mktemp_bin})
-tmpfile_sec=$(${mktemp_bin})
-tmpfile_bug=$(${mktemp_bin})
+tmpfile_pkg=$(mktemp)
+tmpfile_rep=$(mktemp)
+tmpfile_sec=$(mktemp)
+tmpfile_bug=$(mktemp)
 
 get_host_data
 get_packages
