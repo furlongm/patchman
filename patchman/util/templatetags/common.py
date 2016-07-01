@@ -17,7 +17,7 @@
 # along with Patchman  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from humanize import naturaldelta
+from humanize import naturaltime
 from datetime import datetime, timedelta
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')
@@ -113,4 +113,4 @@ def reports_timedelta():
         days = settings.DAYS_WITHOUT_REPORT
     else:
         days = 14
-    return naturaldelta(timedelta(days=days))
+    return naturaltime(datetime.now() - timedelta(days=days))
