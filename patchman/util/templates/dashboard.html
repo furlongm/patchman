@@ -44,7 +44,7 @@
 {% with count=stale_hosts.count %}
   {% if count > 0 %}
   <div class="well well-sm">
-    <button class="btn btn-sm" data-toggle="collapse" data-target="#stale_hosts"><span class="badge">{{ count }}</span> Hosts have not reported in {% reports_timedelta %}</button>
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#stale_hosts"><span class="badge">{{ count }}</span> Hosts have not reported since {% reports_timedelta %}</button>
     <div class="collapse" id="stale_hosts">
       {% gen_table stale_hosts %}
     </div>
