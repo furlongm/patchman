@@ -3,7 +3,6 @@
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_DIR = BASE_DIR
 
 DEBUG = False
 ALLOWED_HOSTS = ['127.0.0.1']
@@ -139,3 +138,16 @@ except ImportError:
 
 MANAGERS = ADMINS
 INSTALLED_APPS = DEFAULT_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+
+if RUN_GUNICORN:
+
+    PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+
+    # Static files (CSS, JavaScript, Images)
+    STATIC_ROOT = os.path.abspath(os.path.join(PROJECT_ROOT, '../patchman_media'))
+    STATIC_URL = '/patchman_media/'
+
+    # Extra places for collectstatic to find static files.
+    STATICFILES_DIRS = (
+        os.path.abspath(os.path.join(PROJECT_ROOT, '../media')),
+    )
