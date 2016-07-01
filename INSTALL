@@ -36,7 +36,7 @@ add this repo, run the following command:
 apt-get install python-django-tagging python-django python-requests \
 python-django-extensions python-argparse python-lxml python-rpm python-debian \
 python-pygooglechart python-cracklib python-progressbar libapache2-mod-wsgi \
-python-djangorestframework apache2 python-colorama
+python-djangorestframework apache2 python-colorama python-humanize
 
 # If python-django-tagging is older than 0.3.3, you may need to install a
 # newer version. E.g. to upgrade to the latest pip version:

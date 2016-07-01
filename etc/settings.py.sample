@@ -41,5 +41,8 @@ ALLOWED_HOSTS = ['127.0.0.1', 'X.X.X.X']
 # Maximum number of mirrors to add or refresh per repo
 MAX_MIRRORS = 5
 
+# Number of days to wait before notifying users that a host has not reported
+DAYS_WITHOUT_REPORT = 14
+
 # Whether to run patchman under the gunicorn web server
 RUN_GUNICORN = True
