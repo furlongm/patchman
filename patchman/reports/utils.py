@@ -186,14 +186,9 @@ def process_update(host, update_string, security):
             with transaction.atomic():
                 MirrorPackage.objects.create(mirror=mirror, package=package)
 
-    try:
-        installed_package = host.packages.filter(name=p_name,
-                                                 arch=p_arch,
-                                                 packagetype='R')[0]
-    except IndexError:
-        # Silently fail for now, while waiting for yum bug to be fixed
-        # https://bugzilla.redhat.com/show_bug.cgi?id=1191313
-        return
+    installed_package = host.packages.filter(name=p_name,
+                                             arch=p_arch,
+                                             packagetype='R')[0]
 
     updates = PackageUpdate.objects.all()
     with transaction.atomic():
