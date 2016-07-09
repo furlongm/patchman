@@ -26,7 +26,6 @@ except ImportError:
         from backports import lzma
     except ImportError:
         lzma = None
-import requests
 from datetime import datetime
 from hashlib import sha1, sha256
 from io import BytesIO
@@ -42,7 +41,7 @@ from django.utils.six import text_type
 
 from patchman.packages.models import Package, PackageName, PackageString
 from patchman.arch.models import PackageArchitecture
-from patchman.util import download_url
+from patchman.util import get_url, download_url, response_is_valid
 from patchman.signals import progress_info_s, progress_update_s, \
     info_message, warning_message, error_message, debug_message
 
@@ -224,32 +223,6 @@ def get_sha(checksum_type, data):
         text = 'Unknown checksum type: {0!s}'.format(checksum_type)
         error_message.send(sender=None, text=text)
     return sha
-
-
-def get_url(url):
-    """ Perform a http GET on a URL. Return None on error.
-    """
-    res = None
-    try:
-        res = requests.get(url, stream=True)
-    except requests.exceptions.Timeout:
-        error_message.send(sender=None, text='Timeout - {0!s}'.format(url))
-    except requests.exceptions.TooManyRedirects:
-        error_message.send(sender=None,
-                           text='Too many redirects - {0!s}'.format(url))
-    except requests.exceptions.RequestException as e:
-        error_message.send(sender=None,
-                           text='Error ({0!s}) - {1!s}'.format(e, url))
-    return res
-
-
-def response_is_valid(res):
-    """ Check if a http response is valid
-    """
-    if res is not None:
-        return res.ok
-    else:
-        return False
 
 
 def find_mirror_url(stored_mirror_url, formats):

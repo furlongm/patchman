@@ -19,6 +19,7 @@ from __future__ import print_function
 
 import os
 import sys
+import requests
 from colorama import Fore, Style
 from progressbar import Bar, ETA, Percentage, ProgressBar
 
@@ -93,3 +94,29 @@ def print_nocr(text):
     """
     print(text, end='')
     sys.stdout.softspace = False
+
+
+def get_url(url):
+    """ Perform a http GET on a URL. Return None on error.
+    """
+    res = None
+    try:
+        res = requests.get(url, stream=True)
+    except requests.exceptions.Timeout:
+        error_message.send(sender=None, text='Timeout - {0!s}'.format(url))
+    except requests.exceptions.TooManyRedirects:
+        error_message.send(sender=None,
+                           text='Too many redirects - {0!s}'.format(url))
+    except requests.exceptions.RequestException as e:
+        error_message.send(sender=None,
+                           text='Error ({0!s}) - {1!s}'.format(e, url))
+    return res
+
+
+def response_is_valid(res):
+    """ Check if a http response is valid
+    """
+    if res is not None:
+        return res.ok
+    else:
+        return False
