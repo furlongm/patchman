@@ -23,7 +23,7 @@ from patchman.hosts.models import HostRepo
 from patchman.arch.models import MachineArchitecture, PackageArchitecture
 from patchman.repos.models import Repository, Mirror, MirrorPackage
 from patchman.packages.models import Package, PackageName, PackageUpdate
-from patchman.packages.utils import find_versions
+from patchman.packages.utils import find_evr
 from patchman.signals import progress_info_s, progress_update_s, \
     error_message, info_message
 
@@ -158,7 +158,7 @@ def process_update(host, update_string, security):
     package_str = parts[0]
     arch_str = parts[2]
 
-    p_epoch, p_version, p_release = find_versions(update_str[1])
+    p_epoch, p_version, p_release = find_evr(update_str[1])
 
     package_arches = PackageArchitecture.objects.all()
     with transaction.atomic():

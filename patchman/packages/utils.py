@@ -16,19 +16,19 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 
-def find_versions(s):
-    """ Given a package version string, return the epoch, version, release """
 
+def find_evr(s):
+    """ Given a package version string, return the epoch, version, release
+    """
     epoch = find_epoch(s)
     release = find_release(s)
     version = find_version(s, epoch, release)
-
     return epoch, version, release
 
 
 def find_release(s):
-    """ Given a package version string, return the release """
-
+    """ Given a package version string, return the release
+    """
     r = s.rpartition('-')
     if r[0] == '':
         return ''
@@ -37,8 +37,8 @@ def find_release(s):
 
 
 def find_epoch(s):
-    """ Given a package version string, return the epoch """
-
+    """ Given a package version string, return the epoch
+    """
     r = s.partition(':')
     if r[1] == '':
         return ''
@@ -47,8 +47,8 @@ def find_epoch(s):
 
 
 def find_version(s, epoch, release):
-    """ Given a package version string, return the version """
-
+    """ Given a package version string, return the version
+    """
     try:
         es = '{0!s}:'.format(epoch)
         e = s.index(es) + len(epoch) + 1
