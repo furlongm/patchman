@@ -20,7 +20,10 @@ from __future__ import unicode_literals
 from django.utils.encoding import python_2_unicode_compatible
 from django.db import models
 
-from rpm import labelCompare
+try:
+    from version_utils.rpm import labelCompare
+except ImportError:
+    from rpm import labelCompare
 from debian.debian_support import Version, version_compare
 
 from patchman.arch.models import PackageArchitecture
