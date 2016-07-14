@@ -22,7 +22,10 @@ from django.db import models, IntegrityError, DatabaseError, transaction
 from django.db.models import Q
 from django.utils import timezone
 
-from rpm import labelCompare
+try:
+    from version_utils.rpm import labelCompare
+except ImportError:
+    from rpm import labelCompare
 from tagging.fields import TagField
 
 from patchman.packages.models import Package, PackageUpdate
