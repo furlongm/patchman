@@ -20,11 +20,22 @@ from __future__ import print_function
 import os
 import sys
 import requests
+import bz2
+import zlib
+try:
+    import lzma
+except ImportError:
+    try:
+        from backports import lzma
+    except ImportError:
+        lzma = None
 from colorama import Fore, Style
 from progressbar import Bar, ETA, Percentage, ProgressBar
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')
 from django.conf import settings
+
+from patchman.signals import error_message
 
 pbar = None
 verbose = None
@@ -120,3 +131,50 @@ def response_is_valid(res):
         return res.ok
     else:
         return False
+
+
+def gunzip(contents):
+    """ gunzip contents in memory and return the data
+    """
+    try:
+        wbits = zlib.MAX_WBITS | 32
+        return zlib.decompress(contents, wbits)
+    except zlib.error as e:
+        error_message.send(sender=None, text='gunzip: ' + e)
+
+
+def bunzip2(contents):
+    """ bunzip2 contents in memory and return the data
+    """
+    try:
+        bzip2data = bz2.decompress(contents)
+        return bzip2data
+    except IOError as e:
+        if e == 'invalid data stream':
+            error_message.send(sender=None, text='bunzip2: ' + e)
+    except ValueError as e:
+        if e == 'couldn\'t find end of stream':
+            error_message.send(sender=None, text='bunzip2: ' + e)
+
+
+def unxz(contents):
+    """ unxz contents in memory and return the data
+    """
+    try:
+        xzdata = lzma.decompress(contents)
+        return xzdata
+    except lzma.LZMAError as e:
+        error_message.send(sender=None, text='lzma: ' + e)
+
+
+def extract(data, fmt):
+    """ Extract the contents based on the file ending. Return the untouched
+        data if no file ending matches, else return the extracted contents.
+    """
+    if fmt.endswith('xz') and lzma is not None:
+        return unxz(data)
+    elif fmt.endswith('bz2'):
+        return bunzip2(data)
+    elif fmt.endswith('gz'):
+        return gunzip(data)
+    return data

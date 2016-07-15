@@ -17,8 +17,6 @@
 
 import os
 import re
-import bz2
-import gzip
 try:
     import lzma
 except ImportError:
@@ -41,7 +39,8 @@ from django.utils.six import text_type
 
 from patchman.packages.models import Package, PackageName, PackageString
 from patchman.arch.models import PackageArchitecture
-from patchman.util import get_url, download_url, response_is_valid
+from patchman.util import get_url, download_url, response_is_valid, gunzip, \
+    bunzip2, unxz, extract
 from patchman.signals import progress_info_s, progress_update_s, \
     info_message, warning_message, error_message, debug_message
 
@@ -132,58 +131,6 @@ def update_mirror_packages(mirror, packages):
         from patchman.repos.models import MirrorPackage
         with transaction.atomic():
             MirrorPackage.objects.create(mirror=mirror, package=p)
-
-
-def gunzip(contents):
-    """ gunzip contents in memory and return the data
-    """
-    try:
-        gzipdata = gzip.GzipFile(fileobj=contents)
-        gzipdata = gzipdata.read()
-        contents = BytesIO(gzipdata)
-        return contents.getvalue()
-    except IOError as e:
-        import warnings
-        warnings.filterwarnings('ignore', category=DeprecationWarning)
-        if e.message == 'Not a gzipped file':
-            error_message.send(sender=None, text='gunzip: ' + e.message)
-
-
-def bunzip2(contents):
-    """ bunzip2 contents in memory and return the data
-    """
-    try:
-        bzip2data = bz2.decompress(contents)
-        return bzip2data
-    except IOError as e:
-        if e == 'invalid data stream':
-            error_message.send(sender=None, text='bunzip2: ' + e)
-    except ValueError as e:
-        if e == 'couldn\'t find end of stream':
-            error_message.send(sender=None, text='bunzip2: ' + e)
-
-
-def unxz(contents):
-    """ unxz contents in memory and return the data
-    """
-    try:
-        xzdata = lzma.decompress(contents)
-        return xzdata
-    except lzma.LZMAError as e:
-        error_message.send(sender=None, text='lzma: ' + e)
-
-
-def extract(data, fmt):
-    """ Extract the contents based on the file ending. Return the untouched
-        data if no file ending matches, else return the extracted contents.
-    """
-    if fmt.endswith('xz') and lzma is not None:
-        return unxz(data)
-    elif fmt.endswith('bz2'):
-        return bunzip2(data)
-    elif fmt.endswith('gz'):
-        return gunzip(BytesIO(data))
-    return data
 
 
 def get_primary_url(mirror_url, data):
