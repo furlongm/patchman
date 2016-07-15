@@ -23,7 +23,7 @@ from patchman.hosts.models import HostRepo
 from patchman.arch.models import MachineArchitecture, PackageArchitecture
 from patchman.repos.models import Repository, Mirror, MirrorPackage
 from patchman.packages.models import Package, PackageName, PackageUpdate
-from patchman.packages.utils import find_evr
+from patchman.packages.utils import find_evr, get_or_create_package
 from patchman.signals import progress_info_s, progress_update_s, \
     error_message, info_message
 
@@ -293,37 +293,19 @@ def parse_packages(packages_string):
 
 def process_package(pkg, protocol):
     """ Processes a single sanitized package string and converts to a package
-        object """
-
+        object
+    """
     if protocol == '1':
-        # ignore gpg-pupbkey pseudo packages
-        name = pkg[0].lower()
-        if name == 'gpg-pubkey':
-            return
-        try:
-            with transaction.atomic():
-                package_names = PackageName.objects.all()
-                p_name, c = package_names.get_or_create(name=name)
-        except IntegrityError as e:
-            error_message.send(sender=None, text=e)
-            p_name = package_names.get(name=name)
-        except DatabaseError as e:
-            error_message.send(sender=None, text=e)
+        p_epoch = p_version = p_release = ''
+        name = pkg[0]
 
         if pkg[4] != '':
             arch = pkg[4]
         else:
             arch = 'unknown'
-        package_arches = PackageArchitecture.objects.all()
-        with transaction.atomic():
-            p_arch, c = package_arches.get_or_create(name=arch)
-
-        p_epoch = p_version = p_release = ''
 
         if pkg[1]:
             p_epoch = pkg[1]
-            if pkg[1] != '0':
-                p_epoch = pkg[1]
 
         if pkg[2]:
             p_version = pkg[2]
@@ -331,30 +313,12 @@ def process_package(pkg, protocol):
         if pkg[3]:
             p_release = pkg[3]
 
-        p_type = Package.UNKNOWN
         if pkg[5] == 'deb':
             p_type = Package.DEB
-        if pkg[5] == 'rpm':
+        elif pkg[5] == 'rpm':
             p_type = Package.RPM
+        else:
+            p_type = Package.UNKNOWN
 
-        try:
-            with transaction.atomic():
-                packages = Package.objects.all()
-                package, c = packages.get_or_create(name=p_name,
-                                                    arch=p_arch,
-                                                    epoch=p_epoch,
-                                                    version=p_version,
-                                                    release=p_release,
-                                                    packagetype=p_type)
-                return package
-        except IntegrityError as e:
-            error_message.send(sender=None, text=e)
-            package = packages.get(name=p_name,
-                                   arch=p_arch,
-                                   epoch=p_epoch,
-                                   version=p_version,
-                                   release=p_release,
-                                   packagetype=p_type)
-            return package
-        except DatabaseError as e:
-            error_message.send(sender=None, text=e)
+        package = get_or_create_package(name, p_epoch, p_version, p_release, arch, p_type)
+        return package
