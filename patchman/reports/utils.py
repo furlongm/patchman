@@ -296,7 +296,7 @@ def process_package(pkg, protocol):
         object
     """
     if protocol == '1':
-        p_epoch = p_version = p_release = ''
+        epoch = version = release = ''
         name = pkg[0]
 
         if pkg[4] != '':
@@ -305,13 +305,13 @@ def process_package(pkg, protocol):
             arch = 'unknown'
 
         if pkg[1]:
-            p_epoch = pkg[1]
+            epoch = pkg[1]
 
         if pkg[2]:
-            p_version = pkg[2]
+            version = pkg[2]
 
         if pkg[3]:
-            p_release = pkg[3]
+            release = pkg[3]
 
         if pkg[5] == 'deb':
             p_type = Package.DEB
@@ -320,5 +320,5 @@ def process_package(pkg, protocol):
         else:
             p_type = Package.UNKNOWN
 
-        package = get_or_create_package(name, p_epoch, p_version, p_release, arch, p_type)
+        package = get_or_create_package(name, epoch, version, release, arch, p_type)
         return package
