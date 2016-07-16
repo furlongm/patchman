@@ -17,7 +17,8 @@
 from rest_framework import viewsets, permissions
 
 from patchman.arch.models import PackageArchitecture, MachineArchitecture
-from patchman.arch.serializers import PackageArchitectureSerializer, MachineArchitectureSerializer
+from patchman.arch.serializers import PackageArchitectureSerializer, \
+    MachineArchitectureSerializer
 
 
 class PackageArchitectureViewSet(viewsets.ModelViewSet):
@@ -27,6 +28,7 @@ class PackageArchitectureViewSet(viewsets.ModelViewSet):
     queryset = PackageArchitecture.objects.all()
     serializer_class = PackageArchitectureSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+
 
 class MachineArchitectureViewSet(viewsets.ModelViewSet):
     """

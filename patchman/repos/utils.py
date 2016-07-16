@@ -39,8 +39,7 @@ from django.utils.six import text_type
 
 from patchman.packages.models import Package, PackageName, PackageString
 from patchman.arch.models import PackageArchitecture
-from patchman.util import get_url, download_url, response_is_valid, gunzip, \
-    bunzip2, unxz, extract
+from patchman.util import get_url, download_url, response_is_valid, extract
 from patchman.signals import progress_info_s, progress_update_s, \
     info_message, warning_message, error_message, debug_message
 
