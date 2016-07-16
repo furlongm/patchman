@@ -34,6 +34,7 @@ from tagging.models import TaggedItem
 
 from patchman.hosts.models import Host
 from patchman.packages.models import Package, PackageName, PackageUpdate
+from patchman.packages.utils import update_errata
 from patchman.repos.models import Repository
 from patchman.arch.models import PackageArchitecture, MachineArchitecture
 from patchman.reports.models import Report
@@ -141,7 +142,9 @@ def list_hosts(hosts=None):
 def clean_packages():
     """ Remove packages that are no longer in use
     """
-    packages = Package.objects.filter(mirror__isnull=True, host__isnull=True)
+    packages = Package.objects.filter(mirror__isnull=True,
+                                      host__isnull=True,
+                                      erratum__isnull=True)
     plen = packages.count()
     if plen == 0:
         info_message.send(sender=None, text='No orphaned Packages found.')
@@ -175,7 +178,8 @@ def clean_arches():
             update_pbar(i + 1)
 
     marches = MachineArchitecture.objects.filter(host__isnull=True,
-                                                 repository__isnull=True)
+                                                 repository__isnull=True,
+                                                 erratum__isnull=True)
     mlen = marches.count()
 
     if mlen == 0:
@@ -509,10 +513,13 @@ def collect_args():
         help='Perform reverse DNS checks if enabled for that Host')
     parser.add_argument(
         '-a', '--all', action='store_true',
-        help='Convenience flag for -r -A -p -c -d -n')
+        help='Convenience flag for -r -A -p -c -d -n -e')
     parser.add_argument(
         '-D', '--diff', metavar=('hostA', 'hostB'), nargs=2,
         help='Show differences between two Hosts in diff-like output')
+    parser.add_argument(
+        '-e', '--errata', action='store_true',
+        help='Download CentOS errata from https://cefs.steve-meier.de/')
     return parser
 
 
@@ -531,6 +538,7 @@ def process_args(args):
         args.clean_updates = True
         args.dbcheck = True
         args.dns_checks = True
+        args.errata = True
     if args.list_repos:
         list_repos(args.repo)
         return False
@@ -565,6 +573,9 @@ def process_args(args):
         dbcheck()
     if args.dns_checks:
         dns_checks(args.host)
+        showhelp = False
+    if args.errata:
+        update_errata(args.force)
         showhelp = False
     return showhelp
 
