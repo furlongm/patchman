@@ -25,8 +25,8 @@ package installed, and which repository it comes from.
 Patchman does not install update packages on hosts, it determines and displays
 what updates are available for each host.
 
-`yum` and `apt` plugins can send reports to the Patchman server every time
-packages are installed or removed on a host.
+`yum`, `apt` and `zypper` plugins can send reports to the Patchman server every
+time packages are installed or removed on a host.
 
 
 ## Source
