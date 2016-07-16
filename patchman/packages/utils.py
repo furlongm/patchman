@@ -66,7 +66,8 @@ def find_version(s, epoch, release):
 
 
 def get_or_create_package(name, epoch, version, release, arch, p_type):
-    """ Get or create a Package object. Returns the object or None
+    """ Get or create a Package object. Returns the object. Returns None if the
+        package is the pseudo package gpg-pubkey, or if it cannot create it
     """
     package = None
     name = name.lower()
