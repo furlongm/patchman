@@ -27,12 +27,12 @@ class MyPlugin(Plugin):
 
     def PLUGINBEGIN(self, headers, body):
         logging.info("PLUGINBEGIN")
-        logging.debug("headers: %s" % headers)
+        logging.debug("headers: {0!s}".format(headers))
         self.ack()
 
     def PACKAGESETCHANGED(self, headers, body):
         logging.info("PACKAGESETCHANGED")
-        logging.debug("headers: %s" % headers)
+        logging.debug("headers: {0!s}".format(headers))
         print('patchman: sending data')
         servicecmd = '/usr/sbin/patchman-client'
         args = '-n'
@@ -42,7 +42,7 @@ class MyPlugin(Plugin):
 
     def PLUGINEND(self, headers, body):
         logging.info("PLUGINEND")
-        logging.debug("headers: %s" % headers)
+        logging.debug("headers: {0!s}".format(headers))
         self.ack()
 
 plugin = MyPlugin()
