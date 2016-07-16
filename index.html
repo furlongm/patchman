@@ -56,8 +56,8 @@ package installed, and which repository it comes from.</p>
 <p>Patchman does not install update packages on hosts, it determines and displays
 what updates are available for each host.</p>
 
-<p><code>yum</code> and <code>apt</code> plugins can send reports to the Patchman server every time
-packages are installed or removed on a host.</p>
+<p><code>yum</code>, <code>apt</code> and <code>zypper</code> plugins can send reports to the Patchman server every
+time packages are installed or removed on a host.</p>
 
 <h2>
 <a id="source" class="anchor" href="#source" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Source</h2>
@@ -76,12 +76,14 @@ packages are installed or removed on a host.</p>
 python-django-tagging
 python-django-extensions
 python-django-bootstrap3
+python-djangorestframework
 python-debian
 python-rpm
 python-progressbar
 python-lxml
 python-argparse
 python-requests
+python-humanize
 </code></pre>
 
 <p>The server can optionally make use of celery to asynchronously process the
