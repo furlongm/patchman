@@ -139,7 +139,10 @@ def get_primary_url(mirror_url, data):
                 data.startswith('Invalid repo'):
             return None, None, None
     ns = 'http://linux.duke.edu/metadata/repo'
-    context = etree.parse(BytesIO(data), etree.XMLParser())
+    try:
+        context = etree.parse(BytesIO(data), etree.XMLParser())
+    except etree.XMLSyntaxError:
+        context = etree.parse(BytesIO(extract(data, 'gz')), etree.XMLParser())
     location = context.xpath("//ns:data[@type='primary']/ns:location/@href",
                              namespaces={'ns': ns})[0]
     checksum = context.xpath("//ns:data[@type='primary']/ns:checksum",
