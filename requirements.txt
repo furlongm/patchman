@@ -10,3 +10,4 @@ requests==2.10.0
 colorama==0.3.7
 djangorestframework==3.3.2
 humanize==0.5.1
+version-utils==0.3.0
