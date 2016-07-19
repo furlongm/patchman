@@ -213,6 +213,9 @@ def get_or_create_package(name, epoch, version, release, arch, p_type):
     if name == 'gpg-pubkey':
         return
 
+    if epoch is None:
+        epoch = ''
+
     try:
         with transaction.atomic():
             package_names = PackageName.objects.all()

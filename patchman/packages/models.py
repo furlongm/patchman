@@ -237,11 +237,15 @@ class Erratum(models.Model):
     releases = models.ManyToManyField(OSGroup, blank=True)
     references = models.ManyToManyField(ErratumReference, blank=True)
 
+    class Meta(object):
+        verbose_name = 'Erratum'
+        verbose_name_plural = 'Errata'
+
     def __str__(self):
         text = '{0!s} {1!s} ({2!s}) : '.format(self.name,
                                                self.issue_date,
                                                self.etype)
-        text += '{0!s} packages, '.format(len(self.packages))
-        text += '{0!s} arches, '.format(len(self.arches))
-        text += '{0!s} releases.'.format(len(self.releases))
+        text += '{0!s} packages, '.format(len(self.packages.all()))
+        text += '{0!s} arches, '.format(len(self.arches.all()))
+        text += '{0!s} releases'.format(len(self.releases.all()))
         return text
