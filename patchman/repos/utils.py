@@ -517,9 +517,9 @@ def refresh_deb_repo(repo):
     for mirror in repo.mirror_set.filter(refresh=True):
         res = find_mirror_url(mirror.url, formats)
         mirror.last_access_ok = response_is_valid(res)
-        mirror_url = res.url
 
         if mirror.last_access_ok:
+            mirror_url = res.url
             text = 'Found deb repo - {0!s}'.format(mirror_url)
             info_message.send(sender=None, text=text)
             data = download_url(res, 'Downloading repo info:')
