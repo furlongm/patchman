@@ -23,10 +23,12 @@ from django.db.models import Q
 from rest_framework import viewsets, permissions
 
 from patchman.util.filterspecs import Filter, FilterBar
-from patchman.packages.models import PackageName, Package, PackageUpdate
+from patchman.packages.models import PackageName, Package, PackageUpdate, \
+    Erratum, ErratumReference
 from patchman.arch.models import PackageArchitecture
 from patchman.packages.serializers import PackageNameSerializer, \
-    PackageSerializer, PackageUpdateSerializer
+    PackageSerializer, PackageUpdateSerializer, ErratumSerializer, \
+    ErratumReferenceSerializer
 
 
 @login_required
@@ -115,4 +117,22 @@ class PackageUpdateViewSet(viewsets.ModelViewSet):
     """
     queryset = PackageUpdate.objects.all()
     serializer_class = PackageUpdateSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+
+
+class ErratumViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows errata to be viewed or edited.
+    """
+    queryset = Erratum.objects.all()
+    serializer_class = ErratumSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+
+
+class ErratumReferenceViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows erratum references to be viewed or edited.
+    """
+    queryset = ErratumReference.objects.all()
+    serializer_class = ErratumReferenceSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)

@@ -16,7 +16,8 @@
 
 from rest_framework import serializers
 
-from patchman.packages.models import PackageName, Package, PackageUpdate
+from patchman.packages.models import PackageName, Package, PackageUpdate, \
+    Erratum, ErratumReference
 
 
 class PackageNameSerializer(serializers.HyperlinkedModelSerializer):
@@ -35,3 +36,16 @@ class PackageUpdateSerializer(serializers.HyperlinkedModelSerializer):
     class Meta(object):
         model = PackageUpdate
         fields = ('id', 'oldpackage', 'newpackage', 'security')
+
+
+class ErratumSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta(object):
+        model = Erratum
+        fields = ('id', 'name', 'etype', 'issue_date', 'synopsis', 'arches',
+                  'releases', 'references')
+
+
+class ErratumReferenceSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta(object):
+        model = ErratumReference
+        fields = ('id', 'url')
