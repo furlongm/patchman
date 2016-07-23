@@ -122,6 +122,8 @@ optional arguments:
   -a, --all             Convenience flag for -r -A -p -c -d -n
   -D hostA hostB, --diff hostA hostB
                         Show differences between two hosts in diff-like output
+  -e, --errata          Download CentOS errata from https://cefs.steve-
+                        meier.de/
 ```
 
 
@@ -155,7 +157,10 @@ A Repository is a collection of Mirrors. Typically all the Mirrors will contain
 the same Packages. For Red Hat-based Hosts, Repositories automatically link
 their Mirrors together. For Debian-based hosts, you may need to link all
 Mirrors that form a Repository using the web interface. This may reduce the
-time required to find updates.
+time required to find updates. Repositories can be marked as being security or
+non-security. This makes most sense with Debian and Ubuntu repositories where
+security updates are delivered via security repositories. For CentOS security
+updates, see the Erratum section below.
 
 ### Report
 A Host creates a Report using `patchman-client`. This Report is sent to the
@@ -174,7 +179,7 @@ Debian 8.1
 Debian 8.4
 ```
 
-Likewise, an OSGroup named "CentOS 7" could be made up of the following OS's:
+Likewise, an OSGroup named "CentOS 7" would be made up of the following OS's:
 
 ```
 CentOS 7.0
@@ -190,3 +195,9 @@ If `use_host_repos` is set to False, the update-finding process looks at the
 OSGroup that the Host's Operating System is in, and uses the OSGroup's
 Repositories to determine the applicable updates. This is useful in environments
 where many hosts are homogeneous (e.g. cloud/cluster environments).
+
+### Erratum
+Errata for CentOS can be downloaded from https://cefs.steve-meier.de/ .
+These errata are parsed and stored in the database. If a PackageUpdate
+contains a package that is a security update in the errata, then that update is
+marked as being a security update.
