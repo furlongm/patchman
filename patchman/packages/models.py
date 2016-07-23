@@ -26,7 +26,7 @@ except ImportError:
     from rpm import labelCompare
 from debian.debian_support import Version, version_compare
 
-from patchman.arch.models import PackageArchitecture
+from patchman.arch.models import PackageArchitecture, MachineArchitecture
 from patchman.packages.managers import PackageManager
 
 
@@ -213,3 +213,39 @@ class PackageUpdate(models.Model):
         return '{0!s} -> {1!s} ({2!s})'.format(self.oldpackage,
                                                self.newpackage,
                                                update_type)
+
+
+@python_2_unicode_compatible
+class ErratumReference(models.Model):
+
+    url = models.URLField(max_length=255)
+
+    def __str__(self):
+        return self.url
+
+
+@python_2_unicode_compatible
+class Erratum(models.Model):
+
+    name = models.CharField(max_length=255)
+    etype = models.CharField(max_length=255)
+    issue_date = models.DateTimeField()
+    synopsis = models.CharField(max_length=255)
+    packages = models.ManyToManyField(Package, blank=True)
+    arches = models.ManyToManyField(MachineArchitecture, blank=True)
+    from patchman.operatingsystems.models import OSGroup
+    releases = models.ManyToManyField(OSGroup, blank=True)
+    references = models.ManyToManyField(ErratumReference, blank=True)
+
+    class Meta(object):
+        verbose_name = 'Erratum'
+        verbose_name_plural = 'Errata'
+
+    def __str__(self):
+        text = '{0!s} {1!s} ({2!s}) : '.format(self.name,
+                                               self.issue_date,
+                                               self.etype)
+        text += '{0!s} packages, '.format(len(self.packages.all()))
+        text += '{0!s} arches, '.format(len(self.arches.all()))
+        text += '{0!s} releases'.format(len(self.releases.all()))
+        return text
