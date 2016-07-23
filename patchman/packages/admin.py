@@ -16,7 +16,15 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from django.contrib import admin
-from patchman.packages.models import Package, PackageName
+from patchman.packages.models import Package, PackageName, \
+    PackageUpdate, Erratum, ErratumReference
+
+
+class ErratumAdmin(admin.ModelAdmin):
+    readonly_fields = ('packages',)
 
 admin.site.register(Package)
 admin.site.register(PackageName)
+admin.site.register(PackageUpdate)
+admin.site.register(Erratum, ErratumAdmin)
+admin.site.register(ErratumReference)
