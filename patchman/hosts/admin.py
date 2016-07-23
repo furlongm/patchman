@@ -16,10 +16,11 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from django.contrib import admin
-from patchman.hosts.models import Host
+from patchman.hosts.models import Host, HostRepo
 
 
 class HostAdmin(admin.ModelAdmin):
     readonly_fields = ('packages', 'updates')
 
 admin.site.register(Host, HostAdmin)
+admin.site.register(HostRepo)
