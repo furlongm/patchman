@@ -258,7 +258,7 @@ def mark_security_updates():
     """
     package_updates = PackageUpdate.objects.all()
     errata = Erratum.objects.all()
-    elen = len(errata)
+    elen = Erratum.objects.count()
     ptext = 'Scanning {0!s} Errata:'.format(elen)
     progress_info_s.send(sender=None, ptext=ptext, plen=elen)
     for i, erratum in enumerate(errata):
