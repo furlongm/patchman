@@ -29,8 +29,8 @@ from patchman.signals import progress_info_s, progress_update_s, \
 
 
 def process_repos(report, host):
-    """ Processes the quoted repos string sent with a report """
-
+    """ Processes the quoted repos string sent with a report
+    """
     if report.repos:
         old_repos = host.repos.all()
         repo_ids = []
@@ -67,8 +67,8 @@ def process_repos(report, host):
 
 
 def process_packages(report, host):
-    """ Processes the quoted packages string sent with a report """
-
+    """ Processes the quoted packages string sent with a report
+    """
     if report.packages:
         old_packages = host.packages.all()
         package_ids = []
@@ -100,8 +100,8 @@ def process_packages(report, host):
 
 
 def process_updates(report, host):
-    """ Processes the update strings sent with a report """
-
+    """ Processes the update strings sent with a report
+    """
     bug_updates = ''
     sec_updates = ''
     if report.bug_updates:
@@ -113,7 +113,8 @@ def process_updates(report, host):
 
 
 def add_updates(updates, host, security):
-
+    """ Add updates to a Host
+    """
     ulen = len(updates)
     if security:
         extra = 'sec'
@@ -131,8 +132,8 @@ def add_updates(updates, host, security):
 
 
 def parse_updates(updates_string):
-    """ Parses updates string in a report and returns a sanitized version """
-
+    """ Parses updates string in a report and returns a sanitized version
+    """
     updates = []
     ulist = updates_string.split()
     while ulist:
@@ -150,7 +151,6 @@ def process_update(host, update_string, security):
     """ Processes a single sanitized update string and converts to an update
     object
     """
-
     update_str = update_string.split()
     repo_id = update_str[2]
 
@@ -176,7 +176,6 @@ def process_update(host, update_string, security):
                                             version=p_version,
                                             release=p_release,
                                             packagetype='R')
-
     try:
         repo = Repository.objects.get(repo_id=repo_id)
     except Repository.DoesNotExist:
@@ -189,7 +188,6 @@ def process_update(host, update_string, security):
     installed_package = host.packages.filter(name=p_name,
                                              arch=p_arch,
                                              packagetype='R')[0]
-
     updates = PackageUpdate.objects.all()
     with transaction.atomic():
         update, c = updates.get_or_create(oldpackage=installed_package,
@@ -199,8 +197,8 @@ def process_update(host, update_string, security):
 
 
 def parse_repos(repos_string):
-    """ Parses repos string in a report and returns a sanitized version """
-
+    """ Parses repos string in a report and returns a sanitized version
+    """
     repos = []
     for r in [s for s in repos_string.splitlines() if s]:
         repodata = re.findall('\'.*?\'', r)
@@ -213,7 +211,6 @@ def parse_repos(repos_string):
 def process_repo(repo, arch):
     """ Processes a single sanitized repo string and converts to a repo object
     """
-
     repository = r_id = None
 
     if repo[2] == '':
@@ -284,7 +281,8 @@ def process_repo(repo, arch):
 
 
 def parse_packages(packages_string):
-    """ Parses packages string in a report and returns a sanitized version """
+    """ Parses packages string in a report and returns a sanitized version
+    """
     packages = []
     for p in packages_string.splitlines():
         packages.append(p.replace('\'', '').split(' '))
