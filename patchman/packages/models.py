@@ -245,7 +245,7 @@ class Erratum(models.Model):
         text = '{0!s} {1!s} ({2!s}) : '.format(self.name,
                                                self.issue_date,
                                                self.etype)
-        text += '{0!s} packages, '.format(len(self.packages.all()))
-        text += '{0!s} arches, '.format(len(self.arches.all()))
-        text += '{0!s} releases'.format(len(self.releases.all()))
+        text += '{0!s} packages, '.format(self.packages.count())
+        text += '{0!s} arches, '.format(self.arches.count())
+        text += '{0!s} releases'.format(self.releases.count())
         return text
