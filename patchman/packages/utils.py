@@ -265,7 +265,8 @@ def mark_security_updates():
         progress_update_s.send(sender=None, index=i + 1)
         if erratum.etype == 'security':
             for package in erratum.packages.all():
-                affected_updates = package_updates.filter(newpackage=package)
-                for affected_update in affected_updates:
-                    affected_update.security = True
-                    affected_update.save()
+                with transaction.atomic():
+                    affected_updates = package_updates.select_for_update().filter(newpackage=package)
+                    for affected_update in affected_updates:
+                        affected_update.security = True
+                        affected_update.save()
