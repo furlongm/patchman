@@ -213,7 +213,7 @@ def get_or_create_package(name, epoch, version, release, arch, p_type):
     if name == 'gpg-pubkey':
         return
 
-    if epoch is None or epoch == 0 or epoch == '0':
+    if epoch in [None, 0, '0']:
         epoch = ''
 
     try:
