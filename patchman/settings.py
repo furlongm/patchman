@@ -2,6 +2,7 @@
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+import sys
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 DEBUG = False
@@ -133,8 +134,13 @@ TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 try:
     from .local_settings import *
 except ImportError:
-    exec(compile(open('/etc/patchman/settings.py').read(),
-                 '/etc/patchman/settings.py', 'exec'))
+    if sys.prefix == '/usr':
+        conf_path = '/etc/patchman'
+    else:
+        conf_path = sys.prefix + '/etc/patchman'
+    settings_file = conf_path + '/local_settings.py'
+    exec(compile(open(settings_file).read(),
+                 settings_file, 'exec'))
 
 MANAGERS = ADMINS
 INSTALLED_APPS = DEFAULT_APPS + THIRD_PARTY_APPS + LOCAL_APPS

@@ -45,4 +45,4 @@ MAX_MIRRORS = 5
 DAYS_WITHOUT_REPORT = 14
 
 # Whether to run patchman under the gunicorn web server
-RUN_GUNICORN = True
+RUN_GUNICORN = False
