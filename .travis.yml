@@ -5,7 +5,7 @@ addons:
    - gcc
    - libcrack2-dev
 install:
-  - pip install tox --use-mirrors
+  - pip install tox
 script:
   - tox
 env:
