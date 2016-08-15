@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+#
 # Copyright 2013-2016 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of Patchman.
@@ -14,49 +16,36 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from setuptools import setup
 import os
+import sys
+import re
+from setuptools import setup, find_packages
 
-with open('VERSION.txt', 'r') as version_file:
-    version = version_file.readline().strip()
+with open('VERSION.txt', 'r') as v:
+    version = v.readline().strip()
 
+with open('README.md', 'r') as r:
+    long_description = r.read()
 
-def fullsplit(path, result=None):
-    """
-    Split a pathname into components (the opposite of os.path.join) in a
-    platform-neutral way.
-    """
-    if result is None:
-        result = []
-    head, tail = os.path.split(path)
-    if head == '':
-        return [tail] + result
-    if head == path:
-        return result
-    return fullsplit(head, [tail] + result)
+with open('requirements.txt') as rt:
+    install_requires = rt.read().splitlines()
 
-packages = []
-for dirpath, dirnames, filenames in os.walk('patchman'):
-    # Ignore dirnames that start with '.'
-    for i, dirname in enumerate(dirnames):
-        if dirname.startswith('.'):
-            del dirnames[i]
-    if filenames:
-        packages.append('.'.join(fullsplit(dirpath)))
+if sys.prefix == '/usr':
+    conf_path = '/etc/patchman'
+else:
+    conf_path = sys.prefix + '/etc/patchman'
 
 data_files = []
-data_files.append(
-    ('/etc/patchman', ['etc/patchman-apache.conf']),
-)
+data_files.append((conf_path, ['etc/patchman-apache.conf']))
+
 for dirpath, dirnames, filenames in os.walk('etc'):
     # Ignore dirnames that start with '.'
     for i, dirname in enumerate(dirnames):
         if dirname.startswith('.'):
             del dirnames[i]
     if filenames:
-        path = dirpath.replace('etc', '/etc/patchman')
         data_files.append(
-            [path, [os.path.join(dirpath, f) for f in filenames]]
+            [conf_path, [os.path.join(dirpath, f) for f in filenames]]
         )
 
 for dirpath, dirnames, filenames in os.walk('media'):
@@ -65,23 +54,33 @@ for dirpath, dirnames, filenames in os.walk('media'):
         if dirname.startswith('.'):
             del dirnames[i]
     if filenames:
-        path = dirpath.replace('media', '/usr/share/patchman/media')
         data_files.append(
-            [path, [os.path.join(dirpath, f) for f in filenames]]
+            [sys.prefix + '/share/patchman/media', [os.path.join(dirpath, f) for f in filenames]]
         )
 
 setup(
     name='patchman',
     version=version,
-    url='https://www.github.com/furlongm/patchman/',
+    url='http://patchman.openbytes.ie/',
     author='Marcus Furlong',
     author_email='furlongm@gmail.com',
-    description='django based patch status monitoring tool for linux systems',
-    packages=packages,
+    description='Django based patch status monitoring tool for linux systems',
+    license='GPLv3',
+    keywords='django patch status monitoring linux spacewalk patchman',
+    packages=find_packages(),
+    install_requires=install_requires,
     data_files=data_files,
     package_data={'': ['*.html'], },
     scripts=['sbin/patchman',
              'sbin/patchman-set-secret-key',
              'sbin/patchman-manage',
              'sbin/patchman-migrations', ],
+    long_description=long_description,
+    classifiers=[
+        'Development Status :: 4 - Beta',
+        'Environment :: Web Environment',
+        'Framework :: Django',
+        'Topic :: Internet :: WWW/HTTP :: WSGI :: Application',
+        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+    ],
 )
