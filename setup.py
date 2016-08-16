@@ -55,8 +55,10 @@ for dirpath, dirnames, filenames in os.walk('media'):
             del dirnames[i]
     if filenames:
         data_files.append(
-            [sys.prefix + '/share/patchman/media' + dirpath, [os.path.join(dirpath, f) for f in filenames]]
+            [sys.prefix + '/share/patchman/' + dirpath, [os.path.join(dirpath, f) for f in filenames]]
         )
+
+print data_files
 
 setup(
     name='patchman',
