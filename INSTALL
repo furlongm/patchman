@@ -5,7 +5,7 @@ $ apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0412F522
 $ echo "deb http://repo.openbytes.ie/ubuntu trusty main" > /etc/apt/sources.list.d/patchman.list
 $ apt-get update
 $ apt-get install python-patchman
-# Modify /etc/patchman/settings.py to suit your site
+# Modify /etc/patchman/local_settings.py to suit your site
 $ patchman-manage syncdb
 
 
@@ -18,7 +18,7 @@ $ echo "deb http://repo.openbytes.ie/debian wheezy main" > /etc/apt/sources.list
 $ apt-get update
 $ apt-get install python-django/wheezy-backports
 $ apt-get install python-patchman
-# Modify /etc/patchman/settings.py to suit your site
+# Modify /etc/patchman/local_settings.py to suit your site
 $ patchman-manage migrate
 $ patchman-manage createsuperuser
 
@@ -38,8 +38,9 @@ python-django-extensions python-argparse python-lxml python-rpm python-debian \
 python-pygooglechart python-cracklib python-progressbar libapache2-mod-wsgi \
 python-djangorestframework apache2 python-colorama python-humanize
 
-# If python-django-tagging is older than 0.3.3, you may need to install a
-# newer version. E.g. to upgrade to the latest pip version:
+# If python-django-tagging is older than 0.3.3, you may need to uninstall the
+# current version and upgrade to the latest pip version:
+dpkg -r --force-depends python-django-tagging
 pip install --upgrade django-tagging
 
 # Install django-bootstrap3
@@ -53,10 +54,11 @@ cd /srv
 git clone https://github.com/furlongm/patchman.git
 
 # 3. Copy server settings example file to /etc/patchman
-mkdir /etc/patchman && cp /srv/patchman/etc/settings.py.sample /etc/patchman/settings.py
+mkdir /etc/patchman
+cp /srv/patchman/etc/local_settings.py.sample /etc/patchman/
 
 # 4. Modify settings file to suit your site
-vi /etc/patchman/settings.py
+vi /etc/patchman/local_settings.py
 
 # e.g. for a mysql backend:
 #
@@ -72,7 +74,7 @@ vi /etc/patchman/settings.py
 #mysql> GRANT ALL PRIVILEGES ON patchman.* TO patchman@localhost IDENTIFIED BY 'changeme';
 #Query OK, 0 rows affected (0.00 sec)
 #
-# Then modify /etc/patchman/settings.py to have the following:
+# Then modify /etc/patchman/local_settings.py to have the following:
 #
 #ADMINS = (
 #    ('Patchman Admin', 'you@example.com'),
@@ -107,7 +109,7 @@ cd /srv/patchman/patchman
 
 ./manage.py migrate
 
-vi /srv/patchman/patchman/settings.py # change STATICFILES_DIRS to /srv/patchman/media
+vi /srv/patchman/patchman/local_settings.py # change STATICFILES_DIRS to /srv/patchman/media
 
 ./manage.py collectstatic
 
@@ -131,7 +133,7 @@ apt-get install python-django-celery rabbitmq-server
 
 # 11. You can optionally run memcached:
 apt-get install memcached python-memcache
-# and add the following to /etc/patchman/settings.py
+# and add the following to /etc/patchman/local_settings.py
 #CACHES = {
 #    'default': {
 #        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',

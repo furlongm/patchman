@@ -46,3 +46,11 @@ DAYS_WITHOUT_REPORT = 14
 
 # Whether to run patchman under the gunicorn web server
 RUN_GUNICORN = False
+
+# Enable memcached
+#CACHES = {
+#    'default': {
+#        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+#        'LOCATION': '127.0.0.1:11211',
+#    }
+#}
