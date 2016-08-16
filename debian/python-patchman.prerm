@@ -21,6 +21,7 @@ if [ "$1" = "remove" ] || [ "$1" = "purge" ]; then
         rm /etc/apache2/conf.d/patchman.conf
         apache_force_reload
     fi
+    rm -fr /var/lib/patchman/media
 fi
 
 #DEBHELPER#
