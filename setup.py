@@ -71,6 +71,7 @@ setup(
     install_requires=install_requires,
     data_files=data_files,
     package_data={'': ['*.html'], },
+    include_package_data=True,
     scripts=['sbin/patchman',
              'sbin/patchman-set-secret-key',
              'sbin/patchman-manage',
