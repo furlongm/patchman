@@ -58,8 +58,6 @@ for dirpath, dirnames, filenames in os.walk('media'):
             [sys.prefix + '/share/patchman/' + dirpath, [os.path.join(dirpath, f) for f in filenames]]
         )
 
-print data_files
-
 setup(
     name='patchman',
     version=version,
