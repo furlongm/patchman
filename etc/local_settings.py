@@ -35,8 +35,9 @@ LANGUAGE_CODE = 'en-au'
 # Create a unique string here, and don't share it with anybody.
 SECRET_KEY = ''
 
-# Add the IP addresses that your web server will be listening on
-ALLOWED_HOSTS = ['127.0.0.1', 'X.X.X.X']
+# Add the IP addresses that your web server will be listening on,
+# instead of '*'
+ALLOWED_HOSTS = ['127.0.0.1', '*']
 
 # Maximum number of mirrors to add or refresh per repo
 MAX_MIRRORS = 5
@@ -46,6 +47,9 @@ DAYS_WITHOUT_REPORT = 14
 
 # Whether to run patchman under the gunicorn web server
 RUN_GUNICORN = False
+
+# Copy patchman media from these directories
+#STATICFILES_DIRS = ('/srv/patchman/media/',)
 
 # Enable memcached
 #CACHES = {

@@ -116,9 +116,9 @@ else:
     USE_ASYNC_PROCESSING = True
     djcelery.setup_loader()
 
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/login/'
-LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/patchman/'
+LOGOUT_REDIRECT_URL = '/patchman/login/'
+LOGIN_URL = '/patchman/login/'
 
 # URL prefix for static files.
 STATIC_URL = '/patchman_media/'
@@ -157,3 +157,7 @@ if RUN_GUNICORN:
     STATICFILES_DIRS = (
         os.path.abspath(os.path.join(PROJECT_ROOT, '../media')),
     )
+
+    LOGIN_REDIRECT_URL = '/'
+    LOGOUT_REDIRECT_URL = '/login/'
+    LOGIN_URL = '/login/'
