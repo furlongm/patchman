@@ -5,6 +5,7 @@ include MANIFEST.in
 include INSTALL
 include UPGRADE
 include VERSION.txt
+include requirements.txt
 recursive-include scripts *
 recursive-include patchman *
 recursive-include sbin *
