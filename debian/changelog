@@ -1,3 +1,23 @@
+patchman (1.0.0-1) stable; urgency=medium
+
+  [ Marcus Furlong ]
+  * updates for django 1.8 and debian jessie
+  * fixes for django 1.9
+  * updates for latest version of zypper
+  * don't report errors for pseudo-package gpg-pubkey
+  * remove unused functions and clean up
+  * use modern template rendering style
+  * initial REST API implementation
+  * switch to django-bootstrap3
+  * add support for opensuse kernels
+  * switch to python-requests and cleanup request code
+  * add lzma support
+  * clean up cli printing, add some color
+  * support python3
+  * support for errata from https://cefs.steve-meier.de/
+
+ -- Marcus Furlong <furlongm@gmail.com>  Wed, 15 Mar 2017 02:57:53 +0000
+
 patchman (0.9.4-1) stable; urgency=medium
 
   [ Marcus Furlong ]
