@@ -1,3 +1,6 @@
+find -name *.pyc -exec rm {} \;
+rm -fr .tox
+rm -fr patchman.egg-info
 gbp dch --auto
-git tag 1.0.0
+git tag `cat VERSION.txt`
 gbp buildpackage --git-ignore-new --git-force-create
