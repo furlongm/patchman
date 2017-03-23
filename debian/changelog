@@ -1,3 +1,15 @@
+patchman (1.0.3-1) stable; urgency=medium
+
+  [ Marcus Furlong ]
+  * add deb build instructions
+  * bump version for pypi
+  * add missing file for pypi
+  * update debian dependencies
+
+  [ root ]
+
+ -- Marcus Furlong <furlongm@gmail.com>  Thu, 23 Mar 2017 12:10:37 +0000
+
 patchman (1.0.0-1) stable; urgency=medium
 
   [ Marcus Furlong ]
