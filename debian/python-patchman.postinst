@@ -14,13 +14,7 @@ apache_force_reload() {
 
 if [ "$1" = "configure" ] ; then
 
-   # python-bootstrap3 is no longer packaged so we pip install it for both the
-   # root and www-data users. This does not install it system-wide.
-
     pip install django-bootstrap3
-    mkdir /var/www/.local
-    chown www-data:www-data /var/www/.local
-    HOME=/var/www sudo -u www-data pip install django-bootstrap3
 
     if [ -e /usr/share/apache2/apache2-maintscript-helper ] ; then
         # apache 2.4
