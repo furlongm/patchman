@@ -7,4 +7,5 @@ tmp*
 *~
 #*
 .svn
-/.tox/
+.tox
+patchman.egg-info
