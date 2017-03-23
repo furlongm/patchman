@@ -1,4 +1,4 @@
-patchman (1.0.4-1) stable; urgency=medium
+patchman (1.0.5-1) stable; urgency=medium
 
   [ Marcus Furlong ]
   * add deb build instructions
