@@ -146,7 +146,7 @@ def gunzip(contents):
         wbits = zlib.MAX_WBITS | 32
         return zlib.decompress(contents, wbits)
     except zlib.error as e:
-        error_message.send(sender=None, text='gunzip: ' + e)
+        error_message.send(sender=None, text='gunzip: ' + str(e))
 
 
 def bunzip2(contents):
