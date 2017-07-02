@@ -1,4 +1,4 @@
-Django==1.8.17
+Django==1.11.3
 django-tagging==0.4.1
 django-extensions==1.6.1
 django-bootstrap3==7.0.1
