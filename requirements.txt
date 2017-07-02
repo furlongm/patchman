@@ -8,6 +8,6 @@ lxml==3.8.0
 chardet==3.0.4
 requests==2.18.1
 colorama==0.3.9
-djangorestframework==3.3.2
+djangorestframework==3.6.3
 humanize==0.5.1
 version-utils==0.3.0
