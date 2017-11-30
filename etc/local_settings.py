@@ -26,11 +26,11 @@ DATABASES = {
 # timezone as the operating system.
 # If running in a Windows environment this must be set to the same as your
 # system time zone.
-TIME_ZONE = 'Australia/Melbourne'
+TIME_ZONE = 'America/New_York'
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
-LANGUAGE_CODE = 'en-au'
+LANGUAGE_CODE = 'en-us'
 
 # Create a unique string here, and don't share it with anybody.
 SECRET_KEY = ''
