@@ -530,7 +530,7 @@ def refresh_deb_repo(repo):
             if mirror.file_checksum == sha1:
                 text = 'Mirror checksum has not changed, '
                 text += 'not refreshing package metadata'
-                info_message.send(sender=None, text=text)
+                warning_message.send(sender=None, text=text)
             else:
                 packages = extract_deb_packages(data, mirror_url)
                 mirror.last_access_ok = True
