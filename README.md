@@ -63,9 +63,8 @@ reports sent by hosts.
 ### Client-side dependencies
 
 The client-side dependencies are kept to a minimum. `rpm` and `dpkg` are
-required to report packages, `yum`, `zypper` and `apt` are required to report
+required to report packages, `yum`, `dnf`, `zypper` and `apt` are required to report
 repositories. These packages are normally installed by default on most systems.
-`dnf` is not yet supported.
 
 rpm-based OS's can tell if a reboot is required to install a new kernel by
 looking at `uname -r` and comparing it to the highest installed kernel version.
@@ -149,7 +148,7 @@ download from a Repository mirror, e.g. `strace-4.8-11.el7.x86_64`,
 `grub2-tools-2.02-0.34.el7.centos.x86_64`, etc.
 
 ### Mirror
-A Mirror is a collection of Packages available on the web, e.g. a `yum`, `yast`
+A Mirror is a collection of Packages available on the web, e.g. a `yum`, `dnf`, `yast`
 or `apt` repo.
 
 ### Repository
