@@ -130,10 +130,15 @@ function get_installed_rpms {
         if [ ${verbose} == 1 ] ; then
             echo 'Finding installed rpms...'
         fi
-
+        kernel_version=`uname -r`
+        running_kernel=`rpm -qa |grep $kernel_version`
         rpm -qa --queryformat "'%{NAME}' '%{EPOCH}' '%{version}' '%{RELEASE}' '%{ARCH}' 'rpm'\n" 2>/dev/null \
         | sed -e 's/(none)//g' \
-        | sed -e 's/\+/%2b/g' >> "${tmpfile_pkg}"
+        | sed -e 's/\+/%2b/g' \
+        | grep -v ^\'kernel- >> "${tmpfile_pkg}"
+        rpm -q $running_kernel --queryformat "'%{NAME}' '%{EPOCH}' '%{version}' '%{RELEASE}' '%{ARCH}' 'rpm'\n" 2>/dev/null \
+        |sed -e 's/(none)//g' \
+        |sed -e 's/\+/%2b/g' >> "${tmpfile_pkg}"
 
         if [ ${debug} == 1 ] ; then
             cat "${tmpfile_pkg}"
@@ -243,7 +248,7 @@ function get_host_data {
     fi
 }
 
-function get_updates {
+function get_updates_yum {
 
     yum -q makecache 2>/dev/null
     yum -C --security list updates --disablerepo="*" --enablerepo="${1}" 2>&1 \
@@ -256,16 +261,33 @@ function get_updates {
     | sed '1,/Updated Packages/d' >> "${tmpfile_bug}"
 }
 
+function get_updates_dnf {
+
+    dnf -q makecache 2>/dev/null
+    dnf -C --security list updates --disablerepo="*" --enablerepo="${1}" 2>&1 \
+    | grep -v 'This system is not registered to Red Hat Subscription Management. You can use subscription-manager to register.' \
+    | grep -v 'This system is receiving updates from Red Hat Subscription Management.' \
+    | sed '1,/Updated Packages/d' >> "${tmpfile_sec}"
+    dnf -C --bugfix list updates --disablerepo="*" --enablerepo="${1}" 2>&1 \
+    | grep -v 'This system is not registered to Red Hat Subscription Management. You can use subscription-manager to register.' \
+    | grep -v 'This system is receiving updates from Red Hat Subscription Management.' \
+    | sed '1,/Updated Packages/d' >> "${tmpfile_bug}"
+}
+
 function get_repos {
 
     OLDIFS=${IFS}
     IFS="
 "
 
-    # Red Hat / CentOS
+    # Red Hat / CentOS / Fedora
     if check_command_exists yum ; then
+      packagemanager='yum'
+      if check_command_exists dnf ; then
+        packagemanager='dnf'
+      fi
         if [ ${verbose} == 1 ] ; then
-            echo 'Finding yum repos...'
+            echo "Finding $packagemanager repos..."
         fi
         releasever=$(rpm -q --qf "%{version}\n" --whatprovides redhat-release)
         let numrepos=$(ls /etc/yum.repos.d/*.repo | wc -l)
@@ -273,8 +295,8 @@ function get_repos {
             priorities=$(sed -n -e "/^name/h; /priority *=/{ G; s/\n/ /; s/ity *= *\(.*\)/ity=\1/ ; s/\$releasever/${releasever}/ ; s/name=\(.*\)/'\1 ${host_arch}'/ ; p }" /etc/yum.repos.d/*.repo)
         fi
         # replace this with a dedicated awk or simple python script?
-        yum_repolist=$(yum repolist enabled --verbose 2>/dev/null | sed -e "s/:\? *([0-9]\+ more)$//g" -e "s/ ([0-9]\+$//g" -e "s/:\? more)$//g")
-        for i in $(echo "${yum_repolist}" | awk '{ if ($1=="Repo-id") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'"'"' "} if ($1=="Repo-name") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'" ${host_arch}'"' "} if ($1=="Repo-baseurl" || $1=="Repo-baseurl:" || $1=="Repo-mirrors") { url=1; comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else { if (url==1) { if ($1==":") { comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else {url=0; print "";} } } }' | sed -e "s/\/'/'/g" | sed -e "s/ ' /' /") ; do
+        packagemanager_repolist=$($packagemanager repolist enabled --verbose 2>/dev/null | sed -e "s/:\? *([0-9]\+ more)$//g" -e "s/ ([0-9]\+$//g" -e "s/:\? more)$//g")
+        for i in $(echo "${packagemanager_repolist}" | awk '{ if ($1=="Repo-id") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'"'"' "} if ($1=="Repo-name") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'" ${host_arch}'"' "} if ($1=="Repo-baseurl" || $1=="Repo-baseurl:" || $1=="Repo-mirrors") { url=1; comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else { if (url==1) { if ($1==":") { comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else {url=0; print "";} } } }' | sed -e "s/\/'/'/g" | sed -e "s/ ' /' /") ; do
             id=$(echo ${i} | cut -d \' -f 2)
             name=$(echo ${i} | cut -d \' -f 4)
             if [ "${priorities}" != "" ] ; then
@@ -290,7 +312,7 @@ function get_repos {
                 if [ ${verbose} == 1 ] ; then
                     echo "Red Hat repo found, finding updates locally for ${id}"
                 fi
-                get_updates ${id}
+                get_updates_$packagemanager ${id}
             fi
             echo "'rpm' ${j}" >> "${tmpfile_rep}"
             unset priority
