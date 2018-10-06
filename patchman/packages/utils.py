@@ -82,16 +82,16 @@ def update_errata(force=False):
         and mark packages that are security updates
     """
     data = download_errata()
-    parse_errata(data, force)
-    mark_security_updates()
+    if data:
+        parse_errata(data, force)
+        mark_security_updates()
 
 
 def download_errata():
     """ Download CentOS errata from https://cefs.steve-meier.de/
     """
     res = get_url('https://cefs.steve-meier.de/errata.latest.xml')
-    data = download_url(res, 'Downloading CentOS Errata:')
-    return gunzip(data)
+    return download_url(res, 'Downloading CentOS Errata:')
 
 
 def parse_errata(data, force):
