@@ -1,3 +1,13 @@
+patchman (1.0.6-1) stable; urgency=medium
+
+  [ Marcus Furlong ]
+  * update debian dependencies
+  * add python-django-bootstrap3 deb
+  * misc fixes
+  * switch to sqlite3 db by default
+
+ -- Marcus Furlong <furlongm@gmail.com>  Sat, 06 Oct 2018 22:12:12 +0000
+
 patchman (1.0.5-1) stable; urgency=medium
 
   [ Marcus Furlong ]
