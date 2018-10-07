@@ -74,7 +74,8 @@ Once the settings are configured, create the database:
 
 ```shell
 patchman-manage makemigrations
-patchman-manage migrate --run-syncdb
+patchman-manage migrate
+patchman-manage syncdb
 ```
 
 ## Configure Database
@@ -121,10 +122,12 @@ DATABASES = {
 
 ### Sync Database
 
-1. Initialise the database, perform migrations, and collect static files
+1. Initialise the database, perform migrations, create user and collect static files:
 ```shell
 cd /srv/patchman/patchman
-./manage.py syncdb # answer questions here if required
+./manage.py makemigrations
+./manage.py migrate --run-syncdb
+./manage.py createsuperuser
 ./manage.py collectstatic
 ```
 
@@ -151,7 +154,7 @@ The django interface should be available at http://127.0.0.1/patchman/
 
 #### Cronjobs
 
-#### Daily cronjob on patchman server
+##### Daily cronjob on patchman server
 You should run a daily job on the patchman server to process reports, perform
 database maintenance, check for upstream updates, and find updates for clients.
 
@@ -159,7 +162,7 @@ database maintenance, check for upstream updates, and find updates for clients.
 patchman -a
 ```
 
-#### Daily cronjob on client to send reports to patchman server
+##### Daily cronjob on client to send reports to patchman server
 
 ```
 patchman-client
@@ -171,6 +174,7 @@ Install celeryd for realtime processing of reports from clients:
 
 ```shell
 apt-get install python-django-celery rabbitmq-server
+./manage.py migrate
 ./manage.py syncdb
 ./manage.py celeryd_detach
 ```
