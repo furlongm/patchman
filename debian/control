@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Marcus Furlong <furlongm@gmail.com>
 Uploaders: Marcus Furlong <furlongm@gmail.com>
 Build-Depends: debhelper (>=9.0.0), python (>= 2.7), dh-python
-Standards-Version: 3.9.6
+Standards-Version: 3.9.7
 Homepage: https://github.com/furlongm/patchman
 Vcs-Git: git://github.com/furlongm/patchman
 Vcs-Browser: https://github.com/furlongm/patchman
@@ -19,7 +19,7 @@ Depends: ${misc:Depends}, python (>= 2.7), python-django (>= 1.8.0),
  libapache2-mod-wsgi (>=3.3), python-django-extensions (>=1.3.10),
  python-colorama (>=0.3.2), python-requests (>=2.4.3), apache2, python-pip,
  python-djangorestframework (>=2.4.3), python-pymysql (>=0.7.2),
- dbconfig-mysql | dbconfig-no-thanks, python-humanize (>=0.5)
+ python-humanize (>=0.5), memcached, python-django-bootstrap3
 Suggests: python-django-celery
 Description: Django-based patch status monitoring tool for linux systems.
  .
@@ -42,7 +42,7 @@ Description: Django-based patch status monitoring tool for linux systems.
 Package: patchman-client
 Architecture: all
 Homepage: https://github.com/furlongm/patchman/
-Depends: curl
+Depends: ${misc:Depends}, curl
 Description: Client for the patchman monitoring system.
  .
  The client will send a list of packages and repositories to the upstream
