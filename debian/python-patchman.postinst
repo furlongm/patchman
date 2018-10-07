@@ -18,10 +18,11 @@ if [ "$1" = "configure" ] ; then
 
     mkdir -p /var/lib/patchman/db
     patchman-manage collectstatic --noinput
-    chown -R www-data:www-data /var/lib/patchman
 
     patchman-manage makemigrations
     patchman-manage migrate
+
+    chown -R www-data:www-data /var/lib/patchman
 
     if ! grep ^LOGIN_REDIRECT_URL /etc/patchman/local_settings.py >/dev/null 2>&1 ; then
         echo "LOGIN_REDIRECT_URL = '/patchman/'" >> /etc/patchman/local_settings.py
