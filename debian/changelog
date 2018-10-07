@@ -1,3 +1,13 @@
+patchman (1.0.8-1) stable; urgency=medium
+
+  [ Marcus Furlong ]
+  * update installation instructions
+  * use migrate without arguments for backwards compat
+  * bump to 1.0.8
+  * fix typo in client
+
+ -- Marcus Furlong <furlongm@gmail.com>  Sun, 07 Oct 2018 04:58:13 +0000
+
 patchman (1.0.6-1) stable; urgency=medium
 
   [ Marcus Furlong ]
