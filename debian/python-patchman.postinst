@@ -21,7 +21,7 @@ if [ "$1" = "configure" ] ; then
     chown -R www-data:www-data /var/lib/patchman
 
     patchman-manage makemigrations
-    patchman-manage migrate --run-syncdb
+    patchman-manage migrate
 
     if ! grep ^LOGIN_REDIRECT_URL /etc/patchman/local_settings.py >/dev/null 2>&1 ; then
         echo "LOGIN_REDIRECT_URL = '/patchman/'" >> /etc/patchman/local_settings.py
