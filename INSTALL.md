@@ -1,6 +1,6 @@
-Installation
+# Installation
 
-## Options
+## Install Options
   - [deb/apt](#deb--apt)
   - [git](#git)
 
@@ -54,8 +54,7 @@ mkdir /etc/patchman
 cp /srv/patchman/etc/local_settings.py /etc/patchman/
 ```
 
-
-Configuration
+# Configuration
 
 ## Patchman Settings
 
