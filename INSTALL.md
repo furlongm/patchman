@@ -15,13 +15,14 @@ apt-get update
 apt-get install python-patchman patchman-client
 ```
 
-#### Debian 9 (stretch)
+#### Debian 8 (jessie)
 
 ```shell
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0412F522
-echo "deb http://repo.openbytes.ie/debian stretch main" > /etc/apt/sources.list.d/patchman.list
-echo "deb http://http.debian.net/debian stretch-backports main contrib non-free" > /etc/apt/sources.list.d/backports.list
+echo "deb http://repo.openbytes.ie/debian jessie main" > /etc/apt/sources.list.d/patchman.list
+echo "deb http://http.debian.net/debian jessie-backports main contrib non-free" > /etc/apt/sources.list.d/backports.list
 apt-get update
+apt-get install -t jessie-backports python-django
 apt-get install python-patchman patchman-client
 ```
 
