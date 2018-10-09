@@ -1,12 +1,12 @@
 # Installation
 
-The default installation uses sqlite3 as the django database. To configure
+The default installation uses sqlite3 for the django database. To configure
 mysql instead, see the instructions below.
 
 ## Install Options
-  - [Ubuntu 16.04](#ubuntu)
-  - [Debian 8](#debian)
-  - [CentOS 7](#centos)
+  - [Ubuntu 16.04](#ubuntu-1604-xenial)
+  - [Debian 8](#debiani-8-jessie)
+  - [CentOS 7](#centos-7)
   - [virtualenv + pip](#virtualenv)
   - [Source](#source)
 
@@ -31,6 +31,14 @@ apt-get -y install -t jessie-backports python-django
 apt-get -y install python-patchman patchman-client
 patchman-manage createsuperuser
 ```
+
+### CentOS 7
+
+TBD
+
+### virtualenv + pip
+
+TBD
 
 ### Source
 
