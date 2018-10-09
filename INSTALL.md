@@ -3,12 +3,14 @@
 The default installation uses sqlite3 for the django database. To configure
 mysql instead, see the instructions below.
 
+
 ## Install Options
   - [Ubuntu 16.04](#ubuntu-1604-xenial)
-  - [Debian 8](#debiani-8-jessie)
+  - [Debian 8](#debian-8-jessie)
   - [CentOS 7](#centos-7)
-  - [virtualenv + pip](#virtualenv)
+  - [virtualenv + pip](#virtualenv--pip)
   - [Source](#source)
+
 
 ### Ubuntu 16.04 (xenial)
 
@@ -34,11 +36,24 @@ patchman-manage createsuperuser
 
 ### CentOS 7
 
-TBD
+TBD - not working yet
+
 
 ### virtualenv + pip
 
-TBD
+TBD - not working yet
+
+```shell
+# apt-get -y install gcc libxml2-dev libxslt-dev python-virtualenv # (debian/ubuntu)
+# yum -y install gcc libxml2-devel libxslt-devel python-virtualenv # (centos/rhel)
+mkdir /srv/patchman
+cd /srv/patchman
+virtualenv .
+. bin/activate
+pip install --upgrade pip
+pip install patchman gunicorn
+gunicorn patchman -b 0.0.0.0:80
+```
 
 ### Source
 
@@ -210,7 +225,7 @@ CACHES = {
 }
 ```
 
-#### Test installation
+#### Test Installation
 To test your installation, run the client locally on the patchman server:
 ```shell
 patchman-client -s http://127.0.0.1/patchman/
