@@ -1,38 +1,44 @@
 # Installation
 
+The default installation uses sqlite3 as the django database. To configure
+mysql instead, see the instructions below.
+
 ## Install Options
-  - [deb/apt](#deb--apt)
-  - [git](#git)
+  - [Ubuntu 16.04](#ubuntu)
+  - [Debian 8](#debian)
+  - [CentOS 7](#centos)
+  - [virtualenv + pip](#virtualenv)
+  - [Source](#source)
 
-### deb/apt
-
-#### Ubuntu 16.04 (xenial)
+### Ubuntu 16.04 (xenial)
 
 ```shell
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0412F522
 echo "deb http://repo.openbytes.ie/ubuntu xenial main" > /etc/apt/sources.list.d/patchman.list
 apt-get update
-apt-get install python-patchman patchman-client
+apt-get -y install python-patchman patchman-client
+patchman-manage createsuperuser
 ```
 
-#### Debian 8 (jessie)
+### Debian 8 (jessie)
 
 ```shell
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0412F522
 echo "deb http://repo.openbytes.ie/debian jessie main" > /etc/apt/sources.list.d/patchman.list
 echo "deb http://http.debian.net/debian jessie-backports main contrib non-free" > /etc/apt/sources.list.d/backports.list
 apt-get update
-apt-get install -t jessie-backports python-django
-apt-get install python-patchman patchman-client
+apt-get -y install -t jessie-backports python-django
+apt-get -y install python-patchman patchman-client
+patchman-manage createsuperuser
 ```
 
-### git
+### Source
 
 #### Ubuntu 16.04 (xenial)
 
 1. Install dependencies
 ```shell
-apt-get install python-django-tagging python-django python-requests \
+apt-get -y install python-django-tagging python-django python-requests \
 python-django-extensions python-argparse python-lxml python-rpm python-debian \
 python-pygooglechart python-cracklib python-progressbar libapache2-mod-wsgi \
 python-djangorestframework apache2 python-colorama python-humanize liblzma-dev
@@ -64,20 +70,16 @@ cp /srv/patchman/etc/local_settings.py /etc/patchman/
 vi /etc/patchman/local_settings.py
 ```
 
-Some things that should be added or modified:
+If installating from source or using virtualenv, the following settings should
+be configured:
 
-   * ADMINS
-   * SECRET_KEY
-   * Change STATICFILES_DIRS to /srv/patchman/media if installing from git
-   * Configure database backend. Default is sqlite, instructions for mysql are below
+   * ADMINS - set up an admin email address
+   * SECRET_KEY - create a random secret key
+   * STATICFILES_DIRS - should point to /srv/patchman/media if installing from
+     source
 
-Once the settings are configured, create the database:
-
-```shell
-patchman-manage makemigrations
-patchman-manage migrate
-patchman-manage syncdb
-```
+The database can also be configured if mysql or postgresql are preferred over
+sqlite.
 
 ## Configure Database
 
@@ -92,7 +94,7 @@ The default database is sqlite.
 Make sure mysql-server and the python mysql bindings are installed:
 
 ```shell
-apt-get install mysql-server python-mysqldb python-pymysql
+apt-get -y install mysql-server python-mysqldb python-pymysql
 ```
 
 2. Create database and users:
@@ -127,7 +129,7 @@ DATABASES = {
 ```shell
 cd /srv/patchman/patchman
 ./manage.py makemigrations
-./manage.py migrate --run-syncdb
+./manage.py migrate
 ./manage.py createsuperuser
 ./manage.py collectstatic
 ```
