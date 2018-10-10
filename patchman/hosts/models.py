@@ -176,8 +176,6 @@ class Host(models.Model):
 
     def find_updates(self):
 
-        old_updates = self.updates.all()
-
         kernels_q = Q(name__name='kernel') | Q(name__name='kernel-devel') | \
             Q(name__name='kernel-pae') | Q(name__name='kernel-pae-devel') | \
             Q(name__name='kernel-xen') | Q(name__name='kernel-xen-devel') | \
@@ -198,9 +196,9 @@ class Host(models.Model):
         for ku_id in kernel_update_ids:
             update_ids.append(ku_id)
 
-        removals = old_updates.exclude(pk__in=update_ids)
-        for update in removals:
-            self.updates.remove(update)
+        for update in self.updates.all():
+            if update.id not in update_ids:
+                self.updates.remove(update)
 
     def find_host_repo_updates(self, host_packages, repo_packages):
 

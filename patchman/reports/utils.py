@@ -32,7 +32,6 @@ def process_repos(report, host):
     """ Processes the quoted repos string sent with a report
     """
     if report.repos:
-        old_repos = host.repos.all()
         repo_ids = []
 
         host_repos = HostRepo.objects.all()
@@ -61,16 +60,15 @@ def process_repos(report, host):
                     error_message.send(sender=None, text=e)
             progress_update_s.send(sender=None, index=i + 1)
 
-        removals = old_repos.exclude(pk__in=repo_ids)
-        for repo in removals:
-            repo.delete()
+        for repo in HostRepo.objects.all():
+            if repo.id not in repo_ids:
+                repo.delete()
 
 
 def process_packages(report, host):
     """ Processes the quoted packages string sent with a report
     """
     if report.packages:
-        old_packages = host.packages.all()
         package_ids = []
 
         packages = parse_packages(report.packages)
@@ -94,9 +92,9 @@ def process_packages(report, host):
                     info_message.send(sender=None, text=text)
             progress_update_s.send(sender=None, index=i + 1)
 
-        removals = old_packages.exclude(pk__in=package_ids)
-        for package in removals:
-            host.packages.remove(package)
+        for package in host.packages.all():
+            if package.id not in package_ids:
+               host.packages.remove(package)
 
 
 def process_updates(report, host):
