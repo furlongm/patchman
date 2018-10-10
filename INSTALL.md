@@ -44,15 +44,17 @@ TBD - not working yet
 TBD - not working yet
 
 ```shell
-# apt-get -y install gcc libxml2-dev libxslt-dev python-virtualenv # (debian/ubuntu)
-# yum -y install gcc libxml2-devel libxslt-devel python-virtualenv # (centos/rhel)
+# apt-get -y install gcc libxml2-dev libxslt1-dev virtualenv python-dev zlib1g-dev # (debian/ubuntu)
+# yum -y install gcc libxml2-devel libxslt-devel python-virtualenv                 # (centos/rhel)
 mkdir /srv/patchman
 cd /srv/patchman
 virtualenv .
 . bin/activate
 pip install --upgrade pip
-pip install patchman gunicorn
-gunicorn patchman -b 0.0.0.0:80
+pip install patchman gunicorn whitenoise==3.3.1
+patchman-manage migrate
+patchman-manage createsuperuser
+gunicorn patchman.wsgi -b 0.0.0.0:80
 ```
 
 ### Source
