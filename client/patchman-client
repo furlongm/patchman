@@ -368,6 +368,8 @@ function post_data {
         tags='Default'
     fi
 
+    sed -i -e 's/%2b/\+/g' "${tmpfile_pkg}"
+
     curl_opts="${curl_opts} -F host=\"${fqdn}\""
     curl_opts="${curl_opts} -F tags=\"${tags}\""
     curl_opts="${curl_opts} -F kernel=\"${host_kernel}\""
@@ -381,8 +383,6 @@ function post_data {
     curl_opts="${curl_opts} -F bug_updates=\<${tmpfile_bug}"
     curl_opts="${curl_opts} -F reboot=\"${reboot}\""
     post_command="curl ${curl_opts} ${server}/reports/upload/"
-
-    sed -i -e 's/%2b/\+/g' "${tmpfile_pkg}"
 
     if [ ${verbose} == 1 ] ; then
         echo "${post_command}"
