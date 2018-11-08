@@ -308,6 +308,9 @@ def extract_deb_packages(data, url):
 
         bio = BytesIO(extracted)
         for i, stanza in enumerate(Sources.iter_paragraphs(bio)):
+            # https://github.com/furlongm/patchman/issues/55
+            if 'version' not in stanza:
+                continue
             fullversion = Version(stanza['version'])
             arch = stanza['architecture']
             name = stanza['package']
