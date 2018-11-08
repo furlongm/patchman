@@ -51,6 +51,7 @@ class OS(models.Model):
     class Meta(object):
         verbose_name = 'Operating System'
         verbose_name_plural = 'Operating Systems'
+        ordering = ('name',)
 
     def __str__(self):
         return self.name
