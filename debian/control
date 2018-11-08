@@ -12,7 +12,7 @@ X-Python-Version: >= 2.7
 
 Package: python-patchman
 Architecture: all
-Homepage: https://github.com/furlongm/patchman/
+Homepage: https://github.com/furlongm/patchman
 Depends: ${misc:Depends}, python (>= 2.7), python-django (>= 1.8.0),
  python-django-tagging (>= 0.3.1), python-debian (>= 0.1.21),
  python-rpm (>= 4.10.0), python-progressbar (>= 2.2), python-lxml (>=2.3.2),
@@ -41,7 +41,7 @@ Description: Django-based patch status monitoring tool for linux systems.
 
 Package: patchman-client
 Architecture: all
-Homepage: https://github.com/furlongm/patchman/
+Homepage: https://github.com/furlongm/patchman
 Depends: ${misc:Depends}, curl
 Description: Client for the patchman monitoring system.
  .
