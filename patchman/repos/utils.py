@@ -29,7 +29,7 @@ from hashlib import sha1, sha256
 from io import BytesIO
 from lxml import etree
 from debian.debian_support import Version
-from debian.deb822 import Sources
+from debian.deb822 import Packages
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')
 from django.conf import settings
@@ -307,7 +307,7 @@ def extract_deb_packages(data, url):
         progress_info_s.send(sender=None, ptext=ptext, plen=plen)
 
         bio = BytesIO(extracted)
-        for i, stanza in enumerate(Sources.iter_paragraphs(bio)):
+        for i, stanza in enumerate(Packages.iter_paragraphs(bio)):
             # https://github.com/furlongm/patchman/issues/55
             if 'version' not in stanza:
                 continue
