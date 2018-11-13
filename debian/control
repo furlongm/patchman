@@ -19,7 +19,8 @@ Depends: ${misc:Depends}, python (>= 2.7), python-django (>= 1.8.0),
  libapache2-mod-wsgi (>=3.3), python-django-extensions (>=1.3.10),
  python-colorama (>=0.3.2), python-requests (>=2.4.3), apache2, python-pip,
  python-djangorestframework (>=2.4.3), python-pymysql (>=0.7.2),
- python-humanize (>=0.5), memcached, python-django-bootstrap3, python-lzma
+ python-humanize (>=0.5), memcached, python-django-bootstrap3, python-lzma,
+ python-magic
 Suggests: python-django-celery
 Description: Django-based patch status monitoring tool for linux systems.
  .

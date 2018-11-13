@@ -21,6 +21,7 @@ import os
 import sys
 import requests
 import bz2
+import magic
 import zlib
 try:
     import lzma
@@ -177,10 +178,11 @@ def extract(data, fmt):
     """ Extract the contents based on the file ending. Return the untouched
         data if no file ending matches, else return the extracted contents.
     """
-    if fmt.endswith('xz') and lzma is not None:
+    mime = magic.from_buffer(data, mime=True)
+    if (mime == 'application/x-xz' or fmt.endswith('xz')) and lzma is not None:
         return unxz(data)
-    elif fmt.endswith('bz2'):
+    elif mime == 'application/x-bzip2' or fmt.endswith('bz2'):
         return bunzip2(data)
-    elif fmt.endswith('gz'):
+    elif mime == 'application/gzip' or fmt.endswith('gz'):
         return gunzip(data)
     return data
