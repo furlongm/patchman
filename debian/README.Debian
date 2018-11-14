@@ -56,7 +56,7 @@ Configuration of patchman under Ubuntu/Debian
         $ touch /var/lib/patchman/patchman.db
         $ chown www-data:www-data /var/lib/patchman/patchman.db
 
-2.  Add admin contact details and external IP address to /etc/patchman/settings.py
+2.  Add admin contact details and external IP address to /etc/patchman/local_settings.py
 
 3.  Set up a default superuser, database, and run migrations:
 
