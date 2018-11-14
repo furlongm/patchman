@@ -1,3 +1,20 @@
+patchman (1.0.10-1) stable; urgency=medium
+
+  * update debian files
+  * add ordering to operating system to fix django 1.11 warning
+  * add DEFAULT_PAGINATION_CLASS to silence warning on newer django_rest_framework
+  * attempt to workaround repos with stanzas that include lines that start with whitespace
+  * support for https apt repos
+  * add python-lzma as a dependency
+  * improve filetype detection with libmagic
+  * update requirements to include python-magic
+  * use Packages instead of Sources
+  * use correct requirements format for magic
+  * file and layout updates
+  * 1.0.10 release
+
+ -- Marcus Furlong <furlongm@gmail.com>  Wed, 14 Nov 2018 21:30:21 +0000
+
 patchman (1.0.8-1) stable; urgency=medium
 
   [ Marcus Furlong ]
