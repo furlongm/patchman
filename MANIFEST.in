@@ -2,7 +2,7 @@ include README.md
 include AUTHORS
 include COPYING
 include MANIFEST.in
-include INSTALL
+include INSTALL.md
 include UPGRADE
 include VERSION.txt
 include requirements.txt

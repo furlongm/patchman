@@ -21,7 +21,3 @@ done
 cat DIRS > INSTALLED_FILES
 # Make sure we match foo.pyo and foo.pyc along with foo.py (but only once each)
 sed -e "/\.py[co]$/d" -e "s/\.py$/.py*/" -e '/\/etc\//s|^|%config(noreplace) |' FILES >>INSTALLED_FILES
-
-
-
-
