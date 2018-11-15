@@ -65,10 +65,10 @@ function cleanup {
         echo "Deleting ${tmpfile_bug}"
     fi
     if [ ${debug} != 1 ] ; then
-        rm -fr "${tmpfile_pkg}"
-        rm -fr "${tmpfile_rep}"
-        rm -fr "${tmpfile_sec}"
-        rm -fr "${tmpfile_bug}"
+        rm -f "${tmpfile_pkg}"{,.gz}
+        rm -f "${tmpfile_rep}"{,.gz}
+        rm -f "${tmpfile_sec}"{,.gz}
+        rm -f "${tmpfile_bug}"{,.gz}
     fi
     flock -u 200
     rm -fr "${lock_dir}/patchman.lock"
@@ -370,6 +370,10 @@ function post_data {
 
     sed -i -e 's/%2b/\+/g' "${tmpfile_pkg}"
 
+    for f in ${tmpfile_pkg} ${tmpfile_rep} ${tmpfile_sec} ${tmpfile_bug} ; do
+        gzip ${f}
+    done
+
     curl_opts="${curl_opts} -F host=\"${fqdn}\""
     curl_opts="${curl_opts} -F tags=\"${tags}\""
     curl_opts="${curl_opts} -F kernel=\"${host_kernel}\""
@@ -382,6 +386,7 @@ function post_data {
     curl_opts="${curl_opts} -F sec_updates=\<${tmpfile_sec}"
     curl_opts="${curl_opts} -F bug_updates=\<${tmpfile_bug}"
     curl_opts="${curl_opts} -F reboot=\"${reboot}\""
+    curl_opts="${curl_opts} -H 'Content-Encoding: gzip'"
     post_command="curl ${curl_opts} ${server}/reports/upload/"
 
     if [ ${verbose} == 1 ] ; then
@@ -389,6 +394,10 @@ function post_data {
     fi
 
     result=$(eval ${post_command})
+
+    for f in ${tmpfile_pkg} ${tmpfile_rep} ${tmpfile_sec} ${tmpfile_bug} ; do
+        gunzip ${f}.gz
+    done
 
     if [ ${report} == 1 ] ; then
         if [ ! -z "${result}" ] ; then
