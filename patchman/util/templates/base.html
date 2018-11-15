@@ -17,7 +17,7 @@
       {% include "navbar.html" with user=user %}
       <ul class="breadcrumb">
         {% block breadcrumbs %}
-          <li class="active"><a href="{{ base_url|default:"/" }}">Home</a></li>
+          <li class="active"><a href="{% url 'dashboard' %}">Home</a></li>
         {% endblock %}
       </ul>
       {% bootstrap_messages %}
