@@ -175,10 +175,17 @@ def unxz(contents):
 
 
 def extract(data, fmt):
-    """ Extract the contents based on the file ending. Return the untouched
-        data if no file ending matches, else return the extracted contents.
+    """ Extract the contents based on mimetype or file ending. Return the
+        unmodified data if neither mimetype nor file ending matches, otherwise
+        return the extracted contents.
     """
-    mime = magic.from_buffer(data, mime=True)
+    try:
+        mime = magic.from_buffer(data, mime=True)
+    except AttributeError:
+        # old python-magic API
+        m = magic.open(magic.MAGIC_MIME)
+        m.load()
+        mime = m.buffer(data).split(';')[0]
     if (mime == 'application/x-xz' or fmt.endswith('xz')) and lzma is not None:
         return unxz(data)
     elif mime == 'application/x-bzip2' or fmt.endswith('bz2'):
