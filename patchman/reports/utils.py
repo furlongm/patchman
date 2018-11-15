@@ -33,10 +33,9 @@ def process_repos(report, host):
     """
     if report.repos:
         repo_ids = []
-
-        host_repos = HostRepo.objects.all()
-
+        host_repos = HostRepo.objects.filter(host=host)
         repos = parse_repos(report.repos)
+
         progress_info_s.send(sender=None,
                              ptext='{0!s} repos'.format(str(host)[0:25]),
                              plen=len(repos))
@@ -60,8 +59,8 @@ def process_repos(report, host):
                     error_message.send(sender=None, text=e)
             progress_update_s.send(sender=None, index=i + 1)
 
-        for repo in HostRepo.objects.all():
-            if repo.id not in repo_ids:
+        for hostrepo in host_repos:
+            if hostrepo.repo.id not in repo_ids:
                 repo.delete()
 
 
