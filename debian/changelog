@@ -1,3 +1,9 @@
+patchman (1.0.12-1) stable; urgency=medium
+
+  * support older python-magic API
+
+ -- Marcus Furlong <furlongm@gmail.com>  Thu, 15 Nov 2018 07:07:13 +0000
+
 patchman (1.0.11-1) stable; urgency=medium
 
   * fix handling of hostrepo deletions
