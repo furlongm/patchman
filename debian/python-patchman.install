@@ -1,2 +1,3 @@
-etc/patchman/apache.conf.example etc/apache2/conf-available/patchman.conf
+#!/usr/bin/dh-exec
+etc/patchman/apache.conf.example => etc/apache2/conf-available/patchman.conf
 etc/patchman/local_settings.py etc/patchman
