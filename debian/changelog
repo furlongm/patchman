@@ -1,3 +1,9 @@
+patchman (1.0.15-1) stable; urgency=medium
+
+  * rename apache config for debian
+
+ -- Marcus Furlong <furlongm@gmail.com>  Fri, 16 Nov 2018 06:19:25 +0000
+
 patchman (1.0.14-1) stable; urgency=medium
 
   * add missing conf files
