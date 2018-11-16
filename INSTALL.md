@@ -166,7 +166,7 @@ cd /srv/patchman/patchman
 1. Enable mod-wsgi and copy the apache conf file:
 ```shell
 a2enmod wsgi
-cp /srv/patchman/etc/patchman-apache.conf /etc/apache2/conf-available/patchman.conf
+cp /srv/patchman/etc/patchman/apache.conf /etc/apache2/conf-available
 a2enconf patchman
 ```
 
