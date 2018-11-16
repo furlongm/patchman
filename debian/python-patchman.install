@@ -1,0 +1,2 @@
+etc/patchman/apache.conf etc/apache2/conf-available
+etc/patchman/local_settings.py etc/patchman
