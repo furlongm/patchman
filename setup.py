@@ -30,13 +30,8 @@ with open('README.md', 'r') as r:
 with open('requirements.txt') as rt:
     install_requires = rt.read().splitlines()
 
-if sys.prefix == '/usr':
-    conf_path = '/etc/patchman'
-else:
-    conf_path = sys.prefix + '/etc/patchman'
 
 data_files = []
-data_files.append((conf_path, ['etc/patchman-apache.conf']))
 
 for dirpath, dirnames, filenames in os.walk('etc'):
     # Ignore dirnames that start with '.'
@@ -45,7 +40,7 @@ for dirpath, dirnames, filenames in os.walk('etc'):
             del dirnames[i]
     if filenames:
         data_files.append(
-            [conf_path, [os.path.join(dirpath, f) for f in filenames]]
+            ['/etc/patchman', [os.path.join(dirpath, f) for f in filenames]]
         )
 
 for dirpath, dirnames, filenames in os.walk('media'):
@@ -55,7 +50,7 @@ for dirpath, dirnames, filenames in os.walk('media'):
             del dirnames[i]
     if filenames:
         data_files.append(
-            [sys.prefix + '/share/patchman/' + dirpath, [os.path.join(dirpath, f) for f in filenames]]
+            ['/usr/share/patchman/' + dirpath, [os.path.join(dirpath, f) for f in filenames]]
         )
 
 setup(
