@@ -191,13 +191,37 @@ def find_mirror_url(stored_mirror_url, formats):
             return res
 
 
-def mirrorlist_check(mirror_url):
-    """ Checks if a given url returns a mirrorlist.
-        Does this by checking if it is of type text/plain
-        and contains a list of urls
+def is_metalink(url):
+    """ Checks if a given url is a metalink url
     """
+    return 'metalink?' in url.lower()
 
-    res = get_url(mirror_url)
+
+def get_metalink_urls(url):
+    """  Parses a metalink and returns a list of mirrors
+    """
+    res = get_url(url)
+    if response_is_valid(res):
+        if 'content-type' in res.headers and \
+           res.headers['content-type'] == 'application/metalink+xml':
+            data = download_url(res, 'Downloading repo info:')
+            ns = 'http://www.metalinker.org/'
+            try:
+                context = etree.parse(BytesIO(data), etree.XMLParser())
+            except etree.XMLSyntaxError:
+                context = etree.parse(BytesIO(extract(data, 'gz')),
+                                      etree.XMLParser())
+            xpath = "//ns:files/ns:file[@name='repomd.xml']/ns:resources/ns:url[@protocol='https']"  # noqa
+            metalink_urls = context.xpath(xpath, namespaces={'ns': ns})
+            return [x.text for x in metalink_urls]
+
+
+def get_mirrorlist_urls(url):
+    """ Checks if a given url returns a mirrorlist by checking if it is of
+        type text/plain and contains a list of urls. Returns a list of
+        mirrors if it is a mirrorlist.
+    """
+    res = get_url(url)
     if response_is_valid(res):
         if 'content-type' in res.headers and \
            'text/plain' in res.headers['content-type']:
@@ -208,41 +232,64 @@ def mirrorlist_check(mirror_url):
                                      data, re.MULTILINE)
             if mirror_urls:
                 return mirror_urls
-    return
 
 
-def mirrorlists_check(repo):
-    """ Check if any of the mirrors are actually mirrorlists
+def add_mirrors_from_urls(mirror, mirror_urls):
+    """ Creates mirrors from a list of mirror urls
     """
+    for mirror_url in mirror_urls:
+        mirror_url = mirror_url.decode('ascii')
+        mirror_url = mirror_url.replace('$ARCH', mirror.repo.arch.name)
+        mirror_url = mirror_url.replace('$basearch', mirror.repo.arch.name)
+        if hasattr(settings, 'MAX_MIRRORS') and \
+                isinstance(settings.MAX_MIRRORS, int):
+            max_mirrors = settings.MAX_MIRRORS
+            # only add X mirrors, where X = max_mirrors
+            q = Q(mirrorlist=False, refresh=True)
+            existing = mirror.repo.mirror_set.filter(q).count()
+            if existing >= max_mirrors:
+                text = '{0!s} mirrors already '.format(max_mirrors)
+                text += 'exist, not adding {0!s}'.format(mirror_url)
+                warning_message.send(sender=None, text=text)
+                continue
+        from patchman.repos.models import Mirror
+        m, c = Mirror.objects.get_or_create(repo=mirror.repo, url=mirror_url)
+        if c:
+            text = 'Added mirror - {0!s}'.format(mirror_url)
+            info_message.send(sender=None, text=text)
 
+
+def check_for_mirrorlists(repo):
+    """ Check if any of the mirrors are actually mirrorlists.
+        Creates MAX_MIRRORS mirrors from list if so.
+    """
     for mirror in repo.mirror_set.all():
-        mirror_urls = mirrorlist_check(mirror.url)
+        mirror_urls = get_mirrorlist_urls(mirror.url)
         if mirror_urls:
             mirror.mirrorlist = True
             mirror.last_access_ok = True
             mirror.save()
             text = 'Found mirrorlist - {0!s}'.format(mirror.url)
             info_message.send(sender=None, text=text)
-            for mirror_url in mirror_urls:
-                mirror_url = mirror_url.decode('ascii')
-                mirror_url = mirror_url.replace('$ARCH', repo.arch.name)
-                mirror_url = mirror_url.replace('$basearch', repo.arch.name)
-                if hasattr(settings, 'MAX_MIRRORS') and \
-                        isinstance(settings.MAX_MIRRORS, int):
-                    max_mirrors = settings.MAX_MIRRORS
-                    # only add X mirrors, where X = max_mirrors
-                    q = Q(mirrorlist=False, refresh=True)
-                    existing = mirror.repo.mirror_set.filter(q).count()
-                    if existing >= max_mirrors:
-                        text = '{0!s} mirrors already '.format(max_mirrors)
-                        text += 'exist, not adding {0!s}'.format(mirror_url)
-                        warning_message.send(sender=None, text=text)
-                        continue
-                from patchman.repos.models import Mirror
-                m, c = Mirror.objects.get_or_create(repo=repo, url=mirror_url)
-                if c:
-                    text = 'Added mirror - {0!s}'.format(mirror_url)
-                    info_message.send(sender=None, text=text)
+            add_mirrors_from_urls(mirror, mirror_urls)
+
+
+def check_for_metalinks(repo):
+    """ Checks a set of mirrors for metalinks and creates
+        MAX_MIRRORS mirrors if so.
+    """
+    for mirror in repo.mirror_set.all():
+        if is_metalink(mirror.url):
+            mirror_urls = get_metalink_urls(mirror.url)
+        else:
+            continue
+        if mirror_urls:
+            mirror.mirrorlist = True
+            mirror.last_access_ok = True
+            mirror.save()
+            text = 'Found metalink - {0!s}'.format(mirror.url)
+            info_message.send(sender=None, text=text)
+            add_mirrors_from_urls(mirror, mirror_urls)
 
 
 def extract_yum_packages(data, url):
@@ -479,7 +526,9 @@ def refresh_rpm_repo(repo):
         formats.insert(0, 'repodata/repomd.xml.xz')
         formats.insert(4, 'suse/repodata/repomd.xml.xz')
 
-    mirrorlists_check(repo)
+    check_for_mirrorlists(repo)
+    check_for_metalinks(repo)
+
     ts = datetime.now().replace(microsecond=0)
 
     for mirror in repo.mirror_set.filter(mirrorlist=False, refresh=True):
