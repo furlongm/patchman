@@ -1,3 +1,9 @@
+patchman (1.0.14-1) stable; urgency=medium
+
+  * add missing conf files
+
+ -- Marcus Furlong <furlongm@gmail.com>  Fri, 16 Nov 2018 05:51:20 +0000
+
 patchman (1.0.13-1) stable; urgency=medium
 
   * update pypi packaging
