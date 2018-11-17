@@ -13,6 +13,4 @@
 * process reports in background
 * Dockerfile/Dockerimage
 * compressed reports
-* fixed setup.py for data files
-* support for metalinks
-* don't overwrite debian conf files when upgrading
+* modularity support
