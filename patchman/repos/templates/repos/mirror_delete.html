@@ -17,7 +17,7 @@
     <tr><th>Packages</th><td> {{ mirror.packages.count }} </td></tr>
     <tr><th>Enabled</th><td> {% yes_no_img mirror.enabled 'Enabled' 'Not Enabled' %} </td></tr>
     <tr><th>Refresh</th><td> {% yes_no_img mirror.refresh 'True' 'False' %} </td></tr>
-    <tr><th>Mirrorlist</th><td> {% yes_no_img mirror.mirrorlist 'True' 'False' %} </td></tr>
+    <tr><th>Mirrorlist/Metalink</th><td> {% yes_no_img mirror.mirrorlist 'True' 'False' %} </td></tr>
     <tr><th>Last Access OK</th><td> {% yes_no_img mirror.last_access_ok 'True' 'False' %} </td></tr>
     <tr><th>Fail Count</th><td> {{ mirror.fail_count }} </td></tr>
     <tr><th>Timestamp</th><td> {{ mirror.timestamp }} </td></tr>
