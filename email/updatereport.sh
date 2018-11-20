@@ -6,7 +6,7 @@ report() {
 
     if [ $UPDATES -gt 0 ]; then
         DIR="/usr/local/patchman/email/"
-        FILE=$DIR$1_`date +%Y%m%d`
+	FILE=$DIR$1_$(date +%Y%m%d)
         DOMAIN="$(patchman -lh -H $1 | tail -n +3 | head -n -1 | awk 'NR==3' | awk -F ' : ' '{ print $2 }')"
 
 	# Chooses a recipient depending on the host's domain
