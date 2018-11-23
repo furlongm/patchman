@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/bin/sh
 #
 # This file becomes the install section of the generated spec file.
 #
