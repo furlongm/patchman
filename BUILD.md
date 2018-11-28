@@ -12,8 +12,9 @@ git tag ${version}
 gbp buildpackage --git-ignore-new --git-force-create -uc -us
 ```
 
-# Build RPM package
+# Build RPM packages
 
 ```shell
 python setup.py bdist_rpm
+rpmbuild -bb patchman-client.spec
 ```
