@@ -36,8 +36,18 @@ patchman-manage createsuperuser
 
 ### CentOS 7
 
-TBD - not working yet
-
+```shell
+cat <<EOF >> /etc/yum.repos.d/openbytes.repo
+[openbytes]
+name=openbytes
+baseurl=http://repo.openbytes.ie/yum
+enabled=1
+gpgcheck=0
+EOF
+yum install -y epel-release
+yum makecache
+yum install -y patchman
+```
 
 ### virtualenv + pip
 
