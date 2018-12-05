@@ -18,7 +18,7 @@ mkdir -p /var/lib/patchman/db
 patchman-manage collectstatic --noinput
 
 patchman-manage makemigrations
-patchman-manage migrate
+patchman-manage migrate --run-syncdb
 
 chown -R apache:apache /var/lib/patchman
 chcon --type httpd_sys_rw_content_t /var/lib/patchman/db/patchman.db
