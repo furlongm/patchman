@@ -7,6 +7,7 @@ Summary: patchman-client uploads reports to the patchman server
 License: GPLv3
 URL: http://patchman.openbytes.ie
 Source: %{expand:%%(pwd)}
+BuildArch: noarch
 
 %description
 patchman-client provides a client that uploads reports to a patchman server
