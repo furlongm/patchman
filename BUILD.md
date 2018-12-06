@@ -1,7 +1,7 @@
 # Build DEB package
 
 ```shell
-sudo apt install python-setuptools debhelper dh-exec
+sudo apt install python-setuptools debhelper dh-exec git-buildpackage
 find -name *.pyc -exec rm {} \;
 rm -fr .tox patchman.egg-info
 gbp dch --auto  # modify changelog manually
