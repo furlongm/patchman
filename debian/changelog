@@ -1,3 +1,12 @@
+patchman (1.0.19-1) stable; urgency=medium
+
+  * add build dependency for dh-exec
+  * update rpm build arch to noarch
+  * add git-buildpackage to deb build dependencies
+  * fix repo deletion when processing report
+
+ -- Marcus Furlong <furlongm@gmail.com>  Tue, 11 Dec 2018 05:18:19 +0000
+
 patchman (1.0.18-1) stable; urgency=medium
 
   * add deps and scripts for rpm generation
