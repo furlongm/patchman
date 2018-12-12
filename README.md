@@ -63,16 +63,16 @@ reports sent by hosts.
 ### Client-side dependencies
 
 The client-side dependencies are kept to a minimum. `rpm` and `dpkg` are
-required to report packages, `yum`, `zypper` and `apt` are required to report
-repositories. These packages are normally installed by default on most systems.
-`dnf` is not yet supported.
+required to report packages, `yum`, `dnf`, `zypper` and/or `apt` are required
+to report repositories. These packages are normally installed by default on
+most systems.
 
 rpm-based OS's can tell if a reboot is required to install a new kernel by
 looking at `uname -r` and comparing it to the highest installed kernel version.
 
 deb-based OS's do not always change the kernel version when a kernel update is
-installed, so the `update-notifier-common` package needs to be installed to
-enable this functionality.
+installed, so the `update-notifier-common` package can optionally be installed
+to enable this functionality.
 
 
 ## Usage
