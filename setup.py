@@ -69,8 +69,7 @@ setup(
     include_package_data=True,
     scripts=['sbin/patchman',
              'sbin/patchman-set-secret-key',
-             'sbin/patchman-manage',
-             'sbin/patchman-migrations', ],
+             'sbin/patchman-manage', ],
     long_description=long_description,
     classifiers=[
         'Development Status :: 4 - Beta',
