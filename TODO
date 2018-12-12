@@ -14,4 +14,3 @@
 * Dockerfile/Dockerimage
 * compressed reports
 * modularity support
-* ignore base-url if mirrorlink or metalink exists

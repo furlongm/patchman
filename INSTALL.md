@@ -72,6 +72,7 @@ gunicorn patchman.wsgi -b 0.0.0.0:80
 #### Ubuntu 16.04 (xenial)
 
 1. Install dependencies
+
 ```shell
 apt-get -y install python-django-tagging python-django python-requests \
 python-django-extensions python-argparse python-lxml python-rpm python-debian \
@@ -80,17 +81,20 @@ python-djangorestframework apache2 python-colorama python-humanize liblzma-dev
 ```
 
 2. Install django-bootstrap3
+
 ```shell
 pip install django-bootstrap3
 ```
 
 3. Clone git repo to e.g. /srv/patchman
+
 ```shell
 cd /srv
 git clone https://github.com/furlongm/patchman
 ```
 
 4. Copy server settings example file to /etc/patchman
+
 ```shell
 mkdir /etc/patchman
 cp /srv/patchman/etc/local_settings.py /etc/patchman/
@@ -100,12 +104,9 @@ cp /srv/patchman/etc/local_settings.py /etc/patchman/
 
 ## Patchman Settings
 
- Modify the patchman settings file to suit your site
-```shell
-vi /etc/patchman/local_settings.py
-```
+Modify `/etc/patchman/local_settings.py` to suit your site.
 
-If installating from source or using virtualenv, the following settings should
+If installing from source or using virtualenv, the following settings should
 be configured:
 
    * ADMINS - set up an admin email address
@@ -116,15 +117,21 @@ be configured:
 The database can also be configured if mysql or postgresql are preferred over
 sqlite.
 
+The `patchman-manage` command should be used instead of `./manage.py` if
+patchman is installed via from packages.
+
+
 ## Configure Database
 
 ### sqlite
 
-The default database is sqlite.
+The default database backend is sqlite. However, this is not recommended for
+production deployments. MySQL or PostgreSQL are better choices.
+
 
 ### MySQL
 
-1. To configure the mysql backend:
+1. To configure the mysql database backend:
 
 Make sure mysql-server and the python mysql bindings are installed:
 
@@ -141,7 +148,7 @@ mysql> GRANT ALL PRIVILEGES ON patchman.* TO patchman@localhost IDENTIFIED BY 'c
 Query OK, 0 rows affected (0.00 sec)
 ```
 
-3. Modify /etc/patchman/local_settings.py as follows:
+3. Modify `/etc/patchman/local_settings.py` as follows:
 
 ```
 DATABASES = {
@@ -158,9 +165,62 @@ DATABASES = {
 }
 ```
 
+4. Proceed to syncing database.
+
+
+### PostgreSQL
+
+1. To configure the postgresql database backend:
+
+Make sure the postgresql server and the python postgres bindings are installed:
+
+```shell
+sudo su - postgres
+psql
+```
+
+2. Create database and users:
+```
+postgres=# CREATE DATABASE patchman;
+CREATE DATABASE
+postgres=# CREATE USER patchman WITH PASSWORD 'changeme';
+CREATE ROLE
+postgres=# ALTER ROLE patchman SET client_encoding TO 'utf8';
+ALTER ROLE
+postgres=# ALTER ROLE patchman SET default_transaction_isolation TO 'read committed';
+ALTER ROLE
+postgres=# ALTER ROLE patchman SET timezone TO 'UTC';
+ALTER ROLE
+postgres=# GRANT ALL PRIVILEGES ON DATABASE patchman to patchman;
+GRANT
+```
+
+3. Modify `/etc/patchman/local_settings.py` as follows:
+
+```
+DATABASES = {
+   'default': {
+       'ENGINE': 'django.db.backends.postgresql_psycopg2', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+       'NAME': 'patchman',                   # Or path to database file if using sqlite3.
+       'USER': 'patchman',                   # Not used with sqlite3.
+       'PASSWORD': 'changeme',               # Not used with sqlite3.
+       'HOST': '',                           # Set to empty string for localhost. Not used with sqlite3.
+       'PORT': '',                           # Set to empty string for default. Not used with sqlite3.
+       'STORAGE_ENGINE': 'INNODB',
+       'CHARSET' : 'utf8'
+   }
+}
+```
+
+4. Proceed to syncing database.
+
+
 ### Sync Database
 
+After changing database, you should sync the django database.
+
 1. Initialise the database, perform migrations, create user and collect static files:
+
 ```shell
 cd /srv/patchman/patchman
 ./manage.py makemigrations
@@ -169,11 +229,15 @@ cd /srv/patchman/patchman
 ./manage.py collectstatic
 ```
 
-## Configure Webserver
+Remember to restart your web server after syncing the database.
+
+
+## Configure Web Server
 
 ### Apache
 
 1. Enable mod-wsgi and copy the apache conf file:
+
 ```shell
 a2enmod wsgi
 cp /srv/patchman/etc/patchman/apache.conf /etc/apache2/conf-available
@@ -181,6 +245,7 @@ a2enconf patchman
 ```
 
 2. Edit the networks allowed to report to apache and reload apache.
+
 ```shell
 vi /etc/apache2/conf-available/patchman.conf
 service apache2 reload
@@ -214,7 +279,7 @@ Install celeryd for realtime processing of reports from clients:
 apt-get install python-django-celery rabbitmq-server
 ./manage.py migrate
 ./manage.py syncdb
-./manage.py celeryd_detach
+C_FORCE_ROOT=true ./manage.py celeryd_detach
 ```
 
 Add the last command to an initscript (e.g. /etc/rc.local) to make celery
@@ -222,12 +287,14 @@ persistent over reboot.
 
 #### Memcached
 
-You can optionally enable memcached:
+You can optionally enable memcached to reduce the load on your server.
+
 ```shell
 apt-get install memcached python-memcache
 ```
 
-and add the following to /etc/patchman/local_settings.py
+and add the following to `/etc/patchman/local_settings.py`
+
 ```
 CACHES = {
    'default': {
@@ -238,7 +305,9 @@ CACHES = {
 ```
 
 #### Test Installation
+
 To test your installation, run the client locally on the patchman server:
+
 ```shell
 patchman-client -s http://127.0.0.1/patchman/
-````
+```
