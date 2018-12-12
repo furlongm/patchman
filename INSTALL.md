@@ -1,7 +1,7 @@
 # Installation
 
 The default installation uses sqlite3 for the django database. To configure
-mysql instead, see the instructions below.
+mysql or postgresql instead, see the database configuration section.
 
 
 ## Install Options
@@ -104,7 +104,7 @@ cp /srv/patchman/etc/local_settings.py /etc/patchman/
 
 ## Patchman Settings
 
-Modify `/etc/patchman/local_settings.py` to suit your site.
+Modify `/etc/patchman/local_settings.py` to configure patchman.
 
 If installing from source or using virtualenv, the following settings should
 be configured:
@@ -118,7 +118,7 @@ The database can also be configured if mysql or postgresql are preferred over
 sqlite.
 
 The `patchman-manage` command should be used instead of `./manage.py` if
-patchman is installed via from packages.
+patchman is installed from packages.
 
 
 ## Configure Database
@@ -141,6 +141,8 @@ apt-get -y install mysql-server python-mysqldb python-pymysql
 
 2. Create database and users:
 ```
+$ mysql
+
 mysql> CREATE DATABASE patchman CHARACTER SET utf8 COLLATE utf8_general_ci;
 Query OK, 1 row affected (0.00 sec)
 
@@ -175,12 +177,14 @@ DATABASES = {
 Make sure the postgresql server and the python postgres bindings are installed:
 
 ```shell
-sudo su - postgres
-psql
+apt-get -y install postgresql python-psycopg2
 ```
 
 2. Create database and users:
 ```
+$ sudo su - postgres
+$ psql
+
 postgres=# CREATE DATABASE patchman;
 CREATE DATABASE
 postgres=# CREATE USER patchman WITH PASSWORD 'changeme';
@@ -217,9 +221,10 @@ DATABASES = {
 
 ### Sync Database
 
-After changing database, you should sync the django database.
+After changing database backend, the django database should be synced:
 
-1. Initialise the database, perform migrations, create user and collect static files:
+1. Initialise the database, perform migrations, create the admin user and
+collect static files:
 
 ```shell
 cd /srv/patchman/patchman
@@ -229,7 +234,7 @@ cd /srv/patchman/patchman
 ./manage.py collectstatic
 ```
 
-Remember to restart your web server after syncing the database.
+2. Restart the web server after syncing the database.
 
 
 ## Configure Web Server
@@ -258,8 +263,10 @@ The django interface should be available at http://127.0.0.1/patchman/
 #### Cronjobs
 
 ##### Daily cronjob on patchman server
-You should run a daily job on the patchman server to process reports, perform
-database maintenance, check for upstream updates, and find updates for clients.
+
+A daily cronjob on the patchman server should be run to process reports,
+perform database maintenance, check for upstream updates, and find updates for
+clients.
 
 ```
 patchman -a
@@ -287,7 +294,7 @@ persistent over reboot.
 
 #### Memcached
 
-You can optionally enable memcached to reduce the load on your server.
+Memcached can optionally be run to reduce the load on the server.
 
 ```shell
 apt-get install memcached python-memcache
@@ -306,7 +313,7 @@ CACHES = {
 
 #### Test Installation
 
-To test your installation, run the client locally on the patchman server:
+To test the installation, run the client locally on the patchman server:
 
 ```shell
 patchman-client -s http://127.0.0.1/patchman/
