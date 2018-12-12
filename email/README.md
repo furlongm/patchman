@@ -1,21 +1,20 @@
-
 Configuration:
 -----------------
-Copy the script to the desired location (e.g. /usr/local/bin)
+$ mv patchman-email /usr/bin
 
-$ chmod +x updatereport.sh
+$ mv patchman-email.conf /etc/patchman
 
-$ mkdir /usr/local/patchman/ /usr/local/patchman/email/
+$ chmod +x /usr/bin/patchman-email
 
-Edit the script and change the e-mail recipient located at line 15. Add more constants to the CASE block if you need different recipients for different domains
+Edit the configuration file and add more domains and recipients to fit your needs.
 
 Make sure Postfix is up and running.
 
 Usage:
 ----------------
-$ ./updatereport.sh all
-or
-$ ./updatereport.sh hostname
+patchman-email [-h] [-a] [-H hostname]
+-h: Shows this help message and exits
+-a: E-mails the available updates to all recipients
+-H hostname: E-mails the hostname's available updates to the recipient
 
-
-For best effect, add a Cron job. This script doesn't process reports sent to the server, it only e-mails a list of available updates for each host.
+For best effect, add a Cron job.

@@ -3,27 +3,40 @@
 usage() {
 	# Shows all available arguments
 	echo "$0 [-h] [-a] [-H hostname]"
-	echo "-h: Show this help message and exit"
-	echo "-a: Send an e-mail with the available updates to all configured recipients"
-	echo "-H hostname: Send an e-mail to the recipient of the specified hostname"
+	echo "-h: Shows this help message and exits"
+	echo "-a: E-mails the available updates to all recipients"
+	echo "-H hostname: E-mails the hostname's available updates to the recipient"
+}
+
+getConfig() {
+	# Gets the configuration of section $1, parameter $2
+	val=$(sed -nr "/\[$1\]/,/\[/{/^(\W|)$2=/p}" $CONF)
+	val=${val#$2=}
+
+	echo "$val"
 }
 
 report() {
-	# Verifies if there are updates available for the host
-	UPDATES="$(patchman -lh -H $1 | tail -n +3 | head -n -1 | awk 'NR==10' | awk -F ' : ' '{ print $2 }')"
+	if [ ! -f $CONF ]; then
+			echo "ERROR: Configuration file not found."
+			exit
+	fi
+
+	DIR=$(getConfig General dir)
+	KEEP=$(getConfig General keep)
+
+	# Gets the number of updates available for the host
+	UPDATES=$(patchman -lh -H $1 | tail -n +3 | head -n -1 | awk 'NR==10' | awk -F ' : ' '{ print $2 }')
 
 	if [ -z $UPDATES ]; then
 		echo "ERROR: Hostname not found."
 	elif [ $UPDATES -gt 0 ]; then
-		FILE=$DIR$1_$(date +%Y%m%d)
-		DOMAIN="$(patchman -lh -H $1 | tail -n +3 | head -n -1 | awk 'NR==3' | awk -F ' : ' '{ print $2 }')"
+		# Creates the directory where the e-mail file will be stored, if it doesn't exist
+		mkdir -p $DIR/$1
 
-		# Chooses a recipient depending on the host's domain
-		case $DOMAIN in
-		*)
-		RECIPIENT="test@test.com"
-		;;
-		esac
+		FILE=$DIR/$1/$(date +%Y%m%d)
+		DOMAIN=$(patchman -lh -H $1 | tail -n +3 | head -n -1 | awk 'NR==3' | awk -F ' : ' '{ print $2 }')
+		RECIPIENT=$(getConfig $DOMAIN recipient)
 
 		# Creates the report
 		echo "<html>" > $FILE
@@ -55,34 +68,42 @@ report() {
 		# E-mails the report
 		mail -aContent-Type:text/html -s "[$1] Update Report" $RECIPIENT < $FILE
 
-		echo "[$1] INFO: E-Mail report sent."
+		# Deletes the file
+		if [ ! $KEEP ]; then
+			rm $FILE
+		fi
+
+		echo "[$1] INFO: E-mail report sent."
 	else
 		echo "[$1] INFO: There are no updates available."
 	fi
 }
 
-DIR="/var/log/patchman-email/"
+# Checks if there are any parameters and if they start with "-"
+if [ $# -gt 0 ] && [[ $1 == -* ]]; then
+	CONF="/etc/patchman/patchman-email.conf"
 
-while getopts 'haH:' arg; do
-	case "${arg}" in
-		h)
-			usage
-			exit 0
-		;;
-		a)
-			HOSTS=()
-			HOSTS+="$(patchman -lh | tail -n +3 | awk 'NR%16==1' | awk -F '[.:]' '{ print $1 }')"
+	while getopts 'haH:' arg; do
+		case $arg in
+			h)
+				usage
+			;;
+			a)
+				HOSTS=()
+				HOSTS+=$(patchman -lh | tail -n +3 | awk 'NR%16==1' | awk -F '[.:]' '{ print $1 }')
 
-			for HOST in $HOSTS; do
-				report $HOST
-			done
-		;;
-		H)
-			report ${OPTARG}
-		;;
-		*)
-			usage
-			exit 0
-		;;	
-	esac
-done
+				for HOST in $HOSTS; do
+						report $HOST
+				done
+			;;
+			H)
+				report ${OPTARG}
+			;;
+			*)
+				usage
+			;;
+		esac
+	done
+else
+	usage
+fi
