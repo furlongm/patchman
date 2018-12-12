@@ -23,18 +23,6 @@ patchman-manage migrate --run-syncdb
 chown -R apache:apache /var/lib/patchman
 chcon --type httpd_sys_rw_content_t /var/lib/patchman/db/patchman.db
 
-if ! grep ^LOGIN_REDIRECT_URL /etc/patchman/local_settings.py >/dev/null 2>&1 ; then
-    echo "LOGIN_REDIRECT_URL = '/patchman/'" >> /etc/patchman/local_settings.py
-fi
-
-if ! grep ^LOGOUT_REDIRECT_URL /etc/patchman/local_settings.py >/dev/null 2>&1 ; then
-    echo "LOGOUT_REDIRECT_URL = '/patchman/login/'" >> /etc/patchman/local_settings.py
-fi
-
-if ! grep ^LOGIN_URL /etc/patchman/local_settings.py >/dev/null 2>&1 ; then
-    echo "LOGIN_URL = '/patchman/login/'" >> /etc/patchman/local_settings.py
-fi
-
 echo
 echo "Remember to run 'patchman-manage createsuperuser' to create a user."
 echo
