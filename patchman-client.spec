@@ -17,9 +17,9 @@ find . -mindepth 1 -delete
 cp -af %{SOURCEURL0}/. .
 
 %install
-mkdir -p %{buildroot}/usr/bin
+mkdir -p %{buildroot}/usr/sbin
 mkdir -p %{buildroot}/etc/patchman
-cp ./client/%{name} %{buildroot}/usr/bin
+cp ./client/%{name} %{buildroot}/usr/sbin
 cp ./client/%{name}.conf %{buildroot}/etc/patchman
 
 %files
