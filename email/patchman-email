@@ -18,8 +18,8 @@ getConfig() {
 
 report() {
 	if [ ! -f $CONF ]; then
-			echo "ERROR: Configuration file not found."
-			exit
+		echo "ERROR: Configuration file not found."
+		exit
 	fi
 
 	DIR=$(getConfig General dir)
@@ -73,7 +73,7 @@ report() {
 			rm $FILE
 		fi
 
-		echo "[$1] INFO: E-mail report sent."
+		echo "[$1] INFO: E-Mail report sent."
 	else
 		echo "[$1] INFO: There are no updates available."
 	fi
@@ -90,10 +90,10 @@ if [ $# -gt 0 ] && [[ $1 == -* ]]; then
 			;;
 			a)
 				HOSTS=()
-				HOSTS+=$(patchman -lh | tail -n +3 | awk 'NR%16==1' | awk -F '[.:]' '{ print $1 }')
+				HOSTS+=$(patchman -lh | tail -n +3 | awk 'NR%16==1' | awk -F '[.:]' '{ print $1 }' | sed -e 's/\\[0m\\[39m//g')
 
 				for HOST in $HOSTS; do
-						report $HOST
+					report $HOST
 				done
 			;;
 			H)
