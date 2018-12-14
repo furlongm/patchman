@@ -61,7 +61,7 @@ def process_repos(report, host):
 
         for hostrepo in host_repos:
             if hostrepo.repo.id not in repo_ids:
-                repo.delete()
+                hostrepo.delete()
 
 
 def process_packages(report, host):

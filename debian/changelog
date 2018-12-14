@@ -1,3 +1,25 @@
+patchman (1.0.19-1) stable; urgency=medium
+
+  * add build dependency for dh-exec
+  * update rpm build arch to noarch
+  * add git-buildpackage to deb build dependencies
+  * fix repo deletion when processing report
+
+ -- Marcus Furlong <furlongm@gmail.com>  Tue, 11 Dec 2018 05:18:19 +0000
+
+patchman (1.0.18-1) stable; urgency=medium
+
+  * add deps and scripts for rpm generation
+  * specify dir as dep due to differing package naming
+  * add rpm spec file and build instructions for the client
+  * update docs with rpm installation instructions
+  * handle mirrorlists and metalinks differently from baseurls
+  * add missing dependency on humanize
+  * add missing dependency on httpd and mod_wsgi
+  * run syncdb when running migrations
+
+ -- Marcus Furlong <furlongm@gmail.com>  Thu, 06 Dec 2018 02:43:19 +0000
+
 patchman (1.0.17-1) stable; urgency=medium
 
   * support for metalink urls on fedora/rhel/centos
