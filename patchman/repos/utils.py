@@ -164,7 +164,7 @@ def get_sha256(data):
 def get_sha(checksum_type, data):
     """ Returns the checksum of the data. Returns None otherwise.
     """
-    if checksum_type == 'sha':
+    if checksum_type == 'sha' or checksum_type == 'sha1':
         sha = get_sha1(data)
     elif checksum_type == 'sha256':
         sha = get_sha256(data)
