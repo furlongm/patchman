@@ -1,6 +1,6 @@
 Django==1.8.19
 django-tagging==0.4.6
-django-extensions==2.1.0
+django-extensions==2.1.5
 django-bootstrap3==9.1.0
 progressbar==2.5
 python-debian==0.1.33
