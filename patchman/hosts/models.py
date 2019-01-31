@@ -109,7 +109,7 @@ class Host(models.Model):
     def check_rdns(self):
         if self.check_dns:
             update_rdns(self)
-            if self.hostname == self.reversedns:
+            if self.hostname.lower() == self.reversedns.lower():
                 info_message.send(sender=None, text='Reverse DNS matches')
             else:
                 text = 'Reverse DNS mismatch found: '
