@@ -75,6 +75,7 @@ class Report(models.Model):
             setattr(self, attr, data.get(attr))
 
         if self.host is not None:
+            self.host = self.host.lower()
             fqdn = self.host.split('.', 1)
             if len(fqdn) == 2:
                 self.domain = fqdn.pop()
