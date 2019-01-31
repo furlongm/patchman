@@ -31,7 +31,7 @@ def update_rdns(host):
     except (gaierror, herror):
         reversedns = 'None'
 
-    host.reversedns = reversedns
+    host.reversedns = reversedns.lower()
     try:
         host.save()
     except DatabaseError as e:
