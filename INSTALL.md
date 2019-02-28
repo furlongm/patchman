@@ -47,6 +47,7 @@ EOF
 yum install -y epel-release
 yum makecache
 yum install -y patchman
+patchman-manage createsuperuser
 ```
 
 ### virtualenv + pip
