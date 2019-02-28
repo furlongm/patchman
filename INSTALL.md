@@ -252,11 +252,11 @@ PYTHONPATH=. sbin/patchman-manage
 
 ### Apache
 
-1. Enable mod-wsgi and copy the apache conf file:
+1. If installing from source, enable mod-wsgi and copy the apache conf file:
 
 ```shell
 a2enmod wsgi
-cp /srv/patchman/etc/patchman/apache.conf /etc/apache2/conf-available
+cp /srv/patchman/etc/patchman/apache.conf.example /etc/apache2/conf-available/patchman.conf
 a2enconf patchman
 ```
 
@@ -265,6 +265,15 @@ a2enconf patchman
 ```shell
 vi /etc/apache2/conf-available/patchman.conf
 service apache2 reload
+```
+
+3. If installing from source, allow apache access to the settings and to the sqlite db:
+
+```shell
+chown -R :www-data /etc/patchman
+chmod -R g+r /etc/patchman
+chown -R :www-data /var/lib/patchman
+chmod -R g+w /var/lib/patchman/db
 ```
 
 The django interface should be available at http://127.0.0.1/patchman/
@@ -295,9 +304,9 @@ Install celeryd for realtime processing of reports from clients:
 
 ```shell
 apt-get install python-django-celery rabbitmq-server
-./manage.py migrate
-./manage.py syncdb
-C_FORCE_ROOT=true ./manage.py celeryd_detach
+patchman-manage migrate
+patchman-manage syncdb
+C_FORCE_ROOT=true patchman-manage celeryd_detach
 ```
 
 Add the last command to an initscript (e.g. /etc/rc.local) to make celery
