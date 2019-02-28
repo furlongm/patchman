@@ -78,7 +78,8 @@ gunicorn patchman.wsgi -b 0.0.0.0:80
 apt-get -y install python-django-tagging python-django python-requests \
 python-django-extensions python-argparse python-lxml python-rpm python-debian \
 python-pygooglechart python-cracklib python-progressbar libapache2-mod-wsgi \
-python-djangorestframework apache2 python-colorama python-humanize liblzma-dev
+python-djangorestframework apache2 python-colorama python-humanize liblzma-dev \
+python-magic
 ```
 
 2. Install django-bootstrap3
@@ -115,26 +116,30 @@ be configured:
    * STATICFILES_DIRS - should point to /srv/patchman/media if installing from
      source
 
-The database can also be configured if mysql or postgresql are preferred over
-sqlite.
-
-The `patchman-manage` command should be used instead of `./manage.py` if
-patchman is installed from packages.
-
 
 ## Configure Database
-
-### sqlite
 
 The default database backend is sqlite. However, this is not recommended for
 production deployments. MySQL or PostgreSQL are better choices.
 
+### sqlite
+
+To configure the sqlite database backend:
+
+1. Ensure the database directory specifed in the settings file exists:
+
+```shell
+mkdir -p /var/lib/patchman/db
+```
+
+2. Proceed to syncing database.
+
 
 ### MySQL
 
-1. To configure the mysql database backend:
+To configure the mysql database backend:
 
-Make sure mysql-server and the python mysql bindings are installed:
+1. Ensure mysql-server and the python mysql bindings are installed:
 
 ```shell
 apt-get -y install mysql-server python-mysqldb python-pymysql
@@ -173,9 +178,9 @@ DATABASES = {
 
 ### PostgreSQL
 
-1. To configure the postgresql database backend:
+To configure the postgresql database backend:
 
-Make sure the postgresql server and the python postgres bindings are installed:
+1. Ensure the postgresql server and the python postgres bindings are installed:
 
 ```shell
 apt-get -y install postgresql python-psycopg2
@@ -222,17 +227,22 @@ DATABASES = {
 
 ### Sync Database
 
-After changing database backend, the django database should be synced:
+After configuring a database backend, the django database should be synced:
 
 1. Initialise the database, perform migrations, create the admin user and
 collect static files:
 
 ```shell
-cd /srv/patchman/patchman
-./manage.py makemigrations
-./manage.py migrate
-./manage.py createsuperuser
-./manage.py collectstatic
+patchman-manage makemigrations
+patchman-manage migrate
+patchman-manage createsuperuser
+patchman-manage collectstatic
+```
+
+N.B. To run patchman-manage when installing from source, run
+
+```shell
+PYTHONPATH=. sbin/patchman-manage
 ```
 
 2. Restart the web server after syncing the database.
