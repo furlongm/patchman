@@ -24,7 +24,7 @@ cp ./client/%{name}.conf %{buildroot}/etc/patchman
 
 %files
 %defattr(755,root,root)
-/usr/bin/patchman-client
+/usr/sbin/patchman-client
 %config /etc/patchman/patchman-client.conf
 
 %changelog
