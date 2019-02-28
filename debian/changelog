@@ -1,3 +1,18 @@
+patchman (1.0.20-1) stable; urgency=medium
+
+  * update packages to remove default settings
+  * update installation docs
+  * remove unused file
+  * use correct path for client on debian
+  * use correct path for client on red hat
+  * handle sha1 as checksum type
+  * ignore case when checking rdns
+  * remove apostrophes from yum repo input
+  * lowercase hostnames and rdns from inception
+  * fix encoded spaces in yum urls
+
+ -- Marcus Furlong <furlongm@gmail.com>  Thu, 28 Feb 2019 04:20:25 +0000
+
 patchman (1.0.19-1) stable; urgency=medium
 
   * add build dependency for dh-exec
