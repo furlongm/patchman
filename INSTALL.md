@@ -98,7 +98,7 @@ git clone https://github.com/furlongm/patchman
 
 ```shell
 mkdir /etc/patchman
-cp /srv/patchman/etc/local_settings.py /etc/patchman/
+cp /srv/patchman/etc/patchman/local_settings.py /etc/patchman/
 ```
 
 # Configuration
