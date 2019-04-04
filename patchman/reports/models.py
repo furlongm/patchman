@@ -64,7 +64,11 @@ class Report(models.Model):
 
     def parse(self, data, meta):
 
-        self.report_ip = meta['REMOTE_ADDR']
+        x_forwarded_for = meta.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            self.report_ip = x_forwarded_for.split(',')[0]
+        else:
+            self.report_ip = meta['REMOTE_ADDR']
         self.useragent = meta['HTTP_USER_AGENT']
         self.domain = None
 
