@@ -38,7 +38,7 @@ from patchman.packages.utils import update_errata
 from patchman.repos.models import Repository
 from patchman.arch.models import PackageArchitecture, MachineArchitecture
 from patchman.reports.models import Report
-from patchman.util import print_nocr, create_pbar, update_pbar, set_verbosity
+from patchman.util import print_nocr, create_pbar, update_pbar, set_verbosity, get_verbosity
 from patchman.signals import \
     info_message, warning_message, error_message, debug_message, \
     progress_info_s, progress_update_s
@@ -401,8 +401,9 @@ def dns_checks(host=None):
     """
     hosts = get_hosts(host, 'Checking rDNS')
     for host in hosts:
-        text = '{0!s}: '.format(str(host)[0:25].ljust(25))
-        print_nocr(text)
+        if get_verbosity():
+            text = '{0!s}: '.format(str(host)[0:25].ljust(25))
+            print_nocr(text)
         host.check_rdns()
 
 
