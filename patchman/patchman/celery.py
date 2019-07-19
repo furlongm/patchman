@@ -1,5 +1,4 @@
-# Copyright 2012 VPAC, http://www.vpac.org
-# Copyright 2013-2016 Marcus Furlong <furlongm@gmail.com>
+# Copyright 2019 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of Patchman.
 #
@@ -18,15 +17,15 @@
 from __future__ import unicode_literals, absolute_import
 
 import os
+from celery import Celery
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')
 from django.conf import settings
 
-from reports.models import Report
 
-if settings.USE_ASYNC_PROCESSING:
-    from celery.task import task
+app = Celery('patchman')
+app.config_from_object('django.conf:settings', namespace='CELERY')
+app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
 
-    @task()
-    def process_report(report_id):
-        report = Report.objects.get(id=report_id)
-        report.process(verbose=True)
+if __name__ == '__main__':
+    app.start()
