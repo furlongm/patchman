@@ -25,6 +25,7 @@ from patchman.packages.models import Package, PackageName, \
 class ErratumAdmin(admin.ModelAdmin):
     readonly_fields = ('packages',)
 
+
 admin.site.register(Package)
 admin.site.register(PackageName)
 admin.site.register(PackageUpdate)
