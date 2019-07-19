@@ -39,9 +39,9 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils.six import text_type
 
-from patchman.packages.models import Package, PackageName, PackageString
-from patchman.arch.models import PackageArchitecture
-from patchman.util import get_url, download_url, response_is_valid, extract
+from packages.models import Package, PackageName, PackageString
+from arch.models import PackageArchitecture
+from util import get_url, download_url, response_is_valid, extract
 from patchman.signals import progress_info_s, progress_update_s, \
     info_message, warning_message, error_message, debug_message
 
@@ -93,7 +93,7 @@ def update_mirror_packages(mirror, packages):
                                 arch=arch,
                                 release=release,
                                 packagetype=packagetype)
-        from patchman.repos.models import MirrorPackage
+        from repos.models import MirrorPackage
         with transaction.atomic():
             MirrorPackage.objects.get(mirror=mirror, package=p).delete()
 
@@ -129,7 +129,7 @@ def update_mirror_packages(mirror, packages):
             package_id.name = package.name
             with transaction.atomic():
                 package_id.save()
-        from patchman.repos.models import MirrorPackage
+        from repos.models import MirrorPackage
         with transaction.atomic():
             MirrorPackage.objects.create(mirror=mirror, package=p)
 
@@ -254,7 +254,7 @@ def add_mirrors_from_urls(mirror, mirror_urls):
                 text += 'exist, not adding {0!s}'.format(mirror_url)
                 warning_message.send(sender=None, text=text)
                 continue
-        from patchman.repos.models import Mirror
+        from repos.models import Mirror
         m, c = Mirror.objects.get_or_create(repo=mirror.repo, url=mirror_url)
         if c:
             text = 'Added mirror - {0!s}'.format(mirror_url)

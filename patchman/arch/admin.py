@@ -18,7 +18,7 @@
 from __future__ import unicode_literals
 
 from django.contrib import admin
-from patchman.arch.models import PackageArchitecture, MachineArchitecture
+from arch.models import PackageArchitecture, MachineArchitecture
 
 admin.site.register(PackageArchitecture)
 admin.site.register(MachineArchitecture)

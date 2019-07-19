@@ -1,6 +1,6 @@
-Define patchman_pythonpath /srv/patchman
+Define patchman_pythonpath /srv/patchman/patchman
 WSGIScriptAlias /patchman ${patchman_pythonpath}/patchman/wsgi.py
-WSGIPythonPath ${patchman_pythonpath}/patchman
+WSGIPythonPath ${patchman_pythonpath}/
 
 <Directory ${patchman_pythonpath}>
     <Files wsgi.py>

@@ -27,10 +27,10 @@ from django.core.urlresolvers import reverse
 
 from rest_framework import viewsets, permissions
 
-from patchman.operatingsystems.models import OS, OSGroup
-from patchman.operatingsystems.forms import AddOSToOSGroupForm, \
+from operatingsystems.models import OS, OSGroup
+from operatingsystems.forms import AddOSToOSGroupForm, \
     AddReposToOSGroupForm, CreateOSGroupForm
-from patchman.operatingsystems.serializers import OSSerializer, \
+from operatingsystems.serializers import OSSerializer, \
     OSGroupSerializer
 
 

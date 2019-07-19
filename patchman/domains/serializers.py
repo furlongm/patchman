@@ -18,7 +18,7 @@ from __future__ import unicode_literals
 
 from rest_framework import serializers
 
-from patchman.domains.models import Domain
+from domains.models import Domain
 
 
 class DomainSerializer(serializers.HyperlinkedModelSerializer):

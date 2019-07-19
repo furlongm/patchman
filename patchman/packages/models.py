@@ -26,8 +26,8 @@ except ImportError:
     from rpm import labelCompare
 from debian.debian_support import Version, version_compare
 
-from patchman.arch.models import PackageArchitecture, MachineArchitecture
-from patchman.packages.managers import PackageManager
+from arch.models import PackageArchitecture, MachineArchitecture
+from packages.managers import PackageManager
 
 
 @python_2_unicode_compatible
@@ -144,7 +144,7 @@ class Package(models.Model):
             return version_compare(vs, vo)
 
     def repo_count(self):
-        from patchman.repos.models import Repository
+        from repos.models import Repository
         return Repository.objects.filter(
             mirror__packages=self).distinct().count()
 
@@ -233,7 +233,7 @@ class Erratum(models.Model):
     synopsis = models.CharField(max_length=255)
     packages = models.ManyToManyField(Package, blank=True)
     arches = models.ManyToManyField(MachineArchitecture, blank=True)
-    from patchman.operatingsystems.models import OSGroup
+    from operatingsystems.models import OSGroup
     releases = models.ManyToManyField(OSGroup, blank=True)
     references = models.ManyToManyField(ErratumReference, blank=True)
 

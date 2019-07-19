@@ -18,8 +18,8 @@ from __future__ import unicode_literals
 
 from rest_framework import viewsets, permissions
 
-from patchman.arch.models import PackageArchitecture, MachineArchitecture
-from patchman.arch.serializers import PackageArchitectureSerializer, \
+from arch.models import PackageArchitecture, MachineArchitecture
+from arch.serializers import PackageArchitectureSerializer, \
     MachineArchitectureSerializer
 
 

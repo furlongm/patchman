@@ -18,7 +18,7 @@
 from __future__ import unicode_literals
 
 from django.contrib import admin
-from patchman.reports.models import Report
+from reports.models import Report
 
 
 class ReportAdmin(admin.ModelAdmin):

@@ -24,11 +24,11 @@ from django.db.models import Q
 
 from rest_framework import viewsets, permissions
 
-from patchman.util.filterspecs import Filter, FilterBar
-from patchman.packages.models import PackageName, Package, PackageUpdate, \
+from util.filterspecs import Filter, FilterBar
+from packages.models import PackageName, Package, PackageUpdate, \
     Erratum, ErratumReference
-from patchman.arch.models import PackageArchitecture
-from patchman.packages.serializers import PackageNameSerializer, \
+from arch.models import PackageArchitecture
+from packages.serializers import PackageNameSerializer, \
     PackageSerializer, PackageUpdateSerializer, ErratumSerializer, \
     ErratumReferenceSerializer
 

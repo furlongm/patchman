@@ -18,7 +18,7 @@ from __future__ import unicode_literals
 
 from rest_framework import serializers
 
-from patchman.hosts.models import Host, HostRepo
+from hosts.models import Host, HostRepo
 
 
 class HostSerializer(serializers.HyperlinkedModelSerializer):

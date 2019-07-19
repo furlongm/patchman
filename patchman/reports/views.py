@@ -30,9 +30,9 @@ from django.db.models import Q
 from django.conf import settings
 from django.contrib import messages
 
-from patchman.util.filterspecs import Filter, FilterBar
+from util.filterspecs import Filter, FilterBar
 
-from patchman.reports.models import Report
+from reports.models import Report
 
 
 @csrf_exempt

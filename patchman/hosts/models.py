@@ -28,14 +28,14 @@ except ImportError:
     from rpm import labelCompare
 from tagging.fields import TagField
 
-from patchman.packages.models import Package, PackageUpdate
-from patchman.domains.models import Domain
-from patchman.repos.models import Repository
-from patchman.operatingsystems.models import OS
-from patchman.arch.models import MachineArchitecture
+from packages.models import Package, PackageUpdate
+from domains.models import Domain
+from repos.models import Repository
+from operatingsystems.models import OS
+from arch.models import MachineArchitecture
 from patchman.signals import info_message, error_message
-from patchman.repos.utils import find_best_repo
-from patchman.hosts.utils import update_rdns, remove_reports
+from repos.utils import find_best_repo
+from hosts.utils import update_rdns, remove_reports
 
 
 @python_2_unicode_compatible

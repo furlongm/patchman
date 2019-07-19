@@ -18,7 +18,7 @@ from __future__ import unicode_literals
 
 from rest_framework import serializers
 
-from patchman.packages.models import PackageName, Package, PackageUpdate, \
+from packages.models import PackageName, Package, PackageUpdate, \
     Erratum, ErratumReference
 
 

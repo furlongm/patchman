@@ -18,7 +18,7 @@ from __future__ import unicode_literals
 
 from rest_framework import serializers
 
-from patchman.repos.models import Repository, Mirror, MirrorPackage
+from repos.models import Repository, Mirror, MirrorPackage
 
 
 class RepositorySerializer(serializers.HyperlinkedModelSerializer):

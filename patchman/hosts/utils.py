@@ -44,7 +44,7 @@ def remove_reports(host, timestamp):
     """ Remove all but the last 3 reports for a host
     """
 
-    from patchman.reports.models import Report
+    from reports.models import Report
 
     reports = Report.objects.filter(host=host).order_by('-created')[:3]
     report_ids = []

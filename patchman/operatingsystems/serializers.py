@@ -18,7 +18,7 @@ from __future__ import unicode_literals
 
 from rest_framework import serializers
 
-from patchman.operatingsystems.models import OS, OSGroup
+from operatingsystems.models import OS, OSGroup
 
 
 class OSSerializer(serializers.HyperlinkedModelSerializer):

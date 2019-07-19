@@ -32,13 +32,14 @@ django_setup()
 from datetime import date, datetime
 from tagging.models import TaggedItem
 
-from patchman.hosts.models import Host
-from patchman.packages.models import Package, PackageName, PackageUpdate
-from patchman.packages.utils import update_errata
-from patchman.repos.models import Repository
-from patchman.arch.models import PackageArchitecture, MachineArchitecture
-from patchman.reports.models import Report
-from patchman.util import print_nocr, create_pbar, update_pbar, set_verbosity, get_verbosity
+from hosts.models import Host
+from packages.models import Package, PackageName, PackageUpdate
+from packages.utils import update_errata
+from repos.models import Repository
+from arch.models import PackageArchitecture, MachineArchitecture
+from reports.models import Report
+from util import print_nocr, create_pbar, update_pbar, \
+    set_verbosity, get_verbosity
 from patchman.signals import \
     info_message, warning_message, error_message, debug_message, \
     progress_info_s, progress_update_s

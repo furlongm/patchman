@@ -28,14 +28,14 @@ from django.contrib import messages
 from tagging.models import Tag, TaggedItem
 from rest_framework import viewsets, permissions
 
-from patchman.util.filterspecs import Filter, FilterBar
-from patchman.hosts.models import Host, HostRepo
-from patchman.domains.models import Domain
-from patchman.arch.models import MachineArchitecture
-from patchman.operatingsystems.models import OS, OSGroup
-from patchman.reports.models import Report
-from patchman.hosts.forms import EditHostForm
-from patchman.hosts.serializers import HostSerializer, HostRepoSerializer
+from util.filterspecs import Filter, FilterBar
+from hosts.models import Host, HostRepo
+from domains.models import Domain
+from arch.models import MachineArchitecture
+from operatingsystems.models import OS, OSGroup
+from reports.models import Report
+from hosts.forms import EditHostForm
+from hosts.serializers import HostSerializer, HostRepoSerializer
 
 
 @login_required

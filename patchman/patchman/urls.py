@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with  If not, see <http://www.gnu.org/licenses/>
 
+from __future__ import unicode_literals
+
 from django.conf.urls import url, include, handler404, handler500
 from django.conf import settings
 from django.contrib import admin
@@ -22,12 +24,12 @@ from django.views import static
 
 from rest_framework import routers
 
-from patchman.arch import views as arch_views
-from patchman.domains import views as domain_views
-from patchman.hosts import views as host_views
-from patchman.operatingsystems import views as os_views
-from patchman.packages import views as package_views
-from patchman.repos import views as repo_views
+from arch import views as arch_views
+from domains import views as domain_views
+from hosts import views as host_views
+from operatingsystems import views as os_views
+from packages import views as package_views
+from repos import views as repo_views
 
 router = routers.DefaultRouter()
 router.register(r'package-architecture', arch_views.PackageArchitectureViewSet)
@@ -51,12 +53,12 @@ admin.autodiscover()
 urlpatterns = [
 
     url(r'^', include('django.contrib.auth.urls')),
-    url(r'^', include('patchman.util.urls')),
-    url(r'^reports/', include('patchman.reports.urls')),
-    url(r'^hosts/', include('patchman.hosts.urls')),
-    url(r'^packages/', include('patchman.packages.urls')),
-    url(r'^repos/', include('patchman.repos.urls')),
-    url(r'^os/', include('patchman.operatingsystems.urls')),
+    url(r'^', include('util.urls')),
+    url(r'^reports/', include('reports.urls')),
+    url(r'^hosts/', include('hosts.urls')),
+    url(r'^packages/', include('packages.urls')),
+    url(r'^repos/', include('repos.urls')),
+    url(r'^os/', include('operatingsystems.urls')),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^api/', include(router.urls)),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),

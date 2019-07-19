@@ -18,7 +18,7 @@
 from __future__ import unicode_literals
 
 from django.contrib import admin
-from patchman.packages.models import Package, PackageName, \
+from packages.models import Package, PackageName, \
     PackageUpdate, Erratum, ErratumReference
 
 
