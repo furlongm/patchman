@@ -14,7 +14,7 @@
     {% for repo in object_list %}
       <tr>
         <td><a href="{{ repo.get_absolute_url }}">{{ repo }}</a></td>
-        <td>{% if repo.repo_id != None %} {{ repo.repo_id }} {% endif %}</td>
+        <td>{% if repo.id != None %} {{ repo.id }} {% endif %}</td>
         <td class="centered">{{ repo.mirror_set.count }}</td>
         <td class="centered"><form>{% yes_no_button_repo_en repo %}</form></td>
         <td class="centered"><form>{% yes_no_button_repo_sec repo %}</form></td>
