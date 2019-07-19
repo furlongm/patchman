@@ -17,8 +17,6 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 import os
-import sys
-import re
 from setuptools import setup, find_packages
 
 with open('VERSION.txt', 'r') as v:
@@ -50,7 +48,8 @@ for dirpath, dirnames, filenames in os.walk('media'):
             del dirnames[i]
     if filenames:
         data_files.append(
-            ['/usr/share/patchman/' + dirpath, [os.path.join(dirpath, f) for f in filenames]]
+            ['/usr/share/patchman/' + dirpath,
+             [os.path.join(dirpath, f) for f in filenames]]
         )
 
 setup(
