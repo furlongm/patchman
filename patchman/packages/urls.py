@@ -19,7 +19,7 @@ from __future__ import unicode_literals
 
 from django.conf.urls import url
 
-from patchman.packages import views
+from packages import views
 
 urlpatterns = [
 

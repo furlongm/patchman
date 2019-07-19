@@ -18,7 +18,7 @@
 from __future__ import unicode_literals
 
 from django.contrib import admin
-from patchman.repos.models import Repository, Mirror, MirrorPackage
+from repos.models import Repository, Mirror, MirrorPackage
 
 
 class MirrorAdmin(admin.ModelAdmin):

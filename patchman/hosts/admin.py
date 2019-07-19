@@ -18,7 +18,7 @@
 from __future__ import unicode_literals
 
 from django.contrib import admin
-from patchman.hosts.models import Host, HostRepo
+from hosts.models import Host, HostRepo
 
 
 class HostAdmin(admin.ModelAdmin):

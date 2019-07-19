@@ -21,11 +21,11 @@ import re
 
 from django.db import IntegrityError, DatabaseError, transaction
 
-from patchman.hosts.models import HostRepo
-from patchman.arch.models import MachineArchitecture, PackageArchitecture
-from patchman.repos.models import Repository, Mirror, MirrorPackage
-from patchman.packages.models import Package, PackageName, PackageUpdate
-from patchman.packages.utils import find_evr, get_or_create_package
+from hosts.models import HostRepo
+from arch.models import MachineArchitecture, PackageArchitecture
+from repos.models import Repository, Mirror, MirrorPackage
+from packages.models import Package, PackageName, PackageUpdate
+from packages.utils import find_evr, get_or_create_package
 from patchman.signals import progress_info_s, progress_update_s, \
     error_message, info_message
 

@@ -25,10 +25,10 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')
 from django.conf import settings
 from django.db import IntegrityError, DatabaseError, transaction
 
-from patchman.util import get_url, download_url, gunzip
-from patchman.packages.models import ErratumReference, Erratum, PackageName, \
+from util import get_url, download_url
+from packages.models import ErratumReference, Erratum, PackageName, \
     Package, PackageUpdate
-from patchman.arch.models import MachineArchitecture, PackageArchitecture
+from arch.models import MachineArchitecture, PackageArchitecture
 from patchman.signals import \
     info_message, warning_message, error_message, debug_message, \
     progress_info_s, progress_update_s
@@ -148,7 +148,7 @@ def parse_errata_children(e, children):
                 m_arch, c = m_arches.get_or_create(name=c.text)
             e.arches.add(m_arch)
         elif c.tag == 'os_release':
-            from patchman.operatingsystems.models import OSGroup
+            from operatingsystems.models import OSGroup
             osgroups = OSGroup.objects.all()
             osgroup_name = 'CentOS {0!s}'.format(c.text)
             with transaction.atomic():

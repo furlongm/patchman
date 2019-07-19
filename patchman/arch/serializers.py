@@ -18,7 +18,7 @@ from __future__ import unicode_literals
 
 from rest_framework import serializers
 
-from patchman.arch.models import PackageArchitecture, MachineArchitecture
+from arch.models import PackageArchitecture, MachineArchitecture
 
 
 class PackageArchitectureSerializer(serializers.HyperlinkedModelSerializer):

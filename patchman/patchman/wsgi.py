@@ -1,4 +1,4 @@
-# Copyright 2013-2016 Marcus Furlong <furlongm@gmail.com>
+# Copyright 2016 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of Patchman.
 #
@@ -14,4 +14,20 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from patchman.receivers import *
+from __future__ import unicode_literals
+
+import os
+import sys
+
+from django.core.wsgi import get_wsgi_application
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')
+
+application = get_wsgi_application()
+
+from django.conf import settings
+if hasattr(settings, 'RUN_GUNICORN') and settings.RUN_GUNICORN:
+    from whitenoise.django import DjangoWhiteNoise
+    application = DjangoWhiteNoise(application)

@@ -28,14 +28,14 @@ from django.db import IntegrityError
 
 from rest_framework import viewsets, permissions
 
-from patchman.util.filterspecs import Filter, FilterBar
-from patchman.hosts.models import HostRepo
-from patchman.repos.models import Repository, Mirror, MirrorPackage
-from patchman.operatingsystems.models import OSGroup
-from patchman.arch.models import MachineArchitecture
-from patchman.repos.forms import EditRepoForm, LinkRepoForm, CreateRepoForm, \
+from util.filterspecs import Filter, FilterBar
+from hosts.models import HostRepo
+from repos.models import Repository, Mirror, MirrorPackage
+from operatingsystems.models import OSGroup
+from arch.models import MachineArchitecture
+from repos.forms import EditRepoForm, LinkRepoForm, CreateRepoForm, \
     EditMirrorForm
-from patchman.repos.serializers import RepositorySerializer, \
+from repos.serializers import RepositorySerializer, \
     MirrorSerializer, MirrorPackageSerializer
 
 

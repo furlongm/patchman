@@ -18,6 +18,6 @@
 from __future__ import unicode_literals
 
 from django.contrib import admin
-from patchman.domains.models import Domain
+from domains.models import Domain
 
 admin.site.register(Domain)

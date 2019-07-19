@@ -20,8 +20,8 @@ from __future__ import unicode_literals
 from django.forms import ModelForm, ModelMultipleChoiceField
 from django.contrib.admin.widgets import FilteredSelectMultiple
 
-from patchman.operatingsystems.models import OS, OSGroup
-from patchman.repos.models import Repository
+from operatingsystems.models import OS, OSGroup
+from repos.models import Repository
 
 
 class AddOSToOSGroupForm(ModelForm):

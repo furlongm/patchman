@@ -18,8 +18,8 @@ from __future__ import unicode_literals
 
 from rest_framework import viewsets, permissions
 
-from patchman.domains.models import Domain
-from patchman.domains.serializers import DomainSerializer
+from domains.models import Domain
+from domains.serializers import DomainSerializer
 
 
 class DomainViewSet(viewsets.ModelViewSet):

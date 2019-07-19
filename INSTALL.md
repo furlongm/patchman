@@ -258,7 +258,7 @@ patchman-manage collectstatic
 N.B. To run patchman-manage when installing from source, run
 
 ```shell
-PYTHONPATH=. sbin/patchman-manage
+PYTHONPATH=patchman sbin/patchman-manage
 ```
 
 2. Restart the web server after syncing the database.

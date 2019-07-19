@@ -20,10 +20,10 @@ from __future__ import unicode_literals
 from django.utils.encoding import python_2_unicode_compatible
 from django.db import models, IntegrityError, DatabaseError, transaction
 
-from patchman.hosts.models import Host
-from patchman.arch.models import MachineArchitecture
-from patchman.operatingsystems.models import OS
-from patchman.domains.models import Domain
+from hosts.models import Host
+from arch.models import MachineArchitecture
+from operatingsystems.models import OS
+from domains.models import Domain
 from patchman.signals import error_message, info_message
 
 from socket import gethostbyaddr, herror
@@ -150,7 +150,7 @@ class Report(models.Model):
                 text += '{0!s} - {1!s}'.format(self.id, self.host)
                 info_message.send(sender=None, text=text)
 
-            from patchman.reports.utils import process_packages, \
+            from reports.utils import process_packages, \
                 process_repos, process_updates
             with transaction.atomic():
                 process_repos(report=self, host=host)

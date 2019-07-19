@@ -20,10 +20,10 @@ from __future__ import unicode_literals
 from django.utils.encoding import python_2_unicode_compatible
 from django.db import models
 
-from patchman.arch.models import MachineArchitecture
-from patchman.packages.models import Package
+from arch.models import MachineArchitecture
+from packages.models import Package
 
-from patchman.repos.utils import refresh_deb_repo, refresh_rpm_repo, \
+from repos.utils import refresh_deb_repo, refresh_rpm_repo, \
     update_mirror_packages
 from patchman.signals import info_message, warning_message, error_message
 
