@@ -22,8 +22,9 @@
         <form method="post" action="{% url 'login' %}">
           {% csrf_token %}
           <div class="input-group">
-            <input class="form-control input-sm" placeholder="Username" id="id_username" maxlength="254" name="username" type="text">
-            <input class="form-control input-sm" id="id_password" name="password" type="password" placeholder="Password">
+            <input class="form-control input-sm" placeholder="Username" id="id_username" name="username" type="text" maxlength="254">
+            <input class="form-control input-sm" placeholder="Password" id="id_password" name="password" type="password">
+	    <br /><br />
             <button class="btn btn-primary btn-sm" type="submit">{% bootstrap_icon "user" %} Login</button>
             <input type="hidden" name="next" value="{{ next }}" />
         </div>
