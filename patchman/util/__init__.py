@@ -61,7 +61,7 @@ def create_pbar(ptext, plength, **kwargs):
     """
     global pbar, verbose
     if verbose and plength > 0:
-        jtext = unicode.ljust(ptext, 35)
+        jtext = unicode.ljust(unicode(ptext), 35)
         pbar = ProgressBar(widgets=[Style.RESET_ALL + Fore.YELLOW + jtext,
                                     Percentage(), Bar(), ETA()],
                            maxval=plength).start()
