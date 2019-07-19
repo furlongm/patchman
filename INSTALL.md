@@ -4,32 +4,30 @@ The default installation uses sqlite3 for the django database. To configure
 mysql or postgresql instead, see the database configuration section.
 
 
-## Install Options
-  - [Ubuntu 16.04](#ubuntu-1604-xenial)
-  - [Debian 8](#debian-8-jessie)
+## Supported Install Options
+  - [Ubuntu 18.04](#ubuntu-1804-bionic)
+  - [Debian 9](#debian-9-stretch)
   - [CentOS 7](#centos-7)
   - [virtualenv + pip](#virtualenv--pip)
   - [Source](#source)
 
 
-### Ubuntu 16.04 (xenial)
+### Ubuntu 18.04 (bionic)
 
 ```shell
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0412F522
-echo "deb http://repo.openbytes.ie/ubuntu xenial main" > /etc/apt/sources.list.d/patchman.list
+echo "deb http://repo.openbytes.ie/ubuntu bionic main" > /etc/apt/sources.list.d/patchman.list
 apt update
 apt -y install python-patchman patchman-client
 patchman-manage createsuperuser
 ```
 
-### Debian 8 (jessie)
+### Debian 9 (stretch)
 
 ```shell
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0412F522
-echo "deb http://repo.openbytes.ie/debian jessie main" > /etc/apt/sources.list.d/patchman.list
-echo "deb http://http.debian.net/debian jessie-backports main contrib non-free" > /etc/apt/sources.list.d/backports.list
+echo "deb http://repo.openbytes.ie/debian stretch main" > /etc/apt/sources.list.d/patchman.list
 apt update
-apt -y install -t jessie-backports python-django
 apt -y install python-patchman patchman-client
 patchman-manage createsuperuser
 ```
@@ -46,8 +44,9 @@ gpgcheck=0
 EOF
 yum install -y epel-release
 yum makecache
-yum install -y patchman
+yum install -y patchman patchman-client
 patchman-manage createsuperuser
+systemctl restart httpd
 ```
 
 ### virtualenv + pip
@@ -70,7 +69,7 @@ gunicorn patchman.wsgi -b 0.0.0.0:80
 
 ### Source
 
-#### Ubuntu 16.04 (xenial)
+#### Ubuntu 18.04 (bionic)
 
 1. Install dependencies
 
@@ -250,7 +249,7 @@ collect static files:
 
 ```shell
 patchman-manage makemigrations
-patchman-manage migrate
+patchman-manage migrate --run-syncdb
 patchman-manage createsuperuser
 patchman-manage collectstatic
 ```
