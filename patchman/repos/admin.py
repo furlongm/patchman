@@ -28,6 +28,7 @@ class MirrorAdmin(admin.ModelAdmin):
 class MirrorPackageAdmin(admin.ModelAdmin):
     readonly_fields = ('package',)
 
+
 admin.site.register(Repository)
 admin.site.register(Mirror, MirrorAdmin)
 admin.site.register(MirrorPackage, MirrorPackageAdmin)

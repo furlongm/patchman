@@ -24,5 +24,6 @@ from patchman.hosts.models import Host, HostRepo
 class HostAdmin(admin.ModelAdmin):
     readonly_fields = ('packages', 'updates')
 
+
 admin.site.register(Host, HostAdmin)
 admin.site.register(HostRepo)

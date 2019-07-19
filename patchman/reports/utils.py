@@ -95,7 +95,7 @@ def process_packages(report, host):
 
         for package in host.packages.all():
             if package.id not in package_ids:
-               host.packages.remove(package)
+                host.packages.remove(package)
 
 
 def process_updates(report, host):
