@@ -71,8 +71,9 @@ setup(
              'sbin/patchman-set-secret-key',
              'sbin/patchman-manage', ],
     long_description=long_description,
+    long_description_content_type='text/markdown',
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',
         'Framework :: Django',
         'Topic :: Internet :: WWW/HTTP :: WSGI :: Application',
