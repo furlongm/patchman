@@ -1,3 +1,26 @@
+patchman (1.0.21-2) stable; urgency=medium
+
+  [ Marcus Furlong ]
+  * use correct location for client in rpm spec
+  * use correct path for config file
+  * update installation docs
+  * use correct id for repo id
+  * update requirements
+  * use correct repo id var in all templates
+  * add unicode_literals to all files
+  * allow report processing
+  * update setup.py
+  * consistent argument ordering
+  * fix unicode_literal damage
+
+  [ Devin Christensen ]
+  * Pull report IP from X-Forwarded-For when present
+
+  [ Leon Koens ]
+  * Check for verbosity before printing
+
+ -- Marcus Furlong <furlongm@gmail.com>  Fri, 19 Jul 2019 20:29:50 +0000
+
 patchman (1.0.20-1) stable; urgency=medium
 
   * update packages to remove default settings
