@@ -17,8 +17,8 @@ mysql or postgresql instead, see the database configuration section.
 ```shell
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0412F522
 echo "deb http://repo.openbytes.ie/ubuntu xenial main" > /etc/apt/sources.list.d/patchman.list
-apt-get update
-apt-get -y install python-patchman patchman-client
+apt update
+apt -y install python-patchman patchman-client
 patchman-manage createsuperuser
 ```
 
@@ -28,9 +28,9 @@ patchman-manage createsuperuser
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0412F522
 echo "deb http://repo.openbytes.ie/debian jessie main" > /etc/apt/sources.list.d/patchman.list
 echo "deb http://http.debian.net/debian jessie-backports main contrib non-free" > /etc/apt/sources.list.d/backports.list
-apt-get update
-apt-get -y install -t jessie-backports python-django
-apt-get -y install python-patchman patchman-client
+apt update
+apt -y install -t jessie-backports python-django
+apt -y install python-patchman patchman-client
 patchman-manage createsuperuser
 ```
 
@@ -55,8 +55,8 @@ patchman-manage createsuperuser
 TBD - not working yet
 
 ```shell
-# apt-get -y install gcc libxml2-dev libxslt1-dev virtualenv python-dev zlib1g-dev # (debian/ubuntu)
-# yum -y install gcc libxml2-devel libxslt-devel python-virtualenv                 # (centos/rhel)
+# apt -y install gcc libxml2-dev libxslt1-dev virtualenv python-dev zlib1g-dev # (debian/ubuntu)
+# yum -y install gcc libxml2-devel libxslt-devel python-virtualenv             # (centos/rhel)
 mkdir /srv/patchman
 cd /srv/patchman
 virtualenv .
@@ -75,7 +75,7 @@ gunicorn patchman.wsgi -b 0.0.0.0:80
 1. Install dependencies
 
 ```shell
-apt-get -y install python-django-tagging python-django python-requests \
+apt -y install python-django-tagging python-django python-requests \
 python-django-extensions python-argparse python-lxml python-rpm python-debian \
 python-pygooglechart python-cracklib python-progressbar libapache2-mod-wsgi \
 python-djangorestframework apache2 python-colorama python-humanize liblzma-dev \
@@ -126,13 +126,30 @@ production deployments. MySQL or PostgreSQL are better choices.
 
 To configure the sqlite database backend:
 
-1. Ensure the database directory specifed in the settings file exists:
+1. Ensure the python sqlite3 bindings are installed:
+
+```shell
+apt -y install python-pysqlite2
+```
+
+2. Create the database directory specified in the settings file:
 
 ```shell
 mkdir -p /var/lib/patchman/db
 ```
 
-2. Proceed to syncing database.
+3. Modify `/etc/patchman/local_settings.py` as follows:
+
+```
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': '/var/lib/patchman/db/patchman.db'
+    }
+}
+```
+
+4. Proceed to syncing database.
 
 
 ### MySQL
@@ -142,7 +159,7 @@ To configure the mysql database backend:
 1. Ensure mysql-server and the python mysql bindings are installed:
 
 ```shell
-apt-get -y install mysql-server python-mysqldb python-pymysql
+apt -y install mysql-server python-mysqldb python-pymysql
 ```
 
 2. Create database and users:
@@ -161,12 +178,12 @@ Query OK, 0 rows affected (0.00 sec)
 ```
 DATABASES = {
    'default': {
-       'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-       'NAME': 'patchman',                   # Or path to database file if using sqlite3.
-       'USER': 'patchman',                   # Not used with sqlite3.
-       'PASSWORD': 'changeme',               # Not used with sqlite3.
-       'HOST': '',                           # Set to empty string for localhost. Not used with sqlite3.
-       'PORT': '',                           # Set to empty string for default. Not used with sqlite3.
+       'ENGINE': 'django.db.backends.mysql',
+       'NAME': 'patchman',
+       'USER': 'patchman',
+       'PASSWORD': 'changeme',
+       'HOST': '',
+       'PORT': '',
        'STORAGE_ENGINE': 'INNODB',
        'CHARSET' : 'utf8'
    }
@@ -183,7 +200,7 @@ To configure the postgresql database backend:
 1. Ensure the postgresql server and the python postgres bindings are installed:
 
 ```shell
-apt-get -y install postgresql python-psycopg2
+apt -y install postgresql python-psycopg2
 ```
 
 2. Create database and users:
@@ -210,13 +227,12 @@ GRANT
 ```
 DATABASES = {
    'default': {
-       'ENGINE': 'django.db.backends.postgresql_psycopg2', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-       'NAME': 'patchman',                   # Or path to database file if using sqlite3.
-       'USER': 'patchman',                   # Not used with sqlite3.
-       'PASSWORD': 'changeme',               # Not used with sqlite3.
-       'HOST': '',                           # Set to empty string for localhost. Not used with sqlite3.
-       'PORT': '',                           # Set to empty string for default. Not used with sqlite3.
-       'STORAGE_ENGINE': 'INNODB',
+       'ENGINE': 'django.db.backends.postgresql_psycopg2',
+       'NAME': 'patchman',
+       'USER': 'patchman',
+       'PASSWORD': 'changeme',
+       'HOST': '',
+       'PORT': '',
        'CHARSET' : 'utf8'
    }
 }
@@ -317,7 +333,7 @@ persistent over reboot.
 Memcached can optionally be run to reduce the load on the server.
 
 ```shell
-apt-get install memcached python-memcache
+apt -y install memcached python-memcache
 ```
 
 and add the following to `/etc/patchman/local_settings.py`
