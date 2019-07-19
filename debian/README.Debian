@@ -3,13 +3,35 @@ Configuration of patchman under Ubuntu/Debian
 
 1. Perform database configuration:
 
+    sqlite3 backend
+    ---------------
+
+    Install the python sqlite bindings:
+
+        $ apt -y install python-pysqlite2
+
+    Update /etc/patchman/local_settings.py:
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': '/var/lib/patchman/db/patchman.db'
+        }
+    }
+
+    Make sure the webserver can write to the database:
+
+        $ mkdir -p /var/lib/patchman/db
+        $ chown -R :www-data /var/lib/patchman
+        $ chmod -R g+w /var/lib/patchman/db
+
 
     mysql backend
     -------------
 
     Install mysql-server and the python mysql bindings:
 
-        $ apt-get install mysql-server python-mysqldb
+        $ apt -y install mysql-server python-mysqldb
 
     Create database and users:
 
@@ -19,7 +41,7 @@ Configuration of patchman under Ubuntu/Debian
         mysql> GRANT ALL PRIVILEGES ON patchman.* TO patchman@localhost IDENTIFIED BY 'changeme';
         Query OK, 0 rows affected (0.00 sec)
 
-    Update /etc/patchman/settings.py:
+    Update /etc/patchman/local_settings.py:
 
         DATABASES = {
             'default': {
@@ -35,26 +57,43 @@ Configuration of patchman under Ubuntu/Debian
         }
 
 
-    sqlite3 backend
-    ---------------
+    postgresql backend
+    ------------------
 
-    Install the python sqlite bindings:
+    Install postgresql server and the python postgres bindings:
 
-        $ apt-get install python-pysqlite2
+        $ apt -y install postgresql python-psycopg2
 
-    Update /etc/patchman/settings.py:
+    Create database and users:
 
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': '/var/lib/patchman/patchman.db'
+        $ sudo su - postgres
+        $ psql
+        postgres=# CREATE DATABASE patchman;
+        CREATE DATABASE
+        postgres=# CREATE USER patchman WITH PASSWORD 'changeme';
+        CREATE ROLE
+        postgres=# ALTER ROLE patchman SET client_encoding TO 'utf8';
+        ALTER ROLE
+        postgres=# ALTER ROLE patchman SET default_transaction_isolation TO 'read committed';
+        ALTER ROLE
+        postgres=# ALTER ROLE patchman SET timezone TO 'UTC';
+        ALTER ROLE
+        postgres=# GRANT ALL PRIVILEGES ON DATABASE patchman to patchman;
+        GRANT
+
+    Update /etc/patchman/local_settings.py:
+
+        DATABASES = {
+           'default': {
+               'ENGINE': 'django.db.backends.postgresql_psycopg2',
+               'NAME': 'patchman',
+               'USER': 'patchman',
+               'PASSWORD': 'changeme',
+               'HOST': '',
+               'PORT': '',
+               'CHARSET' : 'utf8'
+           }
         }
-    }
-
-    Make sure the webserver can write to the database:
-
-        $ touch /var/lib/patchman/patchman.db
-        $ chown www-data:www-data /var/lib/patchman/patchman.db
 
 2.  Add admin contact details and external IP address to /etc/patchman/local_settings.py
 
