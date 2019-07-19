@@ -132,9 +132,10 @@ def report_detail(request, report):
 def report_process(request, report):
 
     report = get_object_or_404(Report, id=report)
+    report.process()
 
     return render(request,
-                  'reports/report_process.html',
+                  'reports/report_detail.html',
                   {'report': report}, )
 
 
