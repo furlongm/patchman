@@ -1,3 +1,9 @@
+patchman (1.0.22-1) stable; urgency=medium
+
+  * additional fix for unicode literal breakage
+
+ -- Marcus Furlong <furlongm@gmail.com>  Fri, 19 Jul 2019 20:58:52 +0000
+
 patchman (1.0.21-2) stable; urgency=medium
 
   [ Marcus Furlong ]
