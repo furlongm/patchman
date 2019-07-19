@@ -316,13 +316,12 @@ patchman-client
 
 #### Celery
 
-Install celeryd for realtime processing of reports from clients:
+Install Celery for realtime processing of reports from clients:
 
 ```shell
-apt-get install python-django-celery rabbitmq-server
+apt -y install python-celery python-celery-common rabbitmq-server
 patchman-manage migrate
-patchman-manage syncdb
-C_FORCE_ROOT=true patchman-manage celeryd_detach
+C_FORCE_ROOT=1 celery worker --loglevel=info -E -A patchman
 ```
 
 Add the last command to an initscript (e.g. /etc/rc.local) to make celery

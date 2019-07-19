@@ -49,8 +49,8 @@ def upload(request):
             report = Report.objects.create()
         report.parse(data, meta)
         if settings.USE_ASYNC_PROCESSING:
-            from patchman.reports.tasks import process_report
-            process_report.delay(report)
+            from reports.tasks import process_report
+            process_report.delay(report.id)
 
         if 'report' in data and data['report'] == '1':
             packages = []
