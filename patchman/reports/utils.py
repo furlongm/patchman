@@ -270,8 +270,7 @@ def process_repo(repo, arch):
             repository.auth_required = True
             with transaction.atomic():
                 repository.save()
-        if mirror['url'].startswith('http://security') or \
-                mirror['url'].startswith('https://security'):
+        if mirror['url'].find('security') != -1:
             repository.security = True
             with transaction.atomic():
                 repository.save()
