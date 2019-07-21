@@ -75,14 +75,14 @@ THIRD_PARTY_APPS = [
 ]
 
 LOCAL_APPS = [
-    'arch',
-    'domains',
-    'packages',
-    'operatingsystems',
-    'hosts',
-    'repos',
-    'reports',
-    'util',
+    'arch.apps.ArchConfig',
+    'domains.apps.DomainsConfig',
+    'packages.apps.PackagesConfig',
+    'operatingsystems.apps.OperatingsystemsConfig',
+    'hosts.apps.HostsConfig',
+    'repos.apps.ReposConfig',
+    'reports.apps.ReportsConfig',
+    'util.apps.UtilConfig',
 ]
 
 REST_FRAMEWORK = {
