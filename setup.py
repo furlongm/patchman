@@ -41,7 +41,7 @@ for dirpath, dirnames, filenames in os.walk('etc'):
             ['/etc/patchman', [os.path.join(dirpath, f) for f in filenames]]
         )
 
-for dirpath, dirnames, filenames in os.walk('media'):
+for dirpath, dirnames, filenames in os.walk('patchman/static'):
     # Ignore dirnames that start with '.'
     for i, dirname in enumerate(dirnames):
         if dirname.startswith('.'):

@@ -66,5 +66,5 @@ urlpatterns = [
 
 if settings.DEBUG:
     urlpatterns += [
-        url(r'^patchman_media/(?P<path>.*)$', static.serve),
+        url(r'^static/(?P<path>.*)$', static.serve),
     ]

@@ -112,7 +112,7 @@ be configured:
 
    * ADMINS - set up an admin email address
    * SECRET_KEY - create a random secret key
-   * STATICFILES_DIRS - should point to /srv/patchman/media if installing from
+   * STATICFILES_DIRS - should point to /srv/patchman/patchman/static if installing from
      source
 
 

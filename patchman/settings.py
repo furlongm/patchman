@@ -109,13 +109,10 @@ LOGOUT_REDIRECT_URL = '/patchman/login/'
 LOGIN_URL = '/patchman/login/'
 
 # URL prefix for static files.
-STATIC_URL = '/patchman_media/'
-
-# Additional dirs where the media should be copied from
-STATICFILES_DIRS = ('/usr/share/patchman/media/',)
+STATIC_URL = '/patchman/static/'
 
 # Absolute path to the directory static files should be collected to.
-STATIC_ROOT = '/var/lib/patchman/media/'
+STATIC_ROOT = '/var/lib/patchman/static/'
 
 TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
@@ -134,18 +131,9 @@ MANAGERS = ADMINS
 INSTALLED_APPS = DEFAULT_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 if RUN_GUNICORN or (len(sys.argv) > 1 and sys.argv[1] == 'runserver'):
-
-    PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
-
-    # Static files (CSS, JavaScript, Images)
-    STATIC_ROOT = os.path.abspath(os.path.join(PROJECT_ROOT, '../patchman_media'))
-    STATIC_URL = '/patchman_media/'
-
-    # Extra places for collectstatic to find static files.
-    STATICFILES_DIRS = (
-        os.path.abspath(os.path.join(PROJECT_ROOT, '../media')),
-    )
-
     LOGIN_REDIRECT_URL = '/'
     LOGOUT_REDIRECT_URL = '/login/'
     LOGIN_URL = '/login/'
+    PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+    STATIC_ROOT = os.path.abspath(os.path.join(PROJECT_ROOT, 'static'))
+    STATIC_URL = '/static/'
