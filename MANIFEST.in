@@ -3,11 +3,9 @@ include AUTHORS
 include COPYING
 include MANIFEST.in
 include INSTALL.md
-include UPGRADE
 include VERSION.txt
 include requirements.txt
 recursive-include scripts *
 recursive-include patchman *
 recursive-include sbin *
 recursive-include etc *
-recursive-include media *

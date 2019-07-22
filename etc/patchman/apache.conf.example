@@ -1,6 +1,6 @@
-Define patchman_pythonpath /srv/patchman/patchman
+Define patchman_pythonpath /srv/patchman/
 WSGIScriptAlias /patchman ${patchman_pythonpath}/patchman/wsgi.py
-WSGIPythonPath ${patchman_pythonpath}/
+WSGIPythonPath ${patchman_pythonpath}
 
 <Directory ${patchman_pythonpath}>
     <Files wsgi.py>
@@ -9,12 +9,12 @@ WSGIPythonPath ${patchman_pythonpath}/
     AllowOverride All
 </Directory>
 
-Alias /patchman_media "/var/lib/patchman/media"
-<Location /patchman_media>
+Alias /patchman/static "/var/lib/patchman/static"
+<Location /patchman/static>
     SetHandler None
 </Location>
 
-<Directory /var/lib/patchman/media>
+<Directory /var/lib/patchman/static>
     Require all granted
 </Directory>
 
