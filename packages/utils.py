@@ -152,7 +152,7 @@ def parse_errata_children(e, children):
             e.releases.add(osgroup)
         elif c.tag == 'packages':
             pkg_str = c.text.replace('.rpm', '')
-            pkg_re = re.compile('(\S+)-(?:(\d*):)?(.*)-(~?\w+[\w.]*)\.(\S+)')
+            pkg_re = re.compile('(\S+)-(?:(\d*):)?(.*)-(~?\w+[\w.]*)\.(\S+)')  # noqa
             name, epoch, ver, rel, arch = pkg_re.match(pkg_str).groups()
             p_type = Package.RPM
             pkg = get_or_create_package(name, epoch, ver, rel, arch, p_type)
