@@ -19,7 +19,7 @@ from __future__ import unicode_literals
 
 import os
 import re
-from lxml import etree
+from defusedxml.lxml import _etree as etree
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')
 from django.conf import settings

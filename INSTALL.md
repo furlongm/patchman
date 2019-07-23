@@ -75,7 +75,7 @@ gunicorn patchman.wsgi -b 0.0.0.0:80
 
 ```shell
 apt -y install python-django-tagging python-django python-requests \
-python-django-extensions python-argparse python-lxml python-rpm python-debian \
+python-django-extensions python-argparse python-defusedxml python-rpm python-debian \
 python-pygooglechart python-cracklib python-progressbar libapache2-mod-wsgi \
 python-djangorestframework apache2 python-colorama python-humanize liblzma-dev \
 python-magic

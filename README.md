@@ -50,7 +50,7 @@ python-djangorestframework
 python-debian
 python-rpm
 python-progressbar
-python-lxml
+python-defusedxml
 python-argparse
 python-requests
 python-humanize
