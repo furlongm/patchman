@@ -298,19 +298,19 @@ def extract_yum_packages(data, url):
 
     extracted = extract(data, url)
     ns = 'http://linux.duke.edu/metadata/common'
-    context = etree.iterparse(BytesIO(extracted),
-                              tag='{{{0!s}}}metadata'.format(ns))
-    plen = int(next(context)[1].get('packages'))
-    context = etree.iterparse(BytesIO(extracted),
-                              tag='{{{0!s}}}package'.format(ns))
+    m_context = etree.iterparse(BytesIO(extracted),
+                                tag='{{{0!s}}}metadata'.format(ns))
+    plen = int(next(m_context)[1].get('packages'))
+    p_context = etree.iterparse(BytesIO(extracted),
+                                tag='{{{0!s}}}package'.format(ns))
     packages = set()
 
     if plen > 0:
         ptext = 'Extracting packages: '
         progress_info_s.send(sender=None, ptext=ptext, plen=plen)
 
-        for i, data in enumerate(context):
-            elem = data[1]
+        for i, p_data in enumerate(p_context):
+            elem = p_data[1]
             progress_update_s.send(sender=None, index=i + 1)
             name = elem.xpath('//ns:name',
                               namespaces={'ns': ns})[0].text.lower()
