@@ -6,7 +6,7 @@
 
 {% block page_title %}Host - {{ host }} {% endblock %}
 
-{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'host_list' %}">Hosts</a></li><li class="active">{{ host }}</li>{% endblock %}
+{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'hosts:host_list' %}">Hosts</a></li><li class="active">{{ host }}</li>{% endblock %}
 
 {% block content_title %} Host - {{ host }} {% endblock %}
 

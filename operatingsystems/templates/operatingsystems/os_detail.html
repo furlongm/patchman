@@ -6,7 +6,7 @@
 
 {% block content_title %} Operating System - {{ os }} {% endblock %}
 
-{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'os_list' %}">Operating Systems</a></li><li class="active">{{ os }}</li>{% endblock %}
+{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'operatingsystems:os_list' %}">Operating Systems</a></li><li class="active">{{ os }}</li>{% endblock %}
 
 {% block content %}
 
@@ -26,7 +26,7 @@
         <tr><th>OS Group</th><td>{% if os.osgroup != None %}<a href="{{ os.osgroup.get_absolute_url }}"> {{ os.osgroup }} </a>{% else %}No OS Group{% endif %}</td></tr>
       </table>
       {% if user.is_authenticated and perms.is_admin %}
-        <a class="btn btn-primary btn-sm" role="button" href="{% url 'os_delete' os.id %}">{% bootstrap_icon "trash" %} Delete this Operating System</a>
+        <a class="btn btn-primary btn-sm" role="button" href="{% url 'operatingsystems:os_delete' os.id %}">{% bootstrap_icon "trash" %} Delete this Operating System</a>
       {% endif %}
     </div>
   </div>

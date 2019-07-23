@@ -51,20 +51,17 @@ router.register(r'mirror-package', repo_views.MirrorPackageViewSet)
 admin.autodiscover()
 
 urlpatterns = [
-
     url(r'^', include('django.contrib.auth.urls')),
-    url(r'^', include('util.urls')),
-    url(r'^reports/', include('reports.urls')),
-    url(r'^hosts/', include('hosts.urls')),
-    url(r'^packages/', include('packages.urls')),
-    url(r'^repos/', include('repos.urls')),
-    url(r'^os/', include('operatingsystems.urls')),
-    url(r'^admin/', include(admin.site.urls)),
+    url(r'^admin/', admin.site.urls),
     url(r'^api/', include(router.urls)),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+    url(r'^', include('util.urls', namespace='util')),
+    url(r'^reports/', include('reports.urls', namespace='reports')),
+    url(r'^hosts/', include('hosts.urls', namespace='hosts')),
+    url(r'^packages/', include('packages.urls', namespace='packages')),
+    url(r'^repos/', include('repos.urls', namespace='repos')),
+    url(r'^os/', include('operatingsystems.urls', namespace='operatingsystems')),
 ]
 
 if settings.DEBUG:
-    urlpatterns += [
-        url(r'^static/(?P<path>.*)$', static.serve),
-    ]
+    urlpatterns += [url(r'^static/(?P<path>.*)$', static.serve)]

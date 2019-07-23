@@ -4,7 +4,7 @@
 
 {% block page_title %}Mirror - {{ mirror }}{% endblock %}
 
-{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'repo_list' %}">Repositories</a></li><li><a href="{% url 'mirror_list' %}">Mirrors</a></li><li class="active">{{ mirror }}</li>{% endblock %}
+{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'repos:repo_list' %}">Repositories</a></li><li><a href="{% url 'repos:mirror_list' %}">Mirrors</a></li><li class="active">{{ mirror }}</li>{% endblock %}
 
 {% block content_title %} Mirror - {{ mirror }} {% endblock %}
 
@@ -24,8 +24,8 @@
     <tr><th>Checksum</th><td> {{ mirror.file_checksum }} </td></tr>
   </table>
   {% if user.is_authenticated and perms.is_admin %}
-    <a class="btn btn-primary btn-sm" role="button" href="{% url 'mirror_delete' mirror.id %}">{% bootstrap_icon "trash" %} Delete this Mirror</a>
-    <a class="btn btn-primary btn-sm" role="button" href="{% url 'mirror_edit' mirror.id %}">{% bootstrap_icon "edit" %} Edit this Mirror</a>
+    <a class="btn btn-primary btn-sm" role="button" href="{% url 'repos:mirror_delete' mirror.id %}">{% bootstrap_icon "trash" %} Delete this Mirror</a>
+    <a class="btn btn-primary btn-sm" role="button" href="{% url 'repos:mirror_edit' mirror.id %}">{% bootstrap_icon "edit" %} Edit this Mirror</a>
   {% endif %}
 </div>
 

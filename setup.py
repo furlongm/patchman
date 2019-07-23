@@ -48,7 +48,7 @@ for dirpath, dirnames, filenames in os.walk('patchman/static'):
             del dirnames[i]
     if filenames:
         data_files.append(
-            ['/usr/share/patchman/' + dirpath,
+            ['/usr/share/' + dirpath,
              [os.path.join(dirpath, f) for f in filenames]]
         )
 

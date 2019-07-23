@@ -20,6 +20,7 @@ from __future__ import unicode_literals
 from django.utils.encoding import python_2_unicode_compatible
 from django.db import models, IntegrityError, DatabaseError, transaction
 from django.db.models import Q
+from django.urls import reverse
 from django.utils import timezone
 
 try:
@@ -45,10 +46,10 @@ class Host(models.Model):
     ipaddress = models.GenericIPAddressField()
     reversedns = models.CharField(max_length=255, blank=True, null=True)
     check_dns = models.BooleanField(default=True)
-    os = models.ForeignKey(OS)
+    os = models.ForeignKey(OS, on_delete=models.CASCADE)
     kernel = models.CharField(max_length=255)
-    arch = models.ForeignKey(MachineArchitecture)
-    domain = models.ForeignKey(Domain)
+    arch = models.ForeignKey(MachineArchitecture, on_delete=models.CASCADE)
+    domain = models.ForeignKey(Domain, on_delete=models.CASCADE)
     lastreport = models.DateTimeField()
     packages = models.ManyToManyField(Package, blank=True)
     repos = models.ManyToManyField(Repository, blank=True, through='HostRepo')
@@ -87,9 +88,8 @@ class Host(models.Model):
 
         info_message.send(sender=None, text=text)
 
-    @models.permalink
     def get_absolute_url(self):
-        return ('host_detail', [self.hostname])
+        return reverse('hosts:host_detail', args=[self.hostname])
 
     def get_num_security_updates(self):
         return self.updates.filter(security=True).count()
@@ -319,8 +319,8 @@ class Host(models.Model):
 
 @python_2_unicode_compatible
 class HostRepo(models.Model):
-    host = models.ForeignKey(Host)
-    repo = models.ForeignKey(Repository)
+    host = models.ForeignKey(Host, on_delete=models.CASCADE)
+    repo = models.ForeignKey(Repository, on_delete=models.CASCADE)
     enabled = models.BooleanField(default=True)
     priority = models.IntegerField(default=0)
 

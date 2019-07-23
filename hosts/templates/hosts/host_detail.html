@@ -4,7 +4,7 @@
 
 {% block page_title %}Host - {{ host }} {% endblock %}
 
-{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'host_list' %}">Hosts</a></li><li class="active">{{ host }}</li>{% endblock %}
+{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'hosts:host_list' %}">Hosts</a></li><li class="active">{{ host }}</li>{% endblock %}
 
 {% block content_title %} Host - {{ host }} {% endblock %}
 
@@ -22,7 +22,7 @@
     <div class="well well-sm">
       <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
         <tr><th>Hostname</th><td> {{ host.hostname }} </td></tr>
-        <tr><th>Domain</th><td> <a href="{% url 'host_list' %}?domain={{ host.domain.id }}">{{ host.domain }}</a> </td></tr>
+        <tr><th>Domain</th><td> <a href="{% url 'hosts:host_list' %}?domain={{ host.domain.id }}">{{ host.domain }}</a> </td></tr>
         <tr><th>Reporting IP Address</th><td> {{ host.ipaddress }} </td></tr>
         <tr><th>Reverse DNS</th><td> {{ host.reversedns }} </td></tr>
         <tr><th>OS</th><td> <a href="{{ host.os.get_absolute_url }}">{{ host.os }}</a> </td></tr>
@@ -35,7 +35,7 @@
           {% load tagging_tags %}
           {% tags_for_object host as tags %}
           {% for tag in tags %}
-            <a href="{% url 'host_list' %}?tag={{ tag }}">{{ tag }}</a>
+            <a href="{% url 'hosts:host_list' %}?tag={{ tag }}">{{ tag }}</a>
           {% endfor %}
           </td>
         </tr>
@@ -56,8 +56,8 @@
         </tr>
       </table>
       {% if user.is_authenticated and perms.is_admin %}
-        <a class="btn btn-primary btn-sm" role="button" href="{% url 'host_delete' host.hostname %}">{% bootstrap_icon "trash" %} Delete this Host</a>
-        <a class="btn btn-primary btn-sm" role="button" href="{% url 'host_edit' host.hostname %}">{% bootstrap_icon "edit" %} Edit this Host</a>
+        <a class="btn btn-primary btn-sm" role="button" href="{% url 'hosts:host_delete' host.hostname %}">{% bootstrap_icon "trash" %} Delete this Host</a>
+        <a class="btn btn-primary btn-sm" role="button" href="{% url 'hosts:host_edit' host.hostname %}">{% bootstrap_icon "edit" %} Edit this Host</a>
       {% endif %}
     </div>
   </div>

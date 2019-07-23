@@ -7,5 +7,13 @@ include VERSION.txt
 include requirements.txt
 recursive-include scripts *
 recursive-include patchman *
+recursive-include util *
+recursive-include arch *
+recursive-include domains *
+recursive-include hosts *
+recursive-include operatingsystems *
+recursive-include packages *
+recursive-include repos *
+recursive-include reports *
 recursive-include sbin *
 recursive-include etc *

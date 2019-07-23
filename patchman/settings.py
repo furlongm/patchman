@@ -23,6 +23,12 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+#SECURE_BROWSER_XSS_FILTER = True
+#SECURE_CONTENT_TYPE_NOSNIFF = True
+#CSRF_COOKIE_SECURE = True
+#SESSION_COOKIE_SECURE = True
+#X_FRAME_OPTIONS = 'DENY'
+
 SITE_ID = 1
 
 ROOT_URLCONF = 'patchman.urls'
@@ -77,9 +83,9 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     'arch.apps.ArchConfig',
     'domains.apps.DomainsConfig',
-    'packages.apps.PackagesConfig',
-    'operatingsystems.apps.OperatingsystemsConfig',
     'hosts.apps.HostsConfig',
+    'operatingsystems.apps.OperatingsystemsConfig',
+    'packages.apps.PackagesConfig',
     'repos.apps.ReposConfig',
     'reports.apps.ReportsConfig',
     'util.apps.UtilConfig',
@@ -110,6 +116,9 @@ LOGIN_URL = '/patchman/login/'
 
 # URL prefix for static files.
 STATIC_URL = '/patchman/static/'
+
+# Additional dirs where the media should be copied from
+STATICFILES_DIRS = ['/usr/share/patchman/static/']
 
 # Absolute path to the directory static files should be collected to.
 STATIC_ROOT = '/var/lib/patchman/static/'

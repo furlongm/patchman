@@ -21,8 +21,9 @@ from django.conf.urls import url
 
 from packages import views
 
-urlpatterns = [
+app_name = 'packages'
 
+urlpatterns = [
     url(r'^$', views.package_list, name='package_list'),
     url(r'^(?P<packagename>[_+-.\w]+)/$', views.package_detail,
         name='package_detail'),

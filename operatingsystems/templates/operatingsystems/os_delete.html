@@ -4,7 +4,7 @@
 
 {% block page_title %}Operating System - {{ os }} {% endblock %}
 
-{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'os_list' %}">Operating Systems</a></li><li class="active">
+{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'operatingsystems:os_list' %}">Operating Systems</a></li><li class="active">
 
 {% if os %}
     {{ os }}

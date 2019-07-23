@@ -21,8 +21,9 @@ from django.conf.urls import url
 
 from reports import views
 
-urlpatterns = [
+app_name = 'reports'
 
+urlpatterns = [
     url(r'^$', views.report_list, name='report_list'),
     url(r'^upload/$', views.upload),
     url(r'^(?P<report>[-.\w]+)/$', views.report_detail,
