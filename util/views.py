@@ -17,10 +17,8 @@
 
 from __future__ import unicode_literals
 
-import os
 from datetime import datetime, timedelta
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')
 from django.conf import settings
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required

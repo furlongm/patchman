@@ -17,7 +17,6 @@
 
 from __future__ import unicode_literals
 
-import os
 import re
 try:
     import lzma
@@ -33,7 +32,6 @@ from defusedxml.lxml import _etree as etree
 from debian.debian_support import Version
 from debian.deb822 import Packages
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Q

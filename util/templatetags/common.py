@@ -18,11 +18,9 @@
 
 from __future__ import unicode_literals
 
-import os
 from humanize import naturaltime
 from datetime import datetime, timedelta
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')
 from django.conf import settings
 from django.template import Library
 from django.template.loader import get_template
