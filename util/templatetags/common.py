@@ -85,8 +85,7 @@ def gen_table(object_list, template_name=None):
 
 @register.simple_tag
 def object_count(page):
-    if isinstance(page.paginator, QuerySetPaginator) or \
-            isinstance(page.paginator, Paginator):
+    if isinstance(page.paginator, (QuerySetPaginator, Paginator)):
         if page.paginator.count == 1:
             name = page.paginator.object_list.model._meta.verbose_name
         else:
