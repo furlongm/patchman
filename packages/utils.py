@@ -29,9 +29,7 @@ from util import get_url, download_url
 from packages.models import ErratumReference, Erratum, PackageName, \
     Package, PackageUpdate
 from arch.models import MachineArchitecture, PackageArchitecture
-from patchman.signals import \
-    info_message, warning_message, error_message, debug_message, \
-    progress_info_s, progress_update_s
+from patchman.signals import error_message, progress_info_s, progress_update_s
 
 
 def find_evr(s):
@@ -268,7 +266,8 @@ def mark_security_updates():
         if erratum.etype == 'security':
             for package in erratum.packages.all():
                 with transaction.atomic():
-                    affected_updates = package_updates.select_for_update().filter(newpackage=package)
+                    affected_updates = package_updates.select_for_update(
+                        ).filter(newpackage=package)
                     for affected_update in affected_updates:
                         affected_update.security = True
                         affected_update.save()

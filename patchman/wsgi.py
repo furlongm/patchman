@@ -17,17 +17,14 @@
 from __future__ import unicode_literals
 
 import os
-import sys
 
 from django.core.wsgi import get_wsgi_application
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
-
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')  # noqa
+from django.conf import settings
 
 application = get_wsgi_application()
 
-from django.conf import settings
 if hasattr(settings, 'RUN_GUNICORN') and settings.RUN_GUNICORN:
     from whitenoise.django import DjangoWhiteNoise
     application = DjangoWhiteNoise(application)

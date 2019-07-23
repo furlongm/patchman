@@ -16,4 +16,4 @@
 
 from __future__ import unicode_literals, absolute_import
 
-from .receivers import *
+from .receivers import *  # noqa

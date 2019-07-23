@@ -339,7 +339,8 @@ def repo_delete(request, repo_id):
             messages.info(request, text)
             return HttpResponseRedirect(reverse('repos:repo_list'))
         elif 'cancel' in request.POST:
-            return HttpResponseRedirect(reverse('repos:repo_detail', args=[repo_id]))
+            return HttpResponseRedirect(reverse('repos:repo_detail',
+                                                args=[repo_id]))
 
     return render(request,
                   'repos/repo_delete.html',

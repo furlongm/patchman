@@ -17,7 +17,7 @@
 
 from __future__ import unicode_literals
 
-from django.conf.urls import url, include, handler404, handler500
+from django.conf.urls import url, include, handler404, handler500  # noqa
 from django.conf import settings
 from django.contrib import admin
 from django.views import static
@@ -54,13 +54,13 @@ urlpatterns = [
     url(r'^', include('django.contrib.auth.urls')),
     url(r'^admin/', admin.site.urls),
     url(r'^api/', include(router.urls)),
-    url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+    url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),  # noqa
     url(r'^', include('util.urls', namespace='util')),
     url(r'^reports/', include('reports.urls', namespace='reports')),
     url(r'^hosts/', include('hosts.urls', namespace='hosts')),
     url(r'^packages/', include('packages.urls', namespace='packages')),
     url(r'^repos/', include('repos.urls', namespace='repos')),
-    url(r'^os/', include('operatingsystems.urls', namespace='operatingsystems')),
+    url(r'^os/', include('operatingsystems.urls', namespace='operatingsystems')),  # noqa
 ]
 
 if settings.DEBUG:
