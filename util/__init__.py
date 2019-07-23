@@ -17,7 +17,6 @@
 
 from __future__ import unicode_literals, print_function
 
-import os
 import sys
 import requests
 import bz2
@@ -33,9 +32,6 @@ except ImportError:
 from colorama import Fore, Style
 from progressbar import Bar, ETA, Percentage, ProgressBar
 from six import u as unicode
-
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')
-from django.conf import settings
 
 from patchman.signals import error_message
 

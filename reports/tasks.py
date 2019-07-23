@@ -17,8 +17,6 @@
 
 from __future__ import unicode_literals, absolute_import
 
-import os
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')
 from django.conf import settings
 
 from reports.models import Report

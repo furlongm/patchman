@@ -17,11 +17,9 @@
 
 from __future__ import unicode_literals
 
-import os
 import re
 from defusedxml.lxml import _etree as etree
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')
 from django.conf import settings
 from django.db import IntegrityError, DatabaseError, transaction
 
