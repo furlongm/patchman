@@ -129,7 +129,7 @@ def update_mirror_packages(mirror, packages):
             package_id.name = package.name
             with transaction.atomic():
                 package_id.save()
-        from repos.models import MirrorPackage
+        from repos.models import MirrorPackage  # noqa
         with transaction.atomic():
             MirrorPackage.objects.create(mirror=mirror, package=p)
 

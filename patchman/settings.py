@@ -23,11 +23,11 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-#SECURE_BROWSER_XSS_FILTER = True
-#SECURE_CONTENT_TYPE_NOSNIFF = True
-#CSRF_COOKIE_SECURE = True
-#SESSION_COOKIE_SECURE = True
-#X_FRAME_OPTIONS = 'DENY'
+# SECURE_BROWSER_XSS_FILTER = True
+# SECURE_CONTENT_TYPE_NOSNIFF = True
+# CSRF_COOKIE_SECURE = True
+# SESSION_COOKIE_SECURE = True
+# X_FRAME_OPTIONS = 'DENY'
 
 SITE_ID = 1
 
@@ -92,13 +92,13 @@ LOCAL_APPS = [
 ]
 
 REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAdminUser',),
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAdminUser',),  # noqa
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',  # noqa
     'PAGE_SIZE': 100,
 }
 
 try:
-    from celery import Celery
+    from celery import Celery  # noqa
 except ImportError:
     USE_ASYNC_PROCESSING = False
 else:
@@ -118,7 +118,7 @@ LOGIN_URL = '/patchman/login/'
 STATIC_URL = '/patchman/static/'
 
 # Additional dirs where the media should be copied from
-STATICFILES_DIRS = ['/usr/share/patchman/static/']
+STATICFILES_DIRS = [os.path.abspath(os.path.join(BASE_DIR, 'patchman/static'))]
 
 # Absolute path to the directory static files should be collected to.
 STATIC_ROOT = '/var/lib/patchman/static/'
@@ -126,23 +126,22 @@ STATIC_ROOT = '/var/lib/patchman/static/'
 TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
 try:
-    from .local_settings import *
+    from .local_settings import *  # noqa
 except ImportError:
     if sys.prefix == '/usr':
         conf_path = '/etc/patchman'
     else:
         conf_path = sys.prefix + '/etc/patchman'
-    settings_file = conf_path + '/local_settings.py'
-    exec(compile(open(settings_file).read(),
-                 settings_file, 'exec'))
+    local_settings = conf_path + '/local_settings.py'
+    exec(compile(open(local_settings).read(), local_settings, 'exec'))
 
 MANAGERS = ADMINS
 INSTALLED_APPS = DEFAULT_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
-if RUN_GUNICORN or (len(sys.argv) > 1 and sys.argv[1] == 'runserver'):
+if RUN_GUNICORN or (len(sys.argv) > 1 and sys.argv[1] == 'runserver'):  # noqa
     LOGIN_REDIRECT_URL = '/'
     LOGOUT_REDIRECT_URL = '/login/'
     LOGIN_URL = '/login/'
-    PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
-    STATIC_ROOT = os.path.abspath(os.path.join(PROJECT_ROOT, 'static'))
+    STATICFILES_DIRS = [os.path.abspath(os.path.join(BASE_DIR, 'patchman/static'))]  # noqa
+    STATIC_ROOT = os.path.abspath(os.path.join(BASE_DIR, 'run/static'))
     STATIC_URL = '/static/'

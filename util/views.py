@@ -56,11 +56,11 @@ def dashboard(request):
         days = 14
     last_report_delta = datetime.now() - timedelta(days=days)
     stale_hosts = hosts.filter(lastreport__lt=last_report_delta)
-    norepo_hosts = hosts.filter(repos__isnull=True, os__osgroup__repos__isnull=True)
+    norepo_hosts = hosts.filter(repos__isnull=True, os__osgroup__repos__isnull=True)  # noqa
     reboot_hosts = hosts.filter(reboot_required=True)
-    secupdate_hosts = hosts.filter(updates__security=True, updates__isnull=False).distinct()
-    bugupdate_hosts = hosts.exclude(updates__security=True, updates__isnull=False).distinct().filter(updates__security=False, updates__isnull=False).distinct()
-    diff_rdns_hosts = hosts.exclude(reversedns=F('hostname')).filter(check_dns=True)
+    secupdate_hosts = hosts.filter(updates__security=True, updates__isnull=False).distinct()  # noqa
+    bugupdate_hosts = hosts.exclude(updates__security=True, updates__isnull=False).distinct().filter(updates__security=False, updates__isnull=False).distinct()  # noqa
+    diff_rdns_hosts = hosts.exclude(reversedns=F('hostname')).filter(check_dns=True)  # noqa
 
     # os issues
     lonely_oses = oses.filter(osgroup__isnull=True)
@@ -72,19 +72,19 @@ def dashboard(request):
         norepo_osgroups = osgroups.filter(repos__isnull=True)
 
     # mirror issues
-    failed_mirrors = repos.filter(auth_required=False).filter(mirror__last_access_ok=False).filter(mirror__last_access_ok=True).distinct()
-    disabled_mirrors = repos.filter(auth_required=False).filter(mirror__enabled=False).filter(mirror__mirrorlist=False).distinct()
-    norefresh_mirrors = repos.filter(auth_required=False).filter(mirror__refresh=False).distinct()
+    failed_mirrors = repos.filter(auth_required=False).filter(mirror__last_access_ok=False).filter(mirror__last_access_ok=True).distinct()  # noqa
+    disabled_mirrors = repos.filter(auth_required=False).filter(mirror__enabled=False).filter(mirror__mirrorlist=False).distinct()  # noqa
+    norefresh_mirrors = repos.filter(auth_required=False).filter(mirror__refresh=False).distinct()  # noqa
 
     # repo issues
-    failed_repos = repos.filter(auth_required=False).filter(mirror__last_access_ok=False).exclude(id__in=[x.id for x in failed_mirrors]).distinct()
+    failed_repos = repos.filter(auth_required=False).filter(mirror__last_access_ok=False).exclude(id__in=[x.id for x in failed_mirrors]).distinct()  # noqa
     unused_repos = repos.filter(host__isnull=True, osgroup__isnull=True)
     nomirror_repos = repos.filter(mirror__isnull=True)
     nohost_repos = repos.filter(host__isnull=True)
 
     # package issues
-    norepo_packages = packages.filter(mirror__isnull=True, oldpackage__isnull=True, host__isnull=False).distinct()
-    orphaned_packages = packages.filter(mirror__isnull=True, host__isnull=True).distinct()
+    norepo_packages = packages.filter(mirror__isnull=True, oldpackage__isnull=True, host__isnull=False).distinct()  # noqa
+    orphaned_packages = packages.filter(mirror__isnull=True, host__isnull=True).distinct()  # noqa
 
     # report issues
     unprocessed_reports = Report.objects.filter(processed=False)
