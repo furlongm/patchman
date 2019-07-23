@@ -29,7 +29,7 @@ except ImportError:
 from datetime import datetime
 from hashlib import sha1, sha256
 from io import BytesIO
-from lxml import etree
+from defusedxml.lxml import _etree as etree
 from debian.debian_support import Version
 from debian.deb822 import Packages
 
