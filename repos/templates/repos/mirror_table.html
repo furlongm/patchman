@@ -27,8 +27,8 @@
         <td class="centered">{% yes_no_img mirror.last_access_ok 'Yes' 'No' %}</td>
         <td>{{ mirror.timestamp }}</td>
         <td>{{ mirror.file_checksum|truncatechars:16 }}</td>
-        <td><a class="btn btn-primary btn-xs" role="button" href="{% url 'mirror_delete' mirror.id %}">{% bootstrap_icon "trash" %} Delete this Mirror</a></td>
-        <td><a class="btn btn-primary btn-xs" role="button" href="{% url 'mirror_edit' mirror.id %}">{% bootstrap_icon "edit" %} Edit this Mirror</a></td>
+        <td><a class="btn btn-primary btn-xs" role="button" href="{% url 'repos:mirror_delete' mirror.id %}">{% bootstrap_icon "trash" %} Delete this Mirror</a></td>
+        <td><a class="btn btn-primary btn-xs" role="button" href="{% url 'repos:mirror_edit' mirror.id %}">{% bootstrap_icon "edit" %} Edit this Mirror</a></td>
       </tr>
     {% endfor %}
   </tbody>

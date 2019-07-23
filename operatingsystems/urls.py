@@ -21,8 +21,9 @@ from django.conf.urls import url
 
 from operatingsystems import views
 
-urlpatterns = [
+app_name = 'operatingsystems'
 
+urlpatterns = [
     url(r'^$', views.os_list, name='os_list'),
     url(r'^groups/$', views.osgroup_list, name='osgroup_list'),
     url(r'^(?P<os_id>[-.\w]+)/$', views.os_detail, name='os_detail'),

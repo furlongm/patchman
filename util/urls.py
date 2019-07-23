@@ -22,8 +22,9 @@ from django.views.generic import RedirectView
 
 from util import views
 
-urlpatterns = [
+app_name = 'util'
 
-    url(r'^$', RedirectView.as_view(pattern_name='dashboard', permanent=True)),
+urlpatterns = [
+    url(r'^$', RedirectView.as_view(url='util:dashboard', permanent=True)),
     url(r'^dashboard/$', views.dashboard, name='dashboard'),
 ]

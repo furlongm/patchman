@@ -21,8 +21,9 @@ from django.conf.urls import url
 
 from repos import views
 
-urlpatterns = [
+app_name = 'repos'
 
+urlpatterns = [
     url(r'^$', views.repo_list, name='repo_list'),
     url(r'^(?P<repo_id>[-.\w]+)/delete/$', views.repo_delete,
         name='repo_delete'),

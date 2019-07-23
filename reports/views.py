@@ -24,7 +24,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
 from django.http import Http404
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db import transaction
 from django.db.models import Q
 from django.conf import settings
@@ -149,9 +149,9 @@ def report_delete(request, report):
             report.delete()
             text = 'Report {0!s} has been deleted'.format(report)
             messages.info(request, text)
-            return HttpResponseRedirect(reverse('report_list'))
+            return HttpResponseRedirect(reverse('reports:report_list'))
         elif 'cancel' in request.POST:
-            return HttpResponseRedirect(reverse('report_detail',
+            return HttpResponseRedirect(reverse('reports:report_detail',
                                         args=[report.id]))
     return render(request,
                   'reports/report_delete.html',

@@ -28,7 +28,7 @@ from django.template import Library
 from django.template.loader import get_template
 from django.utils.html import format_html
 from django.contrib.staticfiles.templatetags.staticfiles import static
-from django.core.paginator import QuerySetPaginator
+from django.core.paginator import QuerySetPaginator, Paginator
 
 try:
     from urllib.parse import urlencode
@@ -85,7 +85,8 @@ def gen_table(object_list, template_name=None):
 
 @register.simple_tag
 def object_count(page):
-    if isinstance(page.paginator, QuerySetPaginator):
+    if isinstance(page.paginator, QuerySetPaginator) or \
+            isinstance(page.paginator, Paginator):
         if page.paginator.count == 1:
             name = page.paginator.object_list.model._meta.verbose_name
         else:
@@ -93,7 +94,7 @@ def object_count(page):
     return '{0!s} {1!s}'.format(page.paginator.count, name)
 
 
-@register.assignment_tag
+@register.simple_tag
 def get_querystring(request):
     get = request.GET.copy()
     if 'page' in get:

@@ -19,6 +19,7 @@ from __future__ import unicode_literals
 
 from django.utils.encoding import python_2_unicode_compatible
 from django.db import models, IntegrityError, DatabaseError, transaction
+from django.urls import reverse
 
 from hosts.models import Host
 from arch.models import MachineArchitecture
@@ -58,9 +59,8 @@ class Report(models.Model):
     def __str__(self):
         return '{0!s} {1!s}'.format(self.host, self.created)
 
-    @models.permalink
     def get_absolute_url(self):
-        return ('report_detail', [self.id])
+        return reverse('reports:report_detail', args=[str(self.id)])
 
     def parse(self, data, meta):
 

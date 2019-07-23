@@ -4,7 +4,7 @@
 
 {% block page_title %}Report - {{ report }} {% endblock %}
 
-{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'report_list' %}">Reports</a></li><li class="active">{{ report }}</li>{% endblock %}
+{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'reports:report_list' %}">Reports</a></li><li class="active">{{ report }}</li>{% endblock %}
 
 {% block content_title %} Report - {{ report }} {% endblock %}
 
@@ -39,8 +39,8 @@
         <tr><th>Has Been Processed?</th><td> {{ report.processed }} </td></tr>
       </table>
       {% if user.is_authenticated and perms.is_admin %}
-        <a class="btn btn-primary btn-sm" role="button" href="{% url 'report_delete' report.id %}">{% bootstrap_icon "trash" %} Delete this Report</a>
-        <a class="btn btn-primary btn-sm" role="button" href="{% url 'report_process' report.id %}">{% bootstrap_icon "tasks" %} Process this Report</a>
+        <a class="btn btn-primary btn-sm" role="button" href="{% url 'reports:report_delete' report.id %}">{% bootstrap_icon "trash" %} Delete this Report</a>
+        <a class="btn btn-primary btn-sm" role="button" href="{% url 'reports:report_process' report.id %}">{% bootstrap_icon "tasks" %} Process this Report</a>
       {% endif %}
     </div>
   </div>

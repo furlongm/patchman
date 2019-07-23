@@ -4,7 +4,7 @@
 
 {% block page_title %}Mirror - {{ mirror }}{% endblock %}
 
-{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'repo_list' %}">Repositories</a></li><li><a href="{% url 'mirror_list' %}">Mirrors</a></li><li class="active">{{ mirror }}</li>{% endblock %}
+{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'repos:repo_list' %}">Repositories</a></li><li><a href="{% url 'repos:mirror_list' %}">Mirrors</a></li><li class="active">{{ mirror }}</li>{% endblock %}
 
 {% block content_title %} Mirror - {{ mirror }} {% endblock %}
 

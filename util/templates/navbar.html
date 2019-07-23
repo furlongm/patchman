@@ -10,12 +10,12 @@
         </div>
         <div class="collapse navbar-collapse" id="myNavbar">
           <ul class="nav navbar-nav">
-            <li class="{% if '/dashboard' in request.path %}active{% endif %}"><a href="{% url 'dashboard' %}">Dashboard</a></li>
-            <li class="{% if '/hosts' in request.path %}active{% endif %}">    <a href="{% url 'host_list' %}">Hosts</a></li>
-            <li class="{% if '/repos' in request.path %}active{% endif %}">    <a href="{% url 'repo_list' %}">Repositories</a></li>
-            <li class="{% if '/packages' in request.path %}active{% endif %}"> <a href="{% url 'package_list' %}">Packages</a></li>
-            <li class="{% if '/os' in request.path %}active{% endif %}">       <a href="{% url 'os_list' %}">Operating Systems</a></li>
-            <li class="{% if '/reports' in request.path %}active{% endif %}">  <a href="{% url 'report_list' %}">Reports</a></li>
+            <li class="{% if '/dashboard' in request.path %}active{% endif %}"><a href="{% url 'util:dashboard' %}">Dashboard</a></li>
+            <li class="{% if '/hosts' in request.path %}active{% endif %}">    <a href="{% url 'hosts:host_list' %}">Hosts</a></li>
+            <li class="{% if '/repos' in request.path %}active{% endif %}">    <a href="{% url 'repos:repo_list' %}">Repositories</a></li>
+            <li class="{% if '/packages' in request.path %}active{% endif %}"> <a href="{% url 'packages:package_list' %}">Packages</a></li>
+            <li class="{% if '/os' in request.path %}active{% endif %}">       <a href="{% url 'operatingsystems:os_list' %}">Operating Systems</a></li>
+            <li class="{% if '/reports' in request.path %}active{% endif %}">  <a href="{% url 'reports:report_list' %}">Reports</a></li>
             {% if user.is_superuser %}
               <li><a href="{% url 'admin:index' %}">Django Admin</a></li>
             {% endif %}

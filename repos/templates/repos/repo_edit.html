@@ -12,7 +12,7 @@
 
 {% block page_title %}Repository - {{ repo }} {% endblock %}
 
-{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'repo_list' %}">Repositories</a></li><li class="active">{{ repo }}</li>{% endblock %}
+{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'repos:repo_list' %}">Repositories</a></li><li class="active">{{ repo }}</li>{% endblock %}
 
 {% block content_title %} Repository - {{ repo }} {% endblock %}
 

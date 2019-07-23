@@ -21,8 +21,9 @@ from django.conf.urls import url
 
 from hosts import views
 
-urlpatterns = [
+app_name = 'hosts'
 
+urlpatterns = [
     url(r'^$', views.host_list, name='host_list'),
     url(r'^(?P<hostname>[-.\w]+)/$', views.host_detail, name='host_detail'),
     url(r'^(?P<hostname>[-.\w]+)/delete/$', views.host_delete,

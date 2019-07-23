@@ -17,7 +17,7 @@
       {% include "navbar.html" with user=user %}
       <ul class="breadcrumb">
         {% block breadcrumbs %}
-          <li class="active"><a href="{% url 'dashboard' %}">Home</a></li>
+          <li class="active"><a href="{% url 'util:dashboard' %}">Home</a></li>
         {% endblock %}
       </ul>
       {% bootstrap_messages %}
@@ -33,6 +33,5 @@
         </div>
       </div>
     </div>
-    {% block google_analytics %}{% endblock %}
   </body>
 </html>

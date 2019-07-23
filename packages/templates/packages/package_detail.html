@@ -2,7 +2,7 @@
 
 {% block page_title %}Package - {{ package }} {% endblock %}
 
-{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'package_list' %}">Packages</a></li><li class="active">{{ package }}</li>{% endblock %}
+{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'packages:package_list' %}">Packages</a></li><li class="active">{{ package }}</li>{% endblock %}
 
 {% block content_title %} Package - {{ package }} {% endblock %}
 
@@ -25,8 +25,8 @@
           <td> {{ version.epoch }} </td>
           <td> {{ version.version }} </td><td> {{ version.release }} </td>
           <td> {{ version.arch }} </td><td> {{ version.get_packagetype_display }} </td>
-          <td> <a href="{% url 'repo_list' %}?package_id={{ version.id }}">Available from {{ version.repo_count }} Repositories</a> </td>
-          <td> <a href="{% url 'host_list' %}?package_id={{ version.id }}">Installed on {{ version.host_set.count }} Hosts</a> </td>
+          <td> <a href="{% url 'repos:repo_list' %}?package_id={{ version.id }}">Available from {{ version.repo_count }} Repositories</a> </td>
+          <td> <a href="{% url 'hosts:host_list' %}?package_id={{ version.id }}">Installed on {{ version.host_set.count }} Hosts</a> </td>
         </tr>
       {% endfor %}
     </table>

@@ -21,7 +21,7 @@ from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db.models import Q
 from django.contrib import messages
 from django.db import IntegrityError
@@ -242,9 +242,9 @@ def mirror_delete(request, mirror_id):
             mirror.delete()
             text = 'Mirror {0!s} has been deleted'.format(mirror)
             messages.info(request, text)
-            return HttpResponseRedirect(reverse('mirror_list'))
+            return HttpResponseRedirect(reverse('repos:mirror_list'))
         elif 'cancel' in request.POST:
-            return HttpResponseRedirect(reverse('mirror_detail',
+            return HttpResponseRedirect(reverse('repos:mirror_detail',
                                                 args=[mirror_id]))
 
     return render(request,
@@ -269,7 +269,7 @@ def mirror_edit(request, mirror_id):
             else:
                 mirror = get_object_or_404(Mirror, id=mirror_id)
         elif 'cancel' in request.POST:
-            return HttpResponseRedirect(reverse('mirror_detail',
+            return HttpResponseRedirect(reverse('repos:mirror_detail',
                                                 args=[mirror_id]))
     else:
         edit_form = EditMirrorForm(instance=mirror)
@@ -314,7 +314,7 @@ def repo_edit(request, repo_id):
             else:
                 repo = get_object_or_404(Repository, id=repo_id)
         elif 'cancel' in request.POST:
-            return HttpResponseRedirect(reverse('repo_detail',
+            return HttpResponseRedirect(reverse('repos:repo_detail',
                                                 args=[repo_id]))
     else:
         edit_form = EditRepoForm(instance=repo)
@@ -337,9 +337,9 @@ def repo_delete(request, repo_id):
             repo.delete()
             text = 'Repository {0!s} has been deleted'.format(repo)
             messages.info(request, text)
-            return HttpResponseRedirect(reverse('repo_list'))
+            return HttpResponseRedirect(reverse('repos:repo_list'))
         elif 'cancel' in request.POST:
-            return HttpResponseRedirect(reverse('repo_detail', args=[repo_id]))
+            return HttpResponseRedirect(reverse('repos:repo_detail', args=[repo_id]))
 
     return render(request,
                   'repos/repo_delete.html',
@@ -362,7 +362,7 @@ def repo_toggle_enabled(request, repo_id):
     else:
         text = 'Repository {0!s} has been {1!s}'.format(repo, status)
         messages.info(request, text)
-        return HttpResponseRedirect(reverse('repo_detail',
+        return HttpResponseRedirect(reverse('repos:repo_detail',
                                             args=[repo_id]))
 
 
@@ -383,7 +383,7 @@ def repo_toggle_security(request, repo_id):
         text = 'Repository {0!s} has been marked'.format(repo)
         text += ' as a {0!s} update repo'.format(sectype)
         messages.info(request, text)
-        return HttpResponseRedirect(reverse('repo_detail',
+        return HttpResponseRedirect(reverse('repos:repo_detail',
                                             args=[repo_id]))
 
 

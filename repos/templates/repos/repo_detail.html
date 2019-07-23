@@ -4,7 +4,7 @@
 
 {% block page_title %}Repository - {{ repo }} {% endblock %}
 
-{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'repo_list' %}">Repositories</a></li><li class="active">{{ repo }}</li>{% endblock %}
+{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'repos:repo_list' %}">Repositories</a></li><li class="active">{{ repo }}</li>{% endblock %}
 
 {% block content_title %}Repository - {{ repo }} {% endblock %}
 
@@ -31,17 +31,17 @@
         <tr><th>Requires Authentication</th><td> {{ repo.auth_required }} </td></tr>
       </table>
       {% if user.is_authenticated and perms.is_admin %}
-        <a class="btn btn-primary btn-sm" role="button" href="{% url 'repo_delete' repo.id %}">{% bootstrap_icon "trash" %} Delete this Repository</a>
-        <a class="btn btn-primary btn-sm" role="button" href="{% url 'repo_edit' repo.id %}">{% bootstrap_icon "edit" %} Edit this Repository</a>
+        <a class="btn btn-primary btn-sm" role="button" href="{% url 'repos:repo_delete' repo.id %}">{% bootstrap_icon "trash" %} Delete this Repository</a>
+        <a class="btn btn-primary btn-sm" role="button" href="{% url 'repos:repo_edit' repo.id %}">{% bootstrap_icon "edit" %} Edit this Repository</a>
         {% if repo.enabled %}
-          <a class="btn btn-primary btn-sm" role="button" href="{% url 'repo_toggle_enabled' repo.id %}">{% bootstrap_icon "remove-sign" %} Disable this Repository</a>
+          <a class="btn btn-primary btn-sm" role="button" href="{% url 'repos:repo_toggle_enabled' repo.id %}">{% bootstrap_icon "remove-sign" %} Disable this Repository</a>
         {% else %}
-          <a class="btn btn-primary btn-sm" role="button" href="{% url 'repo_toggle_enabled' repo.id %}">{% bootstrap_icon "ok-sign" %} Enable this Repository</a>
+          <a class="btn btn-primary btn-sm" role="button" href="{% url 'repos:repo_toggle_enabled' repo.id %}">{% bootstrap_icon "ok-sign" %} Enable this Repository</a>
         {% endif %}
         {% if repo.security %}
-          <a class="btn btn-primary btn-sm" role="button" href="{% url 'repo_toggle_security' repo.id %}">{% bootstrap_icon "star-empty" %} Mark as Non-Security repo</a>
+          <a class="btn btn-primary btn-sm" role="button" href="{% url 'repos:repo_toggle_security' repo.id %}">{% bootstrap_icon "star-empty" %} Mark as Non-Security repo</a>
         {% else %}
-          <a class="btn btn-primary btn-sm" role="button" href="{% url 'repo_toggle_security' repo.id %}">{% bootstrap_icon "star" %} Mark as Security repo</a>
+          <a class="btn btn-primary btn-sm" role="button" href="{% url 'repos:repo_toggle_security' repo.id %}">{% bootstrap_icon "star" %} Mark as Security repo</a>
         {% endif %}
       {% endif %}
     </div>

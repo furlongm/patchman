@@ -19,6 +19,7 @@ from __future__ import unicode_literals
 
 from django.utils.encoding import python_2_unicode_compatible
 from django.db import models
+from django.urls import reverse
 
 from repos.models import Repository
 
@@ -36,9 +37,8 @@ class OSGroup(models.Model):
     def __str__(self):
         return self.name
 
-    @models.permalink
     def get_absolute_url(self):
-        return ('osgroup_detail', [self.id])
+        return reverse('operatingsystems:osgroup_detail', args=[str(self.id)])
 
 
 @python_2_unicode_compatible
@@ -46,7 +46,7 @@ class OS(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
     osgroup = models.ForeignKey(OSGroup, blank=True, null=True,
-                                on_delete=models.SET_NULL)
+                                on_delete=models.CASCADE)
 
     class Meta(object):
         verbose_name = 'Operating System'
@@ -56,6 +56,5 @@ class OS(models.Model):
     def __str__(self):
         return self.name
 
-    @models.permalink
     def get_absolute_url(self):
-        return ('os_detail', [self.id])
+        return reverse('operatingsystems:os_detail', args=[str(self.id)])

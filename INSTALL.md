@@ -254,11 +254,8 @@ patchman-manage createsuperuser
 patchman-manage collectstatic
 ```
 
-N.B. To run patchman-manage when installing from source, run
+N.B. To run patchman-manage when installing from source, run `./manage.py`
 
-```shell
-PYTHONPATH=patchman sbin/patchman-manage
-```
 
 2. Restart the web server after syncing the database.
 

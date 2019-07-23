@@ -23,7 +23,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q
 from django.contrib import messages
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from rest_framework import viewsets, permissions
 
@@ -113,22 +113,22 @@ def os_delete(request, os_id):
             if os:
                 os.delete()
                 messages.info(request, 'OS {0!s} has been deleted'.format(os))
-                return HttpResponseRedirect(reverse('os_list'))
+                return HttpResponseRedirect(reverse('operatingsystems:os_list'))
             else:
                 if not oses:
                     text = 'There are no OS\'s with no Hosts'
                     messages.info(request, text)
-                    return HttpResponseRedirect(reverse('os_list'))
+                    return HttpResponseRedirect(reverse('operatingsystems:os_list'))
                 for os in oses:
                     os.delete()
                 text = '{0!s} OS\'s have been deleted'.format(len(oses))
                 messages.info(request, text)
-                return HttpResponseRedirect(reverse('os_list'))
+                return HttpResponseRedirect(reverse('operatingsystems:os_list'))
         elif 'cancel' in request.POST:
             if os_id == 'empty_oses':
-                return HttpResponseRedirect(reverse('os_list'))
+                return HttpResponseRedirect(reverse('operatingsystems:os_list'))
             else:
-                return HttpResponseRedirect(reverse('os_detail', args=[os_id]))
+                return HttpResponseRedirect(reverse('operatingsystems:os_detail', args=[os_id]))
 
     return render(request,
                   'operatingsystems/os_delete.html',
@@ -194,10 +194,10 @@ def osgroup_delete(request, osgroup_id):
             osgroup.delete()
             text = 'OS Group {0!s} has been deleted'.format(osgroup)
             messages.info(request, text)
-            return HttpResponseRedirect(reverse('os_list'))
+            return HttpResponseRedirect(reverse('operatingsystems:os_list'))
         elif 'cancel' in request.POST:
             oid = osgroup_id
-            return HttpResponseRedirect(reverse('osgroup_detail', args=[oid]))
+            return HttpResponseRedirect(reverse('operatingsystems:osgroup_detail', args=[oid]))
 
     return render(request,
                   'operatingsystems/osgroup_delete.html',

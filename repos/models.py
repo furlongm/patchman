@@ -19,6 +19,7 @@ from __future__ import unicode_literals
 
 from django.utils.encoding import python_2_unicode_compatible
 from django.db import models
+from django.urls import reverse
 
 from arch.models import MachineArchitecture
 from packages.models import Package
@@ -40,7 +41,7 @@ class Repository(models.Model):
     )
 
     name = models.CharField(max_length=255, unique=True)
-    arch = models.ForeignKey(MachineArchitecture)
+    arch = models.ForeignKey(MachineArchitecture, on_delete=models.CASCADE)
     security = models.BooleanField(default=False)
     repotype = models.CharField(max_length=1, choices=REPO_TYPES)
     enabled = models.BooleanField(default=True)
@@ -54,9 +55,8 @@ class Repository(models.Model):
     def __str__(self):
         return self.name
 
-    @models.permalink
     def get_absolute_url(self):
-        return ('repo_detail', [self.id])
+        return reverse('repos:repo_detail', args=[str(self.id)])
 
     def show(self):
         """ Show info about this repo, including mirrors
@@ -122,7 +122,7 @@ class Repository(models.Model):
 @python_2_unicode_compatible
 class Mirror(models.Model):
 
-    repo = models.ForeignKey(Repository)
+    repo = models.ForeignKey(Repository, on_delete=models.CASCADE)
     url = models.CharField(max_length=255, unique=True)
     last_access_ok = models.BooleanField(default=False)
     file_checksum = models.CharField(max_length=255, blank=True, null=True)
@@ -142,9 +142,8 @@ class Mirror(models.Model):
     def __str__(self):
         return self.url
 
-    @models.permalink
     def get_absolute_url(self):
-        return ('mirror_detail', [self.id])
+        return reverse('repos:mirror_detail', args=[str(self.id)])
 
     def show(self):
         """ Show info about this mirror
@@ -174,6 +173,6 @@ class Mirror(models.Model):
 
 
 class MirrorPackage(models.Model):
-    mirror = models.ForeignKey(Mirror)
-    package = models.ForeignKey(Package)
+    mirror = models.ForeignKey(Mirror, on_delete=models.CASCADE)
+    package = models.ForeignKey(Package, on_delete=models.CASCADE)
     enabled = models.BooleanField(default=True)
