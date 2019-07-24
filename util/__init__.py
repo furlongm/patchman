@@ -31,7 +31,6 @@ except ImportError:
         lzma = None
 from colorama import Fore, Style
 from progressbar import Bar, ETA, Percentage, ProgressBar
-from six import u as unicode
 
 from patchman.signals import error_message
 
@@ -58,7 +57,7 @@ def create_pbar(ptext, plength, **kwargs):
     """
     global pbar, verbose
     if verbose and plength > 0:
-        jtext = str.ljust(ptext.encode('utf-8'), 35)
+        jtext = str(ptext).ljust(35)
         pbar = ProgressBar(widgets=[Style.RESET_ALL + Fore.YELLOW + jtext,
                                     Percentage(), Bar(), ETA()],
                            maxval=plength).start()
