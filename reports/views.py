@@ -17,12 +17,10 @@
 
 from __future__ import unicode_literals
 
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseRedirect
-from django.http import Http404
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.urls import reverse
 from django.db import transaction
@@ -38,10 +36,7 @@ from reports.models import Report
 @csrf_exempt
 def upload(request):
 
-    response = HttpResponse()
-
     if request.method == 'POST':
-
         data = request.POST.copy()
         meta = request.META.copy()
 
@@ -67,9 +62,7 @@ def upload(request):
                            'repos': repos},
                           content_type='text/plain')
         else:
-            # Should return HTTP 204
-            response.status = 302
-            return response
+            return HttpResponse(status=204)
     else:
         raise Http404
 
@@ -149,10 +142,10 @@ def report_delete(request, report):
             report.delete()
             text = 'Report {0!s} has been deleted'.format(report)
             messages.info(request, text)
-            return HttpResponseRedirect(reverse('reports:report_list'))
+            return redirect(reverse('reports:report_list'))
         elif 'cancel' in request.POST:
-            return HttpResponseRedirect(reverse('reports:report_detail',
-                                        args=[report.id]))
+            return redirect(report.get_absolute_url())
+
     return render(request,
                   'reports/report_delete.html',
                   {'report': report}, )

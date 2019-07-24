@@ -17,8 +17,7 @@
 
 from __future__ import unicode_literals
 
-from django.shortcuts import get_object_or_404, render
-from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q
@@ -80,13 +79,13 @@ def os_detail(request, os_id):
             text = 'Created OS Group {0!s} '.format(osgroup)
             text += 'and added OS {0!s} to it'.format(os)
             messages.info(request, text)
-            return HttpResponseRedirect(os.get_absolute_url())
+            return redirect(os.get_absolute_url())
         add_form = AddOSToOSGroupForm(request.POST, instance=os, prefix='add')
         if add_form.is_valid():
             add_form.save()
             text = 'OS {0!s} added to OS Group {1!s}'.format(os, os.osgroup)
             messages.info(request, text)
-            return HttpResponseRedirect(os.get_absolute_url())
+            return redirect(os.get_absolute_url())
     else:
         add_form = AddOSToOSGroupForm(instance=os, prefix='add')
         create_form = CreateOSGroupForm(prefix='create')
@@ -113,23 +112,22 @@ def os_delete(request, os_id):
             if os:
                 os.delete()
                 messages.info(request, 'OS {0!s} has been deleted'.format(os))
-                return HttpResponseRedirect(reverse('operatingsystems:os_list'))  # noqa
+                return redirect(reverse('operatingsystems:os_list'))
             else:
                 if not oses:
                     text = 'There are no OS\'s with no Hosts'
                     messages.info(request, text)
-                    return HttpResponseRedirect(reverse('operatingsystems:os_list'))  # noqa
+                    return redirect(reverse('operatingsystems:os_list'))
                 for os in oses:
                     os.delete()
                 text = '{0!s} OS\'s have been deleted'.format(len(oses))
                 messages.info(request, text)
-                return HttpResponseRedirect(reverse('operatingsystems:os_list'))  # noqa
+                return redirect(reverse('operatingsystems:os_list'))
         elif 'cancel' in request.POST:
             if os_id == 'empty_oses':
-                return HttpResponseRedirect(reverse('operatingsystems:os_list'))  # noqa
+                return redirect(reverse('operatingsystems:os_list'))
             else:
-                return HttpResponseRedirect(reverse('operatingsystems:os_detail',  # noqa
-                                                     args=[os_id]))
+                return redirect(os.get_absolute_url())
 
     return render(request,
                   'operatingsystems/os_delete.html',
@@ -176,7 +174,7 @@ def osgroup_detail(request, osgroup_id):
         if repos_form.is_valid():
             repos_form.save()
             messages.info(request, 'Modified Repositories')
-            return HttpResponseRedirect(osgroup.get_absolute_url())
+            return redirect(osgroup.get_absolute_url())
 
     repos_form = AddReposToOSGroupForm(instance=osgroup)
 
@@ -195,11 +193,9 @@ def osgroup_delete(request, osgroup_id):
             osgroup.delete()
             text = 'OS Group {0!s} has been deleted'.format(osgroup)
             messages.info(request, text)
-            return HttpResponseRedirect(reverse('operatingsystems:os_list'))
+            return redirect(reverse('operatingsystems:os_list'))
         elif 'cancel' in request.POST:
-            oid = osgroup_id
-            return HttpResponseRedirect(reverse('operatingsystems:osgroup_detail',  # noqa
-                                                args=[oid]))
+            return redirect(osgroup.get_absolute_url())
 
     return render(request,
                   'operatingsystems/osgroup_delete.html',

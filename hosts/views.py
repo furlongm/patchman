@@ -17,8 +17,7 @@
 
 from __future__ import unicode_literals
 
-from django.shortcuts import get_object_or_404, render
-from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.urls import reverse
@@ -143,12 +142,11 @@ def host_edit(request, hostname):
                 host.save()
                 text = 'Saved changes to Host {0!s}'.format(host)
                 messages.info(request, text)
-                return HttpResponseRedirect(host.get_absolute_url())
+                return redirect(host.get_absolute_url())
             else:
                 host = get_object_or_404(Host, hostname=hostname)
         elif 'cancel' in request.POST:
-            return HttpResponseRedirect(reverse('hosts:host_detail',
-                                                args=[hostname]))
+            return redirect(host.get_absolute_url())
     else:
         edit_form = EditHostForm(instance=host)
 
@@ -169,10 +167,9 @@ def host_delete(request, hostname):
             host.delete()
             text = 'Host {0!s} has been deleted'.format(hostname)
             messages.info(request, text)
-            return HttpResponseRedirect(reverse('hosts:host_list'))
+            return redirect(reverse('hosts:host_list'))
         elif 'cancel' in request.POST:
-            return HttpResponseRedirect(reverse('hosts:host_detail',
-                                                args=[hostname]))
+            return redirect(host.get_absolute_url())
 
     reports = Report.objects.filter(host=hostname).order_by('-created')[:3]
 
