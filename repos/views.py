@@ -17,8 +17,8 @@
 
 from __future__ import unicode_literals
 
-from django.shortcuts import get_object_or_404, render
-from django.http import HttpResponseRedirect, HttpResponse
+from django.shortcuts import get_object_or_404, render, redirect
+from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.urls import reverse
@@ -195,7 +195,7 @@ def mirror_list(request):
             move_mirrors(repo)
             text = 'Mirrors linked to new Repository {0!s}'.format(repo)
             messages.info(request, text)
-            return HttpResponseRedirect(repo.get_absolute_url())
+            return redirect(repo.get_absolute_url())
 
         link_form = LinkRepoForm(request.POST, prefix='link')
         if link_form.is_valid():
@@ -203,7 +203,7 @@ def mirror_list(request):
             move_mirrors(repo)
             text = 'Mirrors linked to Repository {0!s}'.format(repo)
             messages.info(request, text)
-            return HttpResponseRedirect(repo.get_absolute_url())
+            return redirect(repo.get_absolute_url())
     else:
         if 'checksum' in request.GET and mirrors:
             arch = mirrors[0].repo.arch
@@ -242,10 +242,9 @@ def mirror_delete(request, mirror_id):
             mirror.delete()
             text = 'Mirror {0!s} has been deleted'.format(mirror)
             messages.info(request, text)
-            return HttpResponseRedirect(reverse('repos:mirror_list'))
+            return redirect(reverse('repos:mirror_list'))
         elif 'cancel' in request.POST:
-            return HttpResponseRedirect(reverse('repos:mirror_detail',
-                                                args=[mirror_id]))
+            return redirect(mirror.get_absolute_url())
 
     return render(request,
                   'repos/mirror_delete.html',
@@ -265,12 +264,11 @@ def mirror_edit(request, mirror_id):
                 mirror.save()
                 text = 'Saved changes to Mirror {0!s}'.format(mirror)
                 messages.info(request, text)
-                return HttpResponseRedirect(mirror.get_absolute_url())
+                return redirect(mirror.get_absolute_url())
             else:
                 mirror = get_object_or_404(Mirror, id=mirror_id)
         elif 'cancel' in request.POST:
-            return HttpResponseRedirect(reverse('repos:mirror_detail',
-                                                args=[mirror_id]))
+            return redirect(mirror.get_absolute_url())
     else:
         edit_form = EditMirrorForm(instance=mirror)
 
@@ -310,12 +308,11 @@ def repo_edit(request, repo_id):
                     repo.disable()
                 text = 'Saved changes to Repository {0!s}'.format(repo)
                 messages.info(request, text)
-                return HttpResponseRedirect(repo.get_absolute_url())
+                return redirect(repo.get_absolute_url())
             else:
                 repo = get_object_or_404(Repository, id=repo_id)
         elif 'cancel' in request.POST:
-            return HttpResponseRedirect(reverse('repos:repo_detail',
-                                                args=[repo_id]))
+            return redirect(repo.get_absolute_url())
     else:
         edit_form = EditRepoForm(instance=repo)
         edit_form.initial['mirrors'] = repo.mirror_set.all()
@@ -337,10 +334,9 @@ def repo_delete(request, repo_id):
             repo.delete()
             text = 'Repository {0!s} has been deleted'.format(repo)
             messages.info(request, text)
-            return HttpResponseRedirect(reverse('repos:repo_list'))
+            return redirect(reverse('repos:repo_list'))
         elif 'cancel' in request.POST:
-            return HttpResponseRedirect(reverse('repos:repo_detail',
-                                                args=[repo_id]))
+            return redirect(repo.get_absolute_url())
 
     return render(request,
                   'repos/repo_delete.html',
@@ -363,8 +359,7 @@ def repo_toggle_enabled(request, repo_id):
     else:
         text = 'Repository {0!s} has been {1!s}'.format(repo, status)
         messages.info(request, text)
-        return HttpResponseRedirect(reverse('repos:repo_detail',
-                                            args=[repo_id]))
+        return redirect(repo.get_absolute_url())
 
 
 @login_required
@@ -384,8 +379,7 @@ def repo_toggle_security(request, repo_id):
         text = 'Repository {0!s} has been marked'.format(repo)
         text += ' as a {0!s} update repo'.format(sectype)
         messages.info(request, text)
-        return HttpResponseRedirect(reverse('repos:repo_detail',
-                                            args=[repo_id]))
+        return redirect(repo.get_absolute_url())
 
 
 class RepositoryViewSet(viewsets.ModelViewSet):
