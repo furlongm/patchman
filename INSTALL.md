@@ -316,7 +316,6 @@ Install Celery for realtime processing of reports from clients:
 
 ```shell
 apt -y install python-celery python-celery-common rabbitmq-server
-patchman-manage migrate
 C_FORCE_ROOT=1 celery worker --loglevel=info -E -A patchman
 ```
 
