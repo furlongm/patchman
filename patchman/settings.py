@@ -103,6 +103,7 @@ except ImportError:
     USE_ASYNC_PROCESSING = False
 else:
     THIRD_PARTY_APPS += ['celery']
+    CELERY_IMPORTS = ['reports.tasks']
     USE_ASYNC_PROCESSING = True
     BROKER_HOST = 'localhost'
     BROKER_PORT = 5672
