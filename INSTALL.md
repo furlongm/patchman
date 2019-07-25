@@ -6,7 +6,7 @@ mysql or postgresql instead, see the database configuration section.
 
 ## Supported Install Options
   - [Ubuntu 18.04](#ubuntu-1804-bionic)
-  - [Debian 9](#debian-9-stretch)
+  - [Debian 10](#debian-10-buster)
   - [CentOS 7](#centos-7)
   - [virtualenv + pip](#virtualenv--pip)
   - [Source](#source)
@@ -22,7 +22,7 @@ apt -y install python-patchman patchman-client
 patchman-manage createsuperuser
 ```
 
-### Debian 9 (stretch)
+### Debian 10 (buster)
 
 ```shell
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0412F522
