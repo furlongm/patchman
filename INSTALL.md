@@ -125,19 +125,13 @@ production deployments. MySQL or PostgreSQL are better choices.
 
 To configure the sqlite database backend:
 
-1. Ensure the python sqlite3 bindings are installed:
-
-```shell
-apt -y install python-pysqlite2
-```
-
-2. Create the database directory specified in the settings file:
+1. Create the database directory specified in the settings file:
 
 ```shell
 mkdir -p /var/lib/patchman/db
 ```
 
-3. Modify `/etc/patchman/local_settings.py` as follows:
+2. Modify `/etc/patchman/local_settings.py` as follows:
 
 ```
 DATABASES = {
@@ -148,7 +142,7 @@ DATABASES = {
 }
 ```
 
-4. Proceed to syncing database.
+3. Proceed to syncing database.
 
 
 ### MySQL

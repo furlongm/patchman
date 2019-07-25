@@ -14,13 +14,11 @@ Package: python-patchman
 Architecture: all
 Homepage: https://github.com/furlongm/patchman
 Depends: ${misc:Depends}, python (>= 2.7), python-django (>= 1.11.0),
- python-django-tagging (>= 0.3.1), python-debian (>= 0.1.21),
- python-rpm (>= 4.10.0), python-progressbar (>= 2.2), python-defusedxml (>=0.5.0),
- libapache2-mod-wsgi (>=3.3), python-django-extensions (>=1.3.10),
- python-colorama (>=0.3.2), python-requests (>=2.4.3), apache2, python-pip,
- python-djangorestframework (>=2.4.3), python-pymysql (>=0.7.2),
- python-humanize (>=0.5), memcached, python-django-bootstrap3, python-lzma,
- python-magic, python-memcache
+ python-django-tagging, python-debian, python-rpm, python-progressbar,
+ python-defusedxml, python-django-extensions, python-colorama, python-requests,
+ python-humanize, python-django-bootstrap3, python-lzma, python-humanize,
+ python-magic, python-memcache, python-pip, python-lxml
+ python-djangorestframework, memcached, libapache2-mod-wsgi, apache2
 Suggests: python-django-celery
 Description: Django-based patch status monitoring tool for linux systems.
  .
