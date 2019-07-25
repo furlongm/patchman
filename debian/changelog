@@ -1,3 +1,22 @@
+patchman (1.2.0-1) stable; urgency=medium
+
+  [ Marcus Furlong ]
+  * djangorestframework / python2 support
+  * django-extensions / python2 fixes
+  * update logic to determine security repos
+  * convert to modern django layout
+  * celery 4 updates
+  * update supported installation targets
+  * convert to using app_config
+  * django2 compatibility
+  * used defusedxml instead of lxml
+  * remove settings modules from all files
+  * simplify yum xml parsing
+  * be consistent with httpresponse and redirect usage
+  * fix justification in progress bar
+
+ -- Marcus Furlong <furlongm@gmail.com>  Thu, 25 Jul 2019 04:50:32 +0000
+
 patchman (1.0.22-1) stable; urgency=medium
 
   * additional fix for unicode literal breakage
