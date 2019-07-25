@@ -394,6 +394,12 @@ function post_data {
     fi
 
     result=$(eval ${post_command})
+    retval=${?}
+
+    if [ ! ${retval} -eq 0 ] ; then
+        echo 'Failed to upload report.'
+        exit ${retval}
+    fi
 
     if [ ${report} == 1 ] ; then
         if [ ! -z "${result}" ] ; then
