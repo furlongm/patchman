@@ -9,7 +9,7 @@ tags=''
 
 function usage {
 
-    echo "$0 [-v] [-d] [-n] [-r] [-s SERVER] [-c FILE]"
+    echo "${0} [-v] [-d] [-n] [-r] [-s SERVER] [-c FILE]"
     echo "-v: verbose output (default is silent)"
     echo "-d: debug output"
     echo "-n: no repo check (required when used as an apt or yum plugin)"
@@ -24,7 +24,7 @@ function usage {
 function parseopts {
 
     while getopts "dvns:r" opt; do
-        case $opt in
+        case ${opt} in
         v)
             verbose=1
             ;;
@@ -39,10 +39,10 @@ function parseopts {
             cli_report=1
             ;;
         s)
-            cli_server=$OPTARG
+            cli_server=${OPTARG}
             ;;
         c)
-            cli_conf=$OPTARG
+            cli_conf=${OPTARG}
             ;;
         *)
             usage
@@ -188,23 +188,32 @@ function get_host_data {
     host_kernel=$(uname -r | sed -e 's/\+/%2b/g')
     host_arch=$(uname -m)
 
-    os="unknown"
+    os='unknown'
 
     if [ -f /etc/os-release ] ; then
         . /etc/os-release
         if [ "${ID}" == "debian" ] ; then
-            release=$(cat /etc/debian_version)
+            os="Debian $(cat /etc/debian_version)"
+        elif [ "${ID}" == "ubuntu" ] ; then
+            os="${PRETTY_NAME}"
+        elif [ "${ID}" == "centos" ] ; then
+            os="$(cat /etc/centos-release)"
+        elif [ "${ID}" == "rhel" ] ; then
+            os="$(cat /etc/redhat-release)"
+        elif [ "${ID}" == "fedora" ] ; then
+            os="${PRETTY_NAME}"
+        elif [[ "${ID}" =~ "suse" ]] ; then
+            os="${PRETTY_NAME}"
         else
-            release=${VERSION_ID}
-        fi
-        os="${ID^} ${release}"
+            os="${NAME} ${VERSION}"
+	fi
     else
-        releases="/etc/SuSE-release /etc/lsb-release /etc/debian_version /etc/fermi-release /etc/redhat-release /etc/fedora-release"
+        releases="/etc/SuSE-release /etc/lsb-release /etc/debian_version /etc/fermi-release /etc/redhat-release /etc/fedora-release /etc/centos-release"
         for i in ${releases} ; do
-            if [ -f $i ] ; then
+            if [ -f ${i} ] ; then
                 case "${i}" in
-                /etc/os-release)
-                    os=$(grep PRETTY_NAME ${i} | sed -e 's/PRETTY_NAME="\(.*\)"/\1/')
+                /etc/SuSE-release)
+                    os=$(grep -i suse ${i})
                     break
                     ;;
                 /etc/lsb-release)
@@ -223,12 +232,8 @@ function get_host_data {
                     os="Debian $(cat ${i})"
                     break
                     ;;
-                /etc/fermi-release|/etc/redhat-release|/etc/fedora-release)
+                /etc/fermi-release|/etc/redhat-release|/etc/fedora-release|/etc/centos-release)
                     os=$(cat ${i})
-                    break
-                    ;;
-                /etc/SuSE-release)
-                    os=$(grep -i suse ${i})
                     break
                     ;;
                 esac
@@ -302,7 +307,7 @@ function get_repos {
         if [ ${verbose} == 1 ] ; then
             echo 'Finding apt repos...'
         fi
-        IFS=$OLDIFS read -r osname shortversion <<<$(echo "${os}" | awk '{print $1,$2}' | cut -d . -f 1,2)
+        IFS=${OLDIFS} read -r osname shortversion <<<$(echo "${os}" | awk '{print $1,$2}' | cut -d . -f 1,2)
         repo_string="'deb\' \'${osname} ${shortversion} ${host_arch} repo at"
         repos=$(apt-cache policy | grep -E "[0-9]{1,5} http(s)?:" | grep -v Translation | sed -e "s/^ *//g" -e "s/ *$//g" | cut -d " " -f 1,2,3,4)
         dist_repos=$(echo "${repos}" | grep -v -e "Packages$")
@@ -317,12 +322,12 @@ function get_repos {
             echo 'Finding zypper repos...'
         fi
         enabled_repos=$(zypper --no-refresh lr | tail -n +5 | cut -d "|" -f 1,4 | grep "Yes" | cut -d "|" -f 1 | sed -e "s/ //")
-        for i in $enabled_repos ; do
+        for i in ${enabled_repos} ; do
             enabled[i]="true"
         done
         let r=0
         for i in $(zypper --no-refresh lr -u --details | tail -n +5 | cut -d "|" -f 2,3,7,9 | sed -e "s/ *|/ ${host_arch} |/" -e "s/^ /'/g" -e "s/ *| */' '/g" -e "s/ *$/'/g") ; do
-            let r=$r+1
+            let r=${r}+1
             if [ "${enabled[${r}]}" == "true" ] ; then
                 echo \'rpm\' ${i} >> "${tmpfile_rep}"
             fi
