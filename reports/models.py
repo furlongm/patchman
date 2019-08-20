@@ -76,7 +76,7 @@ class Report(models.Model):
                  'tags', 'sec_updates', 'bug_updates', 'repos', 'reboot']
 
         for attr in attrs:
-            setattr(self, attr, data.get(attr))
+            setattr(self, attr, data.get(attr).strip())
 
         if self.host is not None:
             self.host = self.host.lower()
