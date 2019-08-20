@@ -46,7 +46,7 @@ class OS(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
     osgroup = models.ForeignKey(OSGroup, blank=True, null=True,
-                                on_delete=models.CASCADE)
+                                on_delete=models.SET_NULL)
 
     class Meta(object):
         verbose_name = 'Operating System'
