@@ -27,7 +27,7 @@
               {% else %}
                 Welcome, {{ user }}
               {% endif %}
-              / <a href="{% url 'logout' %}?next=/">Log out</a>
+              / <a href="{% url 'logout' %}">Log out</a>
             {% else %}
               Welcome, Guest
               / <a href="{% url 'login' %}">Log In</a>
