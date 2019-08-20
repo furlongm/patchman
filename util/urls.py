@@ -25,6 +25,6 @@ from util import views
 app_name = 'util'
 
 urlpatterns = [
-    url(r'^$', RedirectView.as_view(url='util:dashboard', permanent=True)),
+    url(r'^$', RedirectView.as_view(pattern_name='util:dashboard', permanent=True)),
     url(r'^dashboard/$', views.dashboard, name='dashboard'),
 ]
