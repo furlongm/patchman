@@ -325,6 +325,7 @@ Memcached can optionally be run to reduce the load on the server.
 ```shell
 apt -y install memcached python-memcache   # (debian/ubuntu)
 yum -y install memcached python-memcached  # (centos/rhel)
+systemctl restart memcached
 ```
 
 and add the following to `/etc/patchman/local_settings.py`
