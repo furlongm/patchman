@@ -308,11 +308,21 @@ patchman-client
 
 Install Celery for realtime processing of reports from clients:
 
+#### Ubuntu / Debian
+
 ```shell
-apt -y install python-celery python-celery-common rabbitmq-server  # (debian/ubuntu)
-yum -y install python-celery rabbitmq-server                       # (centos/rhel)
-systemctl restart rabbitmq-server
+apt -y install python-celery python-celery-common rabbitmq-server
 C_FORCE_ROOT=1 celery worker --loglevel=info -E -A patchman
+```
+
+#### CentOS / RHEL
+
+```shell
+yum -y install python-celery rabbitmq-server
+systemctl restart rabbitmq-server
+semanage port -a -t http_port_t -p tcp 5672
+C_FORCE_ROOT=1 celery worker --loglevel=info -E -A patchman
+
 ```
 
 Add the last command to an initscript (e.g. /etc/rc.local) to make celery
