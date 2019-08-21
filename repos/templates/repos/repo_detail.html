@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% load common bootstrap3 %}
+
+{% block page_title %}Repository - {{ repo }} {% endblock %}
+
+{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'repos:repo_list' %}">Repositories</a></li><li class="active">{{ repo }}</li>{% endblock %}
+
+{% block content_title %}Repository - {{ repo }} {% endblock %}
+
+{% block content %}
+
+<ul class="nav nav-tabs">
+  <li class="active"><a data-toggle="tab" href="#repo_details">Details</a></li>
+  <li><a data-toggle="tab" href="#repo_mirrors">Mirrors</a></li>
+  <li><a data-toggle="tab" href="#repo_hosts">Hosts with this Repository</a></li>
+  <li><a data-toggle="tab" href="#repo_osgroups">OS Groups with this Repository</a></li>
+</ul>
+
+<div class="tab-content">
+  <div class="tab-pane fade in active" id="repo_details">
+    <div class="well well-sm">
+      <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+        <tr><th>Name</th><td> {{ repo.name }} </td></tr>
+        <tr><th>ID</th><td> {% if repo.id != None %} {{ repo.id }} {% endif %}</td></tr>
+        <tr><th>Type</th><td> {{ repo.get_repotype_display }} </td></tr>
+        <tr><th>Architecture</th><td> {{ repo.arch }} </td></tr>
+        <tr><th>Security</th><td> {% yes_no_img repo.security 'Security' 'Not Security' %} </td></tr>
+        <tr><th>Enabled</th><td> {% yes_no_img repo.enabled 'Enabled' 'Not Enabled' %} </td></tr>
+        <tr><th>Mirrors</th><td> {{ repo.mirror_set.count }} </td></tr>
+        <tr><th>Requires Authentication</th><td> {{ repo.auth_required }} </td></tr>
+      </table>
+      {% if user.is_authenticated and perms.is_admin %}
+        <a class="btn btn-primary btn-sm" role="button" href="{% url 'repos:repo_delete' repo.id %}">{% bootstrap_icon "trash" %} Delete this Repository</a>
+        <a class="btn btn-primary btn-sm" role="button" href="{% url 'repos:repo_edit' repo.id %}">{% bootstrap_icon "edit" %} Edit this Repository</a>
+        {% if repo.enabled %}
+          <a class="btn btn-primary btn-sm" role="button" href="{% url 'repos:repo_toggle_enabled' repo.id %}">{% bootstrap_icon "remove-sign" %} Disable this Repository</a>
+        {% else %}
+          <a class="btn btn-primary btn-sm" role="button" href="{% url 'repos:repo_toggle_enabled' repo.id %}">{% bootstrap_icon "ok-sign" %} Enable this Repository</a>
+        {% endif %}
+        {% if repo.security %}
+          <a class="btn btn-primary btn-sm" role="button" href="{% url 'repos:repo_toggle_security' repo.id %}">{% bootstrap_icon "star-empty" %} Mark as Non-Security repo</a>
+        {% else %}
+          <a class="btn btn-primary btn-sm" role="button" href="{% url 'repos:repo_toggle_security' repo.id %}">{% bootstrap_icon "star" %} Mark as Security repo</a>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="tab-pane fade in" id="repo_mirrors">
+    <div class="well well-sm">
+      {% gen_table repo.mirror_set.all %}
+    </div>
+  </div>
+
+  <div class="tab-pane fade in" id="repo_hosts">
+    <div class="well well-sm">
+      {% gen_table repo.host_set.all.distinct %}
+    </div>
+  </div>
+
+  <div class="tab-pane fade in" id="repo_osgroups">
+    <div class="well well-sm">
+      {% gen_table repo.osgroup_set.all.distinct %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}

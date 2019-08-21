@@ -1,0 +1,38 @@
+    <nav class="navbar navbar-inverse">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="https://github.com/furlongm/patchman">Patchman</a>
+        </div>
+        <div class="collapse navbar-collapse" id="myNavbar">
+          <ul class="nav navbar-nav">
+            <li class="{% if '/dashboard' in request.path %}active{% endif %}"><a href="{% url 'util:dashboard' %}">Dashboard</a></li>
+            <li class="{% if '/hosts' in request.path %}active{% endif %}">    <a href="{% url 'hosts:host_list' %}">Hosts</a></li>
+            <li class="{% if '/repos' in request.path %}active{% endif %}">    <a href="{% url 'repos:repo_list' %}">Repositories</a></li>
+            <li class="{% if '/packages' in request.path %}active{% endif %}"> <a href="{% url 'packages:package_list' %}">Packages</a></li>
+            <li class="{% if '/os' in request.path %}active{% endif %}">       <a href="{% url 'operatingsystems:os_list' %}">Operating Systems</a></li>
+            <li class="{% if '/reports' in request.path %}active{% endif %}">  <a href="{% url 'reports:report_list' %}">Reports</a></li>
+            {% if user.is_superuser %}
+              <li><a href="{% url 'admin:index' %}">Django Admin</a></li>
+            {% endif %}
+          </ul>
+          <div class="pull-right navbar-text">
+            {% if user.is_authenticated %}
+              {% if user.first_name %}
+                Welcome, {{ user.first_name }}
+              {% else %}
+                Welcome, {{ user }}
+              {% endif %}
+              / <a href="{% url 'logout' %}">Log out</a>
+            {% else %}
+              Welcome, Guest
+              / <a href="{% url 'login' %}">Log In</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </nav>

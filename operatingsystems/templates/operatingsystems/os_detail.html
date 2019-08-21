@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% load common bootstrap3 %}
+
+{% block page_title %}Operating System - {{ os }} {% endblock %}
+
+{% block content_title %} Operating System - {{ os }} {% endblock %}
+
+{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'operatingsystems:os_list' %}">Operating Systems</a></li><li class="active">{{ os }}</li>{% endblock %}
+
+{% block content %}
+
+<ul class="nav nav-tabs">
+  <li class="active"><a data-toggle="tab" href="#os_details">Details</a></li>
+  <li><a data-toggle="tab" href="#os_hosts">Hosts where this OS is installed</a></li>
+  <li><a data-toggle="tab" href="#os_osgroups">OS Group membership</a></li>
+</ul>
+
+<div class="tab-content">
+
+  <div class="tab-pane fade in active" id="os_details">
+    <div class="well well-sm">
+      <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+        <tr><th>Name</th><td> {{ os.name }} </td></tr>
+        <tr><th>Hosts</th><td>{% if os.host_set.count != None %} {{ os.host_set.count }} {% else %} 0 {% endif %}</td>
+        <tr><th>OS Group</th><td>{% if os.osgroup != None %}<a href="{{ os.osgroup.get_absolute_url }}"> {{ os.osgroup }} </a>{% else %}No OS Group{% endif %}</td></tr>
+      </table>
+      {% if user.is_authenticated and perms.is_admin %}
+        <a class="btn btn-primary btn-sm" role="button" href="{% url 'operatingsystems:os_delete' os.id %}">{% bootstrap_icon "trash" %} Delete this Operating System</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="tab-pane fade in" id="os_hosts">
+    <div class="well well-sm">
+      {% gen_table os.host_set.all %}
+    </div>
+  </div>
+
+  <div class="tab-pane fade in" id="os_osgroups">
+    <div class="well well-sm">
+      {% if user.is_authenticated and perms.is_admin %}
+        <div class="well well-sm">
+          <form action={{ request.path }} method="post">
+            {% csrf_token %}
+            {% bootstrap_form add_form size='small' %}
+            <button name="add" type="submit" class="btn btn-primary btn-sm">{% bootstrap_icon "link" %} Add this Operating System to an existing OS Group</button>
+          </form>
+        </div>
+        <div class="well well-sm">
+          <form action={{ request.path }} method="post">
+            {% csrf_token %}
+            {% bootstrap_form create_form size='small' %}
+            <button name="create" type="submit" class="btn btn-primary btn-sm">{% bootstrap_icon "flash" %} Create a new OS Group and add this Operating System to it</button>
+          </form>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

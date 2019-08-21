@@ -45,5 +45,6 @@ class MyPlugin(Plugin):
         logging.debug("headers: {0!s}".format(headers))
         self.ack()
 
+
 plugin = MyPlugin()
 plugin.main()
