@@ -54,8 +54,8 @@ patchman-manage createsuperuser
 TBD - not working yet
 
 ```shell
-# apt -y install gcc libxml2-dev libxslt1-dev virtualenv python-dev zlib1g-dev # (debian/ubuntu)
-# yum -y install gcc libxml2-devel libxslt-devel python-virtualenv             # (centos/rhel)
+apt -y install gcc libxml2-dev libxslt1-dev virtualenv python-dev zlib1g-dev  # (debian/ubuntu)
+yum -y install gcc libxml2-devel libxslt-devel python-virtualenv              # (centos/rhel)
 mkdir /srv/patchman
 cd /srv/patchman
 virtualenv .
@@ -309,7 +309,9 @@ patchman-client
 Install Celery for realtime processing of reports from clients:
 
 ```shell
-apt -y install python-celery python-celery-common rabbitmq-server
+apt -y install python-celery python-celery-common rabbitmq-server  # (debian/ubuntu)
+yum -y install python-celery rabbitmq-server                       # (centos/rhel)
+systemctl restart rabbitmq-server
 C_FORCE_ROOT=1 celery worker --loglevel=info -E -A patchman
 ```
 
@@ -321,7 +323,8 @@ persistent over reboot.
 Memcached can optionally be run to reduce the load on the server.
 
 ```shell
-apt -y install memcached python-memcache
+apt -y install memcached python-memcache   # (debian/ubuntu)
+yum -y install memcached python-memcached  # (centos/rhel)
 ```
 
 and add the following to `/etc/patchman/local_settings.py`
