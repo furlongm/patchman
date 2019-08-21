@@ -45,7 +45,7 @@ from patchman.signals import \
     progress_info_s, progress_update_s
 
 
-def get_host(host=None, action='Performing action'):
+def get_host(host=None, action='Performing action', quiet=False):
     """ Helper function to get a single host object
     """
     host_obj = None
@@ -63,27 +63,29 @@ def get_host(host=None, action='Performing action'):
         matches = Host.objects.filter(hostname__startswith=host).count()
         text = '{0!s} Hosts match hostname "{1!s}"'.format(matches, host)
 
-    info_message.send(sender=None, text=text)
+    if not quiet:
+        info_message.send(sender=None, text=text)
     return host_obj
 
 
-def get_hosts(hosts=None, action='Performing action'):
+def get_hosts(hosts=None, action='Performing action', quiet=False):
     """ Helper function to get a list of hosts
     """
     host_objs = []
     if hosts:
         if isinstance(hosts, str):
-            host_obj = get_host(hosts, action)
+            host_obj = get_host(hosts, action, quiet)
             if host_obj is not None:
                 host_objs.append(host_obj)
         elif isinstance(hosts, list):
             for host in hosts:
-                host_obj = get_host(host, action)
+                host_obj = get_host(host, action, quiet)
                 if host_obj is not None:
                     host_objs.append(host_obj)
     else:
         text = '{0!s} for all Hosts\n'.format(action)
-        info_message.send(sender=None, text=text)
+        if not quiet:
+            info_message.send(sender=None, text=text)
         host_objs = Host.objects.all()
 
     return host_objs
@@ -131,13 +133,24 @@ def list_repos(repos=None):
         repo.show()
 
 
-def list_hosts(hosts=None):
+def list_hosts(hosts=None, csv=False):
     """ Print info about a list of hosts
         Defaults to all hosts
     """
-    matching_hosts = get_hosts(hosts, 'Printing information')
+    if csv:
+        matching_hosts = get_hosts(hosts, 'Printing information', True)
+        text = 'Hostname,IP Address,Reverse DNS,Domain,OS,Kernel,Architecture'
+        text += ',Last report,Packages,Repos,Updates,Security Updates,Bugfix Updates'
+        text += ',Tags,Needs reboot,Updated at,Host repos'
+        info_message.send(sender=None, text=text)
+    else:
+        matching_hosts = get_hosts(hosts, 'Printing information', False)
+
     for host in matching_hosts:
-        host.show()
+        if csv:
+            host.show_csv()
+        else:
+            host.show()
 
 
 def clean_packages():
@@ -492,6 +505,9 @@ def collect_args():
         '-lh', '--list-hosts', action='store_true',
         help='List all Hosts')
     parser.add_argument(
+        '-lhc', '--list-hosts-csv', action='store_true',
+        help='List all Hosts in CSV format')
+    parser.add_argument(
         '-u', '--host-updates', action='store_true',
         help='Find Host updates')
     parser.add_argument(
@@ -546,6 +562,9 @@ def process_args(args):
         return False
     if args.list_hosts:
         list_hosts(args.host)
+        return False
+    if args.list_hosts_csv:
+        list_hosts(args.host, True)
         return False
     if args.diff:
         diff_hosts(args.diff)
