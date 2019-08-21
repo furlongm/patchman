@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="author" content="{% block author %}Marcus Furlong{% endblock %}">
+    {% load bootstrap3 %}
+    {% bootstrap_css %}
+    {% bootstrap_javascript jquery=1 %}
+    {% load staticfiles %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/base.css' %}" />
+    <title>{% block page_title %}{% endblock %}</title>
+    <script type="text/javascript" src="{% static 'js/ajax-jquery.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/button-post.js' %}"></script>
+    {% block extrahead %}{% endblock %}
+  </head>
+  <body>
+    <div>
+      {% include "navbar.html" with user=user %}
+      <ul class="breadcrumb">
+        {% block breadcrumbs %}
+          <li class="active"><a href="{% url 'util:dashboard' %}">Home</a></li>
+        {% endblock %}
+      </ul>
+      {% bootstrap_messages %}
+      <div class="well well-sm">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <strong>{% block content_title %}{% endblock %}</strong>
+          </div>
+          <div class="panel-body">
+            {% block content %}{{ content }}{% endblock %}
+          </div>
+          {% block footer %}{% endblock %}
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

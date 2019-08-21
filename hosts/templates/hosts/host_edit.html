@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% load common bootstrap3 %}
+
+{% block extrahead %} {{ edit_form.media }} {% endblock %}
+
+{% block page_title %}Host - {{ host }} {% endblock %}
+
+{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'hosts:host_list' %}">Hosts</a></li><li class="active">{{ host }}</li>{% endblock %}
+
+{% block content_title %} Host - {{ host }} {% endblock %}
+
+{% block content %}
+
+<div class="well well-sm">
+  {% if user.is_authenticated and perms.is_admin %}
+    <form action={{ request.path }} method="post">
+      {% csrf_token %}
+      {% bootstrap_form edit_form size='small' %}
+      <button name="save" type="submit" class="btn btn-primary btn-sm">{% bootstrap_icon "floppy-disk" %} Save</button>
+      <button name="cancel" type="submit" class="btn btn-primary btn-sm">{% bootstrap_icon "stop" %} Cancel</button>
+    </form>
+  {% else %}
+    You do not have permission to edit this Host.
+  {% endif %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "objectlist.html" %}
+
+{% load common bootstrap3 %}
+
+{% block page_title %}Operating Systems{% endblock %}
+
+{% block content_title %} Operating Systems {% endblock %}
+
+{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'operatingsystems:os_list' %}">Operating Systems</a></li> {% endblock %}
+
+{% block objectlist_actions %}
+
+{% if user.is_authenticated and perms.is_admin and empty_oses %}
+  <div class="well well-sm">
+    <a class="btn btn-primary btn-sm" role="button" href="empty_oses/delete/">{% bootstrap_icon "trash" %} Delete OS's with no Hosts</a>
+  </div>
+{% endif %}
+
+{% endblock %}

@@ -19,7 +19,7 @@ if [ "$1" = "configure" ] ; then
     patchman-manage collectstatic --noinput
 
     patchman-manage makemigrations
-    patchman-manage migrate
+    patchman-manage migrate --run-syncdb
 
     chown -R www-data:www-data /var/lib/patchman
 

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% load common bootstrap3 staticfiles %}
+
+{% block extrahead %}
+<script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/jquery.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/jquery.init.js' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/actions.js' %}"></script>
+{{ edit_form.media }}
+{% endblock %}
+
+{% block page_title %}Repository - {{ repo }} {% endblock %}
+
+{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'repos:repo_list' %}">Repositories</a></li><li class="active">{{ repo }}</li>{% endblock %}
+
+{% block content_title %} Repository - {{ repo }} {% endblock %}
+
+{% block content %}
+
+<div class="well well-sm">
+  {% if user.is_authenticated and perms.is_admin %}
+    <form action={{ request.path }} method="post">
+      {% csrf_token %}
+      {% bootstrap_form edit_form size='small' %}
+      <button name="save" type="submit" class="btn btn-primary btn-sm">{% bootstrap_icon "floppy-disk" %} Save</button>
+      <button name="cancel" type="submit" class="btn btn-primary btn-sm">{% bootstrap_icon "stop" %} Cancel</button>
+    </form>
+  {% else %}
+    You do not have permission to edit this Repository.
+  {% endif %}
+</div>
+
+{% endblock %}
