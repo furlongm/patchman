@@ -121,7 +121,7 @@ be configured:
 The default database backend is sqlite. However, this is not recommended for
 production deployments. MySQL or PostgreSQL are better choices.
 
-### sqlite
+### SQLite
 
 To configure the sqlite database backend:
 
@@ -284,11 +284,11 @@ chmod -R g+w /var/lib/patchman/db
 
 The django interface should be available at http://127.0.0.1/patchman/
 
-### Optional Configuration Items
+## Optional Configuration Items
 
-#### Cronjobs
+### Cronjobs
 
-##### Daily cronjob on patchman server
+#### Daily cronjob on patchman server
 
 A daily cronjob on the patchman server should be run to process reports,
 perform database maintenance, check for upstream updates, and find updates for
@@ -298,13 +298,13 @@ clients.
 patchman -a
 ```
 
-##### Daily cronjob on client to send reports to patchman server
+#### Daily cronjob on client to send reports to patchman server
 
 ```
 patchman-client
 ```
 
-#### Celery
+### Celery
 
 Install Celery for realtime processing of reports from clients:
 
@@ -316,7 +316,7 @@ C_FORCE_ROOT=1 celery worker --loglevel=info -E -A patchman
 Add the last command to an initscript (e.g. /etc/rc.local) to make celery
 persistent over reboot.
 
-#### Memcached
+### Memcached
 
 Memcached can optionally be run to reduce the load on the server.
 
@@ -335,7 +335,7 @@ CACHES = {
 }
 ```
 
-#### Test Installation
+# Test Installation
 
 To test the installation, run the client locally on the patchman server:
 
