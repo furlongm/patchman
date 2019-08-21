@@ -45,8 +45,8 @@ EOF
 yum install -y epel-release
 yum makecache
 yum install -y patchman patchman-client
-patchman-manage createsuperuser
 systemctl restart httpd
+patchman-manage createsuperuser
 ```
 
 ### virtualenv + pip
