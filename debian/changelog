@@ -1,3 +1,22 @@
+patchman (1.2.1-1) stable; urgency=medium
+
+  [ Marcus Furlong ]
+  * add failure output to client
+  * fix broken redirectview
+  * remove unneeded redirect to /
+  * set osgroup to null on delete
+  * strip surrounding whitespace from report elements
+  * allow httpd access to rabbit and memcache
+  * bump django version for rpm
+  * update installation docs
+  * update package installation instructions
+  * separate celery installation instructions
+  * update TODO
+  * update build instructions
+  * bump requirements for security fixes
+
+ -- Marcus Furlong <furlongm@gmail.com>  Thu, 22 Aug 2019 03:52:42 +0000
+
 patchman (1.2.0-1) stable; urgency=medium
 
   [ Marcus Furlong ]
