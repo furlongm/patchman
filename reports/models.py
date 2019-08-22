@@ -69,7 +69,7 @@ class Report(models.Model):
         if x_forwarded_for:
             self.report_ip = x_forwarded_for.split(',')[0]
         elif x_real_ip:
-            self.report_ip = meta['HTTP_X_REAL_IP']
+            self.report_ip = x_real_ip
         else:
             self.report_ip = meta['REMOTE_ADDR']
         self.useragent = meta['HTTP_USER_AGENT']
