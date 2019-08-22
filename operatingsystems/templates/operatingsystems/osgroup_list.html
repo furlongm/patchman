@@ -1,0 +1,7 @@
+{% extends "objectlist.html" %}
+
+{% block page_title %}OS Groups{% endblock %}
+
+{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'operatingsystems:os_list' %}">Operating Systems</a></li><li class="active"><a href="{% url 'operatingsystems:osgroup_list' %}">OS Groups</a></li>{% endblock %}
+
+{% block content_title %} OS Groups {% endblock %}
