@@ -17,13 +17,14 @@
 
 from __future__ import unicode_literals
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from django.conf import settings
 
 from django.template import Library
 from django.utils.html import format_html
 from django.contrib.staticfiles.templatetags.staticfiles import static
+from django.utils import timezone
 
 register = Library()
 
@@ -37,6 +38,6 @@ def report_alert(lastreport):
         days = settings.DAYS_WITHOUT_REPORT
     else:
         days = 14
-    if lastreport < (datetime.now() - timedelta(days=days)):
+    if lastreport < (timezone.now() - timedelta(days=days)):
         html = '<img src="{0!s}" alt="Outdated Report" />'.format(alert_icon)
     return format_html(html)
