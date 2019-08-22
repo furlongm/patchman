@@ -4,32 +4,30 @@ The default installation uses sqlite3 for the django database. To configure
 mysql or postgresql instead, see the database configuration section.
 
 
-## Install Options
-  - [Ubuntu 16.04](#ubuntu-1604-xenial)
-  - [Debian 8](#debian-8-jessie)
+## Supported Install Options
+  - [Ubuntu 18.04](#ubuntu-1804-bionic)
+  - [Debian 10](#debian-10-buster)
   - [CentOS 7](#centos-7)
   - [virtualenv + pip](#virtualenv--pip)
   - [Source](#source)
 
 
-### Ubuntu 16.04 (xenial)
+### Ubuntu 18.04 (bionic)
 
 ```shell
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0412F522
-echo "deb http://repo.openbytes.ie/ubuntu xenial main" > /etc/apt/sources.list.d/patchman.list
+echo "deb http://repo.openbytes.ie/ubuntu bionic main" > /etc/apt/sources.list.d/patchman.list
 apt update
 apt -y install python-patchman patchman-client
 patchman-manage createsuperuser
 ```
 
-### Debian 8 (jessie)
+### Debian 10 (buster)
 
 ```shell
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0412F522
-echo "deb http://repo.openbytes.ie/debian jessie main" > /etc/apt/sources.list.d/patchman.list
-echo "deb http://http.debian.net/debian jessie-backports main contrib non-free" > /etc/apt/sources.list.d/backports.list
+echo "deb http://repo.openbytes.ie/debian stretch main" > /etc/apt/sources.list.d/patchman.list
 apt update
-apt -y install -t jessie-backports python-django
 apt -y install python-patchman patchman-client
 patchman-manage createsuperuser
 ```
@@ -46,7 +44,8 @@ gpgcheck=0
 EOF
 yum install -y epel-release
 yum makecache
-yum install -y patchman
+yum install -y patchman patchman-client
+systemctl restart httpd
 patchman-manage createsuperuser
 ```
 
@@ -55,8 +54,8 @@ patchman-manage createsuperuser
 TBD - not working yet
 
 ```shell
-# apt -y install gcc libxml2-dev libxslt1-dev virtualenv python-dev zlib1g-dev # (debian/ubuntu)
-# yum -y install gcc libxml2-devel libxslt-devel python-virtualenv             # (centos/rhel)
+apt -y install gcc libxml2-dev libxslt1-dev virtualenv python-dev zlib1g-dev  # (debian/ubuntu)
+yum -y install gcc libxml2-devel libxslt-devel python-virtualenv              # (centos/rhel)
 mkdir /srv/patchman
 cd /srv/patchman
 virtualenv .
@@ -70,16 +69,16 @@ gunicorn patchman.wsgi -b 0.0.0.0:80
 
 ### Source
 
-#### Ubuntu 16.04 (xenial)
+#### Ubuntu 18.04 (bionic)
 
 1. Install dependencies
 
 ```shell
 apt -y install python-django-tagging python-django python-requests \
-python-django-extensions python-argparse python-lxml python-rpm python-debian \
+python-django-extensions python-argparse python-defusedxml python-rpm python-debian \
 python-pygooglechart python-cracklib python-progressbar libapache2-mod-wsgi \
 python-djangorestframework apache2 python-colorama python-humanize liblzma-dev \
-python-magic
+python-magic python-lxml
 ```
 
 2. Install django-bootstrap3
@@ -113,7 +112,7 @@ be configured:
 
    * ADMINS - set up an admin email address
    * SECRET_KEY - create a random secret key
-   * STATICFILES_DIRS - should point to /srv/patchman/media if installing from
+   * STATICFILES_DIRS - should point to /srv/patchman/patchman/static if installing from
      source
 
 
@@ -122,23 +121,17 @@ be configured:
 The default database backend is sqlite. However, this is not recommended for
 production deployments. MySQL or PostgreSQL are better choices.
 
-### sqlite
+### SQLite
 
 To configure the sqlite database backend:
 
-1. Ensure the python sqlite3 bindings are installed:
-
-```shell
-apt -y install python-pysqlite2
-```
-
-2. Create the database directory specified in the settings file:
+1. Create the database directory specified in the settings file:
 
 ```shell
 mkdir -p /var/lib/patchman/db
 ```
 
-3. Modify `/etc/patchman/local_settings.py` as follows:
+2. Modify `/etc/patchman/local_settings.py` as follows:
 
 ```
 DATABASES = {
@@ -149,7 +142,7 @@ DATABASES = {
 }
 ```
 
-4. Proceed to syncing database.
+3. Proceed to syncing database.
 
 
 ### MySQL
@@ -250,16 +243,13 @@ collect static files:
 
 ```shell
 patchman-manage makemigrations
-patchman-manage migrate
+patchman-manage migrate --run-syncdb
 patchman-manage createsuperuser
 patchman-manage collectstatic
 ```
 
-N.B. To run patchman-manage when installing from source, run
+N.B. To run patchman-manage when installing from source, run `./manage.py`
 
-```shell
-PYTHONPATH=. sbin/patchman-manage
-```
 
 2. Restart the web server after syncing the database.
 
@@ -294,11 +284,11 @@ chmod -R g+w /var/lib/patchman/db
 
 The django interface should be available at http://127.0.0.1/patchman/
 
-### Optional Configuration Items
+## Optional Configuration Items
 
-#### Cronjobs
+### Cronjobs
 
-##### Daily cronjob on patchman server
+#### Daily cronjob on patchman server
 
 A daily cronjob on the patchman server should be run to process reports,
 perform database maintenance, check for upstream updates, and find updates for
@@ -308,32 +298,44 @@ clients.
 patchman -a
 ```
 
-##### Daily cronjob on client to send reports to patchman server
+#### Daily cronjob on client to send reports to patchman server
 
 ```
 patchman-client
 ```
 
-#### Celery
+### Celery
 
-Install celeryd for realtime processing of reports from clients:
+Install Celery for realtime processing of reports from clients:
+
+#### Ubuntu / Debian
 
 ```shell
-apt-get install python-django-celery rabbitmq-server
-patchman-manage migrate
-patchman-manage syncdb
-C_FORCE_ROOT=true patchman-manage celeryd_detach
+apt -y install python-celery python-celery-common rabbitmq-server
+C_FORCE_ROOT=1 celery worker --loglevel=info -E -A patchman
+```
+
+#### CentOS / RHEL
+
+```shell
+yum -y install python-celery rabbitmq-server
+systemctl restart rabbitmq-server
+semanage port -a -t http_port_t -p tcp 5672
+C_FORCE_ROOT=1 celery worker --loglevel=info -E -A patchman
+
 ```
 
 Add the last command to an initscript (e.g. /etc/rc.local) to make celery
 persistent over reboot.
 
-#### Memcached
+### Memcached
 
 Memcached can optionally be run to reduce the load on the server.
 
 ```shell
-apt -y install memcached python-memcache
+apt -y install memcached python-memcache   # (debian/ubuntu)
+yum -y install memcached python-memcached  # (centos/rhel)
+systemctl restart memcached
 ```
 
 and add the following to `/etc/patchman/local_settings.py`
@@ -347,7 +349,7 @@ CACHES = {
 }
 ```
 
-#### Test Installation
+# Test Installation
 
 To test the installation, run the client locally on the patchman server:
 

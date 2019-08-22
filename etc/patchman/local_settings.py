@@ -37,9 +37,6 @@ DAYS_WITHOUT_REPORT = 14
 # Whether to run patchman under the gunicorn web server
 RUN_GUNICORN = False
 
-# Copy patchman media from these directories
-# STATICFILES_DIRS = ('/srv/patchman/media/',)
-
 # Enable memcached
 CACHES = {
     'default': {

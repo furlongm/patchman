@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% load bootstrap3 %}
+
+{% block page_title %}Report - {{ report }} {% endblock %}
+
+{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'reports:report_list' %}">Reports</a></li><li class="active">{{ report }}</li>{% endblock %}
+
+{% block content_title %} Report - {{ report }} {% endblock %}
+
+{% block content %}
+
+<ul class="nav nav-tabs">
+  <li class="active"><a data-toggle="tab" href="#report_details">Details</a></li>
+  <li><a data-toggle="tab" href="#report_repos">Repositories</a></li>
+  {% if report.sec_updates %}
+    <li><a data-toggle="tab" href="#report_secupdates">Security Updates</a></li>
+  {% endif %}
+  {% if report.bug_updates %}
+    <li><a data-toggle="tab" href="#report_bugupdates">Bugfix Updates</a></li>
+  {% endif %}
+  <li><a data-toggle="tab" href="#report_packages">Packages</a></li>
+</ul>
+
+<div class="tab-content">
+  <div class="tab-pane fade in active" id="report_details">
+    <div class="well well-sm">
+      <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+        <tr><th>Host</th><td> {{ report.host }} </td></tr>
+        <tr><th>Reporting IP Address</th><td> {{ report.report_ip }} </td></tr>
+        <tr><th>Domain</th><td> {{ report.domain }} </td></tr>
+        <tr><th>Running Kernel</th><td> {{ report.kernel }} </td></tr>
+        <tr><th>Reboot Required?</th><td> {{ report.reboot }} </td></tr>
+        <tr><th>OS</th><td> {{ report.os }} </td></tr>
+        <tr><th>Arch</th><td> {{ report.arch }} </td></tr>
+        <tr><th>Tags</th><td> {{ report.tags }} </td></tr>
+        <tr><th>Client Protocol</th><td> {{ report.protocol }} </td></tr>
+        <tr><th>User Agent</th><td> {{ report.useragent }} </td></tr>
+        <tr><th>Has Been Processed?</th><td> {{ report.processed }} </td></tr>
+      </table>
+      {% if user.is_authenticated and perms.is_admin %}
+        <a class="btn btn-primary btn-sm" role="button" href="{% url 'reports:report_delete' report.id %}">{% bootstrap_icon "trash" %} Delete this Report</a>
+        <a class="btn btn-primary btn-sm" role="button" href="{% url 'reports:report_process' report.id %}">{% bootstrap_icon "tasks" %} Process this Report</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="tab-pane fade in" id="report_repos">
+    <div class="well well-sm">
+      <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+        {% for repo in report.repos.splitlines %}
+          <tr>
+            <td> {{ repo }} </td>
+          </tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+
+  {% if report.sec_updates %}
+    <div class="tab-pane fade in" id="report_secupdates">
+      <div class="well well-sm">
+        <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+          {% for update in report.sec_updates.splitlines %}
+            <tr>
+              <td> {{ update }} </td>
+            </tr>
+          {% endfor %}
+        </table>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if report.bug_updates %}
+    <div class="tab-pane fade in" id="report_bugupdates">
+      <div class="well well-sm">
+        <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+          {% for update in report.bug_updates.splitlines %}
+            <tr>
+              <td> {{ update }} </td>
+            </tr>
+          {% endfor %}
+        </table>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="tab-pane fade in" id="report_packages">
+    <div class="well well-sm">
+      <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+        {% for package in report.packages.splitlines %}
+          <tr>
+            <td> {{ package }} </td>
+          </tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
