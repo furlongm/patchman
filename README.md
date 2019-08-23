@@ -31,7 +31,7 @@ time packages are installed or removed on a host.
 
 ## Installation
 
-See [the installation guide](https://github.com/furlongm/patchman/INSTALL.md)
+See [the installation guide](https://github.com/furlongm/patchman/blob/master/INSTALL.md)
 for installation options.
 
 
