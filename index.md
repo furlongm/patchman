@@ -10,7 +10,7 @@ for linux hosts.
 [![](https://raw.githubusercontent.com/furlongm/patchman/gh-pages/screenshots/dashboard.png)](https://github.com/furlongm/patchman/tree/gh-pages/screenshots)
 
 
-## How does it work?
+## How does Patchman work?
 
 Patchman clients send a list of installed packages and enabled repositories to
 the Patchman server. The Patchman server updates its package list for each
@@ -31,51 +31,8 @@ time packages are installed or removed on a host.
 
 ## Installation
 
-See [the installation guide](INSTALL.md) for installation options.
-
-The current source code is available on github:
-
-   https://github.com/furlongm/patchman
-
-
-## Dependencies
-
-### Server-side dependencies
-
-
-```
-python-django
-python-django-tagging
-python-django-extensions
-python-django-bootstrap3
-python-djangorestframework
-python-debian
-python-rpm
-python-progressbar
-python-lxml
-python-defusedxml
-python-argparse
-python-requests
-python-humanize
-```
-
-The server can optionally make use of celery to asynchronously process the
-reports sent by hosts.
-
-
-### Client-side dependencies
-
-The client-side dependencies are kept to a minimum. `rpm` and `dpkg` are
-required to report packages, `yum`, `dnf`, `zypper` and/or `apt` are required
-to report repositories. These packages are normally installed by default on
-most systems.
-
-deb-based OS's do not always change the kernel version when a kernel update is
-installed, so the `update-notifier-common` package can optionally be installed
-to enable this functionality. rpm-based OS's can tell if a reboot is required
-to install a new kernel by looking at `uname -r` and comparing it to the
-highest installed kernel version, so no extra packages are required on those
-OS's.
+See [the installation guide](https://github.com/furlongm/patchman/INSTALL.md)
+for installation options.
 
 
 ## Usage
@@ -128,6 +85,45 @@ optional arguments:
   -e, --errata          Download CentOS errata from https://cefs.steve-
                         meier.de/
 ```
+
+## Dependencies
+
+### Server-side dependencies
+
+
+```
+python-django
+python-django-tagging
+python-django-extensions
+python-django-bootstrap3
+python-djangorestframework
+python-debian
+python-rpm
+python-progressbar
+python-lxml
+python-defusedxml
+python-argparse
+python-requests
+python-humanize
+```
+
+The server can optionally make use of celery to asynchronously process the
+reports sent by hosts.
+
+
+### Client-side dependencies
+
+The client-side dependencies are kept to a minimum. `rpm` and `dpkg` are
+required to report packages, `yum`, `dnf`, `zypper` and/or `apt` are required
+to report repositories. These packages are normally installed by default on
+most systems.
+
+deb-based OS's do not always change the kernel version when a kernel update is
+installed, so the `update-notifier-common` package can optionally be installed
+to enable this functionality. rpm-based OS's can tell if a reboot is required
+to install a new kernel by looking at `uname -r` and comparing it to the
+highest installed kernel version, so no extra packages are required on those
+OS's.
 
 
 ## Concepts
