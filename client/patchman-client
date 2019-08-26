@@ -16,6 +16,7 @@ function usage {
     echo "-r: request a report from the server (default is no report)"
     echo "-s SERVER: web server address, e.g. https://patchman.example.com"
     echo "-c FILE: config file location (default is /etc/patchman/patchman-client.conf)"
+    echo "-t TAGS: comma-separated list of tags, e.g. -t www,dev"
     echo
     echo "Command line options override config file options."
     exit 0
@@ -23,7 +24,7 @@ function usage {
 
 function parseopts {
 
-    while getopts "dvns:r" opt; do
+    while getopts "vdnrs:c:t:" opt; do
         case ${opt} in
         v)
             verbose=1
@@ -43,6 +44,9 @@ function parseopts {
             ;;
         c)
             cli_conf=${OPTARG}
+            ;;
+        t)
+            tags=${OPTARG}
             ;;
         *)
             usage
