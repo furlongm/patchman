@@ -23,7 +23,7 @@ from defusedxml.lxml import _etree as etree
 from django.conf import settings
 from django.db import IntegrityError, DatabaseError, transaction
 
-from util import get_url, download_url
+from util import bunzip2, get_url, download_url
 from packages.models import ErratumReference, Erratum, PackageName, \
     Package, PackageUpdate
 from arch.models import MachineArchitecture, PackageArchitecture
@@ -79,7 +79,7 @@ def update_errata(force=False):
     """ Update CentOS errata from https://cefs.steve-meier.de/
         and mark packages that are security updates
     """
-    data = download_errata()
+    data = bunzip2(download_errata())
     if data:
         parse_errata(data, force)
         mark_security_updates()
@@ -88,7 +88,7 @@ def update_errata(force=False):
 def download_errata():
     """ Download CentOS errata from https://cefs.steve-meier.de/
     """
-    res = get_url('https://cefs.steve-meier.de/errata.latest.xml')
+    res = get_url('https://cefs.steve-meier.de/errata.latest.xml.bz2')
     return download_url(res, 'Downloading CentOS Errata:')
 
 
