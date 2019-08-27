@@ -33,6 +33,7 @@ class OSGroup(models.Model):
     class Meta(object):
         verbose_name = 'Operating System Group'
         verbose_name_plural = 'Operating System Groups'
+        ordering = ('name',)
 
     def __str__(self):
         return self.name
