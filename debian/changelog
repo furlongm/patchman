@@ -1,3 +1,20 @@
+patchman (1.2.2-1) main; urgency=medium
+
+  [ Tim Rightnour ]
+  * Patch for X_REAL_IP handling (#126)
+
+  [ Yannik Petersen ]
+  * Use djangos TimeZone aware timestamps (#125)
+
+  [ Marcus Furlong ]
+  * documentation updates (#129)
+  * add tags cli option
+  * add osgroup ordering by name
+  * use compressed xml for cefs in order to obtain all errata (#130)
+  * add checksum verification for CEFS (#131)
+
+ -- Marcus Furlong <furlongm@gmail.com>  Wed, 28 Aug 2019 04:32:17 +0000
+
 patchman (1.2.1-1) stable; urgency=medium
 
   [ Marcus Furlong ]
