@@ -30,6 +30,7 @@ except ImportError:
     except ImportError:
         lzma = None
 from colorama import Fore, Style
+from hashlib import sha1, sha256
 from progressbar import Bar, ETA, Percentage, ProgressBar
 
 from patchman.signals import error_message
@@ -189,3 +190,15 @@ def extract(data, fmt):
     elif mime == 'application/gzip' or fmt.endswith('gz'):
         return gunzip(data)
     return data
+
+
+def get_sha1(data):
+    """ Return the sha1 checksum for data
+    """
+    return sha1(data).hexdigest()
+
+
+def get_sha256(data):
+    """ Return the sha256 checksum for data
+    """
+    return sha256(data).hexdigest()

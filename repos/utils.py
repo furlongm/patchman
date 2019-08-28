@@ -26,7 +26,6 @@ except ImportError:
     except ImportError:
         lzma = None
 from datetime import datetime
-from hashlib import sha1, sha256
 from io import BytesIO
 from defusedxml.lxml import _etree as etree
 from debian.debian_support import Version
@@ -39,7 +38,8 @@ from django.utils.six import text_type
 
 from packages.models import Package, PackageName, PackageString
 from arch.models import PackageArchitecture
-from util import get_url, download_url, response_is_valid, extract
+from util import get_url, download_url, response_is_valid, extract, \
+    get_sha1, get_sha256
 from patchman.signals import progress_info_s, progress_update_s, \
     info_message, warning_message, error_message, debug_message
 
@@ -151,14 +151,6 @@ def get_primary_url(mirror_url, data):
                               namespaces={'ns': ns})[0]
     primary_url = str(mirror_url.rsplit('/', 2)[0]) + '/' + location
     return primary_url, checksum, csum_type
-
-
-def get_sha1(data):
-    return sha1(data).hexdigest()
-
-
-def get_sha256(data):
-    return sha256(data).hexdigest()
 
 
 def get_sha(checksum_type, data):
