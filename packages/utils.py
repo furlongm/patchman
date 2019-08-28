@@ -81,14 +81,14 @@ def update_errata(force=False):
     """
     data = download_errata_checksum()
     expected_checksum = parse_errata_checksum(data)
-    data = bunzip2(download_errata())
+    data = download_errata()
     actual_checksum = get_sha1(data)
     if actual_checksum != expected_checksum:
         e = 'CEFS checksum did not match, skipping errata parsing'
         error_message.send(sender=None, text=e)
     else:
         if data:
-            parse_errata(data, force)
+            parse_errata(bunzip2(data), force)
             mark_security_updates()
 
 
