@@ -88,6 +88,29 @@ class Host(models.Model):
 
         info_message.send(sender=None, text=text)
 
+    def show_csv(self):
+        """ Show info about this host, in CSV format
+        """
+        text = '{0!s}'.format(self)
+        text += ',{0!s}'.format(self.ipaddress)
+        text += ',{0!s}'.format(self.reversedns)
+        text += ',{0!s}'.format(self.domain)
+        text += ',{0!s}'.format(self.os)
+        text += ',{0!s}'.format(self.kernel)
+        text += ',{0!s}'.format(self.arch)
+        text += ',{0!s}'.format(self.lastreport)
+        text += ',{0!s}'.format(self.get_num_packages())
+        text += ',{0!s}'.format(self.get_num_repos())
+        text += ',{0!s}'.format(self.get_num_updates())
+        text += ',{0!s}'.format(self.get_num_security_updates())
+        text += ',{0!s}'.format(self.get_num_bugfix_updates())
+        text += ',{0!s}'.format(self.tags)
+        text += ',{0!s}'.format(self.reboot_required)
+        text += ',{0!s}'.format(self.updated_at)
+        text += ',{0!s}'.format(self.host_repos_only)
+
+        info_message.send(sender=None, text=text)
+
     def get_absolute_url(self):
         return reverse('hosts:host_detail', args=[self.hostname])
 
