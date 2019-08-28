@@ -174,8 +174,8 @@ would be comprised of the following OS's:
 
 ```
 Ubuntu 18.04.1
-Debian 18.04.2
-Debian 18.04.5
+Ubuntu 18.04.2
+Ubuntu 18.04.5
 ```
 
 Likewise, an OSGroup named "CentOS 7" would be made up of the following OS's:
