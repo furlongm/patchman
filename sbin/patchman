@@ -396,6 +396,17 @@ def diff_hosts(hosts):
         info_message.send(sender=None, text='\nNo Repo differences')
 
 
+def delete_hosts(hosts=None):
+    """ Delete a host or matching pattern of hosts
+    """
+    if hosts:
+        matching_hosts = get_hosts(hosts)
+        for host in matching_hosts:
+            text = 'Deleting host: {0!s}:'.format(host.hostname)
+            info_message.send(sender=None, text=text)
+            host.delete()
+
+
 def dns_checks(host=None):
     """ Check all hosts for reverse DNS mismatches, specify host for a single
         host
@@ -406,15 +417,6 @@ def dns_checks(host=None):
             text = '{0!s}: '.format(str(host)[0:25].ljust(25))
             print_nocr(text)
         host.check_rdns()
-
-
-def host_delete(host=None):
-    """ Look for a host, if found, delete it
-    """
-    hosts = get_hosts(host, 'Looking for hosts to delete')
-    for host in hosts:
-        print('Deleting: ' + host.hostname)
-        host.delete()
 
 
 def process_reports(host=None, force=False):
@@ -501,6 +503,9 @@ def collect_args():
         '-lh', '--list-hosts', action='store_true',
         help='List all Hosts')
     parser.add_argument(
+        '-dh', '--delete-hosts', action='store_true',
+        help='Delete hosts, requires -H, matches substring patterns')
+    parser.add_argument(
         '-u', '--host-updates', action='store_true',
         help='Find Host updates')
     parser.add_argument(
@@ -531,9 +536,6 @@ def collect_args():
     parser.add_argument(
         '-e', '--errata', action='store_true',
         help='Download CentOS errata from https://cefs.steve-meier.de/')
-    parser.add_argument(
-        '-k', '--delete-host',
-        help='Delete host by FQDN.  Will match partial hostnames, same matching as -H argument')
     return parser
 
 
@@ -558,6 +560,10 @@ def process_args(args):
         return False
     if args.list_hosts:
         list_hosts(args.host)
+        return False
+    if args.delete_hosts:
+        delete_hosts(args.host)
+        showhelp = False
         return False
     if args.diff:
         diff_hosts(args.diff)
@@ -590,9 +596,6 @@ def process_args(args):
         showhelp = False
     if args.errata:
         update_errata(args.force)
-        showhelp = False
-    if args.delete_host:
-        host_delete(args.delete_host)
         showhelp = False
     return showhelp
 
