@@ -408,6 +408,15 @@ def dns_checks(host=None):
         host.check_rdns()
 
 
+def host_delete(host=None):
+    """ Look for a host, if found, delete it
+    """
+    hosts = get_hosts(host, 'Looking for hosts to delete')
+    for host in hosts:
+        print('Deleting: ' + host.hostname)
+        host.delete()
+
+
 def process_reports(host=None, force=False):
     """ Process all pending reports, specify host to process only a single host
         The --force option forces even processed reports to be reprocessed
@@ -522,6 +531,9 @@ def collect_args():
     parser.add_argument(
         '-e', '--errata', action='store_true',
         help='Download CentOS errata from https://cefs.steve-meier.de/')
+    parser.add_argument(
+        '-k', '--delete-host',
+        help='Delete host by FQDN.  Will match partial hostnames, same matching as -H argument')
     return parser
 
 
@@ -578,6 +590,9 @@ def process_args(args):
         showhelp = False
     if args.errata:
         update_errata(args.force)
+        showhelp = False
+    if args.delete_host:
+        host_delete(args.delete_host)
         showhelp = False
     return showhelp
 
