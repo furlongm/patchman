@@ -26,7 +26,7 @@ patchman-manage createsuperuser
 
 ```shell
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0412F522
-echo "deb http://repo.openbytes.ie/debian stretch main" > /etc/apt/sources.list.d/patchman.list
+echo "deb http://repo.openbytes.ie/debian buster main" > /etc/apt/sources.list.d/patchman.list
 apt update
 apt -y install python-patchman patchman-client
 patchman-manage createsuperuser
@@ -152,7 +152,7 @@ To configure the mysql database backend:
 1. Ensure mysql-server and the python mysql bindings are installed:
 
 ```shell
-apt -y install mysql-server python-mysqldb python-pymysql
+apt -y install default-mysql-server python-mysqldb python-pymysql
 ```
 
 2. Create database and users:
@@ -224,7 +224,7 @@ DATABASES = {
        'NAME': 'patchman',
        'USER': 'patchman',
        'PASSWORD': 'changeme',
-       'HOST': '',
+       'HOST': '127.0.0.1',
        'PORT': '',
        'CHARSET' : 'utf8'
    }
