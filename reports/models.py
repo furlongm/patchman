@@ -57,7 +57,7 @@ class Report(models.Model):
         ordering = ('-created',)
 
     def __str__(self):
-        return '{0!s} {1!s}'.format(self.host, self.created)
+        return '{0!s} {1!s}'.format(self.host, self.created.strftime('%c'))
 
     def get_absolute_url(self):
         return reverse('reports:report_detail', args=[str(self.id)])

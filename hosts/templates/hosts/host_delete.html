@@ -30,7 +30,8 @@
       {% endfor %}
       </td>
     </tr>
-    <tr><th>Last Update</th><td> {{ host.lastreport }} </td></tr>
+    <tr><th>Updated</th><td> {{ host.updated_at }} </td></tr>
+    <tr><th>Last Report</th><td> {{ host.lastreport }} </td></tr>
     <tr><th>Updates Available</th><td> <a data-toggle="tab" href="{{ host.get_absolute_url }}#host_updates">{{ host.updates.count }}</a> </td></tr>
     <tr><th>Reboot Required</th><td> {{ host.reboot_required }} </td></tr>
     <tr><th>Packages Installed</th><td> <a data-toggle="tab" href="{{ host.get_absolute_url }}#host_packages">{{ host.packages.count}}</a> </td></tr>
