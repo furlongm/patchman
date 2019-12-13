@@ -16,7 +16,7 @@ mysql or postgresql instead, see the database configuration section.
 
 ```shell
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0412F522
-echo "deb http://repo.openbytes.ie/ubuntu bionic main" > /etc/apt/sources.list.d/patchman.list
+echo "deb https://repo.openbytes.ie/ubuntu bionic main" > /etc/apt/sources.list.d/patchman.list
 apt update
 apt -y install python-patchman patchman-client
 patchman-manage createsuperuser
@@ -26,7 +26,7 @@ patchman-manage createsuperuser
 
 ```shell
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0412F522
-echo "deb http://repo.openbytes.ie/debian buster main" > /etc/apt/sources.list.d/patchman.list
+echo "deb https://repo.openbytes.ie/debian buster main" > /etc/apt/sources.list.d/patchman.list
 apt update
 apt -y install python-patchman patchman-client
 patchman-manage createsuperuser
@@ -38,7 +38,7 @@ patchman-manage createsuperuser
 cat <<EOF >> /etc/yum.repos.d/openbytes.repo
 [openbytes]
 name=openbytes
-baseurl=http://repo.openbytes.ie/yum
+baseurl=https://repo.openbytes.ie/yum
 enabled=1
 gpgcheck=0
 EOF
