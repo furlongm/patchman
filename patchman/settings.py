@@ -134,7 +134,10 @@ except ImportError:
     else:
         conf_path = sys.prefix + '/etc/patchman'
     local_settings = conf_path + '/local_settings.py'
-    exec(compile(open(local_settings).read(), local_settings, 'exec'))
+    try:
+        exec(compile(open(local_settings).read(), local_settings, 'exec'))
+    except IOError:
+        pass
 
 MANAGERS = ADMINS
 INSTALLED_APPS = DEFAULT_APPS + THIRD_PARTY_APPS + LOCAL_APPS
