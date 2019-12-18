@@ -1,4 +1,4 @@
-Django==1.11.23
+Django==3.0.1
 django-tagging==0.4.6
 django-extensions==2.2.1
 django-bootstrap3==11.1.0
