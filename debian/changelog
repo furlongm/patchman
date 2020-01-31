@@ -1,3 +1,23 @@
+patchman (1.2.3-1) main; urgency=medium
+
+  [ Marcus Furlong ]
+  * calculate checksum of compressed data
+
+  [ Tim Rightnour ]
+  * Add -k argument to delete host from commandline (#105)
+
+  [ Marcus Furlong ]
+  * reorg host deletion for consistency (#132)
+  * clarify host last update vs last report (#146)
+  * update instructions for buster
+  * convert repo links to https (#147)
+  * allow for missing local_settings
+  * fix sed error on Raspbian
+  * bump django minor version
+  * fix github actions
+
+ -- Marcus Furlong <furlongm@gmail.com>  Fri, 31 Jan 2020 09:17:29 +0000
+
 patchman (1.2.2-1) main; urgency=medium
 
   [ Tim Rightnour ]
