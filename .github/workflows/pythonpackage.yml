@@ -9,7 +9,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        python-version: [2.7, 3.5, 3.6, 3.7]
+        python-version: [2.7]
 
     steps:
     - uses: actions/checkout@v1
@@ -28,5 +28,7 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    - name: Set secret key
+      run: ./sbin/patchman-set-secret-key
     - name: Test with django
       run: ./manage.py test
