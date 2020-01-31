@@ -1,0 +1,19 @@
+name: Create deb and rpm packages
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install build dependencies
+      run: |
+        apt -y install python-setuptools debhelper dh-exec dh-python git-buildpackage
+        gbp buildpackage --git-ignore-new --git-force-create -uc -us
+    - uses: actions/upload-artifact@v1
+      with:
+        name: python-patchman.deb
+        path: ../python-patchman_1.2.3-1_all.deb
