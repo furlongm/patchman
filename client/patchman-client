@@ -198,6 +198,8 @@ function get_host_data {
         . /etc/os-release
         if [ "${ID}" == "debian" ] ; then
             os="Debian $(cat /etc/debian_version)"
+        elif [ "${ID}" == "raspbian" ] ; then
+            os="Raspbian $(cat /etc/debian_version)"
         elif [ "${ID}" == "ubuntu" ] ; then
             os="${PRETTY_NAME}"
         elif [ "${ID}" == "centos" ] ; then
@@ -210,7 +212,7 @@ function get_host_data {
             os="${PRETTY_NAME}"
         else
             os="${NAME} ${VERSION}"
-	fi
+        fi
     else
         releases="/etc/SuSE-release /etc/lsb-release /etc/debian_version /etc/fermi-release /etc/redhat-release /etc/fedora-release /etc/centos-release"
         for i in ${releases} ; do
