@@ -6,8 +6,10 @@ find -name *.pyc -exec rm {} \;
 rm -fr .tox patchman.egg-info
 gbp dch --auto  # modify changelog manually
 git add debian/changelog
+vim VERSION.txt # modify version
+git add VERSION.txt
 version=$(cat VERSION.txt)
-git commit -m "update debian changelog for ${version}"
+git commit -m "release ${version}"
 git tag ${version}
 gbp buildpackage --git-ignore-new --git-force-create -uc -us
 ```
