@@ -13,7 +13,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ github.ref }}
     - run: |
-        git fetch --prune --unshallow
+        git switch ${{ github.ref }}
     - name: Install build dependencies
       run: |
         sudo apt -y install python-setuptools debhelper dh-exec dh-python git-buildpackage
