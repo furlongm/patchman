@@ -5,7 +5,7 @@ on:
     types: [created]
 
 jobs:
-  deploy:
+  build-and-upload-assets:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -17,11 +17,14 @@ jobs:
     - name: Install build dependencies
       run: |
         sudo apt -y install python-setuptools debhelper dh-exec dh-python git-buildpackage
+    - name: Get version
+      run: |
+        export version=$(<VERSION.txt)
+        echo "::set-env name=verson::${version}"
     - name: Build deb package
       run: |
-        git branch -v
         gbp buildpackage --git-ignore-new --git-force-create -uc -us
     - uses: actions/upload-artifact@v1
       with:
-        name: python-patchman.deb
-        path: ../python-patchman_1.2.3-1_all.deb
+        name: python-patchman_${{ env.version }}-1_all.deb
+        path: ../python-patchman_${{ env.version }}-1_all.deb
