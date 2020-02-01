@@ -13,7 +13,7 @@ jobs:
         fetch-depth: 0
         ref: master
     - run: |
-        git fetch --prune --unshallow
+        git fetch --all
     - name: Install build dependencies
       run: |
         sudo apt -y install python-setuptools debhelper dh-exec dh-python git-buildpackage
