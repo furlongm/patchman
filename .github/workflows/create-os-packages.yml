@@ -9,9 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-      ref: github.ref
       with:
         fetch-depth: 0
+        ref: github.ref
     - run: |
         git fetch --prune --unshallow
     - name: Install build dependencies
