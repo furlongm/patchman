@@ -23,7 +23,7 @@ jobs:
         echo "::set-env name=verson::${version}"
     - name: Build deb package
       run: |
-        gbp buildpackage --git-ignore-new --git-force-create -uc -us
+        gbp buildpackage --git-ignore-new --git-force-create --git-upstream-tree=SLOPPY -uc -us
     - uses: actions/upload-artifact@v1
       with:
         name: python-patchman_${{ env.version }}-1_all.deb
