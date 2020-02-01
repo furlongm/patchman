@@ -12,6 +12,11 @@ jobs:
     - name: Install build dependencies
       run: |
         sudo apt -y install python-setuptools debhelper dh-exec dh-python git-buildpackage
+    - name: Build deb package
+      run: |
+        cd patchman
+        pwd
+        git branch -v
         gbp buildpackage --git-ignore-new --git-force-create -uc -us
     - uses: actions/upload-artifact@v1
       with:
