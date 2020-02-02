@@ -22,10 +22,11 @@ jobs:
       run: |
         export version=$(<VERSION.txt)
         echo "::set-env name=verson::${version}"
+        echo "::set-output name=version::${version}"
     - name: Build deb package
       run: |
         gbp buildpackage --git-ignore-new --git-force-create --git-upstream-tree=SLOPPY -uc -us
     - uses: actions/upload-artifact@v1
       with:
-        name: python-patchman_${{ env.version }}-1_all.deb
-        path: ../python-patchman_${{ env.version }}-1_all.deb
+        name:  ${{ format('python-patchman_{0}-1_all.deb', steps.get_version.outputs.version) }}
+        path: ../${{ format('python-patchman_{0}-1_all.deb', steps.get_version.outputs.version) }}
