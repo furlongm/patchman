@@ -35,7 +35,7 @@ jobs:
         echo "::set-output name=version::${version}"
     - name: Build deb package
       run: |
-        gbp buildpackage --git-ignore-new --git-force-create --git-upstream-tree=SLOPPY --git-upstream-tag=v%(version)s -uc -us
+        gbp buildpackage --git-ignore-new --git-force-create --git-upstream-tree=SLOPPY --git-upstream-tag='v%(version)s' -uc -us
     - uses: actions/upload-artifact@v1
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
