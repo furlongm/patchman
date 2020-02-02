@@ -38,13 +38,19 @@ jobs:
         gbp buildpackage --git-ignore-new --git-force-create --git-upstream-tree=SLOPPY --git-upstream-tag='v%(version)s' -uc -us
     - name: Upload python-patchman deb
       uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        name:  ${{ format('python-patchman_{0}-1_all.deb', steps.get_version.outputs.version) }}
-        path: ../${{ format('python-patchman_{0}-1_all.deb', steps.get_version.outputs.version) }}
+        asset_name: ${{ format('python-patchman_{0}-1_all.deb', steps.get_version.outputs.version) }}
+        asset_path: ../${{ format('python-patchman_{0}-1_all.deb', steps.get_version.outputs.version) }}
+        asset_content_type: application/vnd.debian.binary-package
     - name: Upload patchman-client deb
       uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        name:  ${{ format('patchman-client_{0}-1_all.deb', steps.get_version.outputs.version) }}
-        path: ../${{ format('patchman-client_{0}-1_all.deb', steps.get_version.outputs.version) }}
+        asset_name: ${{ format('patchman-client_{0}-1_all.deb', steps.get_version.outputs.version) }}
+        asset_path: ../${{ format('patchman-client_{0}-1_all.deb', steps.get_version.outputs.version) }}
+        asset_content_type: application/vnd.debian.binary-package
