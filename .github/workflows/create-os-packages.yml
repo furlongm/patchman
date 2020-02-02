@@ -27,5 +27,5 @@ jobs:
         gbp buildpackage --git-ignore-new --git-force-create --git-upstream-tree=SLOPPY -uc -us
     - uses: actions/upload-artifact@v1
       with:
-        name: python-patchman_${{ steps.get_version.outputs.version }}-1_all.deb
-        path: ../python-patchman_${{ steps.get_version.outputs.version }}-1_all.deb
+        name: python-patchman_${{ env.version }}-1_all.deb
+        path: ../python-patchman_${{ env.version }}-1_all.deb
