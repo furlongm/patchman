@@ -44,5 +44,5 @@ jobs:
     - uses: actions/upload-artifact@v1
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        name:  ${{ format('patchman-client_{0}-1_all.deb', env.version) }}
-        path: ../${{ format('patchman-client_{0}-1_all.deb', env.version) }}
+        name:  ${{ format('patchman-client_{0}-1_all.deb', steps.get_version.outputs.version) }}
+        path: ../${{ format('patchman-client_{0}-1_all.deb', steps.get_version.outputs.version) }}
