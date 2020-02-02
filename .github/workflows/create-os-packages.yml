@@ -30,3 +30,8 @@ jobs:
       with:
         name:  ${{ format('python-patchman_{0}-1_all.deb', steps.get_version.outputs.version) }}
         path: ../${{ format('python-patchman_{0}-1_all.deb', steps.get_version.outputs.version) }}
+    - uses: actions/upload-artifact@v1
+      with:
+        name:  ${{ format('patchman-client_{0}-1_all.deb', env.version) }}
+        path: ../${{ format('patchman-client_{0}-1_all.deb', env.version) }}
+  
