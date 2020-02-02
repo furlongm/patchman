@@ -1,8 +1,8 @@
-name: Create deb and rpm packages
-
+name: Upload release assets
 on:
-  release:
-    types: [created]
+  push:
+    tags:
+    - 'v*'
 
 jobs:
   build-and-upload-assets:
@@ -17,6 +17,16 @@ jobs:
     - name: Install build dependencies
       run: |
         sudo apt -y install python-setuptools debhelper dh-exec dh-python git-buildpackage
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1.0.0
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false        
     - name: Get version
       id: get_version
       run: |
@@ -25,13 +35,14 @@ jobs:
         echo "::set-output name=version::${version}"
     - name: Build deb package
       run: |
-        gbp buildpackage --git-ignore-new --git-force-create --git-upstream-tree=SLOPPY -uc -us
+        gbp buildpackage --git-ignore-new --git-force-create --git-upstream-tree=SLOPPY --git-upstream-tag=v%(version)s -uc -us
     - uses: actions/upload-artifact@v1
       with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
         name:  ${{ format('python-patchman_{0}-1_all.deb', steps.get_version.outputs.version) }}
         path: ../${{ format('python-patchman_{0}-1_all.deb', steps.get_version.outputs.version) }}
     - uses: actions/upload-artifact@v1
       with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
         name:  ${{ format('patchman-client_{0}-1_all.deb', env.version) }}
         path: ../${{ format('patchman-client_{0}-1_all.deb', env.version) }}
-  
