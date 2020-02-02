@@ -1,11 +1,11 @@
-name: Upload release assets
+name: Release, build and upload release assets
 on:
   push:
     tags:
     - 'v*'
 
 jobs:
-  build-and-upload-assets:
+  release-build-and-upload-assets:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -33,15 +33,17 @@ jobs:
         export version=$(<VERSION.txt)
         echo "::set-env name=verson::${version}"
         echo "::set-output name=version::${version}"
-    - name: Build deb package
+    - name: Build deb packages
       run: |
         gbp buildpackage --git-ignore-new --git-force-create --git-upstream-tree=SLOPPY --git-upstream-tag='v%(version)s' -uc -us
-    - uses: actions/upload-artifact@v1
+    - name: Upload python-patchman deb
+      uses: actions/upload-release-asset@v1.0.1
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         name:  ${{ format('python-patchman_{0}-1_all.deb', steps.get_version.outputs.version) }}
         path: ../${{ format('python-patchman_{0}-1_all.deb', steps.get_version.outputs.version) }}
-    - uses: actions/upload-artifact@v1
+    - name: Upload patchman-client deb
+      uses: actions/upload-release-asset@v1.0.1
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         name:  ${{ format('patchman-client_{0}-1_all.deb', steps.get_version.outputs.version) }}
