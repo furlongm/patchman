@@ -61,7 +61,10 @@ jobs:
     steps:
     - name: Install build dependencies
       run: |
-        yum -y install rpm-build git python-setuptools
+        yum -y install epel-release
+        yum -y remove git
+        rpm -U https://centos7.iuscommunity.org/ius-release.rpm
+        yum -y install rpm-build git python-setuptools git2u
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0
