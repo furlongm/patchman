@@ -36,7 +36,7 @@ jobs:
     needs: create-release
     runs-on: ubuntu-latest
     container:
-      image: ubuntu:bionic
+      image: debian:buster
     steps:
       - name: Install build dependencies
         run: |
