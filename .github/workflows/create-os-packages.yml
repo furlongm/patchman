@@ -5,7 +5,7 @@ on:
     - 'v*'
 
 jobs:
-  release-build-and-upload-assets:
+  release-build-and-upload-deb-assets:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -54,3 +54,44 @@ jobs:
         asset_name: ${{ format('patchman-client_{0}-1_all.deb', steps.get_version.outputs.version) }}
         asset_path: ../${{ format('patchman-client_{0}-1_all.deb', steps.get_version.outputs.version) }}
         asset_content_type: application/vnd.debian.binary-package
+  build-and-upload-rpm-assets:
+    runs-on: ubuntu-latest
+    container: centos-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+        ref: master
+    - run: |
+        git fetch --all
+    - name: Install build dependencies
+      run: |
+        sudo yum -y install rpm-build git python-setuptools
+    - name: Get version
+      id: get_version
+      run: |
+        export version=$(<VERSION.txt)
+        echo "::set-env name=verson::${version}"
+        echo "::set-output name=version::${version}"
+    - name: Build rpm packages
+      run: |
+        python setup.py bdist_rpm
+        rpmbuild -bb patchman-client.spec
+    - name: Upload patchman rpm
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ jobs.release-build-and-upload-deb-assets.steps.create_release.outputs.upload_url }}
+        asset_name: ${{ format('patchman-{0}-1.noarch.rpm', steps.get_version.outputs.version) }}
+        asset_path: ${{ format('dist/patchman-{0}-1.noarch.rpm', steps.get_version.outputs.version) }}
+        asset_content_type: application/x-rpm
+    - name: Upload patchman-client rpm
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ jobs.release-build-and-upload-deb-assets.steps.create_release.outputs.upload_url }}
+        asset_name: ${{ format('patchman-client-{0}-1.noarch.rpm', steps.get_version.outputs.version) }}
+        asset_path: ${{ format('dist/noarch/patchman-client-{0}-1.noarch.rpm', steps.get_version.outputs.version) }}
+        asset_content_type: application/x-rpm
