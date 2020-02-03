@@ -1,3 +1,77 @@
+patchman (1.2.4-1) stable; urgency=medium
+
+  [ Marcus Furlong ]
+  * Update pythonpublish.yml
+  * Update pythonpackage.yml
+  * Update pythonpublish.yml
+  * Create create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update create-os-packages.yml
+  * Update github actions
+  * Update github actions
+  * Update github actions
+  * Update github actions
+  * Update github actions
+  * Update github actions
+  * Update github actions
+  * Update github actions
+  * Update github actions
+  * Update github actions
+
+ --  <runner@fv-az76.d1qcq1qk3pnezlxzd5jnz5whje.cx.internal.cloudapp.net>  Mon, 03 Feb 2020 05:39:43 +0000
+
 patchman (1.2.3-1) main; urgency=medium
 
   [ Marcus Furlong ]
