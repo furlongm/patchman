@@ -93,11 +93,10 @@ jobs:
     - name: Get upload_url
       id: get_upload_url
       run: |
-        ls -l
-        file upload_url.txt
-        cat upload_url.txt
+        ls -l upload_url.txt
+        file upload_url.txt/*
+        cat upload_url.txt/*
         export upload_url=$(<upload_url.txt)
-        rm upload_url.txt
         echo "::set-env name=upload_url::${upload_url}"
         echo "::set-output name=upload_url::${upload_url}"
     - name: Build rpm packages
