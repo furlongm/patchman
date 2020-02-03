@@ -29,12 +29,12 @@ jobs:
         prerelease: false
     - name: Create upload_url artifact
       run: |
-        echo ${{ steps.create_release.outputs.upload_url }} > ../upload_url.txt
+        echo ${{ steps.create_release.outputs.upload_url }} > /tmp/upload_url.txt
     - name: Upload upload_url artifact
       uses: actions/upload-artifact@v1
       with:
         name: upload_url.txt
-        path: ../upload_url.txt
+        path: /tmp/upload_url.txt
     - name: Get version
       id: get_version
       run: |
@@ -63,6 +63,7 @@ jobs:
         asset_path: ../${{ format('patchman-client_{0}-1_all.deb', steps.get_version.outputs.version) }}
         asset_content_type: application/vnd.debian.binary-package
   build-and-upload-rpm-assets:
+    needs: release-build-and-upload-deb-assets
     runs-on: ubuntu-latest
     container:
       image: centos:7
@@ -89,10 +90,11 @@ jobs:
       uses: actions/download-artifact@v1
       with:
         name: upload_url.txt
+        path: /tmp/upload_url.txt
     - name: Get upload_url
       id: get_upload_url
       run: |
-        export upload_url=$(<upload_url.txt)
+        export upload_url=$(</tmp/upload_url.txt)
         pwd
         ls -l
         echo ${upload_url}
