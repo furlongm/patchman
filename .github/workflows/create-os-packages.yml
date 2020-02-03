@@ -17,7 +17,7 @@ jobs:
     - name: Install build dependencies
       run: |
         sudo apt -y install python-setuptools debhelper dh-exec dh-python git-buildpackage
-    - name: Create Release
+    - name: Create release
       id: create_release
       uses: actions/create-release@v1
       env:
@@ -29,9 +29,7 @@ jobs:
         prerelease: false
     - name: Create upload_url artifact
       run: |
-        echo "${{ steps.create_release.outputs.upload_url }}"
-        echo ${{ steps.create_release.outputs.upload_url }}
-        echo ${{ steps.create_release.outputs.upload_url }} > /tmp/upload_url.txt
+        echo "${{ steps.create_release.outputs.upload_url }}" > /tmp/upload_url.txt
     - name: Upload upload_url artifact
       uses: actions/upload-artifact@v1
       with:
@@ -96,7 +94,6 @@ jobs:
     - name: Get upload_url
       id: get_upload_url
       run: |
-        cat upload_url.txt
         export upload_url=$(<upload_url.txt)
         echo "::set-env name=upload_url::${upload_url}"
         echo "::set-output name=upload_url::${upload_url}"
