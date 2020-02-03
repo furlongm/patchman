@@ -57,7 +57,7 @@ jobs:
   build-and-upload-rpm-assets:
     runs-on: ubuntu-latest
     container:
-      image: centos-latest
+      image: centos/latest
     steps:
     - uses: actions/checkout@v2
       with:
