@@ -57,7 +57,7 @@ jobs:
   build-and-upload-rpm-assets:
     runs-on: ubuntu-latest
     container:
-      image: centos:latest
+      image: centos:7
     steps:
     - name: Install build dependencies
       run: |
