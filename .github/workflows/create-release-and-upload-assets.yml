@@ -43,6 +43,8 @@ jobs:
           apt update
           export DEBIAN_FRONTEND=noninteractive
           apt -y install python-setuptools debhelper dh-exec dh-python git-buildpackage
+      - name: Fix sh so env vars propogate
+        run: |
           rm /bin/sh
           ln -sf /bin/bash /bin/sh
       - uses: actions/checkout@v2
