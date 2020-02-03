@@ -142,3 +142,23 @@ jobs:
           asset_name: ${{ format('patchman-client-{0}-1.noarch.rpm', env.version) }}
           asset_path: ${{ format('dist/noarch/patchman-client-{0}-1.noarch.rpm', env.version) }}
           asset_content_type: application/x-rpm
+  upload-package-to-pypi:
+    needs: create-release
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up python
+      uses: actions/setup-python@v1
+      with:
+        python-version: '3.x'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install setuptools wheel twine
+    - name: Build and publish
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: |
+        python setup.py sdist bdist_wheel
+        twine upload dist/*
