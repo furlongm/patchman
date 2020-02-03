@@ -59,16 +59,15 @@ jobs:
     container:
       image: centos:latest
     steps:
+    - name: Install build dependencies
+      run: |
+        dnf -y install rpm-build git python-setuptools
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0
         ref: master
     - run: |
-        dnf -y install git
         git fetch --all
-    - name: Install build dependencies
-      run: |
-        dnf -y install rpm-build python-setuptools
     - name: Get version
       id: get_version
       run: |
