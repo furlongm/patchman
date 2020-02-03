@@ -90,14 +90,13 @@ jobs:
       uses: actions/download-artifact@v1
       with:
         name: upload_url.txt
-        path: /tmp/upload_url.txt
     - name: Get upload_url
       id: get_upload_url
       run: |
-        export upload_url=$(</tmp/upload_url.txt)
-        pwd
-        ls -l /tmp
-        echo ${upload_url}
+        ls -l
+        ls -l /github/workspace
+        ls -l /github/home
+        export upload_url=$(<upload_url.txt)
         echo "::set-env name=upload_url::${upload_url}"
         echo "::set-output name=upload_url::${upload_url}"
     - name: Build rpm packages
