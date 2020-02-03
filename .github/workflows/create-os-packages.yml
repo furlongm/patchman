@@ -61,7 +61,7 @@ jobs:
     steps:
     - name: Install build dependencies
       run: |
-        dnf -y install rpm-build git python-setuptools
+        yum -y install rpm-build git python-setuptools
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0
