@@ -41,22 +41,36 @@ jobs:
         with:
           fetch-depth: 0
           ref: master
-      - name: Commit version and changelog to repo
+      - name: git fetch --all
+        run: |
+          git fetch --all
+      - name: git config
+        run: |
+          git config user.email furlongm@gmail.com
+          git config user.name 'Marcus Furlong'
+      - name: Install dependencies
+        run: |
+          sudo apt -y install python-setuptools debhelper dh-exec dh-python git-buildpackage
+      - name: Update repo version if required
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COMMIT_MSG: |
-            auto-commit: update version and changelog
+            auto-commit to update version
             skip-checks: true
         run: |
-          git fetch --all
-          git config user.email furlongm@gmail.com
-          git config user.name 'Marcus Furlong'
           echo "${{ github.ref }}" | cut -dv -f2 > VERSION.txt
           git add VERSION.txt
-          sudo apt -y install python-setuptools debhelper dh-exec dh-python git-buildpackage
-          gbp dch --auto --distribution=stable --new-version=$(cat VERSION.txt)-1 --commit
+          git diff --quiet && git diff --staged --quiet || git commit -m "${COMMIT_MSG}"
+          git push origin master
+      - name: Update debian changelog
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMIT_MSG: |
+            auto-commit to update debian changelog
+            skip-checks: true
+        run: |
+          gbp dch --auto --distribution=stable --new-version=$(cat VERSION.txt)-1 --commit --git-author --commit-msg="${COMMIT_MSG}"
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
-          git commit -m "${COMMIT_MSG}"
           git push origin master
   build-and-upload-deb-assets:
     needs: update-version-and-changelog
