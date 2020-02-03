@@ -53,6 +53,7 @@ jobs:
           git config user.name 'Marcus Furlong'
           echo "${{ github.ref }}" | cut -dv -f2 > VERSION.txt
           git add VERSION.txt
+          sudo apt -y install python-setuptools debhelper dh-exec dh-python git-buildpackage
           gbp dch --auto --distribution=stable --new-version=$(cat VERSION.txt)-1 --commit
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
           git commit -m "${COMMIT_MSG}"
