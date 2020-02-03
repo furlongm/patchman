@@ -13,7 +13,6 @@ jobs:
         fetch-depth: 0
         ref: master
     - run: |
-        sudo dnf -y install git
         git fetch --all
     - name: Install build dependencies
       run: |
@@ -27,7 +26,7 @@ jobs:
         tag_name: ${{ github.ref }}
         release_name: Release ${{ github.ref }}
         draft: false
-        prerelease: false        
+        prerelease: false
     - name: Get version
       id: get_version
       run: |
@@ -65,10 +64,11 @@ jobs:
         fetch-depth: 0
         ref: master
     - run: |
+        sudo dnf -y install git
         git fetch --all
     - name: Install build dependencies
       run: |
-        sudo yum -y install rpm-build git python-setuptools
+        sudo dnf -y install rpm-build python-setuptools
     - name: Get version
       id: get_version
       run: |
