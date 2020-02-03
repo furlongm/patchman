@@ -64,11 +64,11 @@ jobs:
         fetch-depth: 0
         ref: master
     - run: |
-        sudo dnf -y install git
+        dnf -y install git
         git fetch --all
     - name: Install build dependencies
       run: |
-        sudo dnf -y install rpm-build python-setuptools
+        dnf -y install rpm-build python-setuptools
     - name: Get version
       id: get_version
       run: |
