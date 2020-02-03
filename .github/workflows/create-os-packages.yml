@@ -1,4 +1,4 @@
-name: Release, build and upload release assets
+name: Create release, build and upload release assets
 on:
   push:
     tags:
@@ -53,7 +53,7 @@ jobs:
         id: get_version
         run: |
           export version=$(<VERSION.txt)
-          echo "::set-env name=verson::${version}"
+          echo "::set-env name=version::${version}"
           echo "::set-output name=version::${version}"
       - name: Download upload_url artifact
         uses: actions/download-artifact@v1
@@ -63,6 +63,9 @@ jobs:
       - name: Get upload_url
         id: get_upload_url
         run: |
+          cat upload_url.txt
+          pwd
+          ls -l
           export upload_url=$(<upload_url.txt)
           rm upload_url.txt
           echo "::set-env name=upload_url::${upload_url}"
@@ -110,8 +113,7 @@ jobs:
         id: get_version
         run: |
           export version=$(<VERSION.txt)
-          echo "::set-env name=verson::${version}"
-          echo "::set-output name=version::${version}"
+          echo "::set-env name=version::${version}"
       - name: Download upload_url artifact
         uses: actions/download-artifact@v1
         with:
@@ -123,7 +125,6 @@ jobs:
           export upload_url=$(<upload_url.txt)
           rm upload_url.txt
           echo "::set-env name=upload_url::${upload_url}"
-          echo "::set-output name=upload_url::${upload_url}"
       - name: Build rpm packages
         run: |
           python setup.py bdist_rpm
@@ -133,16 +134,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.get_upload_url.outputs.upload_url }}
-          asset_name: ${{ format('patchman-{0}-1.noarch.rpm', steps.get_version.outputs.version) }}
-          asset_path: ${{ format('dist/patchman-{0}-1.noarch.rpm', steps.get_version.outputs.version) }}
+          upload_url: ${{ env.upload_url }}
+          asset_name: ${{ format('patchman-{0}-1.noarch.rpm', env.version) }}
+          asset_path: ${{ format('dist/patchman-{0}-1.noarch.rpm', env.version) }}
           asset_content_type: application/x-rpm
       - name: Upload patchman-client rpm
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.get_upload_url.outputs.upload_url }}
-          asset_name: ${{ format('patchman-client-{0}-1.noarch.rpm', steps.get_version.outputs.version) }}
-          asset_path: ${{ format('dist/noarch/patchman-client-{0}-1.noarch.rpm', steps.get_version.outputs.version) }}
+          upload_url: ${{ env.upload_url }}
+          asset_name: ${{ format('patchman-client-{0}-1.noarch.rpm', env.version) }}
+          asset_path: ${{ format('dist/noarch/patchman-client-{0}-1.noarch.rpm', env.version) }}
           asset_content_type: application/x-rpm
