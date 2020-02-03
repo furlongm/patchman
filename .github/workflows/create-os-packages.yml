@@ -96,7 +96,7 @@ jobs:
       run: |
         export upload_url=$(</tmp/upload_url.txt)
         pwd
-        ls -l
+        ls -l /tmp
         echo ${upload_url}
         echo "::set-env name=upload_url::${upload_url}"
         echo "::set-output name=upload_url::${upload_url}"
