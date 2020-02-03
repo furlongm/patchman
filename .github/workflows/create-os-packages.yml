@@ -56,7 +56,8 @@ jobs:
         asset_content_type: application/vnd.debian.binary-package
   build-and-upload-rpm-assets:
     runs-on: ubuntu-latest
-    container: centos-latest
+    container:
+      image: centos-latest
     steps:
     - uses: actions/checkout@v2
       with:
@@ -82,7 +83,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ jobs.release-build-and-upload-deb-assets.steps.create_release.outputs.upload_url }}
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_name: ${{ format('patchman-{0}-1.noarch.rpm', steps.get_version.outputs.version) }}
         asset_path: ${{ format('dist/patchman-{0}-1.noarch.rpm', steps.get_version.outputs.version) }}
         asset_content_type: application/x-rpm
@@ -91,7 +92,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ jobs.release-build-and-upload-deb-assets.steps.create_release.outputs.upload_url }}
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_name: ${{ format('patchman-client-{0}-1.noarch.rpm', steps.get_version.outputs.version) }}
         asset_path: ${{ format('dist/noarch/patchman-client-{0}-1.noarch.rpm', steps.get_version.outputs.version) }}
         asset_content_type: application/x-rpm
