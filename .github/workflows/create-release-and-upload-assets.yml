@@ -12,7 +12,8 @@ jobs:
         with:
           fetch-depth: 0
           ref: master
-      - run: |
+      - name: git fetch --all
+        run: |
           git fetch --all
       - name: Create release
         id: create_release
@@ -32,8 +33,32 @@ jobs:
         with:
           name: upload_url.txt
           path: upload_url.txt
-  build-and-upload-deb-assets:
+  update-version-and-changelog:
     needs: create-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          ref: master
+      - name: Commit version and changelog to repo
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMIT_MSG: |
+            auto-commit: update version and changelog
+            skip-checks: true
+        run: |
+          git fetch --all
+          git config user.email furlongm@gmail.com
+          git config user.name 'Marcus Furlong'
+          echo "${{ github.ref }}" | cut -dv -f2 > VERSION.txt
+          git add VERSION.txt
+          gbp dch --auto --distribution=stable --new-version=$(cat VERSION.txt)-1 --commit
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+          git commit -m "${COMMIT_MSG}"
+          git push origin master
+  build-and-upload-deb-assets:
+    needs: update-version-and-changelog
     runs-on: ubuntu-latest
     container:
       image: debian:buster
@@ -51,11 +76,12 @@ jobs:
         with:
           fetch-depth: 0
           ref: master
-      - run: |
+      - name: git fetch --all
+        run: |
           git fetch --all
       - name: Get version
         run: |
-          export version=$(<VERSION.txt)
+          export version=$(echo "${{ github.ref }}" | cut -dv -f2)
           echo "::set-env name=version::${version}"
       - name: Download upload_url artifact
         uses: actions/download-artifact@v1
@@ -89,7 +115,7 @@ jobs:
           asset_path: ../${{ format('patchman-client_{0}-1_all.deb', env.version) }}
           asset_content_type: application/vnd.debian.binary-package
   build-and-upload-rpm-assets:
-    needs: create-release
+    needs: update-version-and-changelog
     runs-on: ubuntu-latest
     container:
       image: centos:7
@@ -104,11 +130,12 @@ jobs:
         with:
           fetch-depth: 0
           ref: master
-      - run: |
+      - name: git fetch --all
+        run: |
           git fetch --all
       - name: Get version
         run: |
-          export version=$(<VERSION.txt)
+          export version=$(echo "${{ github.ref }}" | cut -dv -f2)
           echo "::set-env name=version::${version}"
       - name: Download upload_url artifact
         uses: actions/download-artifact@v1
@@ -143,7 +170,7 @@ jobs:
           asset_path: ${{ format('dist/noarch/patchman-client-{0}-1.noarch.rpm', env.version) }}
           asset_content_type: application/x-rpm
   upload-package-to-pypi:
-    needs: create-release
+    needs: update-version-and-changelog
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
