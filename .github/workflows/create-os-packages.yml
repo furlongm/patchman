@@ -40,6 +40,7 @@ jobs:
     steps:
     - name: Install build dependencies
       run: |
+        apt update
         apt -y install python-setuptools debhelper dh-exec dh-python git-buildpackage
     - uses: actions/checkout@v2
       with:
