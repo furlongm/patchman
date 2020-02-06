@@ -17,14 +17,13 @@
 
 from __future__ import unicode_literals
 
-from django.conf.urls import url
+from django.urls import path
 
 from packages import views
 
 app_name = 'packages'
 
 urlpatterns = [
-    url(r'^$', views.package_list, name='package_list'),
-    url(r'^(?P<packagename>[_+-.\w]+)/$', views.package_detail,
-        name='package_detail'),
+    path('', views.package_list, name='package_list'),
+    path('<str:packagename>/', views.package_detail, name='package_detail'),
 ]
