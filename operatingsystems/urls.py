@@ -17,19 +17,17 @@
 
 from __future__ import unicode_literals
 
-from django.conf.urls import url
+from django.urls import path
 
 from operatingsystems import views
 
 app_name = 'operatingsystems'
 
 urlpatterns = [
-    url(r'^$', views.os_list, name='os_list'),
-    url(r'^groups/$', views.osgroup_list, name='osgroup_list'),
-    url(r'^(?P<os_id>[-.\w]+)/$', views.os_detail, name='os_detail'),
-    url(r'^(?P<os_id>[-.\w]+)/delete/$', views.os_delete, name='os_delete'),
-    url(r'^groups/(?P<osgroup_id>[-.\w]+)/$', views.osgroup_detail,
-        name='osgroup_detail'),
-    url(r'^groups/(?P<osgroup_id>[-.\w]+)/delete/$', views.osgroup_delete,
-        name='osgroup_delete'),
+    path('', views.os_list, name='os_list'),
+    path('<int:os_id>/', views.os_detail, name='os_detail'),
+    path('<int:os_id>/delete/', views.os_delete, name='os_delete'),
+    path('groups/', views.osgroup_list, name='osgroup_list'),
+    path('groups/<int:osgroup_id>/', views.osgroup_detail, name='osgroup_detail'),  # noqa
+    path('groups/<int:osgroup_id>/delete/', views.osgroup_delete, name='osgroup_delete'),  # noqa
 ]

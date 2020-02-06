@@ -17,7 +17,7 @@
 
 from __future__ import unicode_literals
 
-from django.conf.urls import url
+from django.urls import path
 from django.views.generic import RedirectView
 
 from util import views
@@ -25,6 +25,6 @@ from util import views
 app_name = 'util'
 
 urlpatterns = [
-    url(r'^$', RedirectView.as_view(pattern_name='util:dashboard', permanent=True)),  # noqa
-    url(r'^dashboard/$', views.dashboard, name='dashboard'),
+    path('', RedirectView.as_view(pattern_name='util:dashboard', permanent=True)),  # noqa
+    path('dashboard/', views.dashboard, name='dashboard'),
 ]
