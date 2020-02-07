@@ -1,5 +1,5 @@
 # Copyright 2012 VPAC, http://www.vpac.org
-# Copyright 2013-2016 Marcus Furlong <furlongm@gmail.com>
+# Copyright 2013-2020 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of Patchman.
 #
@@ -14,8 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
-
-from __future__ import unicode_literals
 
 import re
 from defusedxml.lxml import _etree as etree
@@ -109,7 +107,7 @@ def download_errata():
 def parse_errata_checksum(data):
     """ Parse the errata checksum and return the bz2 checksum
     """
-    for line in data.splitlines():
+    for line in data.decode('utf-8').splitlines():
         if line.endswith('errata.latest.xml.bz2'):
             return line.split()[0]
 

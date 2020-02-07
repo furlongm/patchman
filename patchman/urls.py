@@ -1,5 +1,5 @@
 # Copyright 2012 VPAC, http://www.vpac.org
-# Copyright 2013-2016 Marcus Furlong <furlongm@gmail.com>
+# Copyright 2013-2020 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of patchman
 #
@@ -14,8 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with  If not, see <http://www.gnu.org/licenses/>
-
-from __future__ import unicode_literals
 
 from django.conf.urls import include, handler404, handler500  # noqa
 from django.conf import settings
