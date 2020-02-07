@@ -17,15 +17,16 @@
 
 from __future__ import unicode_literals
 
-from django.urls import path
+from django.conf.urls import url
 
 from hosts import views
 
 app_name = 'hosts'
 
 urlpatterns = [
-    path('', views.host_list, name='host_list'),
-    path('<str:hostname>/', views.host_detail, name='host_detail'),
-    path('<str:hostname>/delete/', views.host_delete, name='host_delete'),
-    path('<str:hostname>/edit/', views.host_edit, name='host_edit'),
+    url(r'^$', views.host_list, name='host_list'),
+    url(r'^(?P<hostname>[-.\w]+)/$', views.host_detail, name='host_detail'),
+    url(r'^(?P<hostname>[-.\w]+)/delete/$', views.host_delete,
+        name='host_delete'),
+    url(r'^(?P<hostname>[-.\w]+)/edit/$', views.host_edit, name='host_edit'),
 ]
