@@ -112,9 +112,9 @@ def report_list(request):
 
 
 @login_required
-def report_detail(request, report_id):
+def report_detail(request, report):
 
-    report = get_object_or_404(Report, id=report_id)
+    report = get_object_or_404(Report, id=report)
 
     return render(request,
                   'reports/report_detail.html',
@@ -122,9 +122,9 @@ def report_detail(request, report_id):
 
 
 @login_required
-def report_process(request, report_id):
+def report_process(request, report):
 
-    report = get_object_or_404(Report, id=report_id)
+    report = get_object_or_404(Report, id=report)
     report.process()
 
     return render(request,
@@ -133,9 +133,9 @@ def report_process(request, report_id):
 
 
 @login_required
-def report_delete(request, report_id):
+def report_delete(request, report):
 
-    report = get_object_or_404(Report, id=report_id)
+    report = get_object_or_404(Report, id=report)
 
     if request.method == 'POST':
         if 'delete' in request.POST:
