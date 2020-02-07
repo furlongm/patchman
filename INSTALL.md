@@ -5,20 +5,20 @@ mysql or postgresql instead, see the database configuration section.
 
 
 ## Supported Install Options
-  - [Ubuntu 18.04](#ubuntu-1804-bionic)
+  - [Ubuntu 20.04](#ubuntu-2004-bionic)
   - [Debian 10](#debian-10-buster)
   - [CentOS 7](#centos-7)
   - [virtualenv + pip](#virtualenv--pip)
   - [Source](#source)
 
 
-### Ubuntu 18.04 (bionic)
+### Ubuntu 20.04 (focal)
 
 ```shell
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0412F522
-echo "deb https://repo.openbytes.ie/ubuntu bionic main" > /etc/apt/sources.list.d/patchman.list
+echo "deb https://repo.openbytes.ie/ubuntu focal main" > /etc/apt/sources.list.d/patchman.list
 apt update
-apt -y install python-patchman patchman-client
+apt -y install python3-patchman patchman-client
 patchman-manage createsuperuser
 ```
 
@@ -28,7 +28,7 @@ patchman-manage createsuperuser
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0412F522
 echo "deb https://repo.openbytes.ie/debian buster main" > /etc/apt/sources.list.d/patchman.list
 apt update
-apt -y install python-patchman patchman-client
+apt -y install python3-patchman patchman-client
 patchman-manage createsuperuser
 ```
 
@@ -54,8 +54,8 @@ patchman-manage createsuperuser
 TBD - not working yet
 
 ```shell
-apt -y install gcc libxml2-dev libxslt1-dev virtualenv python-dev zlib1g-dev  # (debian/ubuntu)
-yum -y install gcc libxml2-devel libxslt-devel python-virtualenv              # (centos/rhel)
+apt -y install gcc libxml2-dev libxslt1-dev virtualenv python3-dev zlib1g-dev  # (debian/ubuntu)
+yum -y install gcc libxml2-devel libxslt-devel python3-virtualenv              # (centos/rhel)
 mkdir /srv/patchman
 cd /srv/patchman
 virtualenv .
@@ -74,17 +74,18 @@ gunicorn patchman.wsgi -b 0.0.0.0:80
 1. Install dependencies
 
 ```shell
-apt -y install python-django-tagging python-django python-requests \
-python-django-extensions python-argparse python-defusedxml python-rpm python-debian \
-python-pygooglechart python-cracklib python-progressbar libapache2-mod-wsgi \
-python-djangorestframework apache2 python-colorama python-humanize liblzma-dev \
-python-magic python-lxml
+apt -y install -t buster-backports python3-django
+apt -y install python3-django-tagging python3-django-extensions
+python3-djangorestframework python3-defusedxml python3-lxml \
+python3-requests python3-rpm python3-debian \
+python3-colorama python3-humanize python3-magic \
+apache2 libapache2-mod-wsgi
 ```
 
 2. Install django-bootstrap3
 
 ```shell
-pip install django-bootstrap3
+pip3 install django-bootstrap3
 ```
 
 3. Clone git repo to e.g. /srv/patchman
@@ -152,7 +153,7 @@ To configure the mysql database backend:
 1. Ensure mysql-server and the python mysql bindings are installed:
 
 ```shell
-apt -y install default-mysql-server python-mysqldb python-pymysql
+apt -y install default-mysql-server python3-mysqldb
 ```
 
 2. Create database and users:
@@ -193,7 +194,7 @@ To configure the postgresql database backend:
 1. Ensure the postgresql server and the python postgres bindings are installed:
 
 ```shell
-apt -y install postgresql python-psycopg2
+apt -y install postgresql python3-psycopg2
 ```
 
 2. Create database and users:
@@ -311,14 +312,14 @@ Install Celery for realtime processing of reports from clients:
 #### Ubuntu / Debian
 
 ```shell
-apt -y install python-celery python-celery-common rabbitmq-server
+apt -y install python3-celery rabbitmq-server
 C_FORCE_ROOT=1 celery worker --loglevel=info -E -A patchman
 ```
 
 #### CentOS / RHEL
 
 ```shell
-yum -y install python-celery rabbitmq-server
+yum -y install python3-celery rabbitmq-server
 systemctl restart rabbitmq-server
 semanage port -a -t http_port_t -p tcp 5672
 C_FORCE_ROOT=1 celery worker --loglevel=info -E -A patchman
@@ -333,8 +334,8 @@ persistent over reboot.
 Memcached can optionally be run to reduce the load on the server.
 
 ```shell
-apt -y install memcached python-memcache   # (debian/ubuntu)
-yum -y install memcached python-memcached  # (centos/rhel)
+apt -y install memcached python3-memcache   # (debian/ubuntu)
+yum -y install memcached python3-memcached  # (centos/rhel)
 systemctl restart memcached
 ```
 

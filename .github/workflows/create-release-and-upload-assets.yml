@@ -50,7 +50,7 @@ jobs:
           git config user.name 'Marcus Furlong'
       - name: Install dependencies
         run: |
-          sudo apt -y install python-setuptools debhelper dh-exec dh-python git-buildpackage
+          sudo apt -y install python3-setuptools debhelper dh-exec dh-python git-buildpackage
       - name: Update repo version if required
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -143,14 +143,12 @@ jobs:
     needs: update-version-and-changelog
     runs-on: ubuntu-latest
     container:
-      image: centos:7
+      image: centos:8
     steps:
       - name: Install build dependencies
         run: |
-          yum -y install epel-release
-          yum -y install https://repo.ius.io/ius-release-el7.rpm
-          yum makecache
-          yum -y install rpm-build python-setuptools git222
+          dnf -y install epel-release
+          dnf -y install rpm-build python-setuptools git
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0

@@ -1,5 +1,5 @@
 # Copyright 2010 VPAC
-# Copyright 2016 Marcus Furlong <furlongm@gmail.com>
+# Copyright 2020 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of Patchman.
 #
@@ -16,9 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import unicode_literals
-
-from django.utils.six import text_type
 from django.utils.safestring import mark_safe
 from django.db.models.query import QuerySet
 from operator import itemgetter
@@ -43,7 +40,7 @@ class Filter(object):
         if isinstance(filters, QuerySet):
             f = {}
             for i in filters:
-                if isinstance(i, text_type):
+                if isinstance(i, str):
                     f[str(i)] = str(i)
                 else:
                     f[i.pk] = str(i)

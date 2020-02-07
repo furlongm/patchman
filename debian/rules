@@ -2,13 +2,14 @@
 # -*- makefile -*-
 
 clean::
-	rm -rf build MANIFEST dist .pybuild
+	find -name *.pyc -exec rm {} \;
+	rm -rf debian/python3-patchman build MANIFEST dist .pybuild patchman.egg-info .tox
 	dh_clean
 
 export PYBUILD_NAME=patchman
 
 %:
-	dh $@ --with python2 --buildsystem=pybuild
+	dh $@ --with python3 --buildsystem=pybuild
 
 override_dh_auto_test:
 	true

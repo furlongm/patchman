@@ -1,5 +1,5 @@
 # Copyright 2012 VPAC, http://www.vpac.org
-# Copyright 2013-2016 Marcus Furlong <furlongm@gmail.com>
+# Copyright 2013-2020 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of Patchman.
 #
@@ -14,8 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
-
-from __future__ import unicode_literals
 
 import re
 try:
@@ -34,7 +32,6 @@ from debian.deb822 import Packages
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
-from django.utils.six import text_type
 
 from packages.models import Package, PackageName, PackageString
 from arch.models import PackageArchitecture
@@ -134,7 +131,7 @@ def update_mirror_packages(mirror, packages):
 
 def get_primary_url(mirror_url, data):
 
-    if isinstance(data, text_type):
+    if isinstance(data, str):
         if data.startswith('Bad repo - not in list') or \
                 data.startswith('Invalid repo'):
             return None, None, None

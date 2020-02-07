@@ -1,4 +1,4 @@
-# Copyright 2019 Marcus Furlong <furlongm@gmail.com>
+# Copyright 2019-2020 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of Patchman.
 #
@@ -13,8 +13,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
-
-from __future__ import unicode_literals
 
 from django.apps import AppConfig
 

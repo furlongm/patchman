@@ -1,3 +1,10 @@
+patchman (2.0.0-1) stable; urgency=medium
+
+  [ Marcus Furlong ]
+  * python 3 / django 2.2 support
+
+ -- Marcus Furlong <furlongm@gmail.com>  Tue, 07 Feb 2020 04:19:57 +0000
+
 patchman (1.2.11-1) UNRELEASED; urgency=medium
 
   [ Bolol ]
