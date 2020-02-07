@@ -1,6 +1,7 @@
 # Django settings for patchman project.
 
 import os
+import site
 import sys
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -124,18 +125,24 @@ STATIC_ROOT = '/var/lib/patchman/static/'
 
 TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
-try:
-    from .local_settings import *  # noqa
-except ImportError:
-    if sys.prefix == '/usr':
-        conf_path = '/etc/patchman'
-    else:
-        conf_path = os.path.join(sys.prefix, 'etc/patchman')
-        # if conf_path doesn't exist, try ./etc/patchman
-        if not os.path.isdir(conf_path):
-            conf_path = './etc/patchman'
-    local_settings = os.path.join(conf_path, 'local_settings.py')
-    exec(compile(open(local_settings).read(), local_settings, 'exec'))
+if sys.prefix == '/usr':
+    conf_path = '/etc/patchman'
+else:
+    conf_path = os.path.join(sys.prefix, 'etc/patchman')
+    # if sys.prefix + conf_path doesn't exist, try ./etc/patchman (source)
+    if not os.path.isdir(conf_path):
+        conf_path = './etc/patchman'
+    # if ./etc/patchman doesn't exist, try site.getsitepackages() (pip)
+    if not os.path.isdir(conf_path):
+        try:
+            sitepackages = site.getsitepackages()
+        except AttributeError:
+            # virtualenv, try site-packages in sys.path
+            sp = 'site-packages'
+            sitepackages = [s for s in sys.path if s.endswith(sp)][0]
+        conf_path = os.path.join(sitepackages, 'etc/patchman')
+local_settings = os.path.join(conf_path, 'local_settings.py')
+exec(compile(open(local_settings).read(), local_settings, 'exec'))
 
 MANAGERS = ADMINS
 INSTALLED_APPS = DEFAULT_APPS + THIRD_PARTY_APPS + LOCAL_APPS
