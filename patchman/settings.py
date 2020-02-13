@@ -132,12 +132,12 @@ except ImportError:
     if sys.prefix == '/usr':
         conf_path = '/etc/patchman'
     else:
-        conf_path = sys.prefix + '/etc/patchman'
-    local_settings = conf_path + '/local_settings.py'
-    try:
-        exec(compile(open(local_settings).read(), local_settings, 'exec'))
-    except IOError:
-        pass
+        conf_path = os.path.join(sys.prefix, 'etc/patchman')
+        # if conf_path doesn't exist, try ./etc/patchman
+        if not os.path.isdir(conf_path):
+            conf_path = './etc/patchman'
+    local_settings = os.path.join(conf_path, 'local_settings.py')
+    exec(compile(open(local_settings).read(), local_settings, 'exec'))
 
 MANAGERS = ADMINS
 INSTALLED_APPS = DEFAULT_APPS + THIRD_PARTY_APPS + LOCAL_APPS
