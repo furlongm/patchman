@@ -5,6 +5,7 @@ protocol=1
 verbose=0
 debug=0
 report=0
+local_updates=0
 tags=''
 
 function usage {
@@ -35,6 +36,9 @@ function parseopts {
             ;;
         n)
             no_repo_check=1
+            ;;
+        u)
+            local_updates=1
             ;;
         r)
             cli_report=1
@@ -297,9 +301,9 @@ function get_repos {
             fi
             j=$(echo ${i} | sed -e "s#'${id}' '${name}'#'${name}' '${id}' '${priority}'#")
             redhat_repo=$(echo ${j} | grep -e "https://.*/XMLRPC.*")
-            if [ ${?} == 0 ] ; then
+            if [ ${?} == 0 ] || [ "${local_updates}" == "1" ] ; then
                 if [ ${verbose} == 1 ] ; then
-                    echo "Red Hat repo found, finding updates locally for ${id}"
+                    echo "Finding updates locally for ${id}"
                 fi
                 get_updates ${id}
             fi
