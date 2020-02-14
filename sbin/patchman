@@ -415,7 +415,7 @@ def toggle_host_hro(hosts=None, host_repos_only=True):
     else:
         toggle = "Unsetting"
     if hosts:
-        matching_hosts = get_hosts(hosts, '{0!s} {1!s}'.format(toggle, 'host_repos_only')
+        matching_hosts = get_hosts(hosts, '{0!s} {1!s}'.format(toggle, 'host_repos_only'))
         for host in matching_hosts:
             info_message.send(sender=None, text=str(host))
             host.host_repos_only = host_repos_only
@@ -430,8 +430,7 @@ def toggle_host_check_dns(hosts=None, check_dns=True):
     else:
         toggle = "Unsetting"
     if hosts:
-        matching_hosts = get_hosts(hosts)
-        matching_hosts = get_hosts(hosts, '{0!s} {1!s}'.format(toggle, 'check_dns')
+        matching_hosts = get_hosts(hosts, '{0!s} {1!s}'.format(toggle, 'check_dns'))
         for host in matching_hosts:
             info_message.send(sender=None, text=str(host))
             host.check_dns = check_dns
