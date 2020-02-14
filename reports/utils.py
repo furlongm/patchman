@@ -104,45 +104,50 @@ def process_updates(report, host):
     bug_updates = ''
     sec_updates = ''
     if report.bug_updates:
-        bug_updates = parse_updates(report.bug_updates)
-        add_updates(bug_updates, host, False)
+        bug_updates = parse_updates(report.bug_updates, False)
     if report.sec_updates:
-        sec_updates = parse_updates(report.sec_updates)
-        add_updates(sec_updates, host, True)
+        sec_updates = parse_updates(report.sec_updates, True)
+    updates = merge_updates(sec_updates, bug_updates)
+    add_updates(updates, host)
 
 
-def add_updates(updates, host, security):
+def merge_updates(sec_updates, bug_updates):
+    """ Merge security and non-security updates, removing duplicate
+        non-security updates if a security version exists
+    """
+    for u in sec_updates:
+        if u in bug_updates:
+            del(bug_updates[u])
+    return sec_updates + bug_updates
+
+
+def add_updates(updates, host):
     """ Add updates to a Host
     """
     ulen = len(updates)
-    if security:
-        extra = 'sec'
-    else:
-        extra = 'bug'
-
     if ulen > 0:
-        ptext = '{0!s} {1!s} updates'.format(str(host)[0:25], extra)
+        ptext = '{0!s} updates'.format(str(host)[0:25])
         progress_info_s.send(sender=None, ptext=ptext, plen=ulen)
-        for i, u in enumerate(updates):
-            update = process_update(host, u, security)
+
+        for i, (u, sec) in enumerate(updates.items):
+            update = process_update(host, u, sec)
             if update:
                 host.updates.add(update)
             progress_update_s.send(sender=None, index=i + 1)
 
 
-def parse_updates(updates_string):
+def parse_updates(updates_string, security):
     """ Parses updates string in a report and returns a sanitized version
+        specifying whether it is a security update or not
     """
-    updates = []
+    updates = {}
     ulist = updates_string.split()
     while ulist:
-        updates.append('{0!s} {1!s} {2!s}\n'.format(ulist[0],
-                                                    ulist[1],
-                                                    ulist[2]))
-        ulist.pop(0)
-        ulist.pop(0)
-        ulist.pop(0)
-
+        name = '{0!s} {1!s} {2!s}\n'.format(ulist[0],
+                                            ulist[1],
+                                            ulist[2])
+        del ulist[:3]
+        updates[name] = security
     return updates
 
 
