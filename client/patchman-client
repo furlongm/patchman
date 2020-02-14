@@ -61,7 +61,7 @@ function cleanup {
         echo "Debug: not deleting ${tmpfile_pkg} (packages)"
         echo "Debug: not deleting ${tmpfile_rep} (repos)"
         echo "Debug: not deleting ${tmpfile_sec} (security updates)"
-        echo "Debug: not deleting ${tmpfile_bug} (bugfix updates)"
+        echo "Debug: not deleting ${tmpfile_bug} (updates)"
     elif [ ${verbose} == 1 ] && [ ${debug} == 0 ] ; then
         echo "Deleting ${tmpfile_pkg}"
         echo "Deleting ${tmpfile_rep}"
@@ -260,11 +260,11 @@ function get_updates {
     yum -C --security list updates --disablerepo="*" --enablerepo="${1}" 2>&1 \
     | grep -v 'This system is not registered to Red Hat Subscription Management. You can use subscription-manager to register.' \
     | grep -v 'This system is receiving updates from Red Hat Subscription Management.' \
-    | sed '1,/Updated Packages/d' >> "${tmpfile_sec}"
-    yum -C --bugfixes list updates --disablerepo="*" --enablerepo="${1}" 2>&1 \
+    | sed '1,/[Available Upgrades|Updated Packages]/d' >> "${tmpfile_sec}"
+    yum -C list updates --disablerepo="*" --enablerepo="${1}" 2>&1 \
     | grep -v 'This system is not registered to Red Hat Subscription Management. You can use subscription-manager to register.' \
     | grep -v 'This system is receiving updates from Red Hat Subscription Management.' \
-    | sed '1,/Updated Packages/d' >> "${tmpfile_bug}"
+    | sed '1,/[Available Upgrades|Updated Packages]/d' >> "${tmpfile_bug}"
 }
 
 function get_repos {
