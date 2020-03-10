@@ -35,8 +35,8 @@ report() {
 		mkdir -p $DIR/$1
 
 		FILE=$DIR/$1/$(date +%Y%m%d)
-		DOMAIN=$(patchman -lh -H $1 | tail -n +3 | head -n -1 | awk 'NR==3' | awk -F ' : ' '{ print $2 }')
-		RECIPIENT=$(getConfig $DOMAIN recipient)
+		TAGS=$(patchman -lh -H $1 | tail -n +3 | head -n -1 | awk 'NR==11' | awk -F ' : ' '{ print $2 }')
+		RECIPIENT=$(getConfig $TAGS recipient)
 
 		# Creates the report
 		echo "<html>" > $FILE
