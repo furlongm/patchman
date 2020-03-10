@@ -56,7 +56,7 @@ report() {
 		echo "</table></div><br>" >> $FILE
 
 		echo "<div id=\"updates\"><table>" >> $FILE
-		patchman -u -H $1 | tail -n +3 | head -n -1 | awk 'BEGIN { print "<tr><th>Current Version</th><th>New Version</th><th>Type</th></tr>" }
+		patchman -u -H $1 | tail -n +3 | head -n -1 | sed 's/\x1b\[[0-9;]*m//g' |  awk 'BEGIN { print "<tr><th>Current Version</th><th>New Version</th><th>Type</th></tr>" }
 																 { print "<tr><td>"$1"</td><td>"$3"</td><td>"$4"</td></tr>" }' >> $FILE
 		echo "</table></div><br>" >> $FILE
 
@@ -66,7 +66,14 @@ report() {
 		echo "</html>" >> $FILE
 
 		# E-mails the report
-		mail -aContent-Type:text/html -s "[$1] Update Report" $RECIPIENT < $FILE
+		(
+			echo "From: ricardo.jeronimo@netcabo.pt" 
+			echo "To: $RECIPIENT"
+    			echo "Subject: [$1] Update Report"
+    			echo "Content-Type: text/html"
+    			echo
+    			cat $FILE
+		) | sendmail -t
 
 		# Deletes the file
 		if [ ! $KEEP ]; then
@@ -90,7 +97,7 @@ if [ $# -gt 0 ] && [[ $1 == -* ]]; then
 			;;
 			a)
 				HOSTS=()
-				HOSTS+=$(patchman -lh | tail -n +3 | awk 'NR%16==1' | awk -F '[.:]' '{ print $1 }' | sed -e 's/\\[0m\\[39m//g')
+				HOSTS+=$(patchman -lh | tail -n +3 | awk 'NR%16==1' | awk -F '[.:]' '{ print $1 }' | sed 's/\x1b\[[0-9;]*m//g')
 
 				for HOST in $HOSTS; do
 					report $HOST
