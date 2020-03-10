@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% load common bootstrap3 %}
+
+{% block extrahead %} {{ repos_form.media }} {% endblock %}
+
+{% block page_title %}OS Group - {{ osgroup }} {% endblock %}
+
+{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'operatingsystems:os_list' %}">Operating Systems</a></li><li><a href="{% url 'operatingsystems:osgroup_list' %}">OS Groups</a></li><li class="active">{{ osgroup }}</li>{% endblock %}
+
+{% block content_title %} OS Group - {{ osgroup }}{% endblock %}
+
+{% block content %}
+
+<ul class="nav nav-tabs">
+  <li class="active"><a data-toggle="tab" href="#osgroup_details">Details</a></li>
+  <li><a data-toggle="tab" href="#osgroup_oses">Operating Systems</a></li>
+  <li><a data-toggle="tab" href="#osgroup_repos">Repositories</a></li>
+</ul>
+
+<div class="tab-content">
+
+  <div class="tab-pane fade in active" id="osgroup_details">
+    <div class="well well-sm">
+      <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+        <tr>
+          <th>Name</th><td>{{ osgroup }}</td>
+        </tr>
+        <tr>
+          <th class="col-sm-6">Operating Systems in this OS Group</th><td class="col-sm-6">{{ osgroup.os_set.select_related.count }}</td>
+        </tr>
+      </table>
+      {% if user.is_authenticated and perms.is_admin %}
+        <a class="btn btn-primary btn-sm" role="button" href="{% url 'operatingsystems:osgroup_delete' osgroup.id %}">{% bootstrap_icon "trash" %} Delete this OS Group</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="tab-pane fade in" id="osgroup_oses">
+    <div class="well well-sm">
+      <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+        {% for repo in osgroup.os_set.select_related %}
+          <tr>
+            <td><a href="{{ repo.get_absolute_url }}">{{ repo }}</a></td>
+          </tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+
+  <div class="tab-pane fade in" id="osgroup_repos">
+    <div class="well well-sm">
+      {% if osgroup.repos.count == 0 %}
+        {{ osgroup }} has no Repositories</div>
+      {% else %}
+        {% gen_table osgroup.repos.select_related %}
+      {% endif %}
+      {% if user.is_authenticated and perms.is_admin %}
+        <div class="well well-sm">
+          <form action={{ request.path }} method="post">
+            {% csrf_token %}
+            {% bootstrap_form repos_form size='small' %}
+            <button type="submit" class="btn btn-primary btn-sm">{% bootstrap_icon "floppy-disk" %} Modify Repositories</button>
+          </form>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

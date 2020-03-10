@@ -32,13 +32,14 @@ django_setup()
 from datetime import date, datetime
 from tagging.models import TaggedItem
 
-from patchman.hosts.models import Host
-from patchman.packages.models import Package, PackageName, PackageUpdate
-from patchman.packages.utils import update_errata
-from patchman.repos.models import Repository
-from patchman.arch.models import PackageArchitecture, MachineArchitecture
-from patchman.reports.models import Report
-from patchman.util import print_nocr, create_pbar, update_pbar, set_verbosity
+from hosts.models import Host
+from packages.models import Package, PackageName, PackageUpdate
+from packages.utils import update_errata
+from repos.models import Repository
+from arch.models import PackageArchitecture, MachineArchitecture
+from reports.models import Report
+from util import print_nocr, create_pbar, update_pbar, \
+    set_verbosity, get_verbosity
 from patchman.signals import \
     info_message, warning_message, error_message, debug_message, \
     progress_info_s, progress_update_s
@@ -395,14 +396,56 @@ def diff_hosts(hosts):
         info_message.send(sender=None, text='\nNo Repo differences')
 
 
+def delete_hosts(hosts=None):
+    """ Delete a host or matching pattern of hosts
+    """
+    if hosts:
+        matching_hosts = get_hosts(hosts)
+        for host in matching_hosts:
+            text = 'Deleting host: {0!s}:'.format(host.hostname)
+            info_message.send(sender=None, text=text)
+            host.delete()
+
+
+def toggle_host_hro(hosts=None, host_repos_only=True):
+    """ Toggle host_repos_only for a host or matching pattern of hosts
+    """
+    if host_repos_only:
+        toggle = "Setting"
+    else:
+        toggle = "Unsetting"
+    if hosts:
+        matching_hosts = get_hosts(hosts, '{0!s} {1!s}'.format(toggle, 'host_repos_only'))
+        for host in matching_hosts:
+            info_message.send(sender=None, text=str(host))
+            host.host_repos_only = host_repos_only
+            host.save()
+
+
+def toggle_host_check_dns(hosts=None, check_dns=True):
+    """ Toggle check_dns for a host or matching pattern of hosts
+    """
+    if check_dns:
+        toggle = "Setting"
+    else:
+        toggle = "Unsetting"
+    if hosts:
+        matching_hosts = get_hosts(hosts, '{0!s} {1!s}'.format(toggle, 'check_dns'))
+        for host in matching_hosts:
+            info_message.send(sender=None, text=str(host))
+            host.check_dns = check_dns
+            host.save()
+
+
 def dns_checks(host=None):
     """ Check all hosts for reverse DNS mismatches, specify host for a single
         host
     """
     hosts = get_hosts(host, 'Checking rDNS')
     for host in hosts:
-        text = '{0!s}: '.format(str(host)[0:25].ljust(25))
-        print_nocr(text)
+        if get_verbosity():
+            text = '{0!s}: '.format(str(host)[0:25].ljust(25))
+            print_nocr(text)
         host.check_rdns()
 
 
@@ -490,12 +533,29 @@ def collect_args():
         '-lh', '--list-hosts', action='store_true',
         help='List all Hosts')
     parser.add_argument(
+        '-dh', '--delete-hosts', action='store_true',
+        help='Delete hosts, requires -H, matches substring patterns')
+    parser.add_argument(
         '-u', '--host-updates', action='store_true',
         help='Find Host updates')
     parser.add_argument(
         '-A', '--host-updates-alt', action='store_true',
         help='Find Host updates (alternative algorithm that may be faster \
         when there are many homogeneous hosts)')
+    hro_group = parser.add_mutually_exclusive_group()
+    hro_group.add_argument(
+        '-shro', '--set-host-repos-only', action='store_true',
+        help='Set host_repos_only, requires -H, matches substring patterns')
+    hro_group.add_argument(
+        '-uhro', '--unset-host-repos-only', action='store_true',
+        help='Unset host_repos_only, requires -H, matches substring patterns')
+    dns_group = parser.add_mutually_exclusive_group()
+    dns_group.add_argument(
+        '-sdns', '--set-check-dns', action='store_true',
+        help='Set check_dns, requires -H, matches substring patterns')
+    dns_group.add_argument(
+        '-udns', '--unset-check-dns', action='store_true',
+        help='Unset check_dns, requires -H, matches substring patterns')
     parser.add_argument(
         '-H', '--host',
         help='Only perform action on a specific Host (fqdn)')
@@ -545,6 +605,26 @@ def process_args(args):
     if args.list_hosts:
         list_hosts(args.host)
         return False
+    if args.delete_hosts:
+        delete_hosts(args.host)
+        showhelp = False
+        return False
+    if args.set_host_repos_only:
+        toggle_host_hro(args.host)
+        showhelp = False
+        return False
+    elif args.unset_host_repos_only:
+        toggle_host_hro(args.host, False)
+        showhelp = False
+        return False
+    if args.set_check_dns:
+        toggle_host_check_dns(args.host)
+        showhelp = False
+        return False
+    elif args.unset_check_dns:
+        toggle_host_check_dns(args.host, False)
+        showhelp = False
+        return False
     if args.diff:
         diff_hosts(args.diff)
         return False
@@ -588,6 +668,7 @@ def main():
     showhelp = process_args(args)
     if showhelp:
         parser.print_help()
+
 
 if __name__ == '__main__':
     main()

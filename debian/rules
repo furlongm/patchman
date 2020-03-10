@@ -10,3 +10,5 @@ export PYBUILD_NAME=patchman
 %:
 	dh $@ --with python2 --buildsystem=pybuild
 
+override_dh_auto_test:
+	true

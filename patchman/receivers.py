@@ -15,18 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from __future__ import print_function
+from __future__ import unicode_literals, print_function
 
-import os
 from colorama import init, Fore, Style
 
 from django.dispatch import receiver
 
-from patchman.util import create_pbar, update_pbar, get_verbosity
+from util import create_pbar, update_pbar, get_verbosity
 from patchman.signals import progress_info_s, progress_update_s, \
     info_message, warning_message, error_message, debug_message
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')
 from django.conf import settings
 
 init(autoreset=True)

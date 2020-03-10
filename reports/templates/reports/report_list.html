@@ -1,0 +1,7 @@
+{% extends "objectlist.html" %}
+
+{% block page_title %}Reports{% endblock %}
+
+{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'reports:report_list' %}">Reports</a></li>{% endblock %}
+
+{% block content_title %} Reports {% endblock %}

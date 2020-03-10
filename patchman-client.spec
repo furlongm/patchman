@@ -17,14 +17,14 @@ find . -mindepth 1 -delete
 cp -af %{SOURCEURL0}/. .
 
 %install
-mkdir -p %{buildroot}/usr/bin
+mkdir -p %{buildroot}/usr/sbin
 mkdir -p %{buildroot}/etc/patchman
-cp ./client/%{name} %{buildroot}/usr/bin
+cp ./client/%{name} %{buildroot}/usr/sbin
 cp ./client/%{name}.conf %{buildroot}/etc/patchman
 
 %files
 %defattr(755,root,root)
-/usr/bin/patchman-client
+/usr/sbin/patchman-client
 %config /etc/patchman/patchman-client.conf
 
 %changelog

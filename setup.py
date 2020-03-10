@@ -17,8 +17,6 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 import os
-import sys
-import re
 from setuptools import setup, find_packages
 
 with open('VERSION.txt', 'r') as v:
@@ -43,14 +41,15 @@ for dirpath, dirnames, filenames in os.walk('etc'):
             ['/etc/patchman', [os.path.join(dirpath, f) for f in filenames]]
         )
 
-for dirpath, dirnames, filenames in os.walk('media'):
+for dirpath, dirnames, filenames in os.walk('patchman/static'):
     # Ignore dirnames that start with '.'
     for i, dirname in enumerate(dirnames):
         if dirname.startswith('.'):
             del dirnames[i]
     if filenames:
         data_files.append(
-            ['/usr/share/patchman/' + dirpath, [os.path.join(dirpath, f) for f in filenames]]
+            ['/usr/share/' + dirpath,
+             [os.path.join(dirpath, f) for f in filenames]]
         )
 
 setup(
@@ -71,8 +70,9 @@ setup(
              'sbin/patchman-set-secret-key',
              'sbin/patchman-manage', ],
     long_description=long_description,
+    long_description_content_type='text/markdown',
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',
         'Framework :: Django',
         'Topic :: Internet :: WWW/HTTP :: WSGI :: Application',

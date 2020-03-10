@@ -1,3 +1,135 @@
+patchman (1.2.5-1) stable; urgency=medium
+
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Mon, 03 Feb 2020 05:54:04 +0000
+
+patchman (1.2.4-1) stable; urgency=medium
+
+  [ Marcus Furlong ]
+  * Update github actions
+
+ -- Marcus Furlong <furlongm@gmail.com>  Mon, 03 Feb 2020 05:39:43 +0000
+
+patchman (1.2.3-1) stable; urgency=medium
+
+  [ Marcus Furlong ]
+  * calculate checksum of compressed data
+
+  [ Tim Rightnour ]
+  * Add -k argument to delete host from commandline (#105)
+
+  [ Marcus Furlong ]
+  * reorg host deletion for consistency (#132)
+  * clarify host last update vs last report (#146)
+  * update instructions for buster
+  * convert repo links to https (#147)
+  * allow for missing local_settings
+  * fix sed error on Raspbian
+  * bump django minor version
+  * fix github actions
+
+ -- Marcus Furlong <furlongm@gmail.com>  Fri, 31 Jan 2020 09:17:29 +0000
+
+patchman (1.2.2-1) stable; urgency=medium
+
+  [ Tim Rightnour ]
+  * Patch for X_REAL_IP handling (#126)
+
+  [ Yannik Petersen ]
+  * Use djangos TimeZone aware timestamps (#125)
+
+  [ Marcus Furlong ]
+  * documentation updates (#129)
+  * add tags cli option
+  * add osgroup ordering by name
+  * use compressed xml for cefs in order to obtain all errata (#130)
+  * add checksum verification for CEFS (#131)
+
+ -- Marcus Furlong <furlongm@gmail.com>  Wed, 28 Aug 2019 04:32:17 +0000
+
+patchman (1.2.1-1) stable; urgency=medium
+
+  [ Marcus Furlong ]
+  * add failure output to client
+  * fix broken redirectview
+  * remove unneeded redirect to /
+  * set osgroup to null on delete
+  * strip surrounding whitespace from report elements
+  * allow httpd access to rabbit and memcache
+  * bump django version for rpm
+  * update installation docs
+  * update package installation instructions
+  * separate celery installation instructions
+  * update TODO
+  * update build instructions
+  * bump requirements for security fixes
+
+ -- Marcus Furlong <furlongm@gmail.com>  Thu, 22 Aug 2019 03:52:42 +0000
+
+patchman (1.2.0-1) stable; urgency=medium
+
+  [ Marcus Furlong ]
+  * djangorestframework / python2 support
+  * django-extensions / python2 fixes
+  * update logic to determine security repos
+  * convert to modern django layout
+  * celery 4 updates
+  * update supported installation targets
+  * convert to using app_config
+  * django2 compatibility
+  * used defusedxml instead of lxml
+  * remove settings modules from all files
+  * simplify yum xml parsing
+  * be consistent with httpresponse and redirect usage
+  * fix justification in progress bar
+
+ -- Marcus Furlong <furlongm@gmail.com>  Thu, 25 Jul 2019 04:50:32 +0000
+
+patchman (1.0.22-1) stable; urgency=medium
+
+  * additional fix for unicode literal breakage
+
+ -- Marcus Furlong <furlongm@gmail.com>  Fri, 19 Jul 2019 20:58:52 +0000
+
+patchman (1.0.21-2) stable; urgency=medium
+
+  [ Marcus Furlong ]
+  * use correct location for client in rpm spec
+  * use correct path for config file
+  * update installation docs
+  * use correct id for repo id
+  * update requirements
+  * use correct repo id var in all templates
+  * add unicode_literals to all files
+  * allow report processing
+  * update setup.py
+  * consistent argument ordering
+  * fix unicode_literal damage
+
+  [ Devin Christensen ]
+  * Pull report IP from X-Forwarded-For when present
+
+  [ Leon Koens ]
+  * Check for verbosity before printing
+
+ -- Marcus Furlong <furlongm@gmail.com>  Fri, 19 Jul 2019 20:29:50 +0000
+
+patchman (1.0.20-1) stable; urgency=medium
+
+  * update packages to remove default settings
+  * update installation docs
+  * remove unused file
+  * use correct path for client on debian
+  * use correct path for client on red hat
+  * handle sha1 as checksum type
+  * ignore case when checking rdns
+  * remove apostrophes from yum repo input
+  * lowercase hostnames and rdns from inception
+  * fix encoded spaces in yum urls
+
+ -- Marcus Furlong <furlongm@gmail.com>  Thu, 28 Feb 2019 04:20:25 +0000
+
 patchman (1.0.19-1) stable; urgency=medium
 
   * add build dependency for dh-exec

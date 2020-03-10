@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% load common bootstrap3 %}
+
+{% block page_title %}Host - {{ host }} {% endblock %}
+
+{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'hosts:host_list' %}">Hosts</a></li><li class="active">{{ host }}</li>{% endblock %}
+
+{% block content_title %} Host - {{ host }} {% endblock %}
+
+{% block content %}
+
+<ul class="nav nav-tabs">
+  <li class="active"><a data-toggle="tab" href="#host_details">Details</a></li>
+  <li><a data-toggle="tab" href="#host_updates">Updates Available</a></li>
+  <li><a data-toggle="tab" href="#host_repos">Repos</a></li>
+  <li><a data-toggle="tab" href="#host_packages">Packages</a></li>
+</ul>
+
+<div class="tab-content">
+  <div class="tab-pane fade in active" id="host_details">
+    <div class="well well-sm">
+      <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+        <tr><th>Hostname</th><td> {{ host.hostname }} </td></tr>
+        <tr><th>Domain</th><td> <a href="{% url 'hosts:host_list' %}?domain={{ host.domain.id }}">{{ host.domain }}</a> </td></tr>
+        <tr><th>Reporting IP Address</th><td> {{ host.ipaddress }} </td></tr>
+        <tr><th>Reverse DNS</th><td> {{ host.reversedns }} </td></tr>
+        <tr><th>OS</th><td> <a href="{{ host.os.get_absolute_url }}">{{ host.os }}</a> </td></tr>
+        <tr><th>OS Group</th><td> <a href="{{ host.os.osgroup.get_absolute_url }}">{{ host.os.osgroup }}</a> </td></tr>
+        <tr><th>Kernel</th><td> {{ host.kernel }} </td></tr>
+        <tr><th>Architecture</th><td> {{ host.arch }} </td></tr>
+        <tr>
+          <th>Tags</th>
+          <td>
+          {% load tagging_tags %}
+          {% tags_for_object host as tags %}
+          {% for tag in tags %}
+            <a href="{% url 'hosts:host_list' %}?tag={{ tag }}">{{ tag }}</a>
+          {% endfor %}
+          </td>
+        </tr>
+        <tr><th>Updated</th><td> {{ host.updated_at }} </td></tr>
+        <tr><th>Last Report</th><td> {{ host.lastreport }} </td></tr>
+        <tr><th>Updates Available</th><td> <a data-toggle="tab" href="{{ host.get_absolute_url }}#host_updates">{{ host.updates.count }}</a> </td></tr>
+        <tr><th>Reboot Required</th><td> {{ host.reboot_required }} </td></tr>
+        <tr><th>Packages Installed</th><td> <a data-toggle="tab" href="{{ host.get_absolute_url }}#host_packages">{{ host.packages.count}}</a> </td></tr>
+        <tr><th>Repos In Use</th><td>{% if host.host_repos_only %}Host Repos{% else %}Host and OS Group Repos{% endif %}</td></tr>
+        <tr>
+          <th>Last 3 reports</th>
+          <td>
+          {% for report in reports %}
+            <span class="label label-brick {% cycle 'bg-info' 'bg-success' %}">
+              <a href="{{ report.get_absolute_url}}">{{ report.created }} </a>
+            </span>
+          {% endfor %}
+          </td>
+        </tr>
+      </table>
+      {% if user.is_authenticated and perms.is_admin %}
+        <a class="btn btn-primary btn-sm" role="button" href="{% url 'hosts:host_delete' host.hostname %}">{% bootstrap_icon "trash" %} Delete this Host</a>
+        <a class="btn btn-primary btn-sm" role="button" href="{% url 'hosts:host_edit' host.hostname %}">{% bootstrap_icon "edit" %} Edit this Host</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="tab-pane fade in" id="host_updates">
+    <div class="well well-sm">
+      <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+        <thead>
+          <tr>
+            <th></th><th>Installed</th><th>Available</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for update in host.updates.select_related %}
+          <tr>
+            <td>
+            {% if update.security %}
+              <span class="secupdate">
+            {% else %}
+              <span class="bugupdate">
+            {% endif %}
+              &nbsp;</span>
+            </td>
+            <td>
+              <a href="{{ update.oldpackage.name.get_absolute_url }}"> {{ update.oldpackage }} </a>
+            </td>
+            <td>
+              <a href="{{ update.newpackage.name.get_absolute_url }}"> {{ update.newpackage }} </a>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="tab-pane fade in" id="host_repos">
+    <div class="well well-sm">
+      <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+        <thead>
+          <tr>
+            <th>Name</th><th>Type</th><th>Priority</th><th>Enabled</th><th>Security</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% if hostrepos %}
+          {% for hostrepo in hostrepos %}
+            <tr>
+              <td> <a href="{{ hostrepo.repo.get_absolute_url }}">{{ hostrepo.repo.name }}</a> </td>
+              <td>Host</td>
+              <td>{{ hostrepo.priority }}</td>
+              <td class="centered"> {% yes_no_img hostrepo.enabled %} </td>
+              <td class="centered"> {% yes_no_img hostrepo.repo.security %} </td>
+            </tr>
+          {% endfor %}
+        {% endif %}
+        {% with osrepos=host.os.osgroup.repos.select_related %}
+          {% if osrepos and not host.host_repos_only %}
+            {% for osrepo in osrepos %}
+              {% if osrepo.arch == host.arch %}
+                <tr>
+                  <td> <a href="{{ osrepo.get_absolute_url }}">{{ osrepo.name }}</a> </td>
+                  <td>OS Group</td>
+                  <td>N/A</td>
+                  <td class="centered"> {% yes_no_img osrepo.enabled %} </td>
+                  <td class="centered"> {% yes_no_img osrepo.security %} </td>
+                </tr>
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="tab-pane fade in" id="host_packages">
+    <div class="well well-sm">
+      <button class="btn btn-primary btn-sm" data-toggle="collapse" data-target="#packages">Show/Hide Installed Packages</button>
+      <div id="packages" class="collapse">
+        <div class="well">
+          {% for package in host.packages.select_related %}
+            <span class="label label-brick {% cycle 'bg-info' 'bg-success' %}">
+              <a href="{{ package.name.get_absolute_url }}"> {{ package }} </a>
+            </span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

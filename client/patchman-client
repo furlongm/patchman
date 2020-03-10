@@ -5,17 +5,19 @@ protocol=1
 verbose=0
 debug=0
 report=0
+local_updates=0
 tags=''
 
 function usage {
 
-    echo "$0 [-v] [-d] [-n] [-r] [-s SERVER] [-c FILE]"
+    echo "${0} [-v] [-d] [-n] [-r] [-s SERVER] [-c FILE]"
     echo "-v: verbose output (default is silent)"
     echo "-d: debug output"
     echo "-n: no repo check (required when used as an apt or yum plugin)"
     echo "-r: request a report from the server (default is no report)"
     echo "-s SERVER: web server address, e.g. https://patchman.example.com"
     echo "-c FILE: config file location (default is /etc/patchman/patchman-client.conf)"
+    echo "-t TAGS: comma-separated list of tags, e.g. -t www,dev"
     echo
     echo "Command line options override config file options."
     exit 0
@@ -23,8 +25,8 @@ function usage {
 
 function parseopts {
 
-    while getopts "dvns:r" opt; do
-        case $opt in
+    while getopts "vdnrs:c:t:" opt; do
+        case ${opt} in
         v)
             verbose=1
             ;;
@@ -35,14 +37,20 @@ function parseopts {
         n)
             no_repo_check=1
             ;;
+        u)
+            local_updates=1
+            ;;
         r)
             cli_report=1
             ;;
         s)
-            cli_server=$OPTARG
+            cli_server=${OPTARG}
             ;;
         c)
-            cli_conf=$OPTARG
+            cli_conf=${OPTARG}
+            ;;
+        t)
+            tags=${OPTARG}
             ;;
         *)
             usage
@@ -57,7 +65,7 @@ function cleanup {
         echo "Debug: not deleting ${tmpfile_pkg} (packages)"
         echo "Debug: not deleting ${tmpfile_rep} (repos)"
         echo "Debug: not deleting ${tmpfile_sec} (security updates)"
-        echo "Debug: not deleting ${tmpfile_bug} (bugfix updates)"
+        echo "Debug: not deleting ${tmpfile_bug} (updates)"
     elif [ ${verbose} == 1 ] && [ ${debug} == 0 ] ; then
         echo "Deleting ${tmpfile_pkg}"
         echo "Deleting ${tmpfile_rep}"
@@ -188,23 +196,34 @@ function get_host_data {
     host_kernel=$(uname -r | sed -e 's/\+/%2b/g')
     host_arch=$(uname -m)
 
-    os="unknown"
+    os='unknown'
 
     if [ -f /etc/os-release ] ; then
         . /etc/os-release
         if [ "${ID}" == "debian" ] ; then
-            release=$(cat /etc/debian_version)
+            os="Debian $(cat /etc/debian_version)"
+        elif [ "${ID}" == "raspbian" ] ; then
+            os="Raspbian $(cat /etc/debian_version)"
+        elif [ "${ID}" == "ubuntu" ] ; then
+            os="${PRETTY_NAME}"
+        elif [ "${ID}" == "centos" ] ; then
+            os="$(cat /etc/centos-release)"
+        elif [ "${ID}" == "rhel" ] ; then
+            os="$(cat /etc/redhat-release)"
+        elif [ "${ID}" == "fedora" ] ; then
+            os="${PRETTY_NAME}"
+        elif [[ "${ID}" =~ "suse" ]] ; then
+            os="${PRETTY_NAME}"
         else
-            release=${VERSION_ID}
+            os="${NAME} ${VERSION}"
         fi
-        os="${ID^} ${release}"
     else
-        releases="/etc/SuSE-release /etc/lsb-release /etc/debian_version /etc/fermi-release /etc/redhat-release /etc/fedora-release"
+        releases="/etc/SuSE-release /etc/lsb-release /etc/debian_version /etc/fermi-release /etc/redhat-release /etc/fedora-release /etc/centos-release"
         for i in ${releases} ; do
-            if [ -f $i ] ; then
+            if [ -f ${i} ] ; then
                 case "${i}" in
-                /etc/os-release)
-                    os=$(grep PRETTY_NAME ${i} | sed -e 's/PRETTY_NAME="\(.*\)"/\1/')
+                /etc/SuSE-release)
+                    os=$(grep -i suse ${i})
                     break
                     ;;
                 /etc/lsb-release)
@@ -223,12 +242,8 @@ function get_host_data {
                     os="Debian $(cat ${i})"
                     break
                     ;;
-                /etc/fermi-release|/etc/redhat-release|/etc/fedora-release)
+                /etc/fermi-release|/etc/redhat-release|/etc/fedora-release|/etc/centos-release)
                     os=$(cat ${i})
-                    break
-                    ;;
-                /etc/SuSE-release)
-                    os=$(grep -i suse ${i})
                     break
                     ;;
                 esac
@@ -249,11 +264,11 @@ function get_updates {
     yum -C --security list updates --disablerepo="*" --enablerepo="${1}" 2>&1 \
     | grep -v 'This system is not registered to Red Hat Subscription Management. You can use subscription-manager to register.' \
     | grep -v 'This system is receiving updates from Red Hat Subscription Management.' \
-    | sed '1,/Updated Packages/d' >> "${tmpfile_sec}"
-    yum -C --bugfixes list updates --disablerepo="*" --enablerepo="${1}" 2>&1 \
+    | sed '1,/[Available Upgrades|Updated Packages]/d' >> "${tmpfile_sec}"
+    yum -C list updates --disablerepo="*" --enablerepo="${1}" 2>&1 \
     | grep -v 'This system is not registered to Red Hat Subscription Management. You can use subscription-manager to register.' \
     | grep -v 'This system is receiving updates from Red Hat Subscription Management.' \
-    | sed '1,/Updated Packages/d' >> "${tmpfile_bug}"
+    | sed '1,/[Available Upgrades|Updated Packages]/d' >> "${tmpfile_bug}"
 }
 
 function get_repos {
@@ -273,7 +288,7 @@ function get_repos {
             priorities=$(sed -n -e "/^name/h; /priority *=/{ G; s/\n/ /; s/ity *= *\(.*\)/ity=\1/ ; s/\$releasever/${releasever}/ ; s/name=\(.*\)/'\1 ${host_arch}'/ ; p }" /etc/yum.repos.d/*.repo)
         fi
         # replace this with a dedicated awk or simple python script?
-        yum_repolist=$(yum repolist enabled --verbose 2>/dev/null | sed -e "s/:\? *([0-9]\+ more)$//g" -e "s/ ([0-9]\+$//g" -e "s/:\? more)$//g")
+        yum_repolist=$(yum repolist enabled --verbose 2>/dev/null | sed -e "s/:\? *([0-9]\+ more)$//g" -e "s/ ([0-9]\+$//g" -e "s/:\? more)$//g" -e "s/'//g" -e "s/%/%%/g")
         for i in $(echo "${yum_repolist}" | awk '{ if ($1=="Repo-id") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'"'"' "} if ($1=="Repo-name") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'" ${host_arch}'"' "} if ($1=="Repo-mirrors" || $1=="Repo-metalink:") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'"'"' "} if ($1=="Repo-baseurl" || $1=="Repo-baseurl:") { url=1; comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else { if (url==1) { if ($1==":") { comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else {url=0; print "";} } } }' | sed -e "s/\/'/'/g" | sed -e "s/ ' /' /") ; do
             id=$(echo ${i} | cut -d \' -f 2)
             name=$(echo ${i} | cut -d \' -f 4)
@@ -286,9 +301,9 @@ function get_repos {
             fi
             j=$(echo ${i} | sed -e "s#'${id}' '${name}'#'${name}' '${id}' '${priority}'#")
             redhat_repo=$(echo ${j} | grep -e "https://.*/XMLRPC.*")
-            if [ ${?} == 0 ] ; then
+            if [ ${?} == 0 ] || [ "${local_updates}" == "1" ] ; then
                 if [ ${verbose} == 1 ] ; then
-                    echo "Red Hat repo found, finding updates locally for ${id}"
+                    echo "Finding updates locally for ${id}"
                 fi
                 get_updates ${id}
             fi
@@ -302,7 +317,7 @@ function get_repos {
         if [ ${verbose} == 1 ] ; then
             echo 'Finding apt repos...'
         fi
-        IFS=$OLDIFS read -r osname shortversion <<<$(echo "${os}" | awk '{print $1,$2}' | cut -d . -f 1,2)
+        IFS=${OLDIFS} read -r osname shortversion <<<$(echo "${os}" | awk '{print $1,$2}' | cut -d . -f 1,2)
         repo_string="'deb\' \'${osname} ${shortversion} ${host_arch} repo at"
         repos=$(apt-cache policy | grep -E "[0-9]{1,5} http(s)?:" | grep -v Translation | sed -e "s/^ *//g" -e "s/ *$//g" | cut -d " " -f 1,2,3,4)
         dist_repos=$(echo "${repos}" | grep -v -e "Packages$")
@@ -317,12 +332,12 @@ function get_repos {
             echo 'Finding zypper repos...'
         fi
         enabled_repos=$(zypper --no-refresh lr | tail -n +5 | cut -d "|" -f 1,4 | grep "Yes" | cut -d "|" -f 1 | sed -e "s/ //")
-        for i in $enabled_repos ; do
+        for i in ${enabled_repos} ; do
             enabled[i]="true"
         done
         let r=0
         for i in $(zypper --no-refresh lr -u --details | tail -n +5 | cut -d "|" -f 2,3,7,9 | sed -e "s/ *|/ ${host_arch} |/" -e "s/^ /'/g" -e "s/ *| */' '/g" -e "s/ *$/'/g") ; do
-            let r=$r+1
+            let r=${r}+1
             if [ "${enabled[${r}]}" == "true" ] ; then
                 echo \'rpm\' ${i} >> "${tmpfile_rep}"
             fi
@@ -389,6 +404,12 @@ function post_data {
     fi
 
     result=$(eval ${post_command})
+    retval=${?}
+
+    if [ ! ${retval} -eq 0 ] ; then
+        echo 'Failed to upload report.'
+        exit ${retval}
+    fi
 
     if [ ${report} == 1 ] ; then
         if [ ! -z "${result}" ] ; then

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% load common bootstrap3 %}
+
+{% block page_title %}Mirror - {{ mirror }}{% endblock %}
+
+{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'repos:repo_list' %}">Repositories</a></li><li><a href="{% url 'repos:mirror_list' %}">Mirrors</a></li><li class="active">{{ mirror }}</li>{% endblock %}
+
+{% block content_title %} Mirror - {{ mirror }} {% endblock %}
+
+{% block content %}
+
+<div class="well well-sm">
+  <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+    <tr><th>Repo</th><td> <a href="{{ mirror.repo.get_absolute_url }}">{{ mirror.repo }}</a> </td></tr>
+    <tr><th>URL</th><td> <a href="{{ mirror.url }}">{{ mirror.url }}</a> </td></tr>
+    <tr><th>Packages</th><td> {{ mirror.packages.count }} </td></tr>
+    <tr><th>Enabled</th><td> {% yes_no_img mirror.enabled 'Enabled' 'Not Enabled' %} </td></tr>
+    <tr><th>Refresh</th><td> {% yes_no_img mirror.refresh 'True' 'False' %} </td></tr>
+    <tr><th>Mirrorlist/Metalink</th><td> {% yes_no_img mirror.mirrorlist 'True' 'False' %} </td></tr>
+    <tr><th>Last Access OK</th><td> {% yes_no_img mirror.last_access_ok 'True' 'False' %} </td></tr>
+    <tr><th>Fail Count</th><td> {{ mirror.fail_count }} </td></tr>
+    <tr><th>Timestamp</th><td> {{ mirror.timestamp }} </td></tr>
+    <tr><th>Checksum</th><td> {{ mirror.file_checksum }} </td></tr>
+  </table>
+  {% if user.is_authenticated and perms.is_admin %}
+    <a class="btn btn-primary btn-sm" role="button" href="{% url 'repos:mirror_delete' mirror.id %}">{% bootstrap_icon "trash" %} Delete this Mirror</a>
+    <a class="btn btn-primary btn-sm" role="button" href="{% url 'repos:mirror_edit' mirror.id %}">{% bootstrap_icon "edit" %} Edit this Mirror</a>
+  {% endif %}
+</div>
+
+{% endblock %}

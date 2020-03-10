@@ -14,4 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from patchman.receivers import *
+from __future__ import unicode_literals, absolute_import
+
+from .receivers import *  # noqa

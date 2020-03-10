@@ -14,3 +14,5 @@
 * Dockerfile/Dockerimage
 * compressed reports
 * modularity support
+* add cronjobs to built packages
+* install celery/rabbit/memcache with packages

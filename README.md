@@ -10,7 +10,7 @@ for linux hosts.
 [![](https://raw.githubusercontent.com/furlongm/patchman/gh-pages/screenshots/dashboard.png)](https://github.com/furlongm/patchman/tree/gh-pages/screenshots)
 
 
-## How does it work?
+## How does Patchman work?
 
 Patchman clients send a list of installed packages and enabled repositories to
 the Patchman server. The Patchman server updates its package list for each
@@ -29,50 +29,10 @@ what updates are available for each host.
 time packages are installed or removed on a host.
 
 
-## Source
+## Installation
 
-The current source code is available on github:
-
-   https://github.com/furlongm/patchman
-
-
-## Dependencies
-
-### Server-side dependencies
-
-
-```
-python-django
-python-django-tagging
-python-django-extensions
-python-django-bootstrap3
-python-djangorestframework
-python-debian
-python-rpm
-python-progressbar
-python-lxml
-python-argparse
-python-requests
-python-humanize
-```
-
-The server can optionally make use of celery to asynchronously process the
-reports sent by hosts.
-
-
-### Client-side dependencies
-
-The client-side dependencies are kept to a minimum. `rpm` and `dpkg` are
-required to report packages, `yum`, `dnf`, `zypper` and/or `apt` are required
-to report repositories. These packages are normally installed by default on
-most systems.
-
-rpm-based OS's can tell if a reboot is required to install a new kernel by
-looking at `uname -r` and comparing it to the highest installed kernel version.
-
-deb-based OS's do not always change the kernel version when a kernel update is
-installed, so the `update-notifier-common` package can optionally be installed
-to enable this functionality.
+See [the installation guide](https://github.com/furlongm/patchman/blob/master/INSTALL.md)
+for installation options.
 
 
 ## Usage
@@ -126,6 +86,45 @@ optional arguments:
                         meier.de/
 ```
 
+## Dependencies
+
+### Server-side dependencies
+
+
+```
+python-django
+python-django-tagging
+python-django-extensions
+python-django-bootstrap3
+python-djangorestframework
+python-debian
+python-rpm
+python-progressbar
+python-lxml
+python-defusedxml
+python-argparse
+python-requests
+python-humanize
+```
+
+The server can optionally make use of celery to asynchronously process the
+reports sent by hosts.
+
+
+### Client-side dependencies
+
+The client-side dependencies are kept to a minimum. `rpm` and `dpkg` are
+required to report packages, `yum`, `dnf`, `zypper` and/or `apt` are required
+to report repositories. These packages are normally installed by default on
+most systems.
+
+deb-based OS's do not always change the kernel version when a kernel update is
+installed, so the `update-notifier-common` package can optionally be installed
+to enable this functionality. rpm-based OS's can tell if a reboot is required
+to install a new kernel by looking at `uname -r` and comparing it to the
+highest installed kernel version, so no extra packages are required on those
+OS's.
+
 
 ## Concepts
 
@@ -141,7 +140,7 @@ and Mirrors.
 A Host is a single host, e.g. test01.example.org.
 
 ### Operating System
-A Host runs an Operating System, e.g. CentOS 7.1, Debian 8.4, Ubuntu 16.04
+A Host runs an Operating System, e.g. CentOS 7.7, Debian 10.1, Ubuntu 18.04
 
 ### Package
 A Package is a package that is either installed on a Host, or is available to
@@ -165,25 +164,25 @@ updates, see the Erratum section below.
 ### Report
 A Host creates a Report using `patchman-client`. This Report is sent to the
 Patchman server. The Report contains the Host's Operating System, and lists
-of the installed Packages and enabled Repositories on a Host. The Patchman
+of the installed Packages and enabled Repositories on the Host. The Patchman
 server processes and records the list of Packages and Repositories contained in
 the Report.
 
 ### Operating System Group (optional)
-An OSGroup is a collection of OS's. For example, an OSGroup named "Debian 8"
+An OSGroup is a collection of OS's. For example, an OSGroup named "Ubuntu 18.04"
 would be comprised of the following OS's:
 
 ```
-Debian 8.0
-Debian 8.1
-Debian 8.4
+Ubuntu 18.04.1
+Ubuntu 18.04.2
+Ubuntu 18.04.5
 ```
 
 Likewise, an OSGroup named "CentOS 7" would be made up of the following OS's:
 
 ```
-CentOS 7.0
-CentOS 7.2.1511
+CentOS 7.5
+CentOS 7.7.1511
 ```
 
 Repositories can be associated with an OSGroup, or with the Host itself. If the

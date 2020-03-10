@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% load bootstrap3 %}
+
+{% block page_title %}Login{% endblock %}
+
+{% block breadcrumbs %}{% endblock %}
+
+{% block content %}
+
+<div class="panel-group panel-primary">
+  <div class="panel-heading">Please enter your username and password to login.</div>
+    <div class="panel-body">
+      {% if form.errors %}
+        <div class="well well-sm">Your username and password didn't match. Please try again.</div>
+      {% endif %}
+      {% if next and user.is_authenticated %}
+          <div class="well well-sm">Your account doesn't have access to this page. To proceed,
+          please login with an account that has access.</div>
+      {% endif %}
+      <div class="well well-sm">
+        <form method="post" action="{% url 'login' %}">
+          {% csrf_token %}
+          <div class="input-group">
+            <input class="form-control input-sm" placeholder="Username" id="id_username" name="username" type="text" maxlength="254">
+            <input class="form-control input-sm" placeholder="Password" id="id_password" name="password" type="password">
+	    <br /><br />
+            <button class="btn btn-primary btn-sm" type="submit">{% bootstrap_icon "user" %} Login</button>
+            <input type="hidden" name="next" value="{{ next }}" />
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+  document.getElementById('id_username').focus()
+</script>
+
+{% endblock %}
