@@ -17,26 +17,16 @@ getConfig() {
 }
 
 report() {
-	if [ ! -f $CONF ]; then
-		echo "ERROR: Configuration file not found."
-		exit
-	fi
-
-	DIR=$(getConfig General dir)
-	KEEP=$(getConfig General keep)
-
-	# Gets the number of updates available for the host
-	UPDATES=$(patchman -lh -H $1 | tail -n +3 | head -n -1 | awk 'NR==10' | awk -F ' : ' '{ print $2 }')
-
+	UPDATES=$(patchman -lh -H $1 | tail -n +3 | head -n -1 | awk 'NR==10' | awk -F ' : ' '{ print $2 }')			# Gets the number of updates available for the host
+	
 	if [ -z $UPDATES ]; then
 		echo "ERROR: Hostname not found."
 	elif [ $UPDATES -gt 0 ]; then
-		# Creates the directory where the e-mail file will be stored, if it doesn't exist
-		mkdir -p $DIR/$1
-
-		FILE=$DIR/$1/$(date +%Y%m%d)
-		TAGS=$(patchman -lh -H $1 | tail -n +3 | head -n -1 | awk 'NR==11' | awk -F ' : ' '{ print $2 }')
+		TAGS=$(patchman -lh -H $1 | tail -n +3 | head -n -1 | awk 'NR==11' | awk -F ' : ' '{ print $2 }')			# Gets the host's tags to determine the recipient
 		RECIPIENT=$(getConfig $TAGS recipient)
+		FILE=$DIR/$TAGS/$1-$(date +%Y%m%d).html
+		
+		mkdir -p $(echo $FILE | sed 's|\(.*\)/.*|\1|')			# Creates the directory where the e-mail file will be stored, if it doesn't exist
 
 		# Creates the report
 		echo "<html>" > $FILE
@@ -57,7 +47,7 @@ report() {
 
 		echo "<div id=\"updates\"><table>" >> $FILE
 		patchman -u -H $1 | tail -n +3 | head -n -1 | sed 's/\x1b\[[0-9;]*m//g' |  awk 'BEGIN { print "<tr><th>Current Version</th><th>New Version</th><th>Type</th></tr>" }
-																 { print "<tr><td>"$1"</td><td>"$3"</td><td>"$4"</td></tr>" }' >> $FILE
+																								{ print "<tr><td>"$1"</td><td>"$3"</td><td>"$4"</td></tr>" }' >> $FILE
 		echo "</table></div><br>" >> $FILE
 
 		echo "<p>Please contact your System Administrator in order to schedule the updates.</p>" >> $FILE
@@ -67,7 +57,7 @@ report() {
 
 		# E-mails the report
 		(
-			echo "From: ricardo.jeronimo@netcabo.pt" 
+			echo "From: test@example.com" 
 			echo "To: $RECIPIENT"
     			echo "Subject: [$1] Update Report"
     			echo "Content-Type: text/html"
@@ -89,22 +79,41 @@ report() {
 # Checks if there are any parameters and if they start with "-"
 if [ $# -gt 0 ] && [[ $1 == -* ]]; then
 	CONF="/etc/patchman/patchman-email.conf"
-
-	while getopts 'haH:' arg; do
+	
+	while getopts 'haHT:' arg; do
 		case $arg in
 			h)
 				usage
 			;;
 			a)
-				HOSTS=()
-				HOSTS+=$(patchman -lh | tail -n +3 | awk 'NR%16==1' | awk -F '[.:]' '{ print $1 }' | sed 's/\x1b\[[0-9;]*m//g')
+				if [ ! -f $CONF ]; then
+					echo "ERROR: Configuration file not found."
+					exit
+				else
+					DIR=$(getConfig General dir)
+					KEEP=$(getConfig General keep)
+					
+					HOSTS=()
+					HOSTS+=$(patchman -lh | tail -n +3 | awk 'NR%16==1' | awk -F '[.:]' '{ print $1 }' | sed 's/\x1b\[[0-9;]*m//g')
 
-				for HOST in $HOSTS; do
-					report $HOST
-				done
+					for HOST in $HOSTS; do
+						report $HOST
+					done
+				fi
 			;;
 			H)
-				report ${OPTARG}
+				if [ ! -f $CONF ]; then
+					echo "ERROR: Configuration file not found."
+					exit
+				else
+					DIR=$(getConfig General dir)
+					KEEP=$(getConfig General keep)
+					
+					report ${OPTARG}
+				fi
+			;;
+			T)
+				# TODO: Create reports for given tag
 			;;
 			*)
 				usage
