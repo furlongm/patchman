@@ -12,9 +12,10 @@ Make sure Postfix is up and running.
 
 Usage:
 ----------------
-patchman-email [-h] [-a] [-H hostname]
+patchman-email [-a] [-H hostname] [-T tag] [-h]
+-a: E-mails all recipients with available updates
+-H hostname: E-mails recipient with all available updates for given host
+-T tag: E-mails recipient with all available updates for given tag
 -h: Shows this help message and exits
--a: E-mails the available updates to all recipients
--H hostname: E-mails the hostname's available updates to the recipient
 
 For best effect, add a Cron job.
