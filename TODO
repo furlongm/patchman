@@ -9,6 +9,6 @@
 * check for unused repos
 * suggest names for repos with the same checksum
 * helper script to change paths (e.g. /usr/lib/python3/dist-packages/patchman)
-* Dockerfile/Dockerimage
+* Dockerimage
 * compressed reports
 * modularity support
