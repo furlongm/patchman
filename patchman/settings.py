@@ -93,6 +93,7 @@ LOCAL_APPS = [
     'repos.apps.ReposConfig',
     'reports.apps.ReportsConfig',
     'util.apps.UtilConfig',
+    'patchman.apps.PatchmanConfig',
 ]
 
 REST_FRAMEWORK = {
