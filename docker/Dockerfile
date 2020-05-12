@@ -19,7 +19,8 @@ RUN apk --no-cache add --update libmagic && \
         django-environ \
         psycopg2 \
         gunicorn \
-        whitenoise==3.3.1
+        whitenoise==3.3.1 && \
+    apk del .build-deps
 
 COPY ./local_settings.py /usr/local/etc/patchman/
 WORKDIR /srv/patchman
