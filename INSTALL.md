@@ -322,6 +322,7 @@ dnf -y install python3-celery redis python3-redis
 systemctl restart redis-server
 semanage port -a -t http_port_t -p tcp 6379
 C_FORCE_ROOT=1 celery worker --loglevel=info -b redis://127.0.0.1:6379/0 -E -A patchman
+
 ```
 
 Add the last command to an initscript (e.g. /etc/rc.local) to make celery
