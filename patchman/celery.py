@@ -17,8 +17,8 @@
 import os
 from celery import Celery
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')  # noqa
-from django.conf import settings
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')
+from django.conf import settings  # noqa
 
 
 app = Celery('patchman')
