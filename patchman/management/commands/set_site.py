@@ -17,7 +17,7 @@ class Command(BaseCommand):
         try:
             Site.objects.filter(pk=settings.SITE_ID).update(
                 name=options['site_name'], domain=options['site_name'])
-            if options['claer_cache']:
+            if options['clear_cache']:
                 Site.objects.clear_cache()
         except Exception as e:
             raise CommandError('Failed to update Site name', str(e))
