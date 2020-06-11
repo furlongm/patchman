@@ -1,5 +1,7 @@
 # Django settings for patchman project.
 
+import os
+
 DEBUG = False
 
 ADMINS = (
@@ -21,15 +23,14 @@ DATABASES = {
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
-TIME_ZONE = 'America/New_York'
+TIME_ZONE = 'UTC'
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
 LANGUAGE_CODE = 'en-us'
 
 # Create a unique string here, and don't share it with anybody.
-# TODO replace this with random SECRET_KEY
-SECRET_KEY = 'c+g(8rw(rrvx&v2f!ugim9x*c=-t-k+7y1vfq-nj*nk@(u&mk5'
+SECRET_KEY = os.environ['SECRET_KEY']
 
 # Add the IP addresses that your web server will be listening on,
 # instead of '*'

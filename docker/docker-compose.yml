@@ -4,27 +4,25 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    # TODO remove sleep and use wait-for-mysql script or mysql ping command instead
-    command: bash -c "sleep 10 && patchman-manage makemigrations && patchman-manage migrate --run-syncdb && patchman-manage collectstatic --noinput"
-    depends_on:
-      - "database"
-    expose:
-      - '8080'
+    entrypoint: ["/bin/bash", "/patchman-start.sh"]
+    environment:
+      SECRET_KEY: 'PLEASE_CHANGE_ME_TO_UNIQUE_SECURE_SECRET_KEY'
+    ports:
+      - '80:80'
     volumes:
-      - ./local_settings.py:/etc/patchman/local_settings.py
-      - ./mysql.cnf:/etc/mysql/conf.d/mysql.cnf
+      - ./files/patchman-start.sh:/patchman-start.sh
+      - ./files/local_settings.py:/etc/patchman/local_settings.py
+      - ./files/patchman.conf:/etc/apache2/conf-available/patchman.conf
+
   database:
     image: mysql:5.7
     restart: always
     command: --init-file /init.sql
     environment:
-      MYSQL_ROOT_PASSWORD: 'changeme'
-    ports:
-      - '3306:3306'
-    expose:
-      - '3306'
+      MYSQL_ROOT_PASSWORD: 'PLEASE_CHANGE_ME_TO_UNIQUE_SECURE_PASSWORD'
     volumes:
-      - ./init.sql:/init.sql
+      - ./files/init.sql:/init.sql
       - my-db:/var/lib/mysql
+
 volumes:
   my-db:

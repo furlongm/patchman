@@ -2,7 +2,6 @@ FROM ubuntu:18.04
 
 # Set DEBIAN_FRONTEND env variable to suppress prompt for tzdata package install
 ENV DEBIAN_FRONTEND=noninteractive
-ENV ADMIN_EMAIL=admin@example.com
 
 RUN apt-get update && \
     apt-get install -y gnupg2 ca-certificates && \
@@ -11,10 +10,10 @@ RUN apt-get update && \
     apt-get update && \
     apt-get -y install \
         python-mysqldb \
-        python-pymysql && \
+        python-pymysql \
+        mysql-client-5.7 && \
     apt-get -y install \
         python-patchman \
-        patchman-client && \
-    patchman-manage createsuperuser --username admin --email ${ADMIN_EMAIL} --noinput
+        patchman-client
 
-ENTRYPOINT ["/bin/bash"]
+EXPOSE 80
