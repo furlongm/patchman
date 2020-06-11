@@ -4,15 +4,16 @@ FROM ubuntu:18.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
-    && apt-get install -y gnupg2 ca-certificates \
+    && apt-get install -y --no-install-recommends gnupg2 ca-certificates \
     && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0412F522 \
     && echo "deb https://repo.openbytes.ie/ubuntu bionic main" > /etc/apt/sources.list.d/patchman.list \
     && apt-get update \
-    && apt-get -y install \
+    && apt-get install -y --no-install-recommends \
         python-mysqldb \
         python-pymysql \
         mysql-client-5.7 \
-    && apt-get -y install \
+        python-magic \
+    && apt-get install -y --no-install-recommends \
         python-patchman \
         patchman-client \
     && apt-get clean \
