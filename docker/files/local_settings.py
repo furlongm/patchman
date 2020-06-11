@@ -17,7 +17,7 @@ DATABASES = {
        'HOST': 'database',
        'PORT': '3306',
        'STORAGE_ENGINE': 'INNODB',
-       'CHARSET' : 'utf8'
+       'CHARSET': 'utf8'
    }
 }
 
