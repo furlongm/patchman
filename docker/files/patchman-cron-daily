@@ -1,0 +1,1 @@
+33 6 * * * patchman -a >> /var/log/patchman.log 2>&1
