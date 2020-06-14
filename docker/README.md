@@ -1,5 +1,9 @@
 # How to use this docker-compose
 
+## Define unique SECRET_KEY
+
+Change value for variable `SECRET_KEY` in file `files/local_settings.py`
+
 ## Run the docker compose
 
 ```

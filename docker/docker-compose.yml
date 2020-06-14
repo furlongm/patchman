@@ -5,8 +5,6 @@ services:
       context: .
       dockerfile: Dockerfile
     entrypoint: ["/bin/bash", "/patchman-start.sh"]
-    environment:
-      SECRET_KEY: 'PLEASE_CHANGE_ME_TO_UNIQUE_SECURE_SECRET_KEY'
     ports:
       - '80:80'
     volumes:

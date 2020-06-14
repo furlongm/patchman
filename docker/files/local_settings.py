@@ -30,7 +30,7 @@ TIME_ZONE = 'UTC'
 LANGUAGE_CODE = 'en-us'
 
 # Create a unique string here, and don't share it with anybody.
-SECRET_KEY = os.environ['SECRET_KEY']
+SECRET_KEY = 'PLEASE_CHANGE_ME_TO_UNIQUE_SECURE_SECRET_KEY'
 
 # Add the IP addresses that your web server will be listening on,
 # instead of '*'
