@@ -69,8 +69,7 @@ jobs:
             auto-commit to update debian changelog
             skip-checks: true
         run: |
-          gbp dch --new-version=$(cat VERSION.txt)-1 --commit-msg="${COMMIT_MSG}"
-          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+          gbp dch --new-version=$(cat VERSION.txt)-1 --commit --commit-msg="${COMMIT_MSG}"
           git push origin master
   build-and-upload-deb-assets:
     needs: update-version-and-changelog
@@ -111,13 +110,13 @@ jobs:
       - name: Build deb packages
         env:
           COMMIT_MSG: |
-            auto-commit to update version
+            auto-commit
             skip-checks: true
         run: |
           echo "${{ github.ref }}" | cut -dv -f2 > VERSION.txt
           git add VERSION.txt
           git diff --quiet && git diff --staged --quiet || git commit -m "${COMMIT_MSG}"
-          gbp dch --new-version=$(cat VERSION.txt)-1 --commit-msg="${COMMIT_MSG}"
+          gbp dch --new-version=$(cat VERSION.txt)-1 --commit --commit-msg="${COMMIT_MSG}"
           gbp buildpackage --git-upstream-tree=${{ github.ref }} -uc -us
       - name: Upload python-patchman deb
         uses: actions/upload-release-asset@v1.0.1
