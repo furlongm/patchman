@@ -1,3 +1,48 @@
+patchman (1.2.9-1) UNRELEASED; urgency=medium
+
+  [ Bolol ]
+  * use full path for patchman-client (#174)
+
+  [ Marcus Furlong ]
+  * update build process
+  * use correct copyright file format
+  * migrate to django.urls.path instead of django.conf.urls.url
+  * add cli option to toggle host_repos_only/check_dns
+  * Revert "migrate to django.urls.path instead of django.conf.urls.url"
+
+  [ pyup.io bot ]
+  * Update colorama from 0.4.1 to 0.4.3 (#154)
+
+  [ dependabot[bot] ]
+  * Bump django from 1.11.27 to 1.11.28 (#178)
+  * Update humanize from 0.5.1 to 1.0.0 (#176)
+  * Update python-debian from 0.1.35 to 0.1.36 (#133)
+  * Update django-extensions from 2.2.1 to 2.2.8 (#177)
+  * Update lxml to 4.5.0 (#172)
+
+  [ Marcus Furlong ]
+  * fix setting check_dns and host_repos_only
+  * fix rhel/centos 8 client and make updates security or not-sec
+  * handle rhel/centos 8 modularity naming conventions
+  * process host updates as either security or non-security
+  * allow forcing the client to find local updates
+  * re-add #noqa for regex
+  * Create codeql-analysis.yml
+  * Update requirements.txt
+  * remove travis CI
+  * Release v1.2.6
+  * update gbp dch command
+  * update ius url
+  * regenerate debian changelog before building deb
+  * auto-commit to update version skip-checks: true
+  * set correct version for pypi upload
+  * update deb build process
+  * auto-commit to update version skip-checks: true
+  * update deb build process
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Fri, 03 Jul 2020 22:40:50 +0000
+
 patchman (1.2.5-1) stable; urgency=medium
 
   * auto-commit to update version skip-checks: true
