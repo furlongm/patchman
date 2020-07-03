@@ -109,7 +109,14 @@ jobs:
           rm upload_url.txt
           echo "::set-env name=upload_url::${upload_url}"
       - name: Build deb packages
+        env:
+          COMMIT_MSG: |
+            auto-commit to update version
+            skip-checks: true
         run: |
+          echo "${{ github.ref }}" | cut -dv -f2 > VERSION.txt
+          git add VERSION.txt
+          git diff --quiet && git diff --staged --quiet || git commit -m "${COMMIT_MSG}"
           gbp dch --new-version=$(cat VERSION.txt)-1 --commit-msg="${COMMIT_MSG}"
           gbp buildpackage --git-upstream-tree=${{ github.ref }} -uc -us
       - name: Upload python-patchman deb
