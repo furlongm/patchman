@@ -138,7 +138,7 @@ jobs:
       - name: Install build dependencies
         run: |
           yum -y install epel-release
-          rpm -U https://centos7.iuscommunity.org/ius-release.rpm
+          yum -y install https://repo.ius.io/ius-release-el7.rpm
           yum makecache
           yum -y install rpm-build python-setuptools git222
       - uses: actions/checkout@v2
