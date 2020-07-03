@@ -110,6 +110,7 @@ jobs:
           echo "::set-env name=upload_url::${upload_url}"
       - name: Build deb packages
         run: |
+          gbp dch --new-version=$(cat VERSION.txt)-1 --commit-msg="${COMMIT_MSG}"
           gbp buildpackage --git-upstream-tree=${{ github.ref }} -uc -us
       - name: Upload python-patchman deb
         uses: actions/upload-release-asset@v1.0.1
