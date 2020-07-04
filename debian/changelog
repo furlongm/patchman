@@ -1,4 +1,4 @@
-patchman (1.2.10-1) UNRELEASED; urgency=medium
+patchman (1.2.11-1) UNRELEASED; urgency=medium
 
   [ Bolol ]
   * use full path for patchman-client (#174)
@@ -41,8 +41,10 @@ patchman (1.2.10-1) UNRELEASED; urgency=medium
   * update deb build process
   * auto-commit to update version skip-checks: true
   * 1.2.10
+  * workaround gbp not ignoring changes
+  * auto-commit to update version skip-checks: true
 
- -- Marcus Furlong <furlongm@gmail.com>  Fri, 03 Jul 2020 23:09:05 +0000
+ -- Marcus Furlong <furlongm@gmail.com>  Sat, 04 Jul 2020 17:59:50 +0000
 
 patchman (1.2.5-1) stable; urgency=medium
 
