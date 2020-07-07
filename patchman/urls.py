@@ -1,5 +1,5 @@
 # Copyright 2012 VPAC, http://www.vpac.org
-# Copyright 2013-2016 Marcus Furlong <furlongm@gmail.com>
+# Copyright 2013-2020 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of patchman
 #
@@ -15,11 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with  If not, see <http://www.gnu.org/licenses/>
 
-from __future__ import unicode_literals
-
-from django.conf.urls import url, include, handler404, handler500  # noqa
+from django.conf.urls import include, handler404, handler500  # noqa
 from django.conf import settings
 from django.contrib import admin
+from django.urls import path
 from django.views import static
 
 from rest_framework import routers
@@ -51,17 +50,17 @@ router.register(r'mirror-package', repo_views.MirrorPackageViewSet)
 admin.autodiscover()
 
 urlpatterns = [
-    url(r'^', include('django.contrib.auth.urls')),
-    url(r'^admin/', admin.site.urls),
-    url(r'^api/', include(router.urls)),
-    url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),  # noqa
-    url(r'^', include('util.urls', namespace='util')),
-    url(r'^reports/', include('reports.urls', namespace='reports')),
-    url(r'^hosts/', include('hosts.urls', namespace='hosts')),
-    url(r'^packages/', include('packages.urls', namespace='packages')),
-    url(r'^repos/', include('repos.urls', namespace='repos')),
-    url(r'^os/', include('operatingsystems.urls', namespace='operatingsystems')),  # noqa
+    path('', include('django.contrib.auth.urls')),
+    path('admin/', admin.site.urls),
+    path('api/', include(router.urls)),
+    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),  # noqa
+    path('', include('util.urls', namespace='util')),
+    path('reports/', include('reports.urls', namespace='reports')),
+    path('hosts/', include('hosts.urls', namespace='hosts')),
+    path('packages/', include('packages.urls', namespace='packages')),
+    path('repos/', include('repos.urls', namespace='repos')),
+    path('os/', include('operatingsystems.urls', namespace='operatingsystems')),  # noqa
 ]
 
 if settings.DEBUG:
-    urlpatterns += [url(r'^static/(?P<path>.*)$', static.serve)]
+    urlpatterns += [path('static/<str:path>', static.serve)]

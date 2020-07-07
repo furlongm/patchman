@@ -1,5 +1,5 @@
 # Copyright 2012 VPAC, http://www.vpac.org
-# Copyright 2013-2016 Marcus Furlong <furlongm@gmail.com>
+# Copyright 2013-2020 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of Patchman.
 #
@@ -15,16 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from __future__ import unicode_literals
-
-from django.conf.urls import url
+from django.urls import path
 
 from packages import views
 
 app_name = 'packages'
 
 urlpatterns = [
-    url(r'^$', views.package_list, name='package_list'),
-    url(r'^(?P<packagename>[_+-.\w]+)/$', views.package_detail,
-        name='package_detail'),
+    path('', views.package_list, name='package_list'),
+    path('<str:packagename>/', views.package_detail, name='package_detail'),
 ]
