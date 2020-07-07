@@ -1,5 +1,5 @@
 # Copyright 2012 VPAC, http://www.vpac.org
-# Copyright 2013-2016 Marcus Furlong <furlongm@gmail.com>
+# Copyright 2013-2020 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of Patchman.
 #
@@ -15,13 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from __future__ import unicode_literals
-
-from django.utils.encoding import python_2_unicode_compatible
 from django.db import models
 
 
-@python_2_unicode_compatible
 class Domain(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
