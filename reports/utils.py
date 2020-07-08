@@ -217,9 +217,6 @@ def process_repo(repo, arch):
     """
     repository = r_id = None
 
-    if repo[2] == '':
-        r_priority = 0
-
     if repo[0] == 'deb':
         r_type = Repository.DEB
         r_priority = int(repo[2])
@@ -227,6 +224,10 @@ def process_repo(repo, arch):
         r_type = Repository.RPM
         r_id = repo.pop(2)
         r_priority = int(repo[2]) * -1
+    elif repo[0] == 'arch':
+        r_type = Repository.ARCH
+        r_id = repo[2]
+        r_priority = 0
 
     if repo[1]:
         r_name = repo[1]
@@ -318,6 +319,8 @@ def process_package(pkg, protocol):
             p_type = Package.DEB
         elif pkg[5] == 'rpm':
             p_type = Package.RPM
+        elif pkg[5] == 'arch':
+            p_type = Package.ARCH
         else:
             p_type = Package.UNKNOWN
 
