@@ -18,6 +18,7 @@
 from __future__ import unicode_literals
 
 import re
+import tarfile
 try:
     import lzma
 except ImportError:
@@ -401,6 +402,56 @@ def extract_yast_packages(data):
     return packages
 
 
+def extract_arch_packages(data):
+    """ Extract package metadata from an arch linux tarfile
+    """
+    from packages.utils import find_evr
+    extracted = BytesIO(extract(data, 'gz'))
+    tf = tarfile.open(fileobj=extracted, mode='r:*')
+    packages = set()
+    plen = len(tf.getnames())
+    if plen > 0:
+        ptext = 'Extracting packages: '
+        progress_info_s.send(sender=None, ptext=ptext, plen=plen)
+        for i, tarinfo in enumerate(tf):
+            progress_update_s.send(sender=None, index=i + 1)
+            if tarinfo.isfile():
+                name_sec = ver_sec = arch_sec = False
+                t = tf.extractfile(tarinfo).read()
+                for line in t.decode('utf-8').splitlines():
+                    if line.startswith('%NAME%'):
+                        name_sec = True
+                        continue
+                    if name_sec:
+                        name_sec = False
+                        name = line
+                        continue
+                    if line.startswith('%VERSION%'):
+                        ver_sec = True
+                        continue
+                    if ver_sec:
+                        ver_sec = False
+                        epoch, version, release = find_evr(line)
+                        continue
+                    if line.startswith('%ARCH%'):
+                        arch_sec = True
+                        continue
+                    if arch_sec:
+                        arch_sec = False
+                        arch = line
+                        continue
+                package = PackageString(name=name.lower(),
+                                        epoch=epoch,
+                                        version=version,
+                                        release=release,
+                                        arch=arch,
+                                        packagetype='A')
+                packages.add(package)
+    else:
+        info_message.send(sender=None, text='No packages found in repo')
+    return packages
+
+
 def refresh_yum_repo(mirror, data, mirror_url, ts):
     """ Refresh package metadata for a yum-style rpm mirror
         and add the packages to the mirror
@@ -473,6 +524,39 @@ def checksum_is_valid(sha, checksum, mirror):
         error_message.send(sender=None, text=text)
         mirror.last_access_ok = False
         return False
+
+
+def refresh_arch_repo(repo):
+    """ Refresh all mirrors of an arch linux repo
+    """
+    fname = '{0!s}.db'.format(repo.repo_id)
+    for mirror in repo.mirror_set.filter(refresh=True):
+        res = find_mirror_url(mirror.url, [fname])
+        mirror.last_access_ok = response_is_valid(res)
+
+        if mirror.last_access_ok:
+            mirror_url = res.url
+            text = 'Found arch repo - {0!s}'.format(mirror_url)
+            info_message.send(sender=None, text=text)
+            data = download_url(res, 'Downloading repo info:')
+            if data is None:
+                mirror.fail()
+                return
+            sha1 = get_sha1(data)
+            if mirror.file_checksum == sha1:
+                text = 'Mirror checksum has not changed, '
+                text += 'not refreshing package metadata'
+                warning_message.send(sender=None, text=text)
+            else:
+                packages = extract_arch_packages(data)
+                mirror.last_access_ok = True
+                mirror.timestamp = datetime.now()
+                update_mirror_packages(mirror, packages)
+                mirror.file_checksum = sha1
+                packages.clear()
+        else:
+            mirror.fail()
+        mirror.save()
 
 
 def refresh_yast_repo(mirror, data):

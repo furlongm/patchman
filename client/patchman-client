@@ -8,8 +8,7 @@ report=0
 local_updates=0
 tags=''
 
-function usage {
-
+usage() {
     echo "${0} [-v] [-d] [-n] [-r] [-s SERVER] [-c FILE]"
     echo "-v: verbose output (default is silent)"
     echo "-d: debug output"
@@ -23,8 +22,7 @@ function usage {
     exit 0
 }
 
-function parseopts {
-
+parseopts() {
     while getopts "vdnrs:c:t:" opt; do
         case ${opt} in
         v)
@@ -59,8 +57,7 @@ function parseopts {
     done
 }
 
-function cleanup {
-
+cleanup() {
     if [ ${verbose} == 1 ] && [ ${debug} == 1 ] ; then
         echo "Debug: not deleting ${tmpfile_pkg} (packages)"
         echo "Debug: not deleting ${tmpfile_rep} (repos)"
@@ -82,8 +79,7 @@ function cleanup {
     rm -fr "${lock_dir}/patchman.lock"
 }
 
-function check_conf {
-
+check_conf() {
     if [ ! -z "${cli_conf}" ] ; then
         conf=${cli_conf}
     fi
@@ -123,7 +119,7 @@ function check_conf {
     fi
 }
 
-function check_command_exists {
+check_command_exists() {
     cmd=$(/usr/bin/which ${1} 2>/dev/null)
     if [ ! -z "${cmd}" ] && [ -x "${cmd}" ] ; then
         return 0
@@ -132,8 +128,7 @@ function check_command_exists {
     fi
 }
 
-function get_installed_rpms {
-
+get_installed_rpm_packages() {
     if check_command_exists rpm ; then
         if [ ${verbose} == 1 ] ; then
             echo 'Finding installed rpms...'
@@ -149,8 +144,7 @@ function get_installed_rpms {
     fi
 }
 
-function get_installed_debs {
-
+get_installed_deb_packages() {
     if check_command_exists dpkg-query ; then
         if [ ${verbose} == 1 ] ; then
             echo 'Finding installed debs...'
@@ -175,17 +169,25 @@ function get_installed_debs {
     fi
 }
 
-function get_packages {
-
-    get_installed_rpms
-    get_installed_debs
+get_installed_archlinux_packages() {
+    if check_command_exists pacman ; then
+        pacman -Q -i | awk -v q="'" -v s=" " '/^Name/{n=$3} /^Version/{l=split($3, e, ":"); if (l==2) {ep=e[1]; v=e[2]} else {ep=""; v=$3}; split(v, r, "-")} /^Architecture/{a=$3} /^$/{print q n q s q ep q s q r[1] q s q r[2] q s q a q s q"arch"q}' >> "${tmpfile_pkg}"
+    fi
 }
 
-function get_host_data {
+get_packages() {
+    get_installed_rpm_packages
+    get_installed_deb_packages
+    get_installed_archlinux_packages
+}
 
+get_host_data() {
     fqdn=$(hostname -f)
     if [ "${fqdn}" == "" ] ; then
         host_name=$(hostname)
+        if [ "${host_name}" == "" ] ; then
+            host_name=$(cat /etc/hostname)
+        fi
         domain_name=$(dnsdomainname)
         if [ "${domain_name}" != "" ] ; then
             fqdn=${host_name}.${domain_name}
@@ -258,8 +260,7 @@ function get_host_data {
     fi
 }
 
-function get_updates {
-
+get_yum_updates() {
     yum -q makecache 2>/dev/null
     yum -C --security list updates --disablerepo="*" --enablerepo="${1}" 2>&1 \
     | grep -v 'This system is not registered to Red Hat Subscription Management. You can use subscription-manager to register.' \
@@ -271,8 +272,7 @@ function get_updates {
     | sed '1,/[Available Upgrades|Updated Packages]/d' >> "${tmpfile_bug}"
 }
 
-function get_repos {
-
+get_repos() {
     OLDIFS=${IFS}
     IFS="
 "
@@ -305,7 +305,7 @@ function get_repos {
                 if [ ${verbose} == 1 ] ; then
                     echo "Finding updates locally for ${id}"
                 fi
-                get_updates ${id}
+                get_yum_updates ${id}
             fi
             echo "'rpm' ${j}" >> "${tmpfile_rep}"
             unset priority
@@ -344,6 +344,37 @@ function get_repos {
         done
     fi
 
+    # Arch
+    if check_command_exists pacman ; then
+        if [ ${verbose} == 1 ] ; then
+            echo 'Finding pacman repos...'
+        fi
+        arch=$(uname -m)
+        declare -A repos
+        pacman_conf=$(awk '/\[/{prefix=$0; next} $1{print prefix $0}' /etc/pacman.conf | grep -v '\[options\]' | grep '^\[')
+        for stanza in ${pacman_conf} ; do
+            repo=$(echo ${stanza} | cut -d ']' -f 1 | sed -e 's/\[//')
+            rhs=$(echo ${stanza} | cut -d ']' -f 2 | grep -v ^#)
+            if [[ ${rhs} =~ "Include" ]] ; then
+                include=$(echo ${rhs} | sed -e 's/^ *Include *= *//')
+                for f in $(ls ${include} 2>/dev/null) ; do
+                    if [ -f ${f} ] ; then
+                        servers=$(cat ${f} | grep Server | sed -e 's/^ *Server *= *//')
+                        for s in ${servers} ; do
+                            repos[${repo}]+="'$(eval echo ${s})' "
+                        done
+                    fi
+                done
+            elif [[ ${rhs} =~ "Server" ]] ; then
+                s=$(echo ${rhs} | sed -e 's/^ *Server *= *//')
+                repos[${repo}]+="'$(eval echo ${s})' "
+            fi
+        done
+        for r in "${!repos[@]}"; do
+            echo "'arch' 'Arch Linux ${r} ${arch}' '${r}' ${repos[${r}]}" >> "${tmpfile_rep}"
+        done
+    fi
+
     IFS=${OLDIFS}
 
     sed -i -e '/^$/d' "${tmpfile_rep}"
@@ -353,8 +384,7 @@ function get_repos {
     fi
 }
 
-function reboot_required {
-
+reboot_required() {
     # On debian-based clients, the update-notifier-common
     # package needs to be installed for this to work.
     if [ -e /var/run/reboot-required ] ; then
@@ -364,8 +394,7 @@ function reboot_required {
     fi
 }
 
-function post_data {
-
+post_data() {
     curl_opts=${curl_options}
 
     if [ ${verbose} == 1 ] ; then
@@ -420,8 +449,8 @@ function post_data {
     fi
 }
 
-if ! check_command_exists mktemp || ! check_command_exists curl ; then
-    echo "Either mktemp or curl was not found, exiting."
+if ! check_command_exists which || ! check_command_exists mktemp || ! check_command_exists curl ; then
+    echo "which, mktemp or curl was not found, exiting."
     exit 1
 fi
 
