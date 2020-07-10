@@ -109,7 +109,7 @@ def download_errata():
 def parse_errata_checksum(data):
     """ Parse the errata checksum and return the bz2 checksum
     """
-    for line in data.splitlines():
+    for line in data.decode('utf-8').splitlines():
         if line.endswith('errata.latest.xml.bz2'):
             return line.split()[0]
 
