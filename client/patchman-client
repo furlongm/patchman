@@ -354,7 +354,7 @@ get_repos() {
         pacman_conf=$(awk '/\[/{prefix=$0; next} $1{print prefix $0}' /etc/pacman.conf | grep -v '\[options\]' | grep '^\[')
         for stanza in ${pacman_conf} ; do
             repo=$(echo ${stanza} | cut -d ']' -f 1 | sed -e 's/\[//')
-            rhs=$(echo ${stanza} | cut -d ']' -f 2 | grep -v ^#)
+            rhs=$(echo ${stanza} | cut -d ']' -f 2 | grep -v '^#')
             if [[ ${rhs} =~ "Include" ]] ; then
                 include=$(echo ${rhs} | sed -e 's/^ *Include *= *//')
                 for f in $(ls ${include} 2>/dev/null) ; do
