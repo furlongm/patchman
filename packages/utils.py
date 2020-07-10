@@ -174,8 +174,14 @@ def parse_errata_children(e, children):
             e.releases.add(osgroup)
         elif c.tag == 'packages':
             pkg_str = c.text.replace('.rpm', '')
-            pkg_re = re.compile('(\S+)-(?:(\d*):)?(.*)-(~?\w+)[.+](~?\S+)\.(\S+)$')  # noqa
-            name, epoch, ver, rel, dist, arch = pkg_re.match(pkg_str).groups()
+            pkg_re = re.compile('(\S+)-(?:(\d*):)?(.*)-(~?\w+)[.+]?(~?\S+)?\.(\S+)$')  # noqa
+            m = pkg_re.match(pkg_str)
+            if m:
+                name, epoch, ver, rel, dist, arch = m.groups()
+            else:
+                e = 'Error parsing errata: could not parse package "{0!s}"'.format(pkg_str)
+                error_message.send(sender=None, text=e)
+                continue
             if dist:
                 rel = '{0!s}-{1!s}'.format(rel, dist)
             p_type = Package.RPM
