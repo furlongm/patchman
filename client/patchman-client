@@ -349,7 +349,6 @@ get_repos() {
         if [ ${verbose} == 1 ] ; then
             echo 'Finding pacman repos...'
         fi
-        arch=$(uname -m)
         declare -A repos
         pacman_conf=$(awk '/\[/{prefix=$0; next} $1{print prefix $0}' /etc/pacman.conf | grep -v '\[options\]' | grep '^\[')
         for stanza in ${pacman_conf} ; do
@@ -371,7 +370,7 @@ get_repos() {
             fi
         done
         for r in "${!repos[@]}"; do
-            echo "'arch' 'Arch Linux ${r} ${arch}' '${r}' ${repos[${r}]}" >> "${tmpfile_rep}"
+            echo "'arch' 'Arch Linux ${r} ${host_arch}' '${r}' ${repos[${r}]}" >> "${tmpfile_rep}"
         done
     fi
 
