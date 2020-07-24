@@ -21,8 +21,9 @@ from reports.models import Report
 
 if settings.USE_ASYNC_PROCESSING:
     from celery.task import task
+    from patchman.celery import app
 
-    @task()
+    @app.task()
     def process_report(report_id):
         report = Report.objects.get(id=report_id)
         report.process(verbose=True)
