@@ -313,16 +313,16 @@ Install Celery for realtime processing of reports from clients:
 #### Ubuntu / Debian
 
 ```shell
-apt -y install python3-celery rabbitmq-server
+apt -y install python3-celery redis python3-redis
 C_FORCE_ROOT=1 celery worker --loglevel=info -E -A patchman
 ```
 
 #### CentOS / RHEL
 
 ```shell
-yum -y install python3-celery rabbitmq-server
-systemctl restart rabbitmq-server
-semanage port -a -t http_port_t -p tcp 5672
+dnf -y install python3-celery redis python3-redis
+systemctl restart redis-server
+semanage port -a -t http_port_t -p tcp 6379
 C_FORCE_ROOT=1 celery worker --loglevel=info -E -A patchman
 
 ```
