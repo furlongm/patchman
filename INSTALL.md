@@ -43,9 +43,9 @@ baseurl=https://repo.openbytes.ie/yum
 enabled=1
 gpgcheck=0
 EOF
-yum install -y epel-release
-yum makecache
-yum install -y patchman patchman-client
+dnf install -y epel-release
+dnf makecache
+dnf install -y patchman patchman-client
 systemctl restart httpd
 patchman-manage createsuperuser
 ```
@@ -56,7 +56,7 @@ TBD - not working yet
 
 ```shell
 apt -y install gcc libxml2-dev libxslt1-dev virtualenv python3-dev zlib1g-dev  # (debian/ubuntu)
-yum -y install gcc libxml2-devel libxslt-devel python3-virtualenv              # (centos/rhel)
+dnf -y install gcc libxml2-devel libxslt-devel python3-virtualenv              # (centos/rhel)
 mkdir /srv/patchman
 cd /srv/patchman
 virtualenv .
@@ -336,7 +336,7 @@ Memcached can optionally be run to reduce the load on the server.
 
 ```shell
 apt -y install memcached python3-memcache   # (debian/ubuntu)
-yum -y install memcached python3-memcached  # (centos/rhel)
+dnf -y install memcached python3-memcached  # (centos/rhel)
 systemctl restart memcached
 ```
 
