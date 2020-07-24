@@ -43,9 +43,9 @@ baseurl=https://repo.openbytes.ie/yum
 enabled=1
 gpgcheck=0
 EOF
-dnf install -y epel-release
+dnf -y install epel-release
 dnf makecache
-dnf install -y patchman patchman-client
+dnf -y install patchman patchman-client
 systemctl restart httpd
 patchman-manage createsuperuser
 ```
