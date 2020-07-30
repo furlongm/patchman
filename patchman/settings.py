@@ -104,7 +104,7 @@ else:
     THIRD_PARTY_APPS += ['celery']
     CELERY_IMPORTS = ['reports.tasks']
     USE_ASYNC_PROCESSING = True
-    BROKER_URL = 'redis://localhost:6379/0'
+    CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
 
 LOGIN_REDIRECT_URL = '/patchman/'
 LOGOUT_REDIRECT_URL = '/patchman/login/'
