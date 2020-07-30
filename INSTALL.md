@@ -5,8 +5,8 @@ mysql or postgresql instead, see the database configuration section.
 
 
 ## Supported Install Options
-  - [Ubuntu 20.04](#ubuntu-2004-bionic)
-  - [Debian 10](#debian-10-buster)
+  - [Ubuntu 20.04](#ubuntu-2004-focal)
+  - [Debian 11](#debian-11-bullseye)
   - [CentOS 7](#centos-7)
   - [virtualenv + pip](#virtualenv--pip)
   - [Source](#source)
@@ -16,19 +16,18 @@ mysql or postgresql instead, see the database configuration section.
 
 ```shell
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0412F522
-echo "deb https://repo.openbytes.ie/ubuntu focal main" > /etc/apt/sources.list.d/patchman.list
+echo "deb https://repo.openbytes.ie/patchman/ubuntu focal main" > /etc/apt/sources.list.d/patchman.list
 apt update
 apt -y install python3-patchman patchman-client
 patchman-manage createsuperuser
 ```
 
-### Debian 10 (buster)
+### Debian 11 (bullseye)
 
 ```shell
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0412F522
-echo "deb https://repo.openbytes.ie/debian buster main" > /etc/apt/sources.list.d/patchman.list
+echo "deb https://repo.openbytes.ie/patchman/debian bullseye main" > /etc/apt/sources.list.d/patchman.list
 apt update
-apt -t buster-backports -y install python3-django
 apt -y install python3-patchman patchman-client
 patchman-manage createsuperuser
 ```
@@ -39,7 +38,7 @@ patchman-manage createsuperuser
 cat <<EOF >> /etc/yum.repos.d/openbytes.repo
 [openbytes]
 name=openbytes
-baseurl=https://repo.openbytes.ie/yum
+baseurl=https://repo.openbytes.ie/patchman/el7
 enabled=1
 gpgcheck=0
 EOF
@@ -70,17 +69,15 @@ gunicorn patchman.wsgi -b 0.0.0.0:80
 
 ### Source
 
-#### Ubuntu 18.04 (bionic)
+#### Ubuntu 20.04 (focal)
 
 1. Install dependencies
 
 ```shell
-apt -y install -t buster-backports python3-django
-apt -y install python3-django-tagging python3-django-extensions
-python3-djangorestframework python3-defusedxml python3-lxml \
-python3-requests python3-rpm python3-debian \
-python3-colorama python3-humanize python3-magic \
-apache2 libapache2-mod-wsgi
+apt -y install python3-django python3-django-tagging python3-django-extensions \
+python3-djangorestframework python3-defusedxml python3-lxml python3-requests \
+python3-rpm python3-debian python3-colorama python3-humanize python3-magic \
+apache2 libapache2-mod-wsgi-py3 python3-pip python3-progressbar
 ```
 
 2. Install django-bootstrap3
@@ -313,8 +310,8 @@ Install Celery for realtime processing of reports from clients:
 #### Ubuntu / Debian
 
 ```shell
-apt -y install python3-celery redis python3-redis
-C_FORCE_ROOT=1 celery worker --loglevel=info -E -A patchman
+apt -y install python3-celery redis python3-redis python-celery-common
+C_FORCE_ROOT=1 celery worker --loglevel=info -b redis://localhost:6379/0 -E -A patchman
 ```
 
 #### CentOS / RHEL
@@ -323,7 +320,7 @@ C_FORCE_ROOT=1 celery worker --loglevel=info -E -A patchman
 dnf -y install python3-celery redis python3-redis
 systemctl restart redis-server
 semanage port -a -t http_port_t -p tcp 6379
-C_FORCE_ROOT=1 celery worker --loglevel=info -E -A patchman
+C_FORCE_ROOT=1 celery worker --loglevel=info -b redis://localhost:6379/0 -E -A patchman
 
 ```
 
