@@ -312,7 +312,7 @@ Install Celery for realtime processing of reports from clients:
 
 ```shell
 apt -y install python3-celery redis python3-redis python-celery-common
-C_FORCE_ROOT=1 celery worker --loglevel=info -b redis://localhost:6379/0 -E -A patchman
+C_FORCE_ROOT=1 celery worker --loglevel=info -b redis://127.0.0.1:6379/0 -E -A patchman
 ```
 
 #### CentOS / RHEL
@@ -321,7 +321,7 @@ C_FORCE_ROOT=1 celery worker --loglevel=info -b redis://localhost:6379/0 -E -A p
 dnf -y install python3-celery redis python3-redis
 systemctl restart redis-server
 semanage port -a -t http_port_t -p tcp 6379
-C_FORCE_ROOT=1 celery worker --loglevel=info -b redis://localhost:6379/0 -E -A patchman
+C_FORCE_ROOT=1 celery worker --loglevel=info -b redis://127.0.0.1:6379/0 -E -A patchman
 
 ```
 
