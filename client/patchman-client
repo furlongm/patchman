@@ -417,7 +417,7 @@ post_data() {
     curl_opts="${curl_opts} -F sec_updates=\<${tmpfile_sec}"
     curl_opts="${curl_opts} -F bug_updates=\<${tmpfile_bug}"
     curl_opts="${curl_opts} -F reboot=\"${reboot}\""
-    post_command="curl ${curl_opts} ${server}/reports/upload/"
+    post_command="curl ${curl_opts} ${server%/}/reports/upload/"
 
     if [ ${verbose} == 1 ] ; then
         echo "${post_command}"
