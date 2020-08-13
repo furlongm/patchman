@@ -111,7 +111,7 @@ check_conf() {
             report=${cli_report}
         fi
         if [ ${verbose} == 1 ] ; then
-            echo 'Patchman configuration seems OK: ${conf}'
+            echo "Patchman configuration seems OK: ${conf}"
             echo "Patchman Server: ${server}"
             echo "Tags: ${tags}"
             echo "Report: ${report}"
