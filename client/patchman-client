@@ -389,14 +389,10 @@ post_data() {
     curl_opts=${curl_options}
 
     if [ ${verbose} == 1 ] ; then
-        curl_opts="${curl_opts} -F verbose=\"1\""
+        curl_opts="${curl_opts} -i"
         echo "Sending data to ${server} with curl:"
     else
         curl_opts="${curl_opts} -s -S";
-    fi
-
-    if [ ${debug} == 1 ] ; then
-        curl_opts="${curl_opts} -F debug=\"1\""
     fi
 
     if [ "${tags}" == "" ] ; then
@@ -431,7 +427,7 @@ post_data() {
         exit ${retval}
     fi
 
-    if [ ${report} == 1 ] ; then
+    if [ ${report} == 1 ] || [ ${verbose} == 1 ] ; then
         if [ ! -z "${result}" ] ; then
             echo "${result}"
         else
