@@ -3,13 +3,14 @@ FROM python:2.7-alpine
 ARG BRANCH=master
 ARG DEBIAN_FRONTEND=noninteractive
 
-RUN apk --no-cache add --update libmagic && \
+RUN apk --no-cache add --update \
+        libmagic \
+        libxslt-dev \
+        postgresql-dev && \
     apk --no-cache add --virtual .build-deps --update \
         git \
         gcc \
-        musl-dev \
-        libxslt-dev \
-        postgresql-dev && \
+        musl-dev && \
     git init /srv/patchman && \
     (cd /srv/patchman && \
         git fetch --tags https://github.com/furlongm/patchman.git $BRANCH && \

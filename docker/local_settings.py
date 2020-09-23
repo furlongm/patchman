@@ -10,11 +10,11 @@ env = environ.Env(
     DJANGO_ADMINS=(str, ''),
     DJANGO_SECRET_KEY=(str),
     DJANGO_ALLOWED_HOSTS=(list, ['*']),
-    DATABASE_NAME=(str, 'patchman'),
-    DATABASE_USERNAME=(str, 'patchman'),
-    DATABASE_PASSWORD=(str, 'patchman'),
-    DATABASE_HOST=(str),
-    DATABASE_PORT=(int, 5432),
+    PGDATABASE=(str, 'patchman'),
+    PGUSER=(str, 'patchman'),
+    PGPASSWORD=(str, 'patchman'),
+    PGHOST=(str),
+    PGPORT=(int, 5432),
     MEMCACHED_HOST=(str, ''),
     MEMCACHED_PORT=(int, 11211)
 )
@@ -27,11 +27,11 @@ ADMINS = getaddresses([env('DJANGO_ADMINS')])
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': env('DATABASE_NAME'),
-        'USER': env('DATABASE_USERNAME'),
-        'PASSWORD': env('DATABASE_PASSWORD'),
-        'HOST': env('DATABASE_HOST'),
-        'PORT': env('DATABASE_PORT'),
+        'NAME': env('PGDATABASE'),
+        'USER': env('PGUSER'),
+        'PASSWORD': env('PGPASSWORD'),
+        'HOST': env('PGHOST'),
+        'PORT': env('PGPORT'),
     }
 }
 
