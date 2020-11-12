@@ -165,10 +165,11 @@ class Host(models.Model):
         except DatabaseError as e:
             error_message.send(sender=None, text=e)
         try:
-            with transaction.atomic():
-                self.updates.add(update)
-            info_message.send(sender=None, text='{0!s}'.format(update))
-            return update.id
+            if update not in self.updates_set.all():
+                with transaction.atomic():
+                    self.updates.add(update)
+                info_message.send(sender=None, text='{0!s}'.format(update))
+                return update.id
         except IntegrityError as e:
             error_message.send(sender=None, text=e)
         except DatabaseError as e:
