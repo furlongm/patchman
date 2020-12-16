@@ -262,7 +262,7 @@ N.B. To run patchman-manage when installing from source, run `./manage.py`
 
 ```shell
 a2enmod wsgi
-cp /srv/patchman/etc/patchman/apache.conf.example /etc/apache2/conf-available/patchman.conf
+cp /etc/patchman/apache.conf.example /etc/apache2/conf-available/patchman.conf
 a2enconf patchman
 ```
 
