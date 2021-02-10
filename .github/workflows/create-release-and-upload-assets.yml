@@ -96,7 +96,7 @@ jobs:
       - name: Get version
         run: |
           export version=$(echo "${{ github.ref }}" | cut -dv -f2)
-          echo "::set-env name=version::${version}"
+          echo "version=${version}" >> $GITHUB_ENV
       - name: Download upload_url artifact
         uses: actions/download-artifact@v1
         with:
@@ -106,7 +106,7 @@ jobs:
         run: |
           export upload_url=$(<upload_url.txt)
           rm upload_url.txt
-          echo "::set-env name=upload_url::${upload_url}"
+          echo "upload_url=${upload_url}" >> $GITHUB_ENV
       - name: Build deb packages
         env:
           COMMIT_MSG: |
@@ -161,7 +161,7 @@ jobs:
       - name: Get version
         run: |
           export version=$(echo "${{ github.ref }}" | cut -dv -f2)
-          echo "::set-env name=version::${version}"
+          echo "version=${version}" >> $GITHUB_ENV
       - name: Download upload_url artifact
         uses: actions/download-artifact@v1
         with:
@@ -171,7 +171,7 @@ jobs:
         run: |
           export upload_url=$(<upload_url.txt)
           rm upload_url.txt
-          echo "::set-env name=upload_url::${upload_url}"
+          echo "upload_url=${upload_url}" >> $GITHUB_ENV
       - name: Build rpm packages
         run: |
           python setup.py bdist_rpm
