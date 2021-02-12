@@ -117,7 +117,7 @@ jobs:
           echo "${version}" > VERSION.txt
           git add VERSION.txt
           git diff --quiet && git diff --staged --quiet || git commit -m "${COMMIT_MSG}"
-          gbp dch --new-version=${version}-1 --distribution=stable --commit --commit-msg="${COMMIT_MSG}"
+          gbp dch --new-version=${version}-1 --release=stable --commit --commit-msg="${COMMIT_MSG}"
           git tag --delete v${version}
           git tag v${version}
           gbp buildpackage --git-upstream-tree=${{ github.ref }} -uc -us
