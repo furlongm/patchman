@@ -69,7 +69,7 @@ jobs:
             auto-commit to update debian changelog
             skip-checks: true
         run: |
-          gbp dch --new-version=${cat VERSION.txt)-1 --release --distribution=stable --spawn-editor=never --commit --commit-msg="${COMMIT_MSG}"
+          gbp dch --new-version=$(cat VERSION.txt)-1 --release --distribution=stable --spawn-editor=never --commit --commit-msg="${COMMIT_MSG}"
           git push origin master
   build-and-upload-deb-assets:
     needs: update-version-and-changelog
