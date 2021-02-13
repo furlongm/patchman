@@ -1,22 +1,25 @@
 #!/bin/bash
 
-conf='/etc/patchman/patchman-client.conf'
+conf=/etc/patchman/patchman-client.conf
 protocol=1
 verbose=0
 debug=0
 report=0
 local_updates=0
+no_repo_check=0
 tags=''
 
 usage() {
-    echo "${0} [-v] [-d] [-n] [-r] [-s SERVER] [-c FILE]"
+    echo "${0} [-v] [-d] [-n] [-u] [-r] [-s SERVER] [-c FILE] [-t TAGS] [-h HOSTNAME]"
     echo "-v: verbose output (default is silent)"
     echo "-d: debug output"
     echo "-n: no repo check (required when used as an apt or yum plugin)"
+    echo "-u: find updates locally (e.g. for RHEL)"
     echo "-r: request a report from the server (default is no report)"
     echo "-s SERVER: web server address, e.g. https://patchman.example.com"
     echo "-c FILE: config file location (default is /etc/patchman/patchman-client.conf)"
     echo "-t TAGS: comma-separated list of tags, e.g. -t www,dev"
+    echo "-h HOSTNAME: specify the hostname of the local host"
     echo
     echo "Command line options override config file options."
     exit 0
@@ -48,7 +51,10 @@ parseopts() {
             cli_conf=${OPTARG}
             ;;
         t)
-            tags=${OPTARG}
+            cli_tags="${OPTARG}"
+            ;;
+        h)
+            cli_hostname=${OPTARG}
             ;;
         *)
             usage
@@ -107,15 +113,30 @@ check_conf() {
         if [ ! -z "${cli_server}" ] ; then
             server=${cli_server}
         fi
-        if [ ! -z "${cli_report}" ] ; then
-            report=${cli_report}
+    fi
+
+    if [ ! -z "${cli_report}" ] ; then
+        report=${cli_report}
+    fi
+
+    if [ ! -z "${cli_tags}" ] ; then
+        tags="${cli_tags}"
+    fi
+
+    if [ -z "${hostname}" ] && [ -z "${cli_hostname}" ] ; then
+        get_hostname
+    else
+        if [ ! -z "${cli_server}" ] ; then
+            server=${cli_server}
         fi
-        if [ ${verbose} == 1 ] ; then
-            echo "Patchman configuration seems OK: ${conf}"
-            echo "Patchman Server: ${server}"
-            echo "Tags: ${tags}"
-            echo "Report: ${report}"
-        fi
+    fi
+
+    if [ ${verbose} == 1 ] ; then
+        echo "Patchman configuration seems OK: ${conf}"
+        echo "Patchman Server: ${server}"
+        echo "Hostname: ${hostname}"
+        echo "Tags: ${tags}"
+        echo "Report: ${report}"
     fi
 }
 
@@ -181,20 +202,23 @@ get_packages() {
     get_installed_archlinux_packages
 }
 
-get_host_data() {
-    fqdn=$(hostname -f)
-    if [ "${fqdn}" == "" ] ; then
-        host_name=$(hostname)
-        if [ "${host_name}" == "" ] ; then
-            host_name=$(cat /etc/hostname)
+get_hostname() {
+    hostname=$(hostname -f)
+    if [ "${hostname}" == "" ] ; then
+        short_hostname=$(hostname)
+        if [ "${short_hostname}" == "" ] ; then
+            short_hostname=$(cat /etc/hostname)
         fi
-        domain_name=$(dnsdomainname)
-        if [ "${domain_name}" != "" ] ; then
-            fqdn=${host_name}.${domain_name}
+        domainname=$(dnsdomainname)
+        if [ "${domainname}" != "" ] ; then
+            hostname=${short_hostname}.${domainname}
         else
-            fqdn=${host_name}
+            hostname=${short_hostname}
         fi
     fi
+}
+
+get_host_data() {
     host_kernel=$(uname -r | sed -e 's/\+/%2b/g')
     host_arch=$(uname -m)
 
@@ -253,10 +277,10 @@ get_host_data() {
         done
     fi
     if [ ${debug} == 1 ] ; then
-        echo "FQDN:   ${fqdn}"
-        echo "Kernel: ${host_kernel}"
-        echo "Arch:   ${host_arch}"
-        echo "OS:     ${os}"
+        echo "Hostname: ${hostname}"
+        echo "Kernel:   ${host_kernel}"
+        echo "Arch:     ${host_arch}"
+        echo "OS:       ${os}"
     fi
 }
 
@@ -401,7 +425,7 @@ post_data() {
 
     sed -i -e 's/%2b/\+/g' "${tmpfile_pkg}"
 
-    curl_opts="${curl_opts} -F host=\"${fqdn}\""
+    curl_opts="${curl_opts} -F host=\"${hostname}\""
     curl_opts="${curl_opts} -F tags=\"${tags}\""
     curl_opts="${curl_opts} -F kernel=\"${host_kernel}\""
     curl_opts="${curl_opts} -F arch=\"${host_arch}\""
