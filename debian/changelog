@@ -1,4 +1,4 @@
-patchman (1.2.13-1) UNRELEASED; urgency=medium
+patchman (1.2.18-1) UNRELEASED; urgency=medium
 
   [ Bolol ]
   * use full path for patchman-client (#174)
@@ -58,8 +58,17 @@ patchman (1.2.13-1) UNRELEASED; urgency=medium
   * pin to specific version of python-bootstrap3
   * fix zypper lr command (#259)
   * auto-commit to update version skip-checks: true
+  * remove deprecated set-env
+  * bump version to 1.2.14
+  * update debian changelog distribution
+  * update debian changelog release
+  * update debian changelog release
+  * update codeql action
+  * update actions
+  * support specifying hostname to client
+  * auto-commit to update version skip-checks: true
 
- -- Marcus Furlong <furlongm@gmail.com>  Wed, 10 Feb 2021 22:37:38 +0000
+ -- Marcus Furlong <furlongm@gmail.com>  Sat, 13 Feb 2021 20:34:05 +0000
 
 patchman (1.2.5-1) stable; urgency=medium
 
