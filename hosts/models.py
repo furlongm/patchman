@@ -165,7 +165,7 @@ class Host(models.Model):
         except DatabaseError as e:
             error_message.send(sender=None, text=e)
         try:
-            if update not in self.updates_set.all():
+            if update not in self.updates:
                 with transaction.atomic():
                     self.updates.add(update)
                 info_message.send(sender=None, text='{0!s}'.format(update))
