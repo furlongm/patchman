@@ -178,9 +178,12 @@ class Host(models.Model):
     def find_updates(self):
 
         kernels_q = Q(name__name='kernel') | Q(name__name='kernel-devel') | \
-            Q(name__name='kernel-pae') | Q(name__name='kernel-pae-devel') | \
-            Q(name__name='kernel-xen') | Q(name__name='kernel-xen-devel') | \
-            Q(name__name='kernel-headers') | Q(name__name='kernel-default')
+            Q(name__name='kernel-preempt') | Q(name__name='kernel-preempt-devel') | \
+            Q(name__name='kernel-rt') | Q(name__name='kernel-rt-devel') | \
+            Q(name__name='kernel-debug') | Q(name__name='kernel-debug-devel') | \
+            Q(name__name='kernel-default') | Q(name__name='kernel-default-devel') | \
+            Q(name__name='kernel-headers') | Q(name__name='kernel-core') | \
+            Q(name__name='kernel-modules')
         repo_packages = self.get_host_repo_packages()
         host_packages = self.packages.exclude(kernels_q).distinct()
         kernel_packages = self.packages.filter(kernels_q)
