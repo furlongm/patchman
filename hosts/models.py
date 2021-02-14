@@ -271,12 +271,7 @@ class Host(models.Model):
 
     def check_if_reboot_required(self, host_highest):
 
-        to_strip = ['xen', '-xen', 'PAE', '-pae', '-default', 'vanilla', '-pv']
-        kernel = self.kernel
-        for s in to_strip:
-            if kernel.endswith(s):
-                kernel = kernel[:-len(s)]
-        ver, rel = kernel.rsplit('-')
+        ver, rel = kernel.split('-')[:2]
         kernel_ver = ('', str(ver), str(rel))
         host_highest_ver = ('', host_highest.version, host_highest.release)
         if labelCompare(kernel_ver, host_highest_ver) == -1:
