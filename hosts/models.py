@@ -165,11 +165,10 @@ class Host(models.Model):
         except DatabaseError as e:
             error_message.send(sender=None, text=e)
         try:
-            if update not in self.updates:
-                with transaction.atomic():
-                    self.updates.add(update)
-                info_message.send(sender=None, text='{0!s}'.format(update))
-                return update.id
+            with transaction.atomic():
+                self.updates.add(update)
+            info_message.send(sender=None, text='{0!s}'.format(update))
+            return update.id
         except IntegrityError as e:
             error_message.send(sender=None, text=e)
         except DatabaseError as e:
@@ -183,7 +182,8 @@ class Host(models.Model):
             Q(name__name='kernel-debug') | Q(name__name='kernel-debug-devel') | \
             Q(name__name='kernel-default') | Q(name__name='kernel-default-devel') | \
             Q(name__name='kernel-headers') | Q(name__name='kernel-core') | \
-            Q(name__name='kernel-modules')
+            Q(name__name='kernel-modules') | \
+            Q(name__name='virtualbox-kmp-default') | Q(name__name='virtualbox-kmp-preempt')
         repo_packages = self.get_host_repo_packages()
         host_packages = self.packages.exclude(kernels_q).distinct()
         kernel_packages = self.packages.filter(kernels_q)
@@ -222,21 +222,19 @@ class Host(models.Model):
             pu_q = Q(name=package.name, arch=package.arch,
                      packagetype=package.packagetype)
             potential_updates = repo_packages.filter(pu_q)
-            for potential_update in potential_updates:
-
-                if highest_package.compare_version(potential_update) == -1 \
-                        and package.compare_version(potential_update) == -1:
+            for pu in potential_updates:
+                if highest_package.compare_version(pu) == -1 \
+                        and package.compare_version(pu) == -1:
 
                     if priority is not None:
                         # proceed only if the package is from a repo with a
                         # priority and that priority is >= the repo priority
-                        pu_best_repo = find_best_repo(potential_update,
-                                                      hostrepos)
+                        pu_best_repo = find_best_repo(pu, hostrepos)
                         pu_priority = pu_best_repo.priority
                         if pu_priority >= priority:
-                            highest_package = potential_update
+                            highest_package = pu
                     else:
-                        highest_package = potential_update
+                        highest_package = pu
 
             if highest_package != package:
                 uid = self.process_update(package, highest_package)
@@ -256,11 +254,10 @@ class Host(models.Model):
             pu_q = Q(name=package.name, arch=package.arch,
                      packagetype=package.packagetype)
             potential_updates = repo_packages.filter(pu_q)
-            for potential_update in potential_updates:
-
-                if highest_package.compare_version(potential_update) == -1 \
-                        and package.compare_version(potential_update) == -1:
-                    highest_package = potential_update
+            for pu in potential_updates:
+                if highest_package.compare_version(pu) == -1 \
+                        and package.compare_version(pu) == -1:
+                    highest_package = pu
 
             if highest_package != package:
                 uid = self.process_update(package, highest_package)
@@ -271,7 +268,7 @@ class Host(models.Model):
 
     def check_if_reboot_required(self, host_highest):
 
-        ver, rel = kernel.split('-')[:2]
+        ver, rel = self.kernel.split('-')[:2]
         kernel_ver = ('', str(ver), str(rel))
         host_highest_ver = ('', host_highest.version, host_highest.release)
         if labelCompare(kernel_ver, host_highest_ver) == -1:
@@ -287,14 +284,14 @@ class Host(models.Model):
             host_highest = package
             repo_highest = package
 
-            pk_q = Q(name=package.name)
-            potential_updates = repo_packages.filter(pk_q)
+            pu_q = Q(name=package.name)
+            potential_updates = repo_packages.filter(pu_q)
             for pu in potential_updates:
                 if package.compare_version(pu) == -1 \
                         and repo_highest.compare_version(pu) == -1:
                     repo_highest = pu
 
-            host_packages = self.packages.filter(pk_q)
+            host_packages = self.packages.filter(pu_q)
             for hp in host_packages:
                 if package.compare_version(hp) == -1 and \
                         host_highest.compare_version(hp) == -1:
