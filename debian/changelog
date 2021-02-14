@@ -1,3 +1,15 @@
+patchman (1.2.21-1) stable; urgency=medium
+
+  * don't list multple identical kernel updates (#282)
+  * fix updates logic
+  * update kernel package whitelist
+  * simplify kernel version detection logic
+  * fix update detection logic
+  * api updates to add update counts
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Sun, 14 Feb 2021 23:29:55 +0000
+
 patchman (1.2.20-1) stable; urgency=medium
 
   [ Bolol ]
