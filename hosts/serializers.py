@@ -22,12 +22,21 @@ from hosts.models import Host, HostRepo
 
 
 class HostSerializer(serializers.HyperlinkedModelSerializer):
+    bugfix_update_count = serializers.SerializerMethodField()
+    security_update_count = serializers.SerializerMethodField()
+
     class Meta(object):
         model = Host
         fields = ('id', 'hostname', 'ipaddress', 'reversedns', 'check_dns',
                   'os', 'kernel', 'arch', 'domain', 'lastreport', 'repos',
                   'updates', 'reboot_required', 'host_repos_only', 'tags',
                   'updated_at')
+
+    def get_bugfix_update_count(self, obj):
+        return len([u for u in obj.updates if not u.security])
+
+    def get_security_update_count(self, obj):
+        return len([u for u in obj.updates if u.security])
 
 
 class HostRepoSerializer(serializers.HyperlinkedModelSerializer):
