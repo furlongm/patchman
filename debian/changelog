@@ -1,3 +1,10 @@
+patchman (1.2.22-1) stable; urgency=medium
+
+  * add client -h option to getopts
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Tue, 16 Feb 2021 16:40:54 +0000
+
 patchman (1.2.21-1) stable; urgency=medium
 
   * don't list multple identical kernel updates (#282)
