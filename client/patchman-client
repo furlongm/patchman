@@ -26,7 +26,7 @@ usage() {
 }
 
 parseopts() {
-    while getopts "vdnrs:c:t:" opt; do
+    while getopts "vdnrs:c:t:h:" opt; do
         case ${opt} in
         v)
             verbose=1
