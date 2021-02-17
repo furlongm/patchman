@@ -123,12 +123,10 @@ check_conf() {
         tags="${cli_tags}"
     fi
 
-    if [ -z "${hostname}" ] && [ -z "${cli_hostname}" ] ; then
+    if [ -z "${cli_hostname}" ] ; then
         get_hostname
     else
-        if [ ! -z "${cli_server}" ] ; then
-            server=${cli_server}
-        fi
+        hostname="${cli_hostname}"
     fi
 
     if [ ${verbose} == 1 ] ; then
