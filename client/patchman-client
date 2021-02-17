@@ -126,8 +126,8 @@ check_conf() {
     if [ -z "${hostname}" ] && [ -z "${cli_hostname}" ] ; then
         get_hostname
     else
-        if [ ! -z "${cli_server}" ] ; then
-            server=${cli_server}
+        if [ ! -z "${cli_hostname}" ] ; then
+            hostname=${cli_hostname}
         fi
     fi
 
