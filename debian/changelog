@@ -1,3 +1,10 @@
+patchman (1.2.23-1) stable; urgency=medium
+
+  * fix client hostname logic
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Wed, 17 Feb 2021 18:53:51 +0000
+
 patchman (1.2.22-1) stable; urgency=medium
 
   * add client -h option to getopts
