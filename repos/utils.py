@@ -40,7 +40,7 @@ from django.utils.six import text_type
 from packages.models import Package, PackageName, PackageString
 from arch.models import PackageArchitecture
 from util import get_url, download_url, response_is_valid, extract, \
-    get_sha1, get_sha256
+    get_checksum, Checksum
 from patchman.signals import progress_info_s, progress_update_s, \
     info_message, warning_message, error_message, debug_message
 
@@ -152,19 +152,6 @@ def get_primary_url(mirror_url, data):
                               namespaces={'ns': ns})[0]
     primary_url = str(mirror_url.rsplit('/', 2)[0]) + '/' + location
     return primary_url, checksum, csum_type
-
-
-def get_sha(checksum_type, data):
-    """ Returns the checksum of the data. Returns None otherwise.
-    """
-    if checksum_type == 'sha' or checksum_type == 'sha1':
-        sha = get_sha1(data)
-    elif checksum_type == 'sha256':
-        sha = get_sha256(data)
-    else:
-        text = 'Unknown checksum type: {0!s}'.format(checksum_type)
-        error_message.send(sender=None, text=text)
-    return sha
 
 
 def find_mirror_url(stored_mirror_url, formats):
@@ -456,7 +443,6 @@ def refresh_yum_repo(mirror, data, mirror_url, ts):
     """ Refresh package metadata for a yum-style rpm mirror
         and add the packages to the mirror
     """
-
     primary_url, checksum, checksum_type = get_primary_url(mirror_url, data)
 
     if not primary_url:
@@ -475,13 +461,8 @@ def refresh_yum_repo(mirror, data, mirror_url, ts):
         mirror.fail()
         return
 
-    sha = get_sha(checksum_type, data)
-    if sha is None:
-        mirror.fail()
-        return
-
-    if not checksum_is_valid(sha, checksum, mirror):
-        mirror.fail()
+    computed_checksum = get_checksum(data, Checksum[checksum_type])
+    if not mirror_checksum_is_valid(computed_checksum, checksum, mirror):
         return
 
     if mirror.file_checksum == checksum:
@@ -509,21 +490,21 @@ def refresh_yum_repo(mirror, data, mirror_url, ts):
                 update_mirror_packages(mirror, packages)
 
 
-def checksum_is_valid(sha, checksum, mirror):
+def mirror_checksum_is_valid(computed, provided, mirror):
     """ Compares the computed checksum and the provided checksum. Returns True
         if both match.
     """
-
-    if sha == checksum:
-        return True
-    else:
+    if not computed or computed != provided:
         text = 'Checksum failed for mirror {0!s}'.format(mirror.id)
         text += ', not refreshing package metadata'
         error_message.send(sender=None, text=text)
-        text = 'Found sha = {0!s}\nExpected  = {1!s}'.format(sha, checksum)
+        text = 'Found checksum:    {0!s}\nExpected checksum: {1!s}'.format(computed, provided)
         error_message.send(sender=None, text=text)
         mirror.last_access_ok = False
+        mirror.fail()
         return False
+    else:
+        return True
 
 
 def refresh_arch_repo(repo):
@@ -543,8 +524,8 @@ def refresh_arch_repo(repo):
             if data is None:
                 mirror.fail()
                 return
-            sha1 = get_sha1(data)
-            if mirror.file_checksum == sha1:
+            computed_checksum = get_checksum(data, Checksum.sha1)
+            if mirror.file_checksum == computed_checksum:
                 text = 'Mirror checksum has not changed, '
                 text += 'not refreshing package metadata'
                 warning_message.send(sender=None, text=text)
@@ -553,7 +534,7 @@ def refresh_arch_repo(repo):
                 mirror.last_access_ok = True
                 mirror.timestamp = ts
                 update_mirror_packages(mirror, packages)
-                mirror.file_checksum = sha1
+                mirror.file_checksum = computed_checksum
                 packages.clear()
         else:
             mirror.fail()
@@ -656,8 +637,8 @@ def refresh_deb_repo(repo):
             if data is None:
                 mirror.fail()
                 return
-            sha1 = get_sha1(data)
-            if mirror.file_checksum == sha1:
+            computed_checksum = get_checksum(data, Checksum.sha1)
+            if mirror.file_checksum == computed_checksum:
                 text = 'Mirror checksum has not changed, '
                 text += 'not refreshing package metadata'
                 warning_message.send(sender=None, text=text)
@@ -666,7 +647,7 @@ def refresh_deb_repo(repo):
                 mirror.last_access_ok = True
                 mirror.timestamp = ts
                 update_mirror_packages(mirror, packages)
-                mirror.file_checksum = sha1
+                mirror.file_checksum = computed_checksum
                 packages.clear()
         else:
             mirror.fail()
