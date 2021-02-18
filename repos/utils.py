@@ -15,21 +15,28 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+import io
+import os
+import git
 import re
+import shutil
 import tarfile
+import tempfile
 import yaml
 from datetime import datetime
 from io import BytesIO
 from defusedxml.lxml import _etree as etree
 from debian.debian_support import Version
 from debian.deb822 import Packages
+from fnmatch import fnmatch
 
 from django.conf import settings
 from django.db import IntegrityError, DatabaseError, transaction
 from django.db.models import Q
 
-from packages.models import Package, PackageName, PackageString
-from packages.utils import parse_package_string, get_or_create_package
+from packages.models import Package, PackageString
+from packages.utils import parse_package_string, get_or_create_package, find_evr, \
+    convert_package_to_packagestring, convert_packagestring_to_package
 from arch.models import PackageArchitecture
 from util import get_url, download_url, response_is_valid, extract, \
     get_checksum, Checksum
@@ -37,94 +44,63 @@ from patchman.signals import progress_info_s, progress_update_s, \
     info_message, warning_message, error_message, debug_message
 
 
+def get_or_create_repo(r_name, r_arch, r_type):
+    """ Get or create a Repository object. Returns the object. Returns None if
+        it cannot get or create the object.
+    """
+    from repos.models import Repository
+    repositories = Repository.objects.all()
+    try:
+        with transaction.atomic():
+            repository, c = repositories.get_or_create(name=r_name,
+                                                       arch=r_arch,
+                                                       repotype=r_type)
+    except IntegrityError as e:
+        error_message.send(sender=None, text=e)
+        repository = repositories.get(name=r_name,
+                                      arch=r_arch,
+                                      repotype=r_type)
+    except DatabaseError as e:
+        error_message.send(sender=None, text=e)
+    if repository:
+        return repository
+
+
 def update_mirror_packages(mirror, packages):
     """ Updates the packages contained on a mirror, and
         removes obsolete packages.
     """
-    new = set()
-    old = set()
-    removals = set()
+    from repos.models import MirrorPackage  # noqa
 
+    old = set()
     mirror_packages = mirror.packages.all()
     mlen = mirror_packages.count()
-
     ptext = 'Fetching existing packages:'
     progress_info_s.send(sender=None, ptext=ptext, plen=mlen)
     for i, package in enumerate(mirror_packages):
         progress_update_s.send(sender=None, index=i + 1)
-        name = str(package.name)
-        arch = str(package.arch)
-        strpackage = PackageString(name=name,
-                                   epoch=package.epoch,
-                                   version=package.version,
-                                   release=package.release,
-                                   arch=arch,
-                                   packagetype=package.packagetype)
+        strpackage = convert_package_to_packagestring(package)
         old.add(strpackage)
 
-    new = packages.difference(old)
     removals = old.difference(packages)
-
-    nlen = len(new)
     rlen = len(removals)
-
     ptext = f'Removing {rlen!s} obsolete packages:'
     progress_info_s.send(sender=None, ptext=ptext, plen=rlen)
-    for i, package in enumerate(removals):
+    for i, strpackage in enumerate(removals):
         progress_update_s.send(sender=None, index=i + 1)
-        package_id = PackageName.objects.get(name=package.name)
-        epoch = package.epoch
-        version = package.version
-        release = package.release
-        arch = PackageArchitecture.objects.get(name=package.arch)
-        packagetype = package.packagetype
-        p = Package.objects.get(name=package_id,
-                                epoch=epoch,
-                                version=version,
-                                arch=arch,
-                                release=release,
-                                packagetype=packagetype)
-        from repos.models import MirrorPackage
-        mirror_packages = MirrorPackage.objects.filter(mirror=mirror, package=p)
-        for mirror_package in mirror_packages:
-            with transaction.atomic():
-                mirror_package.delete()
+        package = convert_packagestring_to_package(strpackage)
+        MirrorPackage.objects.filter(mirror=mirror, package=package).delete()
 
+    new = packages.difference(old)
+    nlen = len(new)
     ptext = f'Adding {nlen!s} new packages:'
     progress_info_s.send(sender=None, ptext=ptext, plen=nlen)
-    for i, package in enumerate(new):
+    for i, strpackage in enumerate(new):
         progress_update_s.send(sender=None, index=i + 1)
-
-        package_names = PackageName.objects.all()
+        package = convert_packagestring_to_package(strpackage)
         with transaction.atomic():
-            package_id, c = package_names.get_or_create(name=package.name)
-
-        epoch = package.epoch
-        version = package.version
-        release = package.release
-        packagetype = package.packagetype
-
-        package_arches = PackageArchitecture.objects.all()
-        with transaction.atomic():
-            arch, c = package_arches.get_or_create(name=package.arch)
-
-        all_packages = Package.objects.all()
-        with transaction.atomic():
-            p, c = all_packages.get_or_create(name=package_id,
-                                              epoch=epoch,
-                                              version=version,
-                                              arch=arch,
-                                              release=release,
-                                              packagetype=packagetype)
-        # This fixes a subtle bug where a stored package name with uppercase
-        # letters will not match until it is lowercased.
-        if package_id.name != package.name:
-            package_id.name = package.name
-            with transaction.atomic():
-                package_id.save()
-        from repos.models import MirrorPackage  # noqa
-        with transaction.atomic():
-            mirror_package, c = MirrorPackage.objects.get_or_create(mirror=mirror, package=p)
+            mirror_package, c = MirrorPackage.objects.get_or_create(mirror=mirror, package=package)
+    mirror.save()
 
 
 def get_primary_url(mirror_url, data):
@@ -187,6 +163,62 @@ def find_mirror_url(stored_mirror_url, formats):
         res = get_url(mirror_url)
         if res is not None and res.ok:
             return res
+
+
+def get_gentoo_mirror_urls():
+    """ Use the Gentoo API to find http(s) mirrors
+    """
+    res = get_url('https://api.gentoo.org/mirrors/distfiles.xml')
+    if not res:
+        return
+    mirrors = {}
+    tree = etree.parse(BytesIO(res.content))
+    root = tree.getroot()
+    for child in root:
+        if child.tag == 'mirrorgroup':
+            for k, v in child.attrib.items():
+                if k == 'region':
+                    region = v
+                elif k == 'country':
+                    country = v
+            for mirror in child:
+                for element in mirror:
+                    if element.tag == 'name':
+                        name = element.text
+                        mirrors[name] = {}
+                        mirrors[name]['region'] = region
+                        mirrors[name]['country'] = country
+                        mirrors[name]['urls'] = []
+                    elif element.tag == 'uri':
+                        if element.get('protocol') == 'http':
+                            mirrors[name]['urls'].append(element.text)
+    mirror_urls = []
+    # for now, ignore region data and choose MAX_MIRRORS mirrors at random
+    for _, v in mirrors.items():
+        for url in v['urls']:
+            mirror_urls.append(url.rstrip('/') + '/snapshots/gentoo-latest.tar.xz')
+    return mirror_urls
+
+
+def get_gentoo_overlay_mirrors(repo_name):
+    """Get the gentoo overlay repos that match repo.id
+    """
+    res = get_url('https://api.gentoo.org/overlays/repositories.xml')
+    if not res:
+        return
+    tree = etree.parse(BytesIO(res.content))
+    root = tree.getroot()
+    mirrors = []
+    for child in root:
+        if child.tag == 'repo':
+            found = False
+            for element in child:
+                if element.tag == 'name' and element.text == repo_name:
+                    found = True
+                if found and element.tag == 'source':
+                    if element.text.startswith('http'):
+                        mirrors.append(element.text)
+    return mirrors
 
 
 def is_metalink(url):
@@ -617,6 +649,170 @@ def refresh_arch_repo(repo):
                 update_mirror_packages(mirror, packages)
                 mirror.file_checksum = computed_checksum
                 packages.clear()
+        else:
+            mirror.fail()
+        mirror.save()
+
+
+def refresh_gentoo_main_repo(repo):
+    """ Refresh all mirrors of the main gentoo repo
+    """
+    mirrors = get_gentoo_mirror_urls()
+    add_mirrors_from_urls(repo, mirrors)
+
+
+def refresh_gentoo_overlay_repo(repo):
+    """ Refresh all mirrors of a Gentoo overlay repo
+    """
+    mirrors = get_gentoo_overlay_mirrors(repo.repo_id)
+    add_mirrors_from_urls(repo, mirrors)
+
+
+def get_gentoo_ebuild_keywords(content):
+    keywords = set()
+    default_keywords = {
+        'alpha',
+        'amd64',
+        'arm',
+        'arm64',
+        'hppa',
+        'loong',
+        'm68k',
+        'mips',
+        'ppc',
+        'ppc64',
+        'riscv',
+        's390',
+        'sparc',
+        'x86',
+    }
+    for line in content.decode().splitlines():
+        if not line.startswith('KEYWORDS='):
+            continue
+        all_keywords = line.split('=')[1].split('#')[0].strip(' "').split()
+        if len(all_keywords) == 0 or '*' in all_keywords:
+            all_keywords = default_keywords
+        for keyword in all_keywords:
+            if keyword.startswith('~'):
+                continue
+            if keyword.startswith('-'):
+                keyword = keyword.replace('-', '')
+                if keyword in all_keywords:
+                    all_keywords.remove(keyword)
+                continue
+            keywords.add(keyword)
+        break
+    return keywords
+
+
+def extract_gentoo_packages(mirror, data):
+    extracted_files = {}
+    with tarfile.open(fileobj=io.BytesIO(data), mode='r') as tar:
+        for member in tar.getmembers():
+            if member.isfile():
+                file_content = tar.extractfile(member).read()
+                extracted_files[member.name] = file_content
+    packages = set()
+    for path, content in extracted_files.items():
+        if fnmatch(path, '*.ebuild'):
+            components = path.split(os.sep)
+            if len(components) < 4:
+                continue
+            category = components[1]
+            name = components[2]
+            evr = components[3].replace(f'{name}-', '').replace('.ebuild', '')
+            epoch, version, release = find_evr(evr)
+            arches = get_gentoo_ebuild_keywords(content)
+            for arch in arches:
+                package = PackageString(
+                    name=name.lower(),
+                    epoch=epoch,
+                    version=version,
+                    release=release,
+                    arch=arch,
+                    packagetype='G',
+                    category=category,
+                )
+                packages.add(package)
+    return packages
+
+
+def extract_gentoo_overlay_packages(mirror):
+    from packages.utils import find_evr
+    t = tempfile.mkdtemp()
+    git.Repo.clone_from(mirror.url, t, branch='master', depth=1)
+    packages = set()
+    with transaction.atomic():
+        arch, c = PackageArchitecture.objects.get_or_create(name='any')
+    for root, dirs, files in os.walk(t):
+        for name in files:
+            if fnmatch(name, '*.ebuild'):
+                full_name = root.replace(t + '/', '')
+                p_category, p_name = full_name.split('/')
+                m = re.match(fr'{p_name}-(.*)\.ebuild', name)
+                if m:
+                    p_evr = m.group(1)
+                epoch, version, release = find_evr(p_evr)
+                package = PackageString(
+                    name=p_name.lower(),
+                    epoch=epoch,
+                    version=version,
+                    release=release,
+                    arch=arch,
+                    packagetype='G',
+                    category=p_category,
+                )
+                packages.add(package)
+    shutil.rmtree(t)
+    return packages
+
+
+def refresh_gentoo_repo(repo):
+    """ Refresh a Gentoo repo
+    """
+    if repo.repo_id == 'gentoo':
+        repo_type = 'main'
+        refresh_gentoo_main_repo(repo)
+    else:
+        refresh_gentoo_overlay_repo(repo)
+        repo_type = 'overlay'
+    ts = datetime.now().replace(microsecond=0)
+    for mirror in repo.mirror_set.filter(mirrorlist=False, refresh=True):
+        res = get_url(mirror.url + '.md5sum')
+        data = download_url(res, 'Downloading repo info (1/2):')
+        if data is None:
+            mirror.fail()
+            continue
+        checksum = data.decode().split()[0]
+        if checksum is None:
+            mirror.fail()
+            continue
+        if mirror.file_checksum == checksum:
+            text = 'Mirror checksum has not changed, not refreshing package metadata'
+            warning_message.send(sender=None, text=text)
+            continue
+        res = get_url(mirror.url)
+        mirror.last_access_ok = response_is_valid(res)
+        if mirror.last_access_ok:
+            data = download_url(res, 'Downloading repo info (2/2):')
+            if data is None:
+                mirror.fail()
+                continue
+            extracted = extract(data, mirror.url)
+            text = f'Found gentoo repo - {mirror.url}'
+            info_message.send(sender=None, text=text)
+            computed_checksum = get_checksum(data, Checksum.md5)
+            if not mirror_checksum_is_valid(computed_checksum, checksum, mirror, 'package'):
+                continue
+            else:
+                mirror.file_checksum = checksum
+            if repo_type == 'main':
+                packages = extract_gentoo_packages(mirror, extracted)
+            elif repo_type == 'overlay':
+                packages = extract_gentoo_overlay_packages(mirror)
+            mirror.timestamp = ts
+            if packages:
+                update_mirror_packages(mirror, packages)
         else:
             mirror.fail()
         mirror.save()

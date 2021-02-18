@@ -23,10 +23,60 @@ from django.core.exceptions import MultipleObjectsReturned
 from django.db import IntegrityError, DatabaseError, transaction
 
 from util import bunzip2, get_url, download_url, get_sha1
-from packages.models import ErratumReference, PackageName, \
-    Package, PackageUpdate
+from packages.models import ErratumReference, PackageName, Package, PackageUpdate, PackageCategory, PackageString
 from arch.models import MachineArchitecture, PackageArchitecture
 from patchman.signals import error_message, progress_info_s, progress_update_s
+
+
+def convert_package_to_packagestring(package):
+    """ Convert a Package object to a PackageString object
+    """
+    name = package.name.name
+    arch = package.arch.name
+    if package.category:
+        category = package.category.name
+    else:
+        category = None
+
+    string_package = PackageString(
+        name=name,
+        epoch=package.epoch,
+        version=package.version,
+        release=package.release,
+        arch=arch,
+        packagetype=package.packagetype,
+        category=category,
+    )
+    return string_package
+
+
+def convert_packagestring_to_package(strpackage):
+    """ Convert a PackageString object to a Package object
+    """
+    with transaction.atomic():
+        name, created = PackageName.objects.get_or_create(name=strpackage.name.lower())
+    epoch = strpackage.epoch
+    version = strpackage.version
+    release = strpackage.release
+    with transaction.atomic():
+        arch, created = PackageArchitecture.objects.get_or_create(name=strpackage.arch)
+    packagetype = strpackage.packagetype
+    if strpackage.category:
+        with transaction.atomic():
+            category, created = PackageCategory.objects.get_or_create(name=strpackage.category)
+    else:
+        category = None
+
+    package, created = Package.objects.get_or_create(
+          name=name,
+          epoch=epoch,
+          version=version,
+          release=release,
+          arch=arch,
+          packagetype=packagetype,
+          category=category,
+    )
+    return package
 
 
 def find_evr(s):
