@@ -238,6 +238,8 @@ get_host_data() {
             os="$(cat /etc/redhat-release)"
         elif [ "${ID}" == "fedora" ] ; then
             os="${PRETTY_NAME}"
+        elif [ "${ID}" == "arch" ] ; then
+            os="${NAME}"
         elif [[ "${ID}" =~ "suse" ]] ; then
             os="${PRETTY_NAME}"
         else
