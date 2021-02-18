@@ -227,26 +227,26 @@ def get_mirrorlist_urls(url):
                 return mirror_urls
 
 
-def add_mirrors_from_urls(mirror, mirror_urls):
+def add_mirrors_from_urls(repo, mirror_urls):
     """ Creates mirrors from a list of mirror urls
     """
     for mirror_url in mirror_urls:
         mirror_url = mirror_url.decode('ascii')
-        mirror_url = mirror_url.replace('$ARCH', mirror.repo.arch.name)
-        mirror_url = mirror_url.replace('$basearch', mirror.repo.arch.name)
+        mirror_url = mirror_url.replace('$ARCH', repo.arch.name)
+        mirror_url = mirror_url.replace('$basearch', repo.arch.name)
         if hasattr(settings, 'MAX_MIRRORS') and \
                 isinstance(settings.MAX_MIRRORS, int):
             max_mirrors = settings.MAX_MIRRORS
             # only add X mirrors, where X = max_mirrors
             q = Q(mirrorlist=False, refresh=True)
-            existing = mirror.repo.mirror_set.filter(q).count()
+            existing = repo.mirror_set.filter(q).count()
             if existing >= max_mirrors:
                 text = '{0!s} mirrors already '.format(max_mirrors)
                 text += 'exist, not adding {0!s}'.format(mirror_url)
                 warning_message.send(sender=None, text=text)
                 continue
         from repos.models import Mirror
-        m, c = Mirror.objects.get_or_create(repo=mirror.repo, url=mirror_url)
+        m, c = Mirror.objects.get_or_create(repo=repo, url=mirror_url)
         if c:
             text = 'Added mirror - {0!s}'.format(mirror_url)
             info_message.send(sender=None, text=text)
@@ -264,7 +264,7 @@ def check_for_mirrorlists(repo):
             mirror.save()
             text = 'Found mirrorlist - {0!s}'.format(mirror.url)
             info_message.send(sender=None, text=text)
-            add_mirrors_from_urls(mirror, mirror_urls)
+            add_mirrors_from_urls(repo, mirror_urls)
 
 
 def check_for_metalinks(repo):
@@ -282,7 +282,7 @@ def check_for_metalinks(repo):
             mirror.save()
             text = 'Found metalink - {0!s}'.format(mirror.url)
             info_message.send(sender=None, text=text)
-            add_mirrors_from_urls(mirror, mirror_urls)
+            add_mirrors_from_urls(repo, mirror_urls)
 
 
 def extract_yum_packages(data, url):
