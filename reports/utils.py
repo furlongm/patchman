@@ -299,21 +299,17 @@ def process_package(pkg, protocol):
     """
     if protocol == '1':
         epoch = ver = rel = ''
+        arch = 'unknown'
+
         name = pkg[0]
-
-        if pkg[4] != '':
-            arch = pkg[4]
-        else:
-            arch = 'unknown'
-
         if pkg[1]:
             epoch = pkg[1]
-
         if pkg[2]:
             ver = pkg[2]
-
         if pkg[3]:
             rel = pkg[3]
+        if pkg[4]:
+            arch = pkg[4]
 
         if pkg[5] == 'deb':
             p_type = Package.DEB
