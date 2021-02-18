@@ -530,6 +530,7 @@ def refresh_arch_repo(repo):
     """ Refresh all mirrors of an arch linux repo
     """
     fname = '{0!s}.db'.format(repo.repo_id)
+    ts = datetime.now().replace(microsecond=0)
     for mirror in repo.mirror_set.filter(refresh=True):
         res = find_mirror_url(mirror.url, [fname])
         mirror.last_access_ok = response_is_valid(res)
@@ -550,7 +551,7 @@ def refresh_arch_repo(repo):
             else:
                 packages = extract_arch_packages(data)
                 mirror.last_access_ok = True
-                mirror.timestamp = datetime.now()
+                mirror.timestamp = ts
                 update_mirror_packages(mirror, packages)
                 mirror.file_checksum = sha1
                 packages.clear()
@@ -642,6 +643,7 @@ def refresh_deb_repo(repo):
     if lzma is not None:
         formats.insert(0, 'Packages.xz')
 
+    ts = datetime.now().replace(microsecond=0)
     for mirror in repo.mirror_set.filter(refresh=True):
         res = find_mirror_url(mirror.url, formats)
         mirror.last_access_ok = response_is_valid(res)
@@ -662,7 +664,7 @@ def refresh_deb_repo(repo):
             else:
                 packages = extract_deb_packages(data, mirror_url)
                 mirror.last_access_ok = True
-                mirror.timestamp = datetime.now()
+                mirror.timestamp = ts
                 update_mirror_packages(mirror, packages)
                 mirror.file_checksum = sha1
                 packages.clear()
