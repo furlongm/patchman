@@ -308,7 +308,7 @@ get_repos() {
         if [ ${verbose} == 1 ] ; then
             echo 'Finding yum repos...'
         fi
-        releasever=$(rpm -q --qf "%{version}\n" --whatprovides redhat-release)
+        releasever=$(rpm -q --qf "%{version}\n" --whatprovides redhat-release | sort -u)
         let numrepos=$(ls /etc/yum.repos.d/*.repo | wc -l)
         if [ ${numrepos} -gt 0 ] ; then
             priorities=$(sed -n -e "/^name/h; /priority *=/{ G; s/\n/ /; s/ity *= *\(.*\)/ity=\1/ ; s/\$releasever/${releasever}/ ; s/name=\(.*\)/'\1 ${host_arch}'/ ; p }" /etc/yum.repos.d/*.repo)
