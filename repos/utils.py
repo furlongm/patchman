@@ -586,14 +586,12 @@ def refresh_rpm_repo(repo):
 
     check_for_mirrorlists(repo)
     check_for_metalinks(repo)
-
     ts = datetime.now().replace(microsecond=0)
+    enabled_mirrors = repo.mirror_set.filter(mirrorlist=False, refresh=True)
 
-    for mirror in repo.mirror_set.filter(mirrorlist=False, refresh=True):
-
+    for mirror in enabled_mirrors:
         res = find_mirror_url(mirror.url, formats)
         mirror.last_access_ok = response_is_valid(res)
-
         if mirror.last_access_ok:
             data = download_url(res, 'Downloading repo info (1/2):')
             if data is None:
