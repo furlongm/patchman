@@ -208,7 +208,9 @@ class Host(models.Model):
 
         update_ids = []
         hostrepos_q = Q(repo__mirror__enabled=True,
-                        repo__mirror__repo__enabled=True, host=self)
+                        repo__mirror__refresh=True,
+                        repo__mirror__repo__enabled=True,
+                        host=self)
         hostrepos = HostRepo.objects.select_related().filter(hostrepos_q)
 
         for package in host_packages:
