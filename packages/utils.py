@@ -89,7 +89,6 @@ def update_errata(force=False):
     else:
         if data:
             parse_errata(bunzip2(data), force)
-            mark_security_updates()
 
 
 def download_errata_checksum():
@@ -280,7 +279,7 @@ def get_or_create_package(name, epoch, version, release, arch, p_type):
     return package
 
 
-def mark_security_updates():
+def mark_errata_security_updates():
     """ For each set of erratum packages, modify any PackageUpdate that
         should be marked as a security update.
     """
