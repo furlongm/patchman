@@ -298,7 +298,6 @@ def extract_yum_packages(data, url):
                               namespaces={'ns': ns})[0].text
             fullversion = elem.xpath('//ns:version',
                                      namespaces={'ns': ns})[0]
-            epoch = fullversion.get('epoch')
             version = fullversion.get('ver')
             release = fullversion.get('rel')
             elem.clear()
@@ -306,10 +305,8 @@ def extract_yum_packages(data, url):
                 del elem.getparent()[0]
 
             if name != '' and version != '' and arch != '':
-                if epoch == '0':
-                    epoch = ''
                 package = PackageString(name=name,
-                                        epoch=epoch,
+                                        epoch='',
                                         version=version,
                                         release=release,
                                         arch=arch,
