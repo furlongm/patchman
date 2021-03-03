@@ -155,7 +155,7 @@ get_installed_rpm_packages() {
             echo 'Finding installed rpms...'
         fi
 
-        rpm -qa --queryformat "'%{NAME}' '%{EPOCH}' '%{version}' '%{RELEASE}' '%{ARCH}' 'rpm'\n" 2>/dev/null \
+        rpm -qa --queryformat "'%{NAME}' '' '%{version}' '%{RELEASE}' '%{ARCH}' 'rpm'\n" 2>/dev/null \
         | sed -e 's/(none)//g' \
         | sed -e 's/\+/%2b/g' >> "${tmpfile_pkg}"
 
