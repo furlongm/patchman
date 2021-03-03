@@ -34,7 +34,7 @@ from tagging.models import TaggedItem
 
 from hosts.models import Host
 from packages.models import Package, PackageName, PackageUpdate
-from packages.utils import update_errata
+from packages.utils import update_errata, mark_errata_security_updates
 from repos.models import Repository
 from arch.models import PackageArchitecture, MachineArchitecture
 from reports.models import Report
@@ -578,6 +578,12 @@ def collect_args():
         '-D', '--diff', metavar=('hostA', 'hostB'), nargs=2,
         help='Show differences between two Hosts in diff-like output')
     parser.add_argument(
+        '-ue', '--update-errata', action='store_true',
+        help='Update CentOS errata from https://cefs.steve-meier.de/')
+    parser.add_argument(
+        '-me', '--mark-errata-security-updates', action='store_true',
+        help='Mark updates as security updates based on downloaded errata')
+    parser.add_argument(
         '-e', '--errata', action='store_true',
         help='Download CentOS errata from https://cefs.steve-meier.de/')
     return parser
@@ -656,6 +662,13 @@ def process_args(args):
         showhelp = False
     if args.errata:
         update_errata(args.force)
+        mark_errata_security_updates()
+        showhelp = False
+    if args.update_errata:
+        update_errata(args.force)
+        showhelp = False
+    if args.mark_errata_security_updates:
+        mark_errata_security_updates()
         showhelp = False
     return showhelp
 
