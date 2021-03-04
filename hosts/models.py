@@ -152,11 +152,15 @@ class Host(models.Model):
                 security = True
         try:
             updates = PackageUpdate.objects.all()
-            with transaction.atomic():
-                update, c = updates.get_or_create(
-                    oldpackage=package,
-                    newpackage=highest_package,
-                    security=security)
+            # see if any version of this update exists
+            # if it's already marked as a security update, leave it that way
+            update = updates.get(oldpackage=package, newpackage=highest_package)
+            if not update:
+                with transaction.atomic():
+                    update, c = updates.get_or_create(
+                        oldpackage=package,
+                        newpackage=highest_package,
+                        security=security)
         except IntegrityError as e:
             error_message.send(sender=None, text=e)
             update = updates.get(oldpackage=package,
