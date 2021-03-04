@@ -1,3 +1,14 @@
+patchman (1.2.25-1) stable; urgency=medium
+
+  * account for duplicate lines in rpm --whatprovides
+  * add options to download and process errata separately
+  * don't find updates from mirrors that haven't refreshed
+  * ignore epoch for RPM packages
+  * use correct delimiter when parsing errata
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Thu, 04 Mar 2021 04:36:02 +0000
+
 patchman (1.2.24-1) stable; urgency=medium
 
   * add arch linux os name to client
