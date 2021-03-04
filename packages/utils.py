@@ -292,9 +292,14 @@ def mark_errata_security_updates():
         progress_update_s.send(sender=None, index=i + 1)
         if erratum.etype == 'security':
             for package in erratum.packages.all():
-                with transaction.atomic():
-                    affected_updates = package_updates.select_for_update(
-                        ).filter(newpackage=package)
-                    for affected_update in affected_updates:
+                affected_updates = package_updates.filter(newpackage=package, security=False)
+                for affected_update in affected_updates:
+                    if not affected_update.security:
                         affected_update.security = True
-                        affected_update.save()
+                        try:
+                            with transaction.atomic():
+                                affected_update.save()
+                        except IntegrityError:
+                            # a version of this update already exists that is
+                            # marked as a security update, so delete this one
+                            affected_update.delete()
