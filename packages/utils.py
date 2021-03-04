@@ -182,7 +182,7 @@ def parse_errata_children(e, children):
                 error_message.send(sender=None, text=e)
                 continue
             if dist:
-                rel = '{0!s}-{1!s}'.format(rel, dist)
+                rel = '{0!s}.{1!s}'.format(rel, dist)
             p_type = Package.RPM
             pkg = get_or_create_package(name, epoch, ver, rel, arch, p_type)
             e.packages.add(pkg)
