@@ -309,6 +309,12 @@ get_yum_updates() {
     >> "${tmpfile_bug}"
 }
 
+get_zypper_updates() {
+    zypper -q -n ref
+    # can't differentiate between security and bugfix updates yet
+    zypper -q -n -s11 lu -r 5 | grep ^v | awk '{print $2"."$5,$4}' | sed -e "s/$/ ${1}/" >> "${tmpfile_bug}"
+}
+
 get_repos() {
     OLDIFS=${IFS}
     IFS="
@@ -369,8 +375,16 @@ get_repos() {
         if ${verbose} ; then
             echo 'Finding zypper repos...'
         fi
-        for i in $(zypper -q --no-refresh lr -E -u --details | grep -v ^$ | tail -n +3 | cut -d "|" -f 2,3,7,9 | sed -e "s/ *|/ ${host_arch} |/" -e "s/^ /'/g" -e "s/ *| */' '/g" -e "s/ *$/'/g") ; do
+        for i in $(zypper -q --no-refresh lr -E -u --details | grep -v ^$ | tail -n +3 | cut -d "|" -f 2,3,7,9 | sed -e "s/ *|/ ${host_arch} |/" -e "s/\?[a-zA-Z0-9_-]* *$//" -e "s/^ /'/g" -e "s/ *| */' '/g" -e "s/ *$/'/g") ; do
             echo \'rpm\' ${i} >> "${tmpfile_rep}"
+            id=$(echo ${i} | cut -d \' -f 4)
+            suse_repo=$(echo ${i} | grep -e "https://updates.suse.com/.*")
+            if [ ${?} == 0 ] || ${local_updates} ; then
+                if ${verbose} ; then
+                    echo "Finding updates locally for ${id}"
+                fi
+                get_zypper_updates ${id}
+            fi
         done
     fi
 
