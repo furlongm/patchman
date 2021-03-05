@@ -124,6 +124,8 @@ def merge_updates(sec_updates, bug_updates):
 def add_updates(updates, host):
     """ Add updates to a Host
     """
+    for host_update in host.updates.all():
+        host.updates.remove(host_update)
     ulen = len(updates)
     if ulen > 0:
         ptext = '{0!s} updates'.format(str(host)[0:25])
