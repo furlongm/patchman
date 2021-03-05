@@ -299,7 +299,8 @@ def mark_errata_security_updates():
                         try:
                             with transaction.atomic():
                                 affected_update.save()
-                        except IntegrityError:
+                        except IntegrityError as e:
+                            error_message.send(sender=None, text=e)
                             # a version of this update already exists that is
                             # marked as a security update, so delete this one
                             affected_update.delete()
