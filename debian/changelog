@@ -1,3 +1,19 @@
+patchman (1.2.26-1) stable; urgency=medium
+
+  * handle already existing security updates
+  * don't process epoch for rpms
+  * simplify client options with booleans
+  * mark update as security update if it already exists
+  * send error message to console, but continue
+  * fix rhel update reporting
+  * fix sles update reporting
+  * use dicts consistently for update handling
+  * remove existing updates upon new report
+  * gracefully handle updates that are missing the original package
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Fri, 05 Mar 2021 03:57:52 +0000
+
 patchman (1.2.25-1) stable; urgency=medium
 
   * account for duplicate lines in rpm --whatprovides
