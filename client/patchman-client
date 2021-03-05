@@ -2,11 +2,11 @@
 
 conf=/etc/patchman/patchman-client.conf
 protocol=1
-verbose=0
-debug=0
-report=0
-local_updates=0
-no_repo_check=0
+verbose=false
+debug=false
+report=false
+local_updates=false
+repo_check=true
 tags=''
 
 usage() {
@@ -26,23 +26,23 @@ usage() {
 }
 
 parseopts() {
-    while getopts "vdnrs:c:t:h:" opt; do
+    while getopts "vdnurs:c:t:h:" opt; do
         case ${opt} in
         v)
-            verbose=1
+            verbose=true
             ;;
         d)
-            debug=1
-            verbose=1
+            debug=true
+            verbose=true
             ;;
         n)
-            no_repo_check=1
+            repo_check=false
             ;;
         u)
-            local_updates=1
+            local_updates=true
             ;;
         r)
-            cli_report=1
+            cli_report=true
             ;;
         s)
             cli_server=${OPTARG}
@@ -64,18 +64,18 @@ parseopts() {
 }
 
 cleanup() {
-    if [ ${verbose} == 1 ] && [ ${debug} == 1 ] ; then
+    if ${verbose} && ${debug} ; then
         echo "Debug: not deleting ${tmpfile_pkg} (packages)"
         echo "Debug: not deleting ${tmpfile_rep} (repos)"
         echo "Debug: not deleting ${tmpfile_sec} (security updates)"
         echo "Debug: not deleting ${tmpfile_bug} (updates)"
-    elif [ ${verbose} == 1 ] && [ ${debug} == 0 ] ; then
+    elif ${verbose} && ! ${debug} ; then
         echo "Deleting ${tmpfile_pkg}"
         echo "Deleting ${tmpfile_rep}"
         echo "Deleting ${tmpfile_sec}"
         echo "Deleting ${tmpfile_bug}"
     fi
-    if [ ${debug} != 1 ] ; then
+    if ${debug} ; then
         rm -fr "${tmpfile_pkg}"
         rm -fr "${tmpfile_rep}"
         rm -fr "${tmpfile_sec}"
@@ -90,8 +90,8 @@ check_conf() {
         conf=${cli_conf}
     fi
 
-    if [ "${conf}" == "" ] || [ ! -f "${conf}" ] ; then
-        if [ ${verbose} == 1 ] ; then
+    if [ -z "${conf}" ] || [ ! -f "${conf}" ] ; then
+        if ${verbose} ; then
             echo "Warning: config file '${conf}' not found."
         fi
     else
@@ -131,7 +131,7 @@ check_conf() {
         fi
     fi
 
-    if [ ${verbose} == 1 ] ; then
+    if ${verbose} ; then
         echo "Patchman configuration seems OK: ${conf}"
         echo "Patchman Server: ${server}"
         echo "Hostname: ${hostname}"
@@ -151,7 +151,7 @@ check_command_exists() {
 
 get_installed_rpm_packages() {
     if check_command_exists rpm ; then
-        if [ ${verbose} == 1 ] ; then
+        if ${verbose} ; then
             echo 'Finding installed rpms...'
         fi
 
@@ -159,7 +159,7 @@ get_installed_rpm_packages() {
         | sed -e 's/(none)//g' \
         | sed -e 's/\+/%2b/g' >> "${tmpfile_pkg}"
 
-        if [ ${debug} == 1 ] ; then
+        if ${debug} ; then
             cat "${tmpfile_pkg}"
         fi
     fi
@@ -167,7 +167,7 @@ get_installed_rpm_packages() {
 
 get_installed_deb_packages() {
     if check_command_exists dpkg-query ; then
-        if [ ${verbose} == 1 ] ; then
+        if ${verbose} ; then
             echo 'Finding installed debs...'
         fi
         OLDIFS=${IFS}
@@ -183,7 +183,7 @@ get_installed_deb_packages() {
             epoch=$(echo "${remaining}" | cut -d ":" -f 1 -s)
             version=$(echo "${remaining}" | sed -e "s/.*:\(.*\)/\1/")
             echo \'${name}\' \'${epoch}\' \'${version}\' \'${release}\' \'${arch}\' \'deb\'>> "${tmpfile_pkg}"
-            if [ ${debug} == 1 ] ; then
+            if ${debug} ; then
                 echo \'${name}\' \'${epoch}\' \'${version}\' \'${release}\' \'${arch}\' \'deb\'
             fi
         done
@@ -204,13 +204,13 @@ get_packages() {
 
 get_hostname() {
     hostname=$(hostname -f)
-    if [ "${hostname}" == "" ] ; then
+    if [ -z "${hostname}" ] ; then
         short_hostname=$(hostname)
-        if [ "${short_hostname}" == "" ] ; then
+        if [ -z "${short_hostname}" ] ; then
             short_hostname=$(cat /etc/hostname)
         fi
         domainname=$(dnsdomainname)
-        if [ "${domainname}" != "" ] ; then
+        if [ ! -z "${domainname}" ] ; then
             hostname=${short_hostname}.${domainname}
         else
             hostname=${short_hostname}
@@ -278,7 +278,7 @@ get_host_data() {
             fi
         done
     fi
-    if [ ${debug} == 1 ] ; then
+    if ${debug} ; then
         echo "Hostname: ${hostname}"
         echo "Kernel:   ${host_kernel}"
         echo "Arch:     ${host_arch}"
@@ -305,7 +305,7 @@ get_repos() {
 
     # Red Hat / CentOS
     if check_command_exists yum ; then
-        if [ ${verbose} == 1 ] ; then
+        if ${verbose} ; then
             echo 'Finding yum repos...'
         fi
         releasever=$(rpm -q --qf "%{version}\n" --whatprovides redhat-release | sort -u)
@@ -327,8 +327,8 @@ get_repos() {
             fi
             j=$(echo ${i} | sed -e "s#'${id}' '${name}'#'${name}' '${id}' '${priority}'#")
             redhat_repo=$(echo ${j} | grep -e "https://.*/XMLRPC.*")
-            if [ ${?} == 0 ] || [ "${local_updates}" == "1" ] ; then
-                if [ ${verbose} == 1 ] ; then
+            if [ ${?} == 0 ] || ${local_updates} ; then
+                if ${verbose} ; then
                     echo "Finding updates locally for ${id}"
                 fi
                 get_yum_updates ${id}
@@ -340,7 +340,7 @@ get_repos() {
 
     # Debian
     if check_command_exists apt-cache ; then
-        if [ ${verbose} == 1 ] ; then
+        if ${verbose} ; then
             echo 'Finding apt repos...'
         fi
         IFS=${OLDIFS} read -r osname shortversion <<<$(echo "${os}" | awk '{print $1,$2}' | cut -d . -f 1,2)
@@ -354,7 +354,7 @@ get_repos() {
 
     # SUSE
     if check_command_exists zypper ; then
-        if [ ${verbose} == 1 ] ; then
+        if ${verbose} ; then
             echo 'Finding zypper repos...'
         fi
         for i in $(zypper -q --no-refresh lr -E -u --details | grep -v ^$ | tail -n +3 | cut -d "|" -f 2,3,7,9 | sed -e "s/ *|/ ${host_arch} |/" -e "s/^ /'/g" -e "s/ *| */' '/g" -e "s/ *$/'/g") ; do
@@ -364,7 +364,7 @@ get_repos() {
 
     # Arch
     if check_command_exists pacman ; then
-        if [ ${verbose} == 1 ] ; then
+        if ${verbose} ; then
             echo 'Finding pacman repos...'
         fi
         declare -A repos
@@ -396,7 +396,7 @@ get_repos() {
 
     sed -i -e '/^$/d' "${tmpfile_rep}"
 
-    if [ ${debug} == 1 ] ; then
+    if ${debug} ; then
         cat "${tmpfile_rep}"
     fi
 }
@@ -414,14 +414,14 @@ reboot_required() {
 post_data() {
     curl_opts=${curl_options}
 
-    if [ ${verbose} == 1 ] ; then
+    if ${verbose} ; then
         curl_opts="${curl_opts} -i"
         echo "Sending data to ${server} with curl:"
     else
         curl_opts="${curl_opts} -s -S";
     fi
 
-    if [ "${tags}" == "" ] ; then
+    if [ -z "${tags}" ] ; then
         tags='Default'
     fi
 
@@ -441,7 +441,7 @@ post_data() {
     curl_opts="${curl_opts} -F reboot=\"${reboot}\""
     post_command="curl ${curl_opts} ${server%/}/reports/upload/"
 
-    if [ ${verbose} == 1 ] ; then
+    if ${verbose} ; then
         echo "${post_command}"
     fi
 
@@ -453,7 +453,7 @@ post_data() {
         exit ${retval}
     fi
 
-    if [ ${report} == 1 ] || [ ${verbose} == 1 ] ; then
+    if ${report} || ${verbose} ; then
         if [ ! -z "${result}" ] ; then
             echo "${result}"
         else
@@ -476,7 +476,7 @@ fi
 
 parseopts "$@"
 
-if [ ${verbose} == 1 ] ; then
+if ${verbose} ; then
     echo "Attempting to obtain lock: ${lock_dir}/patchman.lock"
 fi
 
@@ -493,7 +493,7 @@ tmpfile_bug=$(mktemp)
 
 get_host_data
 get_packages
-if [ "${no_repo_check}" != "1" ] ; then
+if ${repo_check} ; then
     get_repos
 fi
 reboot_required
