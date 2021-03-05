@@ -101,8 +101,8 @@ def process_packages(report, host):
 def process_updates(report, host):
     """ Processes the update strings sent with a report
     """
-    bug_updates = ''
-    sec_updates = ''
+    bug_updates = {}
+    sec_updates = {}
     if report.bug_updates:
         bug_updates = parse_updates(report.bug_updates, False)
     if report.sec_updates:
@@ -118,7 +118,7 @@ def merge_updates(sec_updates, bug_updates):
     for u in sec_updates:
         if u in bug_updates:
             del(bug_updates[u])
-    return sec_updates + bug_updates
+    return dict(list(sec_updates.items()) + list(bug_updates.items()))
 
 
 def add_updates(updates, host):
@@ -129,7 +129,7 @@ def add_updates(updates, host):
         ptext = '{0!s} updates'.format(str(host)[0:25])
         progress_info_s.send(sender=None, ptext=ptext, plen=ulen)
 
-        for i, (u, sec) in enumerate(updates.items):
+        for i, (u, sec) in enumerate(updates.items()):
             update = process_update(host, u, sec)
             if update:
                 host.updates.add(update)
