@@ -315,6 +315,7 @@ def process_package(pkg, protocol):
             p_type = Package.DEB
         elif pkg[5] == 'rpm':
             p_type = Package.RPM
+            epoch = ''
         elif pkg[5] == 'arch':
             p_type = Package.ARCH
         else:
