@@ -154,8 +154,18 @@ class Host(models.Model):
             updates = PackageUpdate.objects.all()
             # see if any version of this update exists
             # if it's already marked as a security update, leave it that way
+            # if not, mark it as a security update
+            # this could be an issue if different distros mark the same update
+            # in different ways (security vs bugfix) but in reality this is not
+            # very likely to happen. if it does, we err on the side of caution
+            # and mark it as the security update
             update = updates.get(oldpackage=package, newpackage=highest_package)
-            if not update:
+            if update:
+                if security and not update.security:
+                    update.security = True
+                    with transaction.atomic():
+                        update.save()
+            else:
                 with transaction.atomic():
                     update, c = updates.get_or_create(
                         oldpackage=package,
