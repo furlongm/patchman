@@ -155,7 +155,7 @@ def parse_updates(updates_string, security):
 
 def process_update(host, update_string, security):
     """ Processes a single sanitized update string and converts to an update
-    object
+    object. Only works if the original package exists. Returns None otherwise
     """
     update_str = update_string.split()
     repo_id = update_str[2]
@@ -191,15 +191,17 @@ def process_update(host, update_string, security):
             with transaction.atomic():
                 MirrorPackage.objects.create(mirror=mirror, package=package)
 
-    installed_package = host.packages.filter(name=p_name,
-                                             arch=p_arch,
-                                             packagetype='R')[0]
-    updates = PackageUpdate.objects.all()
-    with transaction.atomic():
-        update, c = updates.get_or_create(oldpackage=installed_package,
-                                          newpackage=package,
-                                          security=security)
-    return update
+    installed_packages = host.packages.filter(name=p_name,
+                                              arch=p_arch,
+                                              packagetype='R')
+    if installed_packages:
+        installed_package = installed_packages[0]
+        updates = PackageUpdate.objects.all()
+        with transaction.atomic():
+            update, c = updates.get_or_create(oldpackage=installed_package,
+                                              newpackage=package,
+                                              security=security)
+        return update
 
 
 def parse_repos(repos_string):
