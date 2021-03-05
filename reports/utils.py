@@ -272,7 +272,8 @@ def process_repo(repo, arch):
 
     for mirror in Mirror.objects.filter(repo=repository).values('url'):
         if mirror['url'].find('cdn.redhat.com') != -1 or \
-                mirror['url'].find('nu.novell.com') != -1:
+                mirror['url'].find('nu.novell.com') != -1 or \
+                mirror['url'].find('updates.suse.com') != -1:
             repository.auth_required = True
             with transaction.atomic():
                 repository.save()
