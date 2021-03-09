@@ -5,7 +5,7 @@ django-bootstrap3==11.1.0
 progressbar==2.5
 python-debian==0.1.36
 lxml==4.5.0
-defusedxml==0.6.0
+defusedxml==0.7.1
 chardet==3.0.4
 requests==2.22.0
 colorama==0.4.3
