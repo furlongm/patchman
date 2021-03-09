@@ -75,7 +75,7 @@ cleanup() {
         echo "Deleting ${tmpfile_sec}"
         echo "Deleting ${tmpfile_bug}"
     fi
-    if ${debug} ; then
+    if ! ${debug} ; then
         rm -fr "${tmpfile_pkg}"
         rm -fr "${tmpfile_rep}"
         rm -fr "${tmpfile_sec}"
