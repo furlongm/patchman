@@ -131,13 +131,29 @@ check_conf() {
         fi
     fi
 
+    check_booleans
+
     if ${verbose} ; then
         echo "Patchman configuration seems OK: ${conf}"
         echo "Patchman Server: ${server}"
         echo "Hostname: ${hostname}"
         echo "Tags: ${tags}"
-        echo "Report: ${report}"
+        for var in report local_updates repo_check verbose debug ; do
+            eval val=\$${var}
+            echo "${var}: ${val}"
+        done
     fi
+}
+
+check_booleans() {
+    for var in report local_updates repo_check verbose debug ; do
+        eval val=\$${var}
+        if [ -z ${val} ] || [ "${val}" == "0" ] || [ "${val,,}" == "false" ] ; then
+            eval ${var}=false
+        elif [ "${val}" == "1" ] || [ "${val,,}" == "true" ] ; then
+            eval ${var}=true
+        fi
+    done
 }
 
 check_command_exists() {
