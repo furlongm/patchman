@@ -136,7 +136,10 @@ check_conf() {
     check_booleans
 
     if ${verbose} ; then
-        echo "Patchman configuration seems OK: ${conf}"
+        echo "Patchman configuration seems OK:"
+        if [ -f ${conf} ] ; then
+            echo "Using configuration file: ${conf}"
+        fi
         echo "Patchman Server: ${server}"
         echo "Hostname: ${hostname}"
         echo "Tags: ${tags}"
@@ -239,9 +242,7 @@ get_hostname() {
 get_host_data() {
     host_kernel=$(uname -r | sed -e 's/\+/%2b/g')
     host_arch=$(uname -m)
-
     os='unknown'
-
     if [ -f /etc/os-release ] ; then
         . /etc/os-release
         if [ "${ID}" == "debian" ] ; then
