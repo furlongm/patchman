@@ -328,7 +328,7 @@ get_yum_updates() {
 get_zypper_updates() {
     zypper -q -n ref
     # can't differentiate between security and bugfix updates yet
-    zypper -q -n -s11 lu -r 5 | grep ^v | awk '{print $2"."$5,$4}' | sed -e "s/$/ ${1}/" >> "${tmpfile_bug}"
+    zypper -q -n -s11 lu -r ${1} | grep ^v | awk '{print $2"."$5,$4}' | sed -e "s/$/ ${1}/" >> "${tmpfile_bug}"
 }
 
 get_repos() {
