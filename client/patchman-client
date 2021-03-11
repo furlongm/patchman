@@ -297,8 +297,7 @@ get_host_data() {
             fi
         done
     fi
-    if ${debug} ; then
-        echo "Hostname: ${hostname}"
+    if ${verbose} ; then
         echo "Kernel:   ${host_kernel}"
         echo "Arch:     ${host_arch}"
         echo "OS:       ${os}"
@@ -308,23 +307,21 @@ get_host_data() {
 get_yum_updates() {
     yum -q makecache 2>/dev/null
     yum -C --security list updates --disablerepo="*" --enablerepo="${1}" 2>&1 \
-    | grep -v excluded \
-    | grep -v "Available Upgrades" \
-    | grep -v "Updated Packages" \
-    | grep -v "Last metadata expiration check" \
-    | grep -v "needed for security" \
-    | grep -v "Loaded plugins" \
-    | grep -v 'This system is not registered to Red Hat Subscription Management. You can use subscription-manager to register.' \
-    | grep -v 'This system is receiving updates from Red Hat Subscription Management.' \
+    | grep -v 'excluded' \
+    | grep -v 'Available Upgrades' \
+    | grep -v 'Updated Packages' \
+    | grep -v 'Last metadata expiration check' \
+    | grep -v 'needed for security' \
+    | grep -v 'Loaded plugins' \
+    | grep -v 'Subscription Management' \
     >> "${tmpfile_sec}"
     yum -C list updates --disablerepo="*" --enablerepo="${1}" 2>&1 \
-    | grep -v excluded \
-    | grep -v "Available Upgrades" \
-    | grep -v "Updated Packages" \
-    | grep -v "Last metadata expiration check" \
-    | grep -v "Loaded plugins" \
-    | grep -v 'This system is not registered to Red Hat Subscription Management. You can use subscription-manager to register.' \
-    | grep -v 'This system is receiving updates from Red Hat Subscription Management.' \
+    | grep -v 'excluded' \
+    | grep -v 'Available Upgrades' \
+    | grep -v 'Updated Packages' \
+    | grep -v 'Last metadata expiration check' \
+    | grep -v 'Loaded plugins' \
+    | grep -v 'Subscription Management' \
     >> "${tmpfile_bug}"
 }
 
