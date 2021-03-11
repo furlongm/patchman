@@ -507,7 +507,7 @@ def mirror_checksum_is_valid(computed, provided, mirror):
 def refresh_arch_repo(repo):
     """ Refresh all mirrors of an arch linux repo
     """
-    fname = '{0!s}.db'.format(repo.repo_id)
+    fname = '{0!s}/{1!s}.db'.format(repo.arch, repo.repo_id)
     ts = datetime.now().replace(microsecond=0)
     for mirror in repo.mirror_set.filter(refresh=True):
         res = find_mirror_url(mirror.url, [fname])
