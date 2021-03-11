@@ -164,7 +164,7 @@ def process_update(host, update_string, security):
     package_str = parts[0]
     arch_str = parts[2]
 
-    p_epoch, p_version, p_release = find_evr(update_str[1])
+    _, p_version, p_release = find_evr(update_str[1])
 
     package_arches = PackageArchitecture.objects.all()
     with transaction.atomic():
@@ -178,7 +178,7 @@ def process_update(host, update_string, security):
     with transaction.atomic():
         package, c = packages.get_or_create(name=p_name,
                                             arch=p_arch,
-                                            epoch=p_epoch,
+                                            epoch='',
                                             version=p_version,
                                             release=p_release,
                                             packagetype='R')
