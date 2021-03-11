@@ -1,3 +1,10 @@
+patchman (1.2.30-1) stable; urgency=medium
+
+  * update arch repo path to include repo architecture
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Thu, 11 Mar 2021 03:35:25 +0000
+
 patchman (1.2.29-1) stable; urgency=medium
 
   * remove epoch from rpm package updates
