@@ -507,13 +507,20 @@ def mirror_checksum_is_valid(computed, provided, mirror):
 def refresh_arch_repo(repo):
     """ Refresh all mirrors of an arch linux repo
     """
+    if hasattr(settings, 'MAX_MIRRORS') and \
+           isinstance(settings.MAX_MIRRORS, int):
+        max_mirrors = settings.MAX_MIRRORS
     fname = '{0!s}/{1!s}.db'.format(repo.arch, repo.repo_id)
     ts = datetime.now().replace(microsecond=0)
-    for mirror in repo.mirror_set.filter(refresh=True):
+    for i, mirror in enumerate(repo.mirror_set.filter(refresh=True)):
         res = find_mirror_url(mirror.url, [fname])
         mirror.last_access_ok = response_is_valid(res)
-
         if mirror.last_access_ok:
+            if i >= max_mirrors:
+                text = '{0!s} mirrors already refreshed, '.format(max_mirrors)
+                text += ' not refreshing {0!s}'.format(mirror.url)
+                warning_message.send(sender=None, text=text)
+                continue
             mirror_url = res.url
             text = 'Found arch repo - {0!s}'.format(mirror_url)
             info_message.send(sender=None, text=text)
@@ -583,13 +590,21 @@ def refresh_rpm_repo(repo):
 
     check_for_mirrorlists(repo)
     check_for_metalinks(repo)
+
+    if hasattr(settings, 'MAX_MIRRORS') and \
+           isinstance(settings.MAX_MIRRORS, int):
+        max_mirrors = settings.MAX_MIRRORS
     ts = datetime.now().replace(microsecond=0)
     enabled_mirrors = repo.mirror_set.filter(mirrorlist=False, refresh=True)
-
-    for mirror in enabled_mirrors:
+    for i, mirror in enumerate(enabled_mirrors):
         res = find_mirror_url(mirror.url, formats)
         mirror.last_access_ok = response_is_valid(res)
         if mirror.last_access_ok:
+            if i >= max_mirrors:
+                text = '{0!s} mirrors already refreshed, '.format(max_mirrors)
+                text += ' not refreshing {0!s}'.format(mirror.url)
+                warning_message.send(sender=None, text=text)
+                continue
             data = download_url(res, 'Downloading repo info (1/2):')
             if data is None:
                 mirror.fail()
