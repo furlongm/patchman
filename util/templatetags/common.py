@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import unicode_literals
-
 from humanize import naturaltime
 from datetime import datetime, timedelta
 
@@ -25,8 +23,8 @@ from django.conf import settings
 from django.template import Library
 from django.template.loader import get_template
 from django.utils.html import format_html
-from django.contrib.staticfiles.templatetags.staticfiles import static
-from django.core.paginator import QuerySetPaginator, Paginator
+from django.templatetags.static import static
+from django.core.paginator import Paginator
 
 try:
     from urllib.parse import urlencode
@@ -83,7 +81,7 @@ def gen_table(object_list, template_name=None):
 
 @register.simple_tag
 def object_count(page):
-    if isinstance(page.paginator, (QuerySetPaginator, Paginator)):
+    if isinstance(page.paginator, Paginator):
         if page.paginator.count == 1:
             name = page.paginator.object_list.model._meta.verbose_name
         else:

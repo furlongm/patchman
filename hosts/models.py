@@ -15,9 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from __future__ import unicode_literals
-
-from django.utils.encoding import python_2_unicode_compatible
 from django.db import models, IntegrityError, DatabaseError, transaction
 from django.db.models import Q
 from django.urls import reverse
@@ -39,13 +36,12 @@ from repos.utils import find_best_repo
 from hosts.utils import update_rdns, remove_reports
 
 
-@python_2_unicode_compatible
 class Host(models.Model):
 
     hostname = models.CharField(max_length=255, unique=True)
     ipaddress = models.GenericIPAddressField()
     reversedns = models.CharField(max_length=255, blank=True, null=True)
-    check_dns = models.BooleanField(default=True)
+    check_dns = models.BooleanField(default=False)
     os = models.ForeignKey(OS, on_delete=models.CASCADE)
     kernel = models.CharField(max_length=255)
     arch = models.ForeignKey(MachineArchitecture, on_delete=models.CASCADE)
@@ -332,7 +328,6 @@ class Host(models.Model):
         return update_ids
 
 
-@python_2_unicode_compatible
 class HostRepo(models.Model):
     host = models.ForeignKey(Host, on_delete=models.CASCADE)
     repo = models.ForeignKey(Repository, on_delete=models.CASCADE)
