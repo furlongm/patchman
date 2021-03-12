@@ -145,6 +145,10 @@ class Package(models.Model):
             vo = Version(other.get_version_string())
             return version_compare(vs, vo)
         elif self.packagetype == 'A' and other.packagetype == 'A':
+            if self.epoch == other.epoch \
+                    and self.version == other.version \
+                    and self.release == other.release:
+                return 0
             vs = Version(self.get_version_string())
             vo = Version(other.get_version_string())
             return version_compare(vs, vo)
