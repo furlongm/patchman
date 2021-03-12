@@ -205,8 +205,8 @@ def get_mirrorlist_urls(url):
             data = download_url(res, 'Downloading repo info:')
             if data is None:
                 return
-            mirror_urls = re.findall(b'^http://.*$|^ftp://.*$',
-                                     data, re.MULTILINE)
+            mirror_urls = re.findall('^http://.*$|^ftp://.*$',
+                                     data.decode('utf-8'), re.MULTILINE)
             if mirror_urls:
                 return mirror_urls
 
@@ -215,7 +215,6 @@ def add_mirrors_from_urls(repo, mirror_urls):
     """ Creates mirrors from a list of mirror urls
     """
     for mirror_url in mirror_urls:
-        mirror_url = mirror_url.decode('ascii')
         mirror_url = mirror_url.replace('$ARCH', repo.arch.name)
         mirror_url = mirror_url.replace('$basearch', repo.arch.name)
         if hasattr(settings, 'MAX_MIRRORS') and \
@@ -272,7 +271,6 @@ def check_for_metalinks(repo):
 def extract_yum_packages(data, url):
     """ Extract package metadata from a yum primary.xml file
     """
-
     extracted = extract(data, url)
     ns = 'http://linux.duke.edu/metadata/common'
     m_context = etree.iterparse(BytesIO(extracted),
@@ -320,18 +318,15 @@ def extract_yum_packages(data, url):
 def extract_deb_packages(data, url):
     """ Extract package metadata from debian Packages file
     """
-
-    extracted = extract(data, url)
-    package_re = re.compile(b'^Package: ', re.M)
+    extracted = extract(data, url).decode('utf-8')
+    package_re = re.compile('^Package: ', re.M)
     plen = len(package_re.findall(extracted))
     packages = set()
 
     if plen > 0:
         ptext = 'Extracting packages: '
         progress_info_s.send(sender=None, ptext=ptext, plen=plen)
-
-        bio = BytesIO(extracted)
-        for i, stanza in enumerate(Packages.iter_paragraphs(bio)):
+        for i, stanza in enumerate(Packages.iter_paragraphs(extracted)):
             # https://github.com/furlongm/patchman/issues/55
             if 'version' not in stanza:
                 continue
@@ -361,9 +356,8 @@ def extract_deb_packages(data, url):
 def extract_yast_packages(data):
     """ Extract package metadata from yast metadata file
     """
-
-    extracted = extract(data, 'gz')
-    pkgs = re.findall(b'=Pkg: (.*)', extracted)
+    extracted = extract(data, 'gz').decode('utf-8')
+    pkgs = re.findall('=Pkg: (.*)', extracted)
     plen = len(pkgs)
     packages = set()
 
@@ -373,7 +367,7 @@ def extract_yast_packages(data):
 
         for i, pkg in enumerate(pkgs):
             progress_update_s.send(sender=None, index=i + 1)
-            name, version, release, arch = str(pkg).split()
+            name, version, release, arch = pkg.split()
             package = PackageString(name=name.lower(),
                                     epoch='',
                                     version=version,
@@ -549,8 +543,7 @@ def refresh_yast_repo(mirror, data):
     """ Refresh package metadata for a yast-style rpm mirror
         and add the packages to the mirror
     """
-
-    package_dir = re.findall(b'DESCRDIR *(.*)', data)[0].decode('ascii')
+    package_dir = re.findall('DESCRDIR *(.*)', data.decode('utf-8'))[0]
     package_url = '{0!s}/{1!s}/packages.gz'.format(mirror.url, package_dir)
     res = get_url(package_url)
     mirror.last_access_ok = response_is_valid(res)
