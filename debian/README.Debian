@@ -6,10 +6,6 @@ Configuration of patchman under Ubuntu/Debian
     sqlite3 backend
     ---------------
 
-    Install the python sqlite bindings:
-
-        $ apt -y install python-pysqlite2
-
     Update /etc/patchman/local_settings.py:
 
     DATABASES = {
@@ -31,7 +27,7 @@ Configuration of patchman under Ubuntu/Debian
 
     Install mysql-server and the python mysql bindings:
 
-        $ apt -y install mysql-server python-mysqldb
+        $ apt -y install mysql-server python3-mysqldb
 
     Create database and users:
 
@@ -62,7 +58,7 @@ Configuration of patchman under Ubuntu/Debian
 
     Install postgresql server and the python postgres bindings:
 
-        $ apt -y install postgresql python-psycopg2
+        $ apt -y install postgresql python3-psycopg2
 
     Create database and users:
 

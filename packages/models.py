@@ -15,9 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from __future__ import unicode_literals
-
-from django.utils.encoding import python_2_unicode_compatible
 from django.db import models
 from django.urls import reverse
 
@@ -31,7 +28,6 @@ from arch.models import PackageArchitecture, MachineArchitecture
 from packages.managers import PackageManager
 
 
-@python_2_unicode_compatible
 class PackageName(models.Model):
 
     name = models.CharField(unique=True, max_length=255)
@@ -48,7 +44,6 @@ class PackageName(models.Model):
         return reverse('packages:package_detail', args=[self.name])
 
 
-@python_2_unicode_compatible
 class Package(models.Model):
 
     RPM = 'R'
@@ -159,7 +154,6 @@ class Package(models.Model):
             mirror__packages=self).distinct().count()
 
 
-@python_2_unicode_compatible
 class PackageString(models.Model):
 
     class Meta(object):
@@ -205,7 +199,6 @@ class PackageString(models.Model):
         return hash(self.__key())
 
 
-@python_2_unicode_compatible
 class PackageUpdate(models.Model):
 
     oldpackage = models.ForeignKey(Package,
@@ -229,7 +222,6 @@ class PackageUpdate(models.Model):
                                                update_type)
 
 
-@python_2_unicode_compatible
 class ErratumReference(models.Model):
 
     url = models.URLField(max_length=255)
@@ -238,7 +230,6 @@ class ErratumReference(models.Model):
         return self.url
 
 
-@python_2_unicode_compatible
 class Erratum(models.Model):
 
     name = models.CharField(max_length=255)
