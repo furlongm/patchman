@@ -257,25 +257,30 @@ def get_or_create_package(name, epoch, version, release, arch, p_type):
     with transaction.atomic():
         p_arch, c = package_arches.get_or_create(name=arch)
 
-    try:
-        with transaction.atomic():
-            packages = Package.objects.all()
-            package, c = packages.get_or_create(name=p_name,
-                                                arch=p_arch,
-                                                epoch=epoch,
-                                                version=version,
-                                                release=release,
-                                                packagetype=p_type)
-    except IntegrityError as e:
-        error_message.send(sender=None, text=e)
-        package = packages.get(name=p_name,
-                               arch=p_arch,
-                               epoch=epoch,
-                               version=version,
-                               release=release,
-                               packagetype=p_type)
-    except DatabaseError as e:
-        error_message.send(sender=None, text=e)
+    packages = Package.objects.all()
+    potential_packages = packages.filter(name=p_name,
+                                         arch=p_arch,
+                                         version=version,
+                                         release=release,
+                                         packagetype=p_type,
+                                        ).order_by('-epoch')
+    if potential_packages:
+        package = potential_packages[0]
+        if epoch and package.epoch != epoch:
+            package.epoch = epoch
+            with transaction.atomic():
+                package.save()
+    else:
+        try:
+            with transaction.atomic():
+                package = packages.create(name=p_name,
+                                          arch=p_arch,
+                                          epoch=epoch,
+                                          version=version,
+                                          release=release,
+                                          packagetype=p_type)
+        except DatabaseError as e:
+            error_message.send(sender=None, text=e)
     return package
 
 
