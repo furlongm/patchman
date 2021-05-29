@@ -10,7 +10,7 @@ chardet==3.0.4
 requests==2.22.0
 colorama==0.4.3
 djangorestframework==3.9.3
-humanize==1.0.0
+humanize==3.6.0
 version-utils==0.3.0
 python-magic==0.4.15
 python-memcached==1.59
