@@ -12,5 +12,5 @@ colorama==0.4.3
 djangorestframework==3.9.3
 humanize==1.0.0
 version-utils==0.3.0
-python-magic==0.4.15
+python-magic==0.4.23
 python-memcached==1.59
