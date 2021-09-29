@@ -1,5 +1,5 @@
 # Copyright 2012 VPAC, http://www.vpac.org
-# Copyright 2013-2016 Marcus Furlong <furlongm@gmail.com>
+# Copyright 2013-2021 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of Patchman.
 #
@@ -89,7 +89,6 @@ def update_errata(force=False):
     else:
         if data:
             parse_errata(bunzip2(data), force)
-            mark_security_updates()
 
 
 def download_errata_checksum():
@@ -109,7 +108,7 @@ def download_errata():
 def parse_errata_checksum(data):
     """ Parse the errata checksum and return the bz2 checksum
     """
-    for line in data.splitlines():
+    for line in data.decode('utf-8').splitlines():
         if line.endswith('errata.latest.xml.bz2'):
             return line.split()[0]
 
@@ -174,10 +173,16 @@ def parse_errata_children(e, children):
             e.releases.add(osgroup)
         elif c.tag == 'packages':
             pkg_str = c.text.replace('.rpm', '')
-            pkg_re = re.compile('(\S+)-(?:(\d*):)?(.*)-(~?\w+)[.+](~?\S+)\.(\S+)$')  # noqa
-            name, epoch, ver, rel, dist, arch = pkg_re.match(pkg_str).groups()
+            pkg_re = re.compile('(\S+)-(?:(\d*):)?(.*)-(~?\w+)[.+]?(~?\S+)?\.(\S+)$')  # noqa
+            m = pkg_re.match(pkg_str)
+            if m:
+                name, epoch, ver, rel, dist, arch = m.groups()
+            else:
+                e = 'Error parsing errata: could not parse package "{0!s}"'.format(pkg_str)
+                error_message.send(sender=None, text=e)
+                continue
             if dist:
-                rel = '{0!s}-{1!s}'.format(rel, dist)
+                rel = '{0!s}.{1!s}'.format(rel, dist)
             p_type = Package.RPM
             pkg = get_or_create_package(name, epoch, ver, rel, arch, p_type)
             e.packages.add(pkg)
@@ -252,29 +257,34 @@ def get_or_create_package(name, epoch, version, release, arch, p_type):
     with transaction.atomic():
         p_arch, c = package_arches.get_or_create(name=arch)
 
-    try:
-        with transaction.atomic():
-            packages = Package.objects.all()
-            package, c = packages.get_or_create(name=p_name,
-                                                arch=p_arch,
-                                                epoch=epoch,
-                                                version=version,
-                                                release=release,
-                                                packagetype=p_type)
-    except IntegrityError as e:
-        error_message.send(sender=None, text=e)
-        package = packages.get(name=p_name,
-                               arch=p_arch,
-                               epoch=epoch,
-                               version=version,
-                               release=release,
-                               packagetype=p_type)
-    except DatabaseError as e:
-        error_message.send(sender=None, text=e)
+    packages = Package.objects.all()
+    potential_packages = packages.filter(name=p_name,
+                                         arch=p_arch,
+                                         version=version,
+                                         release=release,
+                                         packagetype=p_type,
+                                        ).order_by('-epoch')
+    if potential_packages:
+        package = potential_packages[0]
+        if epoch and package.epoch != epoch:
+            package.epoch = epoch
+            with transaction.atomic():
+                package.save()
+    else:
+        try:
+            with transaction.atomic():
+                package = packages.create(name=p_name,
+                                          arch=p_arch,
+                                          epoch=epoch,
+                                          version=version,
+                                          release=release,
+                                          packagetype=p_type)
+        except DatabaseError as e:
+            error_message.send(sender=None, text=e)
     return package
 
 
-def mark_security_updates():
+def mark_errata_security_updates():
     """ For each set of erratum packages, modify any PackageUpdate that
         should be marked as a security update.
     """
@@ -287,9 +297,15 @@ def mark_security_updates():
         progress_update_s.send(sender=None, index=i + 1)
         if erratum.etype == 'security':
             for package in erratum.packages.all():
-                with transaction.atomic():
-                    affected_updates = package_updates.select_for_update(
-                        ).filter(newpackage=package)
-                    for affected_update in affected_updates:
+                affected_updates = package_updates.filter(newpackage=package, security=False)
+                for affected_update in affected_updates:
+                    if not affected_update.security:
                         affected_update.security = True
-                        affected_update.save()
+                        try:
+                            with transaction.atomic():
+                                affected_update.save()
+                        except IntegrityError as e:
+                            error_message.send(sender=None, text=e)
+                            # a version of this update already exists that is
+                            # marked as a security update, so delete this one
+                            affected_update.delete()

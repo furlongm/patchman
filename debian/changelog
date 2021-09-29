@@ -1,3 +1,202 @@
+patchman (1.2.33-1) stable; urgency=medium
+
+  * export LC_ALL variable in client
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Thu, 15 Apr 2021 02:40:05 +0000
+
+patchman (1.2.32-1) stable; urgency=medium
+
+  * update copyright years
+  * reinstate epochs for rpm package versions
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Sat, 13 Mar 2021 21:47:18 +0000
+
+patchman (1.2.31-1) stable; urgency=medium
+
+  * check for equality for arch packages before get_version_string
+  * only refresh max_mirrors for rpm/arch repos
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Fri, 12 Mar 2021 02:08:31 +0000
+
+patchman (1.2.30-1) stable; urgency=medium
+
+  * update arch repo path to include repo architecture
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Thu, 11 Mar 2021 03:35:25 +0000
+
+patchman (1.2.29-1) stable; urgency=medium
+
+  * remove epoch from rpm package updates
+  * set LC_ALL in client script to avoid i18n issues
+  * only show client configuration file path if it exists
+  * simplify finding rhel yum updates on client
+  * lowercase update strings
+  * fix zypper list update command to use passed repo
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Thu, 11 Mar 2021 02:31:44 +0000
+
+patchman (1.2.28-1) stable; urgency=medium
+
+  * add backwards-compatibility for client booleans
+  * don't delete temp files when debugging client
+  * don't overwrite existing configs for client
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Wed, 10 Mar 2021 00:28:15 +0000
+
+patchman (1.2.27-1) stable; urgency=medium
+
+  * default report to false
+  * handle non-existent updates correctly
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Fri, 05 Mar 2021 13:07:38 +0000
+
+patchman (1.2.26-1) stable; urgency=medium
+
+  * handle already existing security updates
+  * don't process epoch for rpms
+  * simplify client options with booleans
+  * mark update as security update if it already exists
+  * send error message to console, but continue
+  * fix rhel update reporting
+  * fix sles update reporting
+  * use dicts consistently for update handling
+  * remove existing updates upon new report
+  * gracefully handle updates that are missing the original package
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Fri, 05 Mar 2021 03:57:52 +0000
+
+patchman (1.2.25-1) stable; urgency=medium
+
+  * account for duplicate lines in rpm --whatprovides
+  * add options to download and process errata separately
+  * don't find updates from mirrors that haven't refreshed
+  * ignore epoch for RPM packages
+  * use correct delimiter when parsing errata
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Thu, 04 Mar 2021 04:36:02 +0000
+
+patchman (1.2.24-1) stable; urgency=medium
+
+  * add arch linux os name to client
+  * clean up parsing packages
+  * simplify adding mirrors
+  * ensure timestamp is consistent across mirrors
+  * clean up checksum handling (#288)
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Mon, 22 Feb 2021 20:01:54 +0000
+
+patchman (1.2.23-1) stable; urgency=medium
+
+  * fix client hostname logic
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Wed, 17 Feb 2021 18:53:51 +0000
+
+patchman (1.2.22-1) stable; urgency=medium
+
+  * add client -h option to getopts
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Tue, 16 Feb 2021 16:40:54 +0000
+
+patchman (1.2.21-1) stable; urgency=medium
+
+  * don't list multple identical kernel updates (#282)
+  * fix updates logic
+  * update kernel package whitelist
+  * simplify kernel version detection logic
+  * fix update detection logic
+  * api updates to add update counts
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Sun, 14 Feb 2021 23:29:55 +0000
+
+patchman (1.2.20-1) stable; urgency=medium
+
+  [ Bolol ]
+  * use full path for patchman-client (#174)
+
+  [ Marcus Furlong ]
+  * update build process
+  * use correct copyright file format
+  * migrate to django.urls.path instead of django.conf.urls.url
+  * add cli option to toggle host_repos_only/check_dns
+  * Revert "migrate to django.urls.path instead of django.conf.urls.url"
+
+  [ pyup.io bot ]
+  * Update colorama from 0.4.1 to 0.4.3 (#154)
+
+  [ dependabot[bot] ]
+  * Bump django from 1.11.27 to 1.11.28 (#178)
+  * Update humanize from 0.5.1 to 1.0.0 (#176)
+  * Update python-debian from 0.1.35 to 0.1.36 (#133)
+  * Update django-extensions from 2.2.1 to 2.2.8 (#177)
+  * Update lxml to 4.5.0 (#172)
+
+  [ Marcus Furlong ]
+  * fix setting check_dns and host_repos_only
+  * fix rhel/centos 8 client and make updates security or not-sec
+  * handle rhel/centos 8 modularity naming conventions
+  * process host updates as either security or non-security
+  * allow forcing the client to find local updates
+  * re-add #noqa for regex
+  * Create codeql-analysis.yml
+  * Update requirements.txt
+  * remove travis CI
+  * Release v1.2.6
+  * update gbp dch command
+  * update ius url
+  * regenerate debian changelog before building deb
+  * auto-commit to update version skip-checks: true
+  * set correct version for pypi upload
+  * update deb build process
+  * auto-commit to update version skip-checks: true
+  * update deb build process
+  * auto-commit to update version skip-checks: true
+  * 1.2.10
+  * workaround gbp not ignoring changes
+  * auto-commit to update version skip-checks: true
+  * use correct version format
+  * auto-commit to update version skip-checks: true
+  * arch linux client support (#219)
+  * decode checksum data before parsing
+  * improve package regex and handle parse failures
+  * add missing quotes
+  * flake8 noqas
+  * remove unneeded call to uname
+  * simplify zypper logic
+  * strip trailing / from server url
+  * use double quotes for variable
+  * remove unused post vars and add http response code
+  * pin to specific version of python-bootstrap3
+  * fix zypper lr command (#259)
+  * auto-commit to update version skip-checks: true
+  * remove deprecated set-env
+  * bump version to 1.2.14
+  * update debian changelog distribution
+  * update debian changelog release
+  * update debian changelog release
+  * update codeql action
+  * update actions
+  * support specifying hostname to client
+  * auto-commit to update version skip-checks: true
+  * update changelog creation comamnd
+  * auto-commit to update version skip-checks: true
+  * fix typo
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Sat, 13 Feb 2021 20:52:52 +0000
+
 patchman (1.2.5-1) stable; urgency=medium
 
   * auto-commit to update version skip-checks: true

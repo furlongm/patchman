@@ -1,5 +1,5 @@
 # Copyright 2012 VPAC, http://www.vpac.org
-# Copyright 2013-2016 Marcus Furlong <furlongm@gmail.com>
+# Copyright 2013-2021 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of Patchman.
 #
@@ -53,11 +53,13 @@ class Package(models.Model):
 
     RPM = 'R'
     DEB = 'D'
+    ARCH = 'A'
     UNKNOWN = 'U'
 
     PACKAGE_TYPES = (
         (RPM, 'rpm'),
         (DEB, 'deb'),
+        (ARCH, 'arch'),
         (UNKNOWN, 'unknown'),
     )
 
@@ -116,7 +118,7 @@ class Package(models.Model):
     def _version_string_rpm(self):
         return (str(self.epoch), str(self.version), str(self.release))
 
-    def _version_string_deb(self):
+    def _version_string_deb_arch(self):
         epoch = ''
         version = ''
         release = ''
@@ -131,14 +133,22 @@ class Package(models.Model):
     def get_version_string(self):
         if self.packagetype == 'R':
             return self._version_string_rpm()
-        elif self.packagetype == 'D':
-            return self._version_string_deb()
+        elif self.packagetype == 'D' or self.packagetype == 'A':
+            return self._version_string_deb_arch()
 
     def compare_version(self, other):
         if self.packagetype == 'R' and other.packagetype == 'R':
             return labelCompare(self.get_version_string(),
                                 other.get_version_string())
         elif self.packagetype == 'D' and other.packagetype == 'D':
+            vs = Version(self.get_version_string())
+            vo = Version(other.get_version_string())
+            return version_compare(vs, vo)
+        elif self.packagetype == 'A' and other.packagetype == 'A':
+            if self.epoch == other.epoch \
+                    and self.version == other.version \
+                    and self.release == other.release:
+                return 0
             vs = Version(self.get_version_string())
             vo = Version(other.get_version_string())
             return version_compare(vs, vo)

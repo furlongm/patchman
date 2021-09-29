@@ -1,5 +1,5 @@
 # Copyright 2010 VPAC
-# Copyright 2016 Marcus Furlong <furlongm@gmail.com>
+# Copyright 2014-2021 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of Patchman.
 #

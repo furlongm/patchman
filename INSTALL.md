@@ -84,7 +84,7 @@ python-magic python-lxml
 2. Install django-bootstrap3
 
 ```shell
-pip install django-bootstrap3
+pip install django-bootstrap3==11.1.0
 ```
 
 3. Clone git repo to e.g. /srv/patchman

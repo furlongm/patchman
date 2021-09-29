@@ -1,47 +1,50 @@
 #!/bin/bash
 
-conf='/etc/patchman/patchman-client.conf'
+export LC_ALL=C
+
+conf=/etc/patchman/patchman-client.conf
 protocol=1
-verbose=0
-debug=0
-report=0
-local_updates=0
+verbose=false
+debug=false
+report=false
+local_updates=false
+repo_check=true
 tags=''
 
-function usage {
-
-    echo "${0} [-v] [-d] [-n] [-r] [-s SERVER] [-c FILE]"
+usage() {
+    echo "${0} [-v] [-d] [-n] [-u] [-r] [-s SERVER] [-c FILE] [-t TAGS] [-h HOSTNAME]"
     echo "-v: verbose output (default is silent)"
     echo "-d: debug output"
     echo "-n: no repo check (required when used as an apt or yum plugin)"
+    echo "-u: find updates locally (e.g. for RHEL)"
     echo "-r: request a report from the server (default is no report)"
     echo "-s SERVER: web server address, e.g. https://patchman.example.com"
     echo "-c FILE: config file location (default is /etc/patchman/patchman-client.conf)"
     echo "-t TAGS: comma-separated list of tags, e.g. -t www,dev"
+    echo "-h HOSTNAME: specify the hostname of the local host"
     echo
     echo "Command line options override config file options."
     exit 0
 }
 
-function parseopts {
-
-    while getopts "vdnrs:c:t:" opt; do
+parseopts() {
+    while getopts "vdnurs:c:t:h:" opt; do
         case ${opt} in
         v)
-            verbose=1
+            verbose=true
             ;;
         d)
-            debug=1
-            verbose=1
+            debug=true
+            verbose=true
             ;;
         n)
-            no_repo_check=1
+            repo_check=false
             ;;
         u)
-            local_updates=1
+            local_updates=true
             ;;
         r)
-            cli_report=1
+            cli_report=true
             ;;
         s)
             cli_server=${OPTARG}
@@ -50,7 +53,10 @@ function parseopts {
             cli_conf=${OPTARG}
             ;;
         t)
-            tags=${OPTARG}
+            cli_tags="${OPTARG}"
+            ;;
+        h)
+            cli_hostname=${OPTARG}
             ;;
         *)
             usage
@@ -59,20 +65,19 @@ function parseopts {
     done
 }
 
-function cleanup {
-
-    if [ ${verbose} == 1 ] && [ ${debug} == 1 ] ; then
+cleanup() {
+    if ${verbose} && ${debug} ; then
         echo "Debug: not deleting ${tmpfile_pkg} (packages)"
         echo "Debug: not deleting ${tmpfile_rep} (repos)"
         echo "Debug: not deleting ${tmpfile_sec} (security updates)"
         echo "Debug: not deleting ${tmpfile_bug} (updates)"
-    elif [ ${verbose} == 1 ] && [ ${debug} == 0 ] ; then
+    elif ${verbose} && ! ${debug} ; then
         echo "Deleting ${tmpfile_pkg}"
         echo "Deleting ${tmpfile_rep}"
         echo "Deleting ${tmpfile_sec}"
         echo "Deleting ${tmpfile_bug}"
     fi
-    if [ ${debug} != 1 ] ; then
+    if ! ${debug} ; then
         rm -fr "${tmpfile_pkg}"
         rm -fr "${tmpfile_rep}"
         rm -fr "${tmpfile_sec}"
@@ -82,14 +87,13 @@ function cleanup {
     rm -fr "${lock_dir}/patchman.lock"
 }
 
-function check_conf {
-
+check_conf() {
     if [ ! -z "${cli_conf}" ] ; then
         conf=${cli_conf}
     fi
 
-    if [ "${conf}" == "" ] || [ ! -f "${conf}" ] ; then
-        if [ ${verbose} == 1 ] ; then
+    if [ -z "${conf}" ] || [ ! -f "${conf}" ] ; then
+        if ${verbose} ; then
             echo "Warning: config file '${conf}' not found."
         fi
     else
@@ -111,19 +115,53 @@ function check_conf {
         if [ ! -z "${cli_server}" ] ; then
             server=${cli_server}
         fi
-        if [ ! -z "${cli_report}" ] ; then
-            report=${cli_report}
+    fi
+
+    if [ ! -z "${cli_report}" ] ; then
+        report=${cli_report}
+    fi
+
+    if [ ! -z "${cli_tags}" ] ; then
+        tags="${cli_tags}"
+    fi
+
+    if [ -z "${hostname}" ] && [ -z "${cli_hostname}" ] ; then
+        get_hostname
+    else
+        if [ ! -z "${cli_hostname}" ] ; then
+            hostname=${cli_hostname}
         fi
-        if [ ${verbose} == 1 ] ; then
-            echo 'Patchman configuration seems OK: ${conf}'
-            echo "Patchman Server: ${server}"
-            echo "Tags: ${tags}"
-            echo "Report: ${report}"
+    fi
+
+    check_booleans
+
+    if ${verbose} ; then
+        echo "Patchman configuration seems OK:"
+        if [ -f ${conf} ] ; then
+            echo "Using configuration file: ${conf}"
         fi
+        echo "Patchman Server: ${server}"
+        echo "Hostname: ${hostname}"
+        echo "Tags: ${tags}"
+        for var in report local_updates repo_check verbose debug ; do
+            eval val=\$${var}
+            echo "${var}: ${val}"
+        done
     fi
 }
 
-function check_command_exists {
+check_booleans() {
+    for var in report local_updates repo_check verbose debug ; do
+        eval val=\$${var}
+        if [ -z ${val} ] || [ "${val}" == "0" ] || [ "${val,,}" == "false" ] ; then
+            eval ${var}=false
+        elif [ "${val}" == "1" ] || [ "${val,,}" == "true" ] ; then
+            eval ${var}=true
+        fi
+    done
+}
+
+check_command_exists() {
     cmd=$(/usr/bin/which ${1} 2>/dev/null)
     if [ ! -z "${cmd}" ] && [ -x "${cmd}" ] ; then
         return 0
@@ -132,10 +170,9 @@ function check_command_exists {
     fi
 }
 
-function get_installed_rpms {
-
+get_installed_rpm_packages() {
     if check_command_exists rpm ; then
-        if [ ${verbose} == 1 ] ; then
+        if ${verbose} ; then
             echo 'Finding installed rpms...'
         fi
 
@@ -143,16 +180,15 @@ function get_installed_rpms {
         | sed -e 's/(none)//g' \
         | sed -e 's/\+/%2b/g' >> "${tmpfile_pkg}"
 
-        if [ ${debug} == 1 ] ; then
+        if ${debug} ; then
             cat "${tmpfile_pkg}"
         fi
     fi
 }
 
-function get_installed_debs {
-
+get_installed_deb_packages() {
     if check_command_exists dpkg-query ; then
-        if [ ${verbose} == 1 ] ; then
+        if ${verbose} ; then
             echo 'Finding installed debs...'
         fi
         OLDIFS=${IFS}
@@ -168,36 +204,45 @@ function get_installed_debs {
             epoch=$(echo "${remaining}" | cut -d ":" -f 1 -s)
             version=$(echo "${remaining}" | sed -e "s/.*:\(.*\)/\1/")
             echo \'${name}\' \'${epoch}\' \'${version}\' \'${release}\' \'${arch}\' \'deb\'>> "${tmpfile_pkg}"
-            if [ ${debug} == 1 ] ; then
+            if ${debug} ; then
                 echo \'${name}\' \'${epoch}\' \'${version}\' \'${release}\' \'${arch}\' \'deb\'
             fi
         done
     fi
 }
 
-function get_packages {
-
-    get_installed_rpms
-    get_installed_debs
+get_installed_archlinux_packages() {
+    if check_command_exists pacman ; then
+        pacman -Q -i | awk -v q="'" -v s=" " '/^Name/{n=$3} /^Version/{l=split($3, e, ":"); if (l==2) {ep=e[1]; v=e[2]} else {ep=""; v=$3}; split(v, r, "-")} /^Architecture/{a=$3} /^$/{print q n q s q ep q s q r[1] q s q r[2] q s q a q s q"arch"q}' >> "${tmpfile_pkg}"
+    fi
 }
 
-function get_host_data {
+get_packages() {
+    get_installed_rpm_packages
+    get_installed_deb_packages
+    get_installed_archlinux_packages
+}
 
-    fqdn=$(hostname -f)
-    if [ "${fqdn}" == "" ] ; then
-        host_name=$(hostname)
-        domain_name=$(dnsdomainname)
-        if [ "${domain_name}" != "" ] ; then
-            fqdn=${host_name}.${domain_name}
+get_hostname() {
+    hostname=$(hostname -f)
+    if [ -z "${hostname}" ] ; then
+        short_hostname=$(hostname)
+        if [ -z "${short_hostname}" ] ; then
+            short_hostname=$(cat /etc/hostname)
+        fi
+        domainname=$(dnsdomainname)
+        if [ ! -z "${domainname}" ] ; then
+            hostname=${short_hostname}.${domainname}
         else
-            fqdn=${host_name}
+            hostname=${short_hostname}
         fi
     fi
+}
+
+get_host_data() {
     host_kernel=$(uname -r | sed -e 's/\+/%2b/g')
     host_arch=$(uname -m)
-
     os='unknown'
-
     if [ -f /etc/os-release ] ; then
         . /etc/os-release
         if [ "${ID}" == "debian" ] ; then
@@ -212,6 +257,8 @@ function get_host_data {
             os="$(cat /etc/redhat-release)"
         elif [ "${ID}" == "fedora" ] ; then
             os="${PRETTY_NAME}"
+        elif [ "${ID}" == "arch" ] ; then
+            os="${NAME}"
         elif [[ "${ID}" =~ "suse" ]] ; then
             os="${PRETTY_NAME}"
         else
@@ -250,39 +297,51 @@ function get_host_data {
             fi
         done
     fi
-    if [ ${debug} == 1 ] ; then
-        echo "FQDN:   ${fqdn}"
-        echo "Kernel: ${host_kernel}"
-        echo "Arch:   ${host_arch}"
-        echo "OS:     ${os}"
+    if ${verbose} ; then
+        echo "Kernel:   ${host_kernel}"
+        echo "Arch:     ${host_arch}"
+        echo "OS:       ${os}"
     fi
 }
 
-function get_updates {
-
+get_yum_updates() {
     yum -q makecache 2>/dev/null
     yum -C --security list updates --disablerepo="*" --enablerepo="${1}" 2>&1 \
-    | grep -v 'This system is not registered to Red Hat Subscription Management. You can use subscription-manager to register.' \
-    | grep -v 'This system is receiving updates from Red Hat Subscription Management.' \
-    | sed '1,/[Available Upgrades|Updated Packages]/d' >> "${tmpfile_sec}"
+    | grep -v 'excluded' \
+    | grep -v 'Available Upgrades' \
+    | grep -v 'Updated Packages' \
+    | grep -v 'Last metadata expiration check' \
+    | grep -v 'needed for security' \
+    | grep -v 'Loaded plugins' \
+    | grep -v 'Subscription Management' \
+    >> "${tmpfile_sec}"
     yum -C list updates --disablerepo="*" --enablerepo="${1}" 2>&1 \
-    | grep -v 'This system is not registered to Red Hat Subscription Management. You can use subscription-manager to register.' \
-    | grep -v 'This system is receiving updates from Red Hat Subscription Management.' \
-    | sed '1,/[Available Upgrades|Updated Packages]/d' >> "${tmpfile_bug}"
+    | grep -v 'excluded' \
+    | grep -v 'Available Upgrades' \
+    | grep -v 'Updated Packages' \
+    | grep -v 'Last metadata expiration check' \
+    | grep -v 'Loaded plugins' \
+    | grep -v 'Subscription Management' \
+    >> "${tmpfile_bug}"
 }
 
-function get_repos {
+get_zypper_updates() {
+    zypper -q -n ref
+    # can't differentiate between security and bugfix updates yet
+    zypper -q -n -s11 lu -r ${1} | grep ^v | awk '{print $2"."$5,$4}' | sed -e "s/$/ ${1}/" >> "${tmpfile_bug}"
+}
 
+get_repos() {
     OLDIFS=${IFS}
     IFS="
 "
 
     # Red Hat / CentOS
     if check_command_exists yum ; then
-        if [ ${verbose} == 1 ] ; then
+        if ${verbose} ; then
             echo 'Finding yum repos...'
         fi
-        releasever=$(rpm -q --qf "%{version}\n" --whatprovides redhat-release)
+        releasever=$(rpm -q --qf "%{version}\n" --whatprovides redhat-release | sort -u)
         let numrepos=$(ls /etc/yum.repos.d/*.repo | wc -l)
         if [ ${numrepos} -gt 0 ] ; then
             priorities=$(sed -n -e "/^name/h; /priority *=/{ G; s/\n/ /; s/ity *= *\(.*\)/ity=\1/ ; s/\$releasever/${releasever}/ ; s/name=\(.*\)/'\1 ${host_arch}'/ ; p }" /etc/yum.repos.d/*.repo)
@@ -290,7 +349,8 @@ function get_repos {
         # replace this with a dedicated awk or simple python script?
         yum_repolist=$(yum repolist enabled --verbose 2>/dev/null | sed -e "s/:\? *([0-9]\+ more)$//g" -e "s/ ([0-9]\+$//g" -e "s/:\? more)$//g" -e "s/'//g" -e "s/%/%%/g")
         for i in $(echo "${yum_repolist}" | awk '{ if ($1=="Repo-id") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'"'"' "} if ($1=="Repo-name") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'" ${host_arch}'"' "} if ($1=="Repo-mirrors" || $1=="Repo-metalink:") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'"'"' "} if ($1=="Repo-baseurl" || $1=="Repo-baseurl:") { url=1; comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else { if (url==1) { if ($1==":") { comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else {url=0; print "";} } } }' | sed -e "s/\/'/'/g" | sed -e "s/ ' /' /") ; do
-            id=$(echo ${i} | cut -d \' -f 2)
+            full_id=$(echo ${i} | cut -d \' -f 2)
+            id=$(echo ${i} | cut -d \' -f 2 | cut -d \/ -f 1)
             name=$(echo ${i} | cut -d \' -f 4)
             if [ "${priorities}" != "" ] ; then
                 priority=$(echo "${priorities}" | grep "'${name}'" | sed -e "s/priority=\(.*\) '${name}'/\1/")
@@ -299,13 +359,13 @@ function get_repos {
             if [ "${priority}" == "" ] ; then
                 priority=99
             fi
-            j=$(echo ${i} | sed -e "s#'${id}' '${name}'#'${name}' '${id}' '${priority}'#")
-            redhat_repo=$(echo ${j} | grep -e "https://.*/XMLRPC.*")
-            if [ ${?} == 0 ] || [ "${local_updates}" == "1" ] ; then
-                if [ ${verbose} == 1 ] ; then
+            j=$(echo ${i} | sed -e "s#'${full_id}' '${name}'#'${name}' '${id}' '${priority}'#")
+            redhat_repo=$(echo ${j} | grep -e "https://.*/XMLRPC.*\|https://cdn.redhat.com/.*")
+            if [ ${?} == 0 ] || ${local_updates} ; then
+                if ${verbose} ; then
                     echo "Finding updates locally for ${id}"
                 fi
-                get_updates ${id}
+                get_yum_updates ${id}
             fi
             echo "'rpm' ${j}" >> "${tmpfile_rep}"
             unset priority
@@ -314,7 +374,7 @@ function get_repos {
 
     # Debian
     if check_command_exists apt-cache ; then
-        if [ ${verbose} == 1 ] ; then
+        if ${verbose} ; then
             echo 'Finding apt repos...'
         fi
         IFS=${OLDIFS} read -r osname shortversion <<<$(echo "${os}" | awk '{print $1,$2}' | cut -d . -f 1,2)
@@ -328,19 +388,49 @@ function get_repos {
 
     # SUSE
     if check_command_exists zypper ; then
-        if [ ${verbose} == 1 ] ; then
+        if ${verbose} ; then
             echo 'Finding zypper repos...'
         fi
-        enabled_repos=$(zypper --no-refresh lr | tail -n +5 | cut -d "|" -f 1,4 | grep "Yes" | cut -d "|" -f 1 | sed -e "s/ //")
-        for i in ${enabled_repos} ; do
-            enabled[i]="true"
-        done
-        let r=0
-        for i in $(zypper --no-refresh lr -u --details | tail -n +5 | cut -d "|" -f 2,3,7,9 | sed -e "s/ *|/ ${host_arch} |/" -e "s/^ /'/g" -e "s/ *| */' '/g" -e "s/ *$/'/g") ; do
-            let r=${r}+1
-            if [ "${enabled[${r}]}" == "true" ] ; then
-                echo \'rpm\' ${i} >> "${tmpfile_rep}"
+        for i in $(zypper -q --no-refresh lr -E -u --details | grep -v ^$ | tail -n +3 | cut -d "|" -f 2,3,7,9 | sed -e "s/ *|/ ${host_arch} |/" -e "s/\?[a-zA-Z0-9_-]* *$//" -e "s/^ /'/g" -e "s/ *| */' '/g" -e "s/ *$/'/g") ; do
+            echo \'rpm\' ${i} >> "${tmpfile_rep}"
+            id=$(echo ${i} | cut -d \' -f 4)
+            suse_repo=$(echo ${i} | grep -e "https://updates.suse.com/.*")
+            if [ ${?} == 0 ] || ${local_updates} ; then
+                if ${verbose} ; then
+                    echo "Finding updates locally for ${id}"
+                fi
+                get_zypper_updates ${id}
             fi
+        done
+    fi
+
+    # Arch
+    if check_command_exists pacman ; then
+        if ${verbose} ; then
+            echo 'Finding pacman repos...'
+        fi
+        declare -A repos
+        pacman_conf=$(awk '/\[/{prefix=$0; next} $1{print prefix $0}' /etc/pacman.conf | grep -v '\[options\]' | grep '^\[')
+        for stanza in ${pacman_conf} ; do
+            repo=$(echo ${stanza} | cut -d ']' -f 1 | sed -e 's/\[//')
+            rhs=$(echo ${stanza} | cut -d ']' -f 2 | grep -v '^#')
+            if [[ ${rhs} =~ "Include" ]] ; then
+                include=$(echo ${rhs} | sed -e 's/^ *Include *= *//')
+                for f in $(ls ${include} 2>/dev/null) ; do
+                    if [ -f ${f} ] ; then
+                        servers=$(cat ${f} | grep Server | sed -e 's/^ *Server *= *//')
+                        for s in ${servers} ; do
+                            repos[${repo}]+="'$(eval echo ${s})' "
+                        done
+                    fi
+                done
+            elif [[ ${rhs} =~ "Server" ]] ; then
+                s=$(echo ${rhs} | sed -e 's/^ *Server *= *//')
+                repos[${repo}]+="'$(eval echo ${s})' "
+            fi
+        done
+        for r in "${!repos[@]}"; do
+            echo "'arch' 'Arch Linux ${r} ${host_arch}' '${r}' ${repos[${r}]}" >> "${tmpfile_rep}"
         done
     fi
 
@@ -348,13 +438,12 @@ function get_repos {
 
     sed -i -e '/^$/d' "${tmpfile_rep}"
 
-    if [ ${debug} == 1 ] ; then
+    if ${debug} ; then
         cat "${tmpfile_rep}"
     fi
 }
 
-function reboot_required {
-
+reboot_required() {
     # On debian-based clients, the update-notifier-common
     # package needs to be installed for this to work.
     if [ -e /var/run/reboot-required ] ; then
@@ -364,28 +453,23 @@ function reboot_required {
     fi
 }
 
-function post_data {
-
+post_data() {
     curl_opts=${curl_options}
 
-    if [ ${verbose} == 1 ] ; then
-        curl_opts="${curl_opts} -F verbose=\"1\""
+    if ${verbose} ; then
+        curl_opts="${curl_opts} -i"
         echo "Sending data to ${server} with curl:"
     else
         curl_opts="${curl_opts} -s -S";
     fi
 
-    if [ ${debug} == 1 ] ; then
-        curl_opts="${curl_opts} -F debug=\"1\""
-    fi
-
-    if [ "${tags}" == "" ] ; then
+    if [ -z "${tags}" ] ; then
         tags='Default'
     fi
 
     sed -i -e 's/%2b/\+/g' "${tmpfile_pkg}"
 
-    curl_opts="${curl_opts} -F host=\"${fqdn}\""
+    curl_opts="${curl_opts} -F host=\"${hostname}\""
     curl_opts="${curl_opts} -F tags=\"${tags}\""
     curl_opts="${curl_opts} -F kernel=\"${host_kernel}\""
     curl_opts="${curl_opts} -F arch=\"${host_arch}\""
@@ -397,9 +481,9 @@ function post_data {
     curl_opts="${curl_opts} -F sec_updates=\<${tmpfile_sec}"
     curl_opts="${curl_opts} -F bug_updates=\<${tmpfile_bug}"
     curl_opts="${curl_opts} -F reboot=\"${reboot}\""
-    post_command="curl ${curl_opts} ${server}/reports/upload/"
+    post_command="curl ${curl_opts} ${server%/}/reports/upload/"
 
-    if [ ${verbose} == 1 ] ; then
+    if ${verbose} ; then
         echo "${post_command}"
     fi
 
@@ -411,7 +495,7 @@ function post_data {
         exit ${retval}
     fi
 
-    if [ ${report} == 1 ] ; then
+    if ${report} || ${verbose} ; then
         if [ ! -z "${result}" ] ; then
             echo "${result}"
         else
@@ -420,8 +504,8 @@ function post_data {
     fi
 }
 
-if ! check_command_exists mktemp || ! check_command_exists curl ; then
-    echo "Either mktemp or curl was not found, exiting."
+if ! check_command_exists which || ! check_command_exists mktemp || ! check_command_exists curl ; then
+    echo "which, mktemp or curl was not found, exiting."
     exit 1
 fi
 
@@ -434,7 +518,7 @@ fi
 
 parseopts "$@"
 
-if [ ${verbose} == 1 ] ; then
+if ${verbose} ; then
     echo "Attempting to obtain lock: ${lock_dir}/patchman.lock"
 fi
 
@@ -451,7 +535,7 @@ tmpfile_bug=$(mktemp)
 
 get_host_data
 get_packages
-if [ "${no_repo_check}" != "1" ] ; then
+if ${repo_check} ; then
     get_repos
 fi
 reboot_required

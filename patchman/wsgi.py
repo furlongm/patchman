@@ -1,4 +1,4 @@
-# Copyright 2016 Marcus Furlong <furlongm@gmail.com>
+# Copyright 2016-2021 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of Patchman.
 #
@@ -21,7 +21,7 @@ import os
 from django.core.wsgi import get_wsgi_application
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')  # noqa
-from django.conf import settings
+from django.conf import settings   # noqa
 
 application = get_wsgi_application()
 
