@@ -14,71 +14,95 @@ getConfig() {
 	val=$(sed -nr "/\[$1\]/,/\[/{/^(\W|)$2=/p}" $CONF)
 	val=${val#$2=}
 
-	echo "$val"
+	echo $val
+}
+
+email() {	
+	SENDER=$(getConfig General sender)
+	FULLNAME=$(getConfig General fullname)
+	RECIPIENT=$(getConfig $TAGS recipient)
+	
+	EMAIL=$((
+		echo "To: $RECIPIENT"; 
+		echo "Subject: [$1] Update Report";
+		echo "MIME-Version: 1.0";
+		echo "Content-Type: text/html";
+		echo "";
+		cat $FILE  
+		) | sendmail -t -f $SENDER -F "$FULLNAME")
+
+	if [ -z $EMAIL ]; then
+		echo 1
+	else
+		echo 0
+	fi
 }
 
 report() {
-	UPDATES=$(patchman -lh -H $1 | tail -n +3 | head -n -1 | awk -F ' : ' 'NR==10 { print $2 }')				# Gets the number of updates available for the host
+	# Gets host info
+	HOST=$(patchman -lh -H $1 | tail -n +3 | head -n -1 | sed 's/\x1b\[[0-9;]*m//g')
+	
+	# Gets the number of updates available for the host
+	UPDATES=$(echo "$HOST" | awk -F ' : ' 'NR==10 { print $2 }')				
 	
 	if [ -z $UPDATES ]; then
-		echo "ERROR: Hostname not found."
-	elif [ $UPDATES -gt 0 ]; then
-		TAGS=$(patchman -lh -H $1 | tail -n +3 | head -n -1 | awk -F ' : ' 'NR==11 { print $2 }')				# Gets the host's tags to determine the recipient
-
-		RECIPIENT=$(getConfig $TAGS recipient)
+		echo "[ERROR] $1: Hostname not found."
+	elif [ $UPDATES -gt 0 ]; then	
+		# Gets the host's tags to determine the recipient and directory
+		TAGS=$(echo "$HOST" | awk -F ' : ' 'NR==11 { print $2 }')	
+		
+		# Creates the directory where the e-mail file will be stored, if it doesn't exist
 		FILE=$DIR/$TAGS/$1/$1-$(date +%Y%m%d).html
+		mkdir -p $(echo $FILE | sed 's|\(.*\)/.*|\1|')				
+	
+		# Creates the report if it doesn\'t exist already
+		if [ ! -f $FILE ]; then	
+			echo "[INFO] $1: Creating report..."
 		
-		mkdir -p $(echo $FILE | sed 's|\(.*\)/.*|\1|')				# Creates the directory where the e-mail file will be stored, if it doesn't exist
-		
-		# Creates the report
-		echo "[$1] INFO: Creating report..."
-		
-		echo "<html>" > $FILE
-		echo "<style>" >> $FILE
-		echo "body { font-family: \"Calibri\"  }" >> $FILE
-		echo "#details table { border-collapse: collapse; width: 20em; }" >> $FILE
-		echo "#updates table { border-collapse: collapse; width: 100%; }" >> $FILE
-		echo "#details th, #details tr, #details td { text-align: left; }" >> $FILE
-		echo "#updates th, #updates td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }" >> $FILE
-		echo "</style>" >> $FILE
+			echo "<html>" > $FILE
+			echo "<style>" >> $FILE
+			echo "body { font-family: \"Calibri\"  }" >> $FILE
+			echo "#details table { border-collapse: collapse; width: 20em; }" >> $FILE
+			echo "#updates table { border-collapse: collapse; width: 100%; }" >> $FILE
+			echo "#details th, #details tr, #details td { text-align: left; }" >> $FILE
+			echo "#updates th, #updates td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }" >> $FILE
+			echo "</style>" >> $FILE
+	
+			echo "<body>" >> $FILE
+			echo "<p>There are new updates available for <b>$1</b>:</p><br>" >> $FILE
+	
+			echo "<div id=\"details\"><table>" >> $FILE
+			echo "$HOST" | awk -F ' : ' 'NR!=2 && NR!=7 && NR!=9 && NR!=11 && NR!=13 && NR!=14 { print "<tr><th>"$1":</th><td>"$2"</td></tr>" }' >> $FILE
+			echo "</table></div><br>" >> $FILE
 
-		echo "<body>" >> $FILE
-		echo "<p>There are new updates available for <b>$1</b>:</p><br>" >> $FILE
-
-		echo "<div id=\"details\"><table>" >> $FILE
-		patchman -lh -H $1 | tail -n +3 | head -n -1 | sed 's/\x1b\[[0-9;]*m//g' | awk -F ' : ' 'NR!=2 && NR!=7 && NR!=9 && NR!=11 && NR!=13 && NR!=14 { print "<tr><th>"$1":</th><td>"$2"</td></tr>" }' >> $FILE
-		echo "</table></div><br>" >> $FILE
-
-		echo "<div id=\"updates\"><table>" >> $FILE
-		echo "<tr><th>Current Version</th><th>New Version</th><th>Type</th></tr>" >> $FILE
-		patchman -u -H $1 | tail -n +3 | head -n -1 | sed 's/\x1b\[[0-9;]*m//g' |  awk '{ print "<tr><td>"$1"</td><td>"$3"</td><td>"$4"</td></tr>" }' >> $FILE
-		echo "</table></div><br>" >> $FILE
-
-		echo "<p>Please contact your System Administrator in order to schedule the updates.</p>" >> $FILE
-
-		echo "</body>" >> $FILE
-		echo "</html>" >> $FILE
-
+			echo "<div id=\"updates\"><table>" >> $FILE
+			echo "<tr><th>Current Version</th><th>New Version</th><th>Type</th></tr>" >> $FILE
+			patchman -u -H $1 | tail -n +3 | head -n -1 | sed 's/\x1b\[[0-9;]*m//g' |  awk '{ print "<tr><td>"$1"</td><td>"$3"</td><td>"$4"</td></tr>" }' >> $FILE
+			echo "</table></div><br>" >> $FILE
+	
+			echo "<p>Please contact your System Administrator in order to schedule the updates.</p>" >> $FILE
+	
+			echo "</body>" >> $FILE
+			echo "</html>" >> $FILE
+		else
+			echo "[INFO] Report exists. Skipping."
+		fi
+	
 		# E-mails the report
-		echo "[$1] INFO: E-mailing report..."
+		echo "[INFO] $1: E-mailing report..."
+				
+		if [ $(email $1) ]; then
+			echo "[INFO] $1: E-Mail report sent."
+		else
+			echo "[INFO] $1: E-Mail report failed."
+		fi
 		
-		(
-			echo "From: test@example.com" 
-			echo "To: $RECIPIENT"
-    			echo "Subject: [$1] Update Report"
-    			echo "Content-Type: text/html"
-    			echo
-    			cat $FILE
-		) | sendmail -t
-
 		# Deletes the file
 		if [ ! $KEEP ]; then
 			rm $FILE
 		fi
-
-		echo "[$1] INFO: E-Mail report sent."
 	else
-		echo "[$1] INFO: There are no updates available."
+		echo "[INFO] $1: There are no updates available."
 	fi
 }
 
@@ -90,7 +114,7 @@ if [ $# -gt 0 ] && [[ $1 == -* ]]; then
 		case $arg in
 			a)
 				if [ ! -f $CONF ]; then
-					echo "ERROR: Configuration file not found."
+					echo "[ERROR] Configuration file not found."
 					exit
 				else
 					DIR=$(getConfig General dir)
@@ -106,7 +130,7 @@ if [ $# -gt 0 ] && [[ $1 == -* ]]; then
 			;;
 			H)
 				if [ ! -f $CONF ]; then
-					echo "ERROR: Configuration file not found."
+					echo "[ERROR] Configuration file not found."
 					exit
 				else
 					DIR=$(getConfig General dir)
@@ -117,7 +141,7 @@ if [ $# -gt 0 ] && [[ $1 == -* ]]; then
 			;;
 			T)				
 				if [ ! -f $CONF ]; then
-					echo "ERROR: Configuration file not found."
+					echo "[ERROR] Configuration file not found."
 					exit
 				else
 					DIR=$(getConfig General dir)
@@ -127,7 +151,7 @@ if [ $# -gt 0 ] && [[ $1 == -* ]]; then
 					HOSTS+=$(patchman -lh | tail -n +3 | awk -F ' : ' 'NR%16==3 || NR%16==12 {print $2}' | paste -d : - - | awk -F ':' '{ if( $2 == "'${OPTARG}'" ){ print $1 }}' | sed 's/\x1b\[[0-9;]*m//g')
 
 					if [ -z $HOSTS ]; then
-						echo "ERROR: Tag not found."
+						echo "[ERROR] ${OPTARG}: Tag not found."
 					else
 						for HOST in $HOSTS; do
 							report $HOST
@@ -146,3 +170,4 @@ if [ $# -gt 0 ] && [[ $1 == -* ]]; then
 else
 	usage
 fi
+
