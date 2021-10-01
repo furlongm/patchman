@@ -1,15 +1,3 @@
-Configuration:
------------------
-$ mv patchman-email /usr/bin
-
-$ mv patchman-email.conf /etc/patchman
-
-$ chmod +x /usr/bin/patchman-email
-
-Edit the configuration file and add more domains and recipients to fit your needs.
-
-Make sure Postfix is up and running.
-
 Usage:
 ----------------
 patchman-email [-a] [-H hostname] [-T tag] [-h]
@@ -23,4 +11,21 @@ patchman-email [-a] [-H hostname] [-T tag] [-h]
 -h: Shows this help message and exits
 
 
-For best effect, add a Cron job.
+Configuration:
+-----------------
+$ mv patchman-email /usr/bin
+
+$ mv patchman-email.conf /etc/patchman
+
+$ chmod +x /usr/bin/patchman-email
+
+Edit the configuration file and edit the parameters to fit your needs.
+
+
+Dependencies:
+-----------------
+- Postfix configured and running
+
+- OpenSSL installed
+
+- GNU sharutils installed
