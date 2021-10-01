@@ -11,15 +11,15 @@ patchman-email [-a] [-H hostname] [-T tag] [-h]
 -h: Shows this help message and exits
 
 
-Configuration:
+Setup:
 -----------------
-$ mv patchman-email /usr/bin
+$ mv email/patchman-email /usr/bin
 
-$ mv patchman-email.conf /etc/patchman
+$ mv etc/patchman/patchman-email.conf /etc/patchman
 
 $ chmod +x /usr/bin/patchman-email
 
-Edit the configuration file and edit the parameters to fit your needs.
+Open the configuration file and edit the parameters to fit your needs.
 
 
 Dependencies:
