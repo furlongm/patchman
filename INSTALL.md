@@ -7,7 +7,7 @@ mysql or postgresql instead, see the database configuration section.
 ## Supported Install Options
   - [Ubuntu 20.04](#ubuntu-2004-focal)
   - [Debian 11](#debian-11-bullseye)
-  - [CentOS 7](#centos-7)
+  - [CentOS 8](#centos-8)
   - [virtualenv + pip](#virtualenv--pip)
   - [Source](#source)
 
@@ -32,13 +32,13 @@ apt -y install python3-patchman patchman-client
 patchman-manage createsuperuser
 ```
 
-### CentOS 7
+### CentOS 8
 
 ```shell
 cat <<EOF >> /etc/yum.repos.d/openbytes.repo
 [openbytes]
 name=openbytes
-baseurl=https://repo.openbytes.ie/patchman/el7
+baseurl=https://repo.openbytes.ie/patchman/el8
 enabled=1
 gpgcheck=0
 EOF
@@ -318,8 +318,9 @@ C_FORCE_ROOT=1 celery -b redis://127.0.0.1:6379/0 -A patchman worker -l INFO -E
 
 ```shell
 dnf -y install python3-celery redis python3-redis
-systemctl restart redis-server
+systemctl restart redis
 semanage port -a -t http_port_t -p tcp 6379
+setsebool -P httpd_can_network_connect 1
 C_FORCE_ROOT=1 celery -b redis://127.0.0.1:6379/0 -A patchman worker -l INFO -E
 ```
 
