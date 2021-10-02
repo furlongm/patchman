@@ -20,10 +20,10 @@ from django.conf import settings
 from reports.models import Report
 
 if settings.USE_ASYNC_PROCESSING:
-    from celery.task import task
+    from celery import shared_task
     from patchman.celery import app
 
-    @app.task()
+    @shared_task
     def process_report(report_id):
         report = Report.objects.get(id=report_id)
         report.process(verbose=True)
