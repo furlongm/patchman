@@ -311,7 +311,7 @@ Install Celery for realtime processing of reports from clients:
 
 ```shell
 apt -y install python3-celery redis python3-redis python-celery-common
-C_FORCE_ROOT=1 celery worker --loglevel=info -b redis://127.0.0.1:6379/0 -E -A patchman
+C_FORCE_ROOT=1 celery -b redis://127.0.0.1:6379/0 -A patchman worker -l INFO -E
 ```
 
 #### CentOS / RHEL
@@ -320,12 +320,13 @@ C_FORCE_ROOT=1 celery worker --loglevel=info -b redis://127.0.0.1:6379/0 -E -A p
 dnf -y install python3-celery redis python3-redis
 systemctl restart redis-server
 semanage port -a -t http_port_t -p tcp 6379
-C_FORCE_ROOT=1 celery worker --loglevel=info -b redis://127.0.0.1:6379/0 -E -A patchman
-
+C_FORCE_ROOT=1 celery -b redis://127.0.0.1:6379/0 -A patchman worker -l INFO -E
 ```
 
 Add the last command to an initscript (e.g. /etc/rc.local) to make celery
 persistent over reboot.
+
+Enable celery by adding `USE_ASYNC_PROCESSING = True` to `/etc/patchman/local_settings.py`
 
 ### Memcached
 
