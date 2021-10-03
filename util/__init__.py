@@ -31,6 +31,10 @@ from colorama import Fore, Style
 from enum import Enum
 from hashlib import md5, sha1, sha256
 from progressbar import Bar, ETA, Percentage, ProgressBar
+if ProgressBar.__dict__.get('maxval'):
+    pbar2 = False
+else:
+    pbar2 = True
 
 from patchman.signals import error_message
 
@@ -59,9 +63,14 @@ def create_pbar(ptext, plength, **kwargs):
     global pbar, verbose
     if verbose and plength > 0:
         jtext = str(ptext).ljust(35)
-        pbar = ProgressBar(widgets=[Style.RESET_ALL + Fore.YELLOW + jtext,
-                                    Percentage(), Bar(), ETA()],
-                           maxval=plength).start()
+        if pbar2:
+            pbar = ProgressBar(widgets=[Style.RESET_ALL + Fore.YELLOW + jtext,
+                                        Percentage(), Bar(), ETA()],
+                               max_value=plength).start()
+        else:
+            pbar = ProgressBar(widgets=[Style.RESET_ALL + Fore.YELLOW + jtext,
+                                        Percentage(), Bar(), ETA()],
+                               maxval=plength).start()
         return pbar
 
 
@@ -71,7 +80,11 @@ def update_pbar(index, **kwargs):
     global pbar, verbose
     if verbose and pbar:
         pbar.update(index)
-        if index == pbar.maxval:
+        if pbar2:
+            pmax = pbar.max_value
+        else:
+            pmax = pbar.maxval
+        if index == pmax:
             pbar.finish()
             print_nocr(Fore.RESET)
             pbar = None
