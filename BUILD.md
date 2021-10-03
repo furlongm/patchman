@@ -20,6 +20,6 @@ gbp buildpackage -uc -us
 
 ```shell
 sudo dnf -y install rpm-build git python3-setuptools
-python3 setup.py bdist_rpm
+python3 setup.py bdist_rpm --python=/usr/bin/python3
 rpmbuild -bb patchman-client.spec
 ```

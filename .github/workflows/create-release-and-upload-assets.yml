@@ -172,7 +172,7 @@ jobs:
           echo "upload_url=${upload_url}" >> $GITHUB_ENV
       - name: Build rpm packages
         run: |
-          python3 setup.py bdist_rpm
+          python3 setup.py bdist_rpm --python=/usr/bin/python3
           rpmbuild -bb patchman-client.spec
       - name: Upload patchman rpm
         uses: actions/upload-release-asset@v1.0.1
