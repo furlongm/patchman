@@ -489,7 +489,10 @@ def mirror_checksum_is_valid(computed, provided, mirror):
         text = 'Checksum failed for mirror {0!s}'.format(mirror.id)
         text += ', not refreshing package metadata'
         error_message.send(sender=None, text=text)
-        text = 'Found checksum:    {0!s}\nExpected checksum: {1!s}'.format(computed, provided)
+        text = 'Found checksum:    {0!s}\nExpected checksum: {1!s}'.format(
+            computed,
+            provided
+        )
         error_message.send(sender=None, text=text)
         mirror.last_access_ok = False
         mirror.fail()
@@ -502,7 +505,7 @@ def refresh_arch_repo(repo):
     """ Refresh all mirrors of an arch linux repo
     """
     if hasattr(settings, 'MAX_MIRRORS') and \
-           isinstance(settings.MAX_MIRRORS, int):
+            isinstance(settings.MAX_MIRRORS, int):
         max_mirrors = settings.MAX_MIRRORS
     fname = '{0!s}/{1!s}.db'.format(repo.arch, repo.repo_id)
     ts = datetime.now().replace(microsecond=0)
@@ -585,7 +588,7 @@ def refresh_rpm_repo(repo):
     check_for_metalinks(repo)
 
     if hasattr(settings, 'MAX_MIRRORS') and \
-           isinstance(settings.MAX_MIRRORS, int):
+            isinstance(settings.MAX_MIRRORS, int):
         max_mirrors = settings.MAX_MIRRORS
     ts = datetime.now().replace(microsecond=0)
     enabled_mirrors = repo.mirror_set.filter(mirrorlist=False, refresh=True)

@@ -31,12 +31,13 @@ from colorama import Fore, Style
 from enum import Enum
 from hashlib import md5, sha1, sha256
 from progressbar import Bar, ETA, Percentage, ProgressBar
+from patchman.signals import error_message
+
+
 if ProgressBar.__dict__.get('maxval'):
     pbar2 = False
 else:
     pbar2 = True
-
-from patchman.signals import error_message
 
 pbar = None
 verbose = None
@@ -230,6 +231,7 @@ def get_sha256(data):
     """ Return the sha256 checksum for data
     """
     return sha256(data).hexdigest()
+
 
 def get_md5(data):
     """ Return the md5 checksum for data

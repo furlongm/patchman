@@ -155,7 +155,10 @@ class Host(models.Model):
         # very likely to happen. if it does, we err on the side of caution
         # and mark it as the security update
         try:
-            update = updates.get(oldpackage=package, newpackage=highest_package)
+            update = updates.get(
+                oldpackage=package,
+                newpackage=highest_package
+            )
         except PackageUpdate.DoesNotExist:
             update = None
         try:
@@ -189,14 +192,21 @@ class Host(models.Model):
 
     def find_updates(self):
 
-        kernels_q = Q(name__name='kernel') | Q(name__name='kernel-devel') | \
-            Q(name__name='kernel-preempt') | Q(name__name='kernel-preempt-devel') | \
-            Q(name__name='kernel-rt') | Q(name__name='kernel-rt-devel') | \
-            Q(name__name='kernel-debug') | Q(name__name='kernel-debug-devel') | \
-            Q(name__name='kernel-default') | Q(name__name='kernel-default-devel') | \
-            Q(name__name='kernel-headers') | Q(name__name='kernel-core') | \
+        kernels_q = Q(name__name='kernel') | \
+            Q(name__name='kernel-devel') | \
+            Q(name__name='kernel-preempt') | \
+            Q(name__name='kernel-preempt-devel') | \
+            Q(name__name='kernel-rt') | \
+            Q(name__name='kernel-rt-devel') | \
+            Q(name__name='kernel-debug') | \
+            Q(name__name='kernel-debug-devel') | \
+            Q(name__name='kernel-default') | \
+            Q(name__name='kernel-default-devel') | \
+            Q(name__name='kernel-headers') | \
+            Q(name__name='kernel-core') | \
             Q(name__name='kernel-modules') | \
-            Q(name__name='virtualbox-kmp-default') | Q(name__name='virtualbox-kmp-preempt')
+            Q(name__name='virtualbox-kmp-default') | \
+            Q(name__name='virtualbox-kmp-preempt')
         repo_packages = self.get_host_repo_packages()
         host_packages = self.packages.exclude(kernels_q).distinct()
         kernel_packages = self.packages.filter(kernels_q)

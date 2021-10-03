@@ -21,7 +21,7 @@ from reports.models import Report
 
 if settings.USE_ASYNC_PROCESSING:
     from celery import shared_task
-    from patchman.celery import app
+    from patchman.celery import app  # noqa
 
     @shared_task
     def process_report(report_id):
