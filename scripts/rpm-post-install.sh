@@ -4,8 +4,8 @@ if [ ! -e /etc/httpd/conf.d/patchman.conf ] ; then
     cp /etc/patchman/apache.conf.example /etc/httpd/conf.d/patchman.conf
 fi
 
-if ! grep /usr/lib64/python3.6/site-packages /etc/httpd/conf.d/patchman.conf >/dev/null 2>&1 ; then
-    sed -i -e "s/^\(Define patchman_pythonpath\).*/\1 \/usr\/lib64\/python3.6\/site-packages/" \
+if ! grep /usr/lib/python3.6/site-packages /etc/httpd/conf.d/patchman.conf >/dev/null 2>&1 ; then
+    sed -i -e "s/^\(Define patchman_pythonpath\).*/\1 \/usr\/lib\/python3.6\/site-packages/" \
     /etc/httpd/conf.d/patchman.conf
 fi
 
