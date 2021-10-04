@@ -148,7 +148,7 @@ jobs:
       - name: Install build dependencies
         run: |
           dnf -y install epel-release
-          dnf -y install rpm-build python3-setuptools git
+          dnf -y install rpm-build python3 python3-setuptools git
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
