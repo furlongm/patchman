@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2019-2021 Marcus Furlong <furlongm@gmail.com>
 #
@@ -15,8 +15,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
-
-from __future__ import unicode_literals
 
 import os
 import sys

@@ -1,3 +1,23 @@
+patchman (2.0.0-1) stable; urgency=medium
+
+  * fix gh action indentation
+  * migrate to django.urls.path instead of django.conf.urls.url
+  * python 3 / django 2.2 support
+  * switch to dnf from yum
+  * switch from rabbit to redis for celery
+  * add celery context for task
+  * consistent argument ordering
+  * update installation instructions
+  * prefer 127.0.0.1 over localhost
+  * bump requirements for sec updates
+  * don't look up errata by default
+  * clean up decoding data for python3
+  * ignore pyc files when building rpms
+  * version bump to 2.0.0
+  * update installation docs
+
+ -- Marcus Furlong <furlongm@gmail.com>  Sat, 02 Oct 2021 19:39:16 +0000
+
 patchman (1.2.33-1) stable; urgency=medium
 
   * export LC_ALL variable in client

@@ -1,8 +1,7 @@
 # Django settings for patchman project.
 
-from __future__ import unicode_literals, absolute_import
-
 import os
+import site
 import sys
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -105,11 +104,7 @@ else:
     THIRD_PARTY_APPS += ['celery']
     CELERY_IMPORTS = ['reports.tasks']
     USE_ASYNC_PROCESSING = True
-    BROKER_HOST = 'localhost'
-    BROKER_PORT = 5672
-    BROKER_USER = 'guest'
-    BROKER_PASSWORD = 'guest'
-    BROKER_VHOST = '/'
+    CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
 
 LOGIN_REDIRECT_URL = '/patchman/'
 LOGOUT_REDIRECT_URL = '/patchman/login/'
@@ -126,18 +121,24 @@ STATIC_ROOT = '/var/lib/patchman/static/'
 
 TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
-try:
-    from .local_settings import *  # noqa
-except ImportError:
-    if sys.prefix == '/usr':
-        conf_path = '/etc/patchman'
-    else:
-        conf_path = os.path.join(sys.prefix, 'etc/patchman')
-        # if conf_path doesn't exist, try ./etc/patchman
-        if not os.path.isdir(conf_path):
-            conf_path = './etc/patchman'
-    local_settings = os.path.join(conf_path, 'local_settings.py')
-    exec(compile(open(local_settings).read(), local_settings, 'exec'))
+if sys.prefix == '/usr':
+    conf_path = '/etc/patchman'
+else:
+    conf_path = os.path.join(sys.prefix, 'etc/patchman')
+    # if sys.prefix + conf_path doesn't exist, try ./etc/patchman (source)
+    if not os.path.isdir(conf_path):
+        conf_path = './etc/patchman'
+    # if ./etc/patchman doesn't exist, try site.getsitepackages() (pip)
+    if not os.path.isdir(conf_path):
+        try:
+            sitepackages = site.getsitepackages()
+        except AttributeError:
+            # virtualenv, try site-packages in sys.path
+            sp = 'site-packages'
+            sitepackages = [s for s in sys.path if s.endswith(sp)][0]
+        conf_path = os.path.join(sitepackages, 'etc/patchman')
+local_settings = os.path.join(conf_path, 'local_settings.py')
+exec(compile(open(local_settings).read(), local_settings, 'exec'))
 
 MANAGERS = ADMINS
 INSTALLED_APPS = DEFAULT_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -149,3 +150,14 @@ if RUN_GUNICORN or (len(sys.argv) > 1 and sys.argv[1] == 'runserver'):  # noqa
     STATICFILES_DIRS = [os.path.abspath(os.path.join(BASE_DIR, 'patchman/static'))]  # noqa
     STATIC_ROOT = os.path.abspath(os.path.join(BASE_DIR, 'run/static'))
     STATIC_URL = '/static/'
+    MIDDLEWARE = [
+        'django.middleware.security.SecurityMiddleware',
+        'whitenoise.middleware.WhiteNoiseMiddleware',
+        'django.contrib.sessions.middleware.SessionMiddleware',
+        'django.middleware.common.CommonMiddleware',
+        'django.middleware.csrf.CsrfViewMiddleware',
+        'django.contrib.auth.middleware.AuthenticationMiddleware',
+        'django.contrib.messages.middleware.MessageMiddleware',
+        'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    ]
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'  # noqa
