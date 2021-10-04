@@ -1,12 +1,5 @@
 patchman (2.0.0-1) stable; urgency=medium
 
-  [ runner@fv-az210-143.4mfgd40mw1herku3etvgsefafa.xx.internal.cloudapp.net ]
-  * UNRELEASED
-
- -- Marcus Furlong <furlongm@gmail.com>  Mon, 04 Oct 2021 01:34:04 +0000
-
-patchman (2.0.0-1) stable; urgency=medium
-
   * fix gh action indentation
   * migrate to django.urls.path instead of django.conf.urls.url
   * python 3 / django 2.2 support
