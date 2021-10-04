@@ -15,8 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from __future__ import unicode_literals
-
 import re
 import tarfile
 try:
@@ -35,7 +33,6 @@ from debian.deb822 import Packages
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
-from django.utils.six import text_type
 
 from packages.models import Package, PackageName, PackageString
 from arch.models import PackageArchitecture
@@ -135,7 +132,7 @@ def update_mirror_packages(mirror, packages):
 
 def get_primary_url(mirror_url, data):
 
-    if isinstance(data, text_type):
+    if isinstance(data, str):
         if data.startswith('Bad repo - not in list') or \
                 data.startswith('Invalid repo'):
             return None, None, None
@@ -208,8 +205,8 @@ def get_mirrorlist_urls(url):
             data = download_url(res, 'Downloading repo info:')
             if data is None:
                 return
-            mirror_urls = re.findall(b'^http://.*$|^ftp://.*$',
-                                     data, re.MULTILINE)
+            mirror_urls = re.findall('^http://.*$|^ftp://.*$',
+                                     data.decode('utf-8'), re.MULTILINE)
             if mirror_urls:
                 return mirror_urls
 
@@ -218,7 +215,6 @@ def add_mirrors_from_urls(repo, mirror_urls):
     """ Creates mirrors from a list of mirror urls
     """
     for mirror_url in mirror_urls:
-        mirror_url = mirror_url.decode('ascii')
         mirror_url = mirror_url.replace('$ARCH', repo.arch.name)
         mirror_url = mirror_url.replace('$basearch', repo.arch.name)
         if hasattr(settings, 'MAX_MIRRORS') and \
@@ -275,7 +271,6 @@ def check_for_metalinks(repo):
 def extract_yum_packages(data, url):
     """ Extract package metadata from a yum primary.xml file
     """
-
     extracted = extract(data, url)
     ns = 'http://linux.duke.edu/metadata/common'
     m_context = etree.iterparse(BytesIO(extracted),
@@ -323,18 +318,15 @@ def extract_yum_packages(data, url):
 def extract_deb_packages(data, url):
     """ Extract package metadata from debian Packages file
     """
-
-    extracted = extract(data, url)
-    package_re = re.compile(b'^Package: ', re.M)
+    extracted = extract(data, url).decode('utf-8')
+    package_re = re.compile('^Package: ', re.M)
     plen = len(package_re.findall(extracted))
     packages = set()
 
     if plen > 0:
         ptext = 'Extracting packages: '
         progress_info_s.send(sender=None, ptext=ptext, plen=plen)
-
-        bio = BytesIO(extracted)
-        for i, stanza in enumerate(Packages.iter_paragraphs(bio)):
+        for i, stanza in enumerate(Packages.iter_paragraphs(extracted)):
             # https://github.com/furlongm/patchman/issues/55
             if 'version' not in stanza:
                 continue
@@ -364,9 +356,8 @@ def extract_deb_packages(data, url):
 def extract_yast_packages(data):
     """ Extract package metadata from yast metadata file
     """
-
-    extracted = extract(data, 'gz')
-    pkgs = re.findall(b'=Pkg: (.*)', extracted)
+    extracted = extract(data, 'gz').decode('utf-8')
+    pkgs = re.findall('=Pkg: (.*)', extracted)
     plen = len(pkgs)
     packages = set()
 
@@ -376,7 +367,7 @@ def extract_yast_packages(data):
 
         for i, pkg in enumerate(pkgs):
             progress_update_s.send(sender=None, index=i + 1)
-            name, version, release, arch = str(pkg).split()
+            name, version, release, arch = pkg.split()
             package = PackageString(name=name.lower(),
                                     epoch='',
                                     version=version,
@@ -498,7 +489,10 @@ def mirror_checksum_is_valid(computed, provided, mirror):
         text = 'Checksum failed for mirror {0!s}'.format(mirror.id)
         text += ', not refreshing package metadata'
         error_message.send(sender=None, text=text)
-        text = 'Found checksum:    {0!s}\nExpected checksum: {1!s}'.format(computed, provided)
+        text = 'Found checksum:    {0!s}\nExpected checksum: {1!s}'.format(
+            computed,
+            provided
+        )
         error_message.send(sender=None, text=text)
         mirror.last_access_ok = False
         mirror.fail()
@@ -511,7 +505,7 @@ def refresh_arch_repo(repo):
     """ Refresh all mirrors of an arch linux repo
     """
     if hasattr(settings, 'MAX_MIRRORS') and \
-           isinstance(settings.MAX_MIRRORS, int):
+            isinstance(settings.MAX_MIRRORS, int):
         max_mirrors = settings.MAX_MIRRORS
     fname = '{0!s}/{1!s}.db'.format(repo.arch, repo.repo_id)
     ts = datetime.now().replace(microsecond=0)
@@ -552,8 +546,7 @@ def refresh_yast_repo(mirror, data):
     """ Refresh package metadata for a yast-style rpm mirror
         and add the packages to the mirror
     """
-
-    package_dir = re.findall(b'DESCRDIR *(.*)', data)[0].decode('ascii')
+    package_dir = re.findall('DESCRDIR *(.*)', data.decode('utf-8'))[0]
     package_url = '{0!s}/{1!s}/packages.gz'.format(mirror.url, package_dir)
     res = get_url(package_url)
     mirror.last_access_ok = response_is_valid(res)
@@ -595,7 +588,7 @@ def refresh_rpm_repo(repo):
     check_for_metalinks(repo)
 
     if hasattr(settings, 'MAX_MIRRORS') and \
-           isinstance(settings.MAX_MIRRORS, int):
+            isinstance(settings.MAX_MIRRORS, int):
         max_mirrors = settings.MAX_MIRRORS
     ts = datetime.now().replace(microsecond=0)
     enabled_mirrors = repo.mirror_set.filter(mirrorlist=False, refresh=True)

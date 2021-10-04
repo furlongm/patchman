@@ -15,8 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from __future__ import unicode_literals
-
 import re
 from defusedxml.lxml import _etree as etree
 
@@ -178,7 +176,8 @@ def parse_errata_children(e, children):
             if m:
                 name, epoch, ver, rel, dist, arch = m.groups()
             else:
-                e = 'Error parsing errata: could not parse package "{0!s}"'.format(pkg_str)
+                e = 'Error parsing errata: '
+                e += 'could not parse package "{0!s}"'.format(pkg_str)
                 error_message.send(sender=None, text=e)
                 continue
             if dist:
@@ -258,12 +257,13 @@ def get_or_create_package(name, epoch, version, release, arch, p_type):
         p_arch, c = package_arches.get_or_create(name=arch)
 
     packages = Package.objects.all()
-    potential_packages = packages.filter(name=p_name,
-                                         arch=p_arch,
-                                         version=version,
-                                         release=release,
-                                         packagetype=p_type,
-                                        ).order_by('-epoch')
+    potential_packages = packages.filter(
+        name=p_name,
+        arch=p_arch,
+        version=version,
+        release=release,
+        packagetype=p_type,
+    ).order_by('-epoch')
     if potential_packages:
         package = potential_packages[0]
         if epoch and package.epoch != epoch:
@@ -297,7 +297,10 @@ def mark_errata_security_updates():
         progress_update_s.send(sender=None, index=i + 1)
         if erratum.etype == 'security':
             for package in erratum.packages.all():
-                affected_updates = package_updates.filter(newpackage=package, security=False)
+                affected_updates = package_updates.filter(
+                    newpackage=package,
+                    security=False
+                )
                 for affected_update in affected_updates:
                     if not affected_update.security:
                         affected_update.security = True

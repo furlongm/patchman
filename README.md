@@ -92,19 +92,20 @@ optional arguments:
 
 
 ```
-python-django
-python-django-tagging
-python-django-extensions
-python-django-bootstrap3
-python-djangorestframework
-python-debian
-python-rpm
-python-progressbar
-python-lxml
-python-defusedxml
-python-argparse
-python-requests
-python-humanize
+python3-django
+python3-django-tagging
+python3-django-extensions
+python3-django-bootstrap3
+python3-djangorestframework
+python3-debian
+python3-rpm
+python3-progressbar
+python3-lxml
+python3-defusedxml
+python3-requests
+python3-colorama
+python3-magic
+python3-humanize
 ```
 
 The server can optionally make use of celery to asynchronously process the
