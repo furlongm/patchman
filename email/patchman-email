@@ -109,7 +109,7 @@ report() {
 			echo "#updates table { border-collapse: collapse; width: 100%; }" >> $FILE
 			echo "#details th, #details tr, #details td { text-align: left; }" >> $FILE
 			echo "#updates th, #updates td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }" >> $FILE
-			echo "</style><body>" >> $FILE
+			echo "</style><head><meta charset=\"UTF-8\"></head><body>" >> $FILE
 			echo "<div id=\"details\"><table>" >> $FILE
 			echo "$HOST" | awk -F ' : ' 'NR!=7 && NR!=9 && NR!=11 && NR!=13 && NR!=14 { print "<tr><th>"$1":</th><td>"$2"</td></tr>" }' | sed 's/Reverse DNS/Hostname/g' >> $FILE
 			echo "</table></div><br>" >> $FILE
