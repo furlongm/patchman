@@ -15,8 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from __future__ import unicode_literals, print_function
-
 from colorama import init, Fore, Style
 
 from django.dispatch import receiver

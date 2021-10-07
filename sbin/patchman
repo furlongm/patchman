@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2013-2021 Marcus Furlong <furlongm@gmail.com>
 #
@@ -604,7 +604,7 @@ def process_args(args):
         args.clean_updates = True
         args.dbcheck = True
         args.dns_checks = True
-        args.errata = True
+        args.errata = False
     if args.list_repos:
         list_repos(args.repo)
         return False

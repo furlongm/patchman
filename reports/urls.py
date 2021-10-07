@@ -15,21 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from __future__ import unicode_literals
-
-from django.conf.urls import url
+from django.urls import path
 
 from reports import views
 
 app_name = 'reports'
 
 urlpatterns = [
-    url(r'^$', views.report_list, name='report_list'),
-    url(r'^upload/$', views.upload),
-    url(r'^(?P<report>[-.\w]+)/$', views.report_detail,
-        name='report_detail'),
-    url(r'^(?P<report>[-.\w]+)/delete/$', views.report_delete,
-        name='report_delete'),
-    url(r'^(?P<report>[-.\w]+)/process/$', views.report_process,
-        name='report_process'),
+    path('', views.report_list, name='report_list'),
+    path('upload/', views.upload),
+    path('<int:report_id>/', views.report_detail, name='report_detail'),
+    path('<int:report_id>/delete/', views.report_delete, name='report_delete'),
+    path('<int:report_id>/process/', views.report_process, name='report_process'),  # noqa
 ]

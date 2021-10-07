@@ -4,8 +4,8 @@
 
 if [ "$1" = "configure" ] ; then
 
-    if ! grep /usr/lib/python2.7/dist-packages/patchman /etc/apache2/conf-available/patchman.conf >/dev/null 2>&1 ; then
-        sed -i -e "s/^\(Define patchman_pythonpath\).*/\1 \/usr\/lib\/python2.7\/dist-packages/" \
+    if ! grep /usr/lib/python3/dist-packages/patchman /etc/apache2/conf-available/patchman.conf >/dev/null 2>&1 ; then
+        sed -i -e "s/^\(Define patchman_pythonpath\).*/\1 \/usr\/lib\/python3\/dist-packages/" \
         /etc/apache2/conf-available/patchman.conf
     fi
 

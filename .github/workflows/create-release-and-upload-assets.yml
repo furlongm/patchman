@@ -50,7 +50,7 @@ jobs:
           git config user.name 'Marcus Furlong'
       - name: Install dependencies
         run: |
-          sudo apt -y install python-setuptools debhelper dh-exec dh-python git-buildpackage
+          sudo apt -y install python3-setuptools debhelper dh-exec dh-python git-buildpackage
       - name: Update repo version if required
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -81,7 +81,7 @@ jobs:
         run: |
           apt update
           export DEBIAN_FRONTEND=noninteractive
-          apt -y install python-setuptools debhelper dh-exec dh-python git-buildpackage
+          apt -y install python3-setuptools debhelper dh-exec dh-python git-buildpackage
       - name: Fix sh so env vars propogate
         run: |
           rm /bin/sh
@@ -121,14 +121,14 @@ jobs:
           git tag --delete v${version}
           git tag v${version}
           gbp buildpackage --git-upstream-tree=${{ github.ref }} -uc -us
-      - name: Upload python-patchman deb
+      - name: Upload python3-patchman deb
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ env.upload_url }}
-          asset_name: ${{ format('python-patchman_{0}-1_all.deb', env.version) }}
-          asset_path: ../${{ format('python-patchman_{0}-1_all.deb', env.version) }}
+          asset_name: ${{ format('python3-patchman_{0}-1_all.deb', env.version) }}
+          asset_path: ../${{ format('python3-patchman_{0}-1_all.deb', env.version) }}
           asset_content_type: application/vnd.debian.binary-package
       - name: Upload patchman-client deb
         uses: actions/upload-release-asset@v1.0.1
@@ -143,14 +143,12 @@ jobs:
     needs: update-version-and-changelog
     runs-on: ubuntu-latest
     container:
-      image: centos:7
+      image: centos:8
     steps:
       - name: Install build dependencies
         run: |
-          yum -y install epel-release
-          yum -y install https://repo.ius.io/ius-release-el7.rpm
-          yum makecache
-          yum -y install rpm-build python-setuptools git222
+          dnf -y install epel-release
+          dnf -y install rpm-build python3 python3-setuptools git
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
@@ -174,7 +172,7 @@ jobs:
           echo "upload_url=${upload_url}" >> $GITHUB_ENV
       - name: Build rpm packages
         run: |
-          python setup.py bdist_rpm
+          python3 setup.py bdist_rpm --python=/usr/bin/python3
           rpmbuild -bb patchman-client.spec
       - name: Upload patchman rpm
         uses: actions/upload-release-asset@v1.0.1
@@ -198,22 +196,22 @@ jobs:
     needs: update-version-and-changelog
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up python
-      uses: actions/setup-python@v1
-      with:
-        python-version: '3.x'
-    - name: Set version
-      run: |
-        echo "${{ github.ref }}" | cut -dv -f2 > VERSION.txt
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install setuptools wheel twine
-    - name: Build and publish
-      env:
-        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-      run: |
-        python setup.py sdist bdist_wheel
-        twine upload dist/*
+      - uses: actions/checkout@v2
+      - name: Set up python
+        uses: actions/setup-python@v1
+        with:
+          python-version: '3.x'
+      - name: Set version
+        run: |
+          echo "${{ github.ref }}" | cut -dv -f2 > VERSION.txt
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install setuptools wheel twine
+      - name: Build and publish
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          python3 setup.py sdist bdist_wheel
+          twine upload dist/*

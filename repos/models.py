@@ -15,9 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from __future__ import unicode_literals
-
-from django.utils.encoding import python_2_unicode_compatible
 from django.db import models
 from django.urls import reverse
 
@@ -29,7 +26,6 @@ from repos.utils import refresh_deb_repo, refresh_rpm_repo, \
 from patchman.signals import info_message, warning_message, error_message
 
 
-@python_2_unicode_compatible
 class Repository(models.Model):
 
     RPM = 'R'
@@ -123,7 +119,6 @@ class Repository(models.Model):
             mirror.save()
 
 
-@python_2_unicode_compatible
 class Mirror(models.Model):
 
     repo = models.ForeignKey(Repository, on_delete=models.CASCADE)

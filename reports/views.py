@@ -15,8 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from __future__ import unicode_literals
-
 from django.http import HttpResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import get_object_or_404, render, redirect
@@ -112,9 +110,9 @@ def report_list(request):
 
 
 @login_required
-def report_detail(request, report):
+def report_detail(request, report_id):
 
-    report = get_object_or_404(Report, id=report)
+    report = get_object_or_404(Report, id=report_id)
 
     return render(request,
                   'reports/report_detail.html',
@@ -122,9 +120,9 @@ def report_detail(request, report):
 
 
 @login_required
-def report_process(request, report):
+def report_process(request, report_id):
 
-    report = get_object_or_404(Report, id=report)
+    report = get_object_or_404(Report, id=report_id)
     report.process()
 
     return render(request,
@@ -133,9 +131,9 @@ def report_process(request, report):
 
 
 @login_required
-def report_delete(request, report):
+def report_delete(request, report_id):
 
-    report = get_object_or_404(Report, id=report)
+    report = get_object_or_404(Report, id=report_id)
 
     if request.method == 'POST':
         if 'delete' in request.POST:

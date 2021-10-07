@@ -5,46 +5,46 @@ mysql or postgresql instead, see the database configuration section.
 
 
 ## Supported Install Options
-  - [Ubuntu 18.04](#ubuntu-1804-bionic)
-  - [Debian 10](#debian-10-buster)
-  - [CentOS 7](#centos-7)
+  - [Ubuntu 20.04](#ubuntu-2004-focal)
+  - [Debian 11](#debian-11-bullseye)
+  - [CentOS 8](#centos-8)
   - [virtualenv + pip](#virtualenv--pip)
   - [Source](#source)
 
 
-### Ubuntu 18.04 (bionic)
+### Ubuntu 20.04 (focal)
 
 ```shell
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0412F522
-echo "deb https://repo.openbytes.ie/ubuntu bionic main" > /etc/apt/sources.list.d/patchman.list
+echo "deb https://repo.openbytes.ie/patchman/ubuntu focal main" > /etc/apt/sources.list.d/patchman.list
 apt update
-apt -y install python-patchman patchman-client
+apt -y install python3-patchman patchman-client
 patchman-manage createsuperuser
 ```
 
-### Debian 10 (buster)
+### Debian 11 (bullseye)
 
 ```shell
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0412F522
-echo "deb https://repo.openbytes.ie/debian buster main" > /etc/apt/sources.list.d/patchman.list
+echo "deb https://repo.openbytes.ie/patchman/debian bullseye main" > /etc/apt/sources.list.d/patchman.list
 apt update
-apt -y install python-patchman patchman-client
+apt -y install python3-patchman patchman-client
 patchman-manage createsuperuser
 ```
 
-### CentOS 7
+### CentOS 8
 
 ```shell
 cat <<EOF >> /etc/yum.repos.d/openbytes.repo
 [openbytes]
 name=openbytes
-baseurl=https://repo.openbytes.ie/yum
+baseurl=https://repo.openbytes.ie/patchman/el8
 enabled=1
 gpgcheck=0
 EOF
-yum install -y epel-release
-yum makecache
-yum install -y patchman patchman-client
+dnf -y install epel-release
+dnf makecache
+dnf -y install patchman patchman-client
 systemctl restart httpd
 patchman-manage createsuperuser
 ```
@@ -54,8 +54,8 @@ patchman-manage createsuperuser
 TBD - not working yet
 
 ```shell
-apt -y install gcc libxml2-dev libxslt1-dev virtualenv python-dev zlib1g-dev  # (debian/ubuntu)
-yum -y install gcc libxml2-devel libxslt-devel python-virtualenv              # (centos/rhel)
+apt -y install gcc libxml2-dev libxslt1-dev virtualenv python3-dev zlib1g-dev  # (debian/ubuntu)
+dnf -y install gcc libxml2-devel libxslt-devel python3-virtualenv              # (centos/rhel)
 mkdir /srv/patchman
 cd /srv/patchman
 virtualenv .
@@ -69,22 +69,21 @@ gunicorn patchman.wsgi -b 0.0.0.0:80
 
 ### Source
 
-#### Ubuntu 18.04 (bionic)
+#### Ubuntu 20.04 (focal)
 
 1. Install dependencies
 
 ```shell
-apt -y install python-django-tagging python-django python-requests \
-python-django-extensions python-argparse python-defusedxml python-rpm python-debian \
-python-pygooglechart python-cracklib python-progressbar libapache2-mod-wsgi \
-python-djangorestframework apache2 python-colorama python-humanize liblzma-dev \
-python-magic python-lxml
+apt -y install python3-django python3-django-tagging python3-django-extensions \
+python3-djangorestframework python3-defusedxml python3-lxml python3-requests \
+python3-rpm python3-debian python3-colorama python3-humanize python3-magic \
+apache2 libapache2-mod-wsgi-py3 python3-pip python3-progressbar
 ```
 
 2. Install django-bootstrap3
 
 ```shell
-pip install django-bootstrap3==11.1.0
+pip3 install django-bootstrap3
 ```
 
 3. Clone git repo to e.g. /srv/patchman
@@ -152,7 +151,7 @@ To configure the mysql database backend:
 1. Ensure mysql-server and the python mysql bindings are installed:
 
 ```shell
-apt -y install default-mysql-server python-mysqldb python-pymysql
+apt -y install default-mysql-server python3-mysqldb
 ```
 
 2. Create database and users:
@@ -193,7 +192,7 @@ To configure the postgresql database backend:
 1. Ensure the postgresql server and the python postgres bindings are installed:
 
 ```shell
-apt -y install postgresql python-psycopg2
+apt -y install postgresql python3-psycopg2
 ```
 
 2. Create database and users:
@@ -311,30 +310,32 @@ Install Celery for realtime processing of reports from clients:
 #### Ubuntu / Debian
 
 ```shell
-apt -y install python-celery python-celery-common rabbitmq-server
-C_FORCE_ROOT=1 celery worker --loglevel=info -E -A patchman
+apt -y install python3-celery redis python3-redis python-celery-common
+C_FORCE_ROOT=1 celery -b redis://127.0.0.1:6379/0 -A patchman worker -l INFO -E
 ```
 
 #### CentOS / RHEL
 
 ```shell
-yum -y install python-celery rabbitmq-server
-systemctl restart rabbitmq-server
-semanage port -a -t http_port_t -p tcp 5672
-C_FORCE_ROOT=1 celery worker --loglevel=info -E -A patchman
-
+dnf -y install python3-celery redis python3-redis
+systemctl restart redis
+semanage port -a -t http_port_t -p tcp 6379
+setsebool -P httpd_can_network_connect 1
+C_FORCE_ROOT=1 celery -b redis://127.0.0.1:6379/0 -A patchman worker -l INFO -E
 ```
 
 Add the last command to an initscript (e.g. /etc/rc.local) to make celery
 persistent over reboot.
+
+Enable celery by adding `USE_ASYNC_PROCESSING = True` to `/etc/patchman/local_settings.py`
 
 ### Memcached
 
 Memcached can optionally be run to reduce the load on the server.
 
 ```shell
-apt -y install memcached python-memcache   # (debian/ubuntu)
-yum -y install memcached python-memcached  # (centos/rhel)
+apt -y install memcached python3-memcache   # (debian/ubuntu)
+dnf -y install memcached python3-memcached  # (centos/rhel)
 systemctl restart memcached
 ```
 

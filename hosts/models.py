@@ -15,9 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from __future__ import unicode_literals
-
-from django.utils.encoding import python_2_unicode_compatible
 from django.db import models, IntegrityError, DatabaseError, transaction
 from django.db.models import Q
 from django.urls import reverse
@@ -39,13 +36,12 @@ from repos.utils import find_best_repo
 from hosts.utils import update_rdns, remove_reports
 
 
-@python_2_unicode_compatible
 class Host(models.Model):
 
     hostname = models.CharField(max_length=255, unique=True)
     ipaddress = models.GenericIPAddressField()
     reversedns = models.CharField(max_length=255, blank=True, null=True)
-    check_dns = models.BooleanField(default=True)
+    check_dns = models.BooleanField(default=False)
     os = models.ForeignKey(OS, on_delete=models.CASCADE)
     kernel = models.CharField(max_length=255)
     arch = models.ForeignKey(MachineArchitecture, on_delete=models.CASCADE)
@@ -159,7 +155,10 @@ class Host(models.Model):
         # very likely to happen. if it does, we err on the side of caution
         # and mark it as the security update
         try:
-            update = updates.get(oldpackage=package, newpackage=highest_package)
+            update = updates.get(
+                oldpackage=package,
+                newpackage=highest_package
+            )
         except PackageUpdate.DoesNotExist:
             update = None
         try:
@@ -193,14 +192,21 @@ class Host(models.Model):
 
     def find_updates(self):
 
-        kernels_q = Q(name__name='kernel') | Q(name__name='kernel-devel') | \
-            Q(name__name='kernel-preempt') | Q(name__name='kernel-preempt-devel') | \
-            Q(name__name='kernel-rt') | Q(name__name='kernel-rt-devel') | \
-            Q(name__name='kernel-debug') | Q(name__name='kernel-debug-devel') | \
-            Q(name__name='kernel-default') | Q(name__name='kernel-default-devel') | \
-            Q(name__name='kernel-headers') | Q(name__name='kernel-core') | \
+        kernels_q = Q(name__name='kernel') | \
+            Q(name__name='kernel-devel') | \
+            Q(name__name='kernel-preempt') | \
+            Q(name__name='kernel-preempt-devel') | \
+            Q(name__name='kernel-rt') | \
+            Q(name__name='kernel-rt-devel') | \
+            Q(name__name='kernel-debug') | \
+            Q(name__name='kernel-debug-devel') | \
+            Q(name__name='kernel-default') | \
+            Q(name__name='kernel-default-devel') | \
+            Q(name__name='kernel-headers') | \
+            Q(name__name='kernel-core') | \
             Q(name__name='kernel-modules') | \
-            Q(name__name='virtualbox-kmp-default') | Q(name__name='virtualbox-kmp-preempt')
+            Q(name__name='virtualbox-kmp-default') | \
+            Q(name__name='virtualbox-kmp-preempt')
         repo_packages = self.get_host_repo_packages()
         host_packages = self.packages.exclude(kernels_q).distinct()
         kernel_packages = self.packages.filter(kernels_q)
@@ -332,7 +338,6 @@ class Host(models.Model):
         return update_ids
 
 
-@python_2_unicode_compatible
 class HostRepo(models.Model):
     host = models.ForeignKey(Host, on_delete=models.CASCADE)
     repo = models.ForeignKey(Repository, on_delete=models.CASCADE)
