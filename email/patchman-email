@@ -36,7 +36,7 @@ email() {
 		<p>Attached to this e-mail, you'll find each system's individual report.</p><br>
 		<p>Please contact your System Administrator in order to schedule the updates.</p></div>
 		<br><hr>
-		<div id=\"disclaimer\">
+		</div><div id=\"disclaimer\">
 		DISCLAIMER<br>The information in this email is confidential and should only be read by the person or entity to whom it is addressed. 
 		If you have received this communication by mistake, please notify the sender and immediately delete the message and 
 		the attached files without reading, copying, recording, distributing, disseminating or making any other use of the information. 
