@@ -23,7 +23,7 @@ email() {
 	RECIPIENT=$(getConfig $1 recipient)
 	SENDER=$(getConfig General sender)
 	FULLNAME=$(getConfig General fullname)
-	SUBJECT=$(echo "[$1] $(getConfig General subject)" | openssl base64)
+	SUBJECT=$(echo "[$1] $(getConfig General subject)" | base64)
 	BODY="<html><style>
 		body { font-family: \"Calibri\" }
 		hr { border: 0; height: 1px; background: #333 }
@@ -117,7 +117,6 @@ report() {
 			echo "<tr><th>Current Version</th><th>New Version</th><th>Type</th></tr>" >> $FILE
 			patchman -u -H $1 | tail -n +3 | head -n -1 | sed 's/\x1b\[[0-9;]*m//g' |  awk '{ print "<tr><td>"$1"</td><td>"$3"</td><td>"$4"</td></tr>" }' >> $FILE
 			echo "</table></div><br>" >> $FILE
-			echo "<p>Please contact your System Administrator in order to schedule the updates.</p>" >> $FILE
 			echo "</body></html>" >> $FILE
 		else
 			echo "[INFO] $TAG $1: Report exists, skipping."
@@ -180,7 +179,7 @@ if [ $# -gt 0 ] && [[ $1 == -* ]]; then
 					HOSTS=()
 					HOSTS+=$(patchman -lh | tail -n +3 | awk -F ' : ' 'NR%16==3 || NR%16==12 {print $2}' | paste -d : - - | awk -F ':' '{ if( $2 == "'${OPTARG}'" ){ print $1 }}' | sed 's/\x1b\[[0-9;]*m//g')
 
-					if [ -z $HOSTS ]; then
+					if [ -z "$HOSTS" ]; then
 						echo "[ERROR] ${OPTARG}: Tag not found."
 					else
 						for HOST in $HOSTS; do

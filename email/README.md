@@ -26,6 +26,4 @@ Dependencies:
 -----------------
 - Postfix configured and running
 
-- OpenSSL installed
-
-- GNU sharutils installed
+- GNU coreutils and sharutils installed
