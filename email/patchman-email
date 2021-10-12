@@ -90,7 +90,6 @@ report() {
 	
 	if [ -z $UPDATES ]; then
 		echo "[ERROR] $1: Hostname not found."
-		exit
 	elif [ $UPDATES -gt 0 ]; then	
 		# Gets the hosts tags to determine the recipient and directory
 		TAG=$(echo "$HOST" | awk -F ' : ' 'NR==11 { print $2 }')	
