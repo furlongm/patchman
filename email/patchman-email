@@ -18,65 +18,75 @@ getConfig() {
 }
 
 email() {	
-	ATTACHMENTS=()
-	BOUNDARY=$(uuidgen)
-	RECIPIENT=$(getConfig $1 recipient)
 	SENDER=$(getConfig General sender)
-	FULLNAME=$(getConfig General fullname)
-	SUBJECT=$(echo "[$1] $(getConfig General subject)" | base64)
-	BODY="<html><style>
-		body { font-family: \"Calibri\" }
-		hr { border: 0; height: 1px; background: #333 }
-		#info { font-size: 1em }
-		#disclaimer { font-size: 0.8em }
-		</style><body>
-		<div id=\"info\">
-		<h2>Server Update Report</h2>
-		<p>There are new updates available for your servers.</p> 
-		<p>Attached to this e-mail, you'll find each system's individual report.</p><br>
-		<p>Please contact your System Administrator in order to schedule the updates.</p></div>
-		<br><hr>
-		</div><div id=\"disclaimer\">
-		DISCLAIMER<br>The information in this email is confidential and should only be read by the person or entity to whom it is addressed. 
-		If you have received this communication by mistake, please notify the sender and immediately delete the message and 
-		the attached files without reading, copying, recording, distributing, disseminating or making any other use of the information. 
-		Remember your Environmental Responsibility before deciding to print this email.
-		</div></body></html>"
 
-	if [ -z $2 ]; then
-		ATTACHMENTS+=$(ls $DIR/$1/*-$DATE.html)
+	if [ ! -z $SENDER ]; then
+		RECIPIENT=$(getConfig $1 recipient)
+
+		if [ ! -z $RECIPIENT ]; then
+			ATTACHMENTS=()
+			BOUNDARY=$(uuidgen)
+			FULLNAME=$(getConfig General fullname)
+			SUBJECT=$(echo "[$1] $(getConfig General subject)" | base64)
+			BODY="<html><style>
+				body { font-family: \"Calibri\" }
+				hr { border: 0; height: 1px; background: #333 }
+				#info { font-size: 1em }
+				#disclaimer { font-size: 0.8em }
+				</style><body>
+				<div id=\"info\">
+				<h2>Server Update Report</h2>
+				<p>There are new updates available for your servers.</p> 
+				<p>Attached to this e-mail, you'll find each system's individual report.</p><br>
+				<p>Please contact your System Administrator in order to schedule the updates.</p></div>
+				<br><hr>
+				</div><div id=\"disclaimer\">
+				DISCLAIMER<br>The information in this email is confidential and should only be read by the person or entity to whom it is addressed. 
+				If you have received this communication by mistake, please notify the sender and immediately delete the message and 
+				the attached files without reading, copying, recording, distributing, disseminating or making any other use of the information. 
+				Remember your Environmental Responsibility before deciding to print this email.
+				</div></body></html>"
+			
+			if [ -z $2 ]; then
+				ATTACHMENTS+=$(ls $DIR/$1/*-$DATE.html)
+			else
+				ATTACHMENTS+=$(ls $DIR/$1/$2-$DATE.html)
+			fi
+
+			echo "[INFO] $1: E-mailing report..."
+
+			(echo "To: $RECIPIENT"
+			echo "Subject: =?UTF-8?B?$SUBJECT?="
+			echo "MIME-Version: 1.0"
+			echo "Content-Type: multipart/mixed; boundary=\"$BOUNDARY\""
+			echo ""
+			echo "--$BOUNDARY"
+			echo "Content-Type: text/html; charset=UTF-8"
+			echo "Content-Disposition: inline"
+			echo ""
+			echo $BODY
+			for ATTACH in $ATTACHMENTS; do
+				echo ""
+				echo "--$BOUNDARY"
+				echo "Content-Type: text/html;"
+				echo "Content-Transfer-Encoding: uuencode"
+				echo "Content-Disposition: attachment; filename=\"$(basename $ATTACH)\""
+				echo ""
+				uuencode $ATTACH $(basename $ATTACH)
+			done
+			echo "--$BOUNDARY--"
+			) | sendmail -t -f $SENDER -F "$FULLNAME"
+
+			if [ $? -eq 0 ]; then
+				echo "[SUCCESS] $1: E-mail report sent."
+			else
+				echo "[ERROR] $1: E-mail report failed."
+			fi
+		else
+			echo "[ERROR] $1: No recipient address found."
+		fi
 	else
-		ATTACHMENTS+=$(ls $DIR/$1/$2-$DATE.html)
-	fi
-
-	echo "[INFO] $1: E-mailing report..."
-
-	(echo "To: $RECIPIENT"
-	echo "Subject: =?UTF-8?B?$SUBJECT?="
-	echo "MIME-Version: 1.0"
-	echo "Content-Type: multipart/mixed; boundary=\"$BOUNDARY\""
-	echo ""
-	echo "--$BOUNDARY"
-	echo "Content-Type: text/html; charset=UTF-8"
-	echo "Content-Disposition: inline"
-	echo ""
-	echo $BODY
-	for ATTACH in $ATTACHMENTS; do
-		echo ""
-		echo "--$BOUNDARY"
-		echo "Content-Type: text/html;"
-		echo "Content-Transfer-Encoding: uuencode"
-		echo "Content-Disposition: attachment; filename=\"$(basename $ATTACH)\""
-		echo ""
-		uuencode $ATTACH $(basename $ATTACH)
-	done
-	echo "--$BOUNDARY--"
-	) | sendmail -t -f $SENDER -F "$FULLNAME"
-
-	if [ $? -eq 0 ]; then
-		echo "[SUCCESS] $1: E-mail report sent."
-	else
-		echo "[ERROR] $1: E-mail report failed."
+		echo "[ERROR] No sender address found."
 	fi
 }
 
