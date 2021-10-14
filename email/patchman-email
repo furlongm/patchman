@@ -51,30 +51,29 @@ email() {
 
 	echo "[INFO] $1: E-mailing report..."
 
-	EMAIL=$((
-		echo "To: $RECIPIENT"
-		echo "Subject: =?UTF-8?B?$SUBJECT?="
-		echo "MIME-Version: 1.0"
-		echo "Content-Type: multipart/mixed; boundary=\"$BOUNDARY\""
+	(echo "To: $RECIPIENT"
+	echo "Subject: =?UTF-8?B?$SUBJECT?="
+	echo "MIME-Version: 1.0"
+	echo "Content-Type: multipart/mixed; boundary=\"$BOUNDARY\""
+	echo ""
+	echo "--$BOUNDARY"
+	echo "Content-Type: text/html; charset=UTF-8"
+	echo "Content-Disposition: inline"
+	echo ""
+	echo $BODY
+	for ATTACH in $ATTACHMENTS; do
 		echo ""
 		echo "--$BOUNDARY"
-		echo "Content-Type: text/html; charset=UTF-8"
-		echo "Content-Disposition: inline"
+		echo "Content-Type: text/html;"
+		echo "Content-Transfer-Encoding: uuencode"
+		echo "Content-Disposition: attachment; filename=\"$(basename $ATTACH)\""
 		echo ""
-		echo $BODY
-		for ATTACH in $ATTACHMENTS; do
-			echo ""
-			echo "--$BOUNDARY"
-			echo "Content-Type: text/html;"
-			echo "Content-Transfer-Encoding: uuencode"
-			echo "Content-Disposition: attachment; filename=\"$(basename $ATTACH)\""
-			echo ""
-			uuencode $ATTACH $(basename $ATTACH)
-		done
-		echo "--$BOUNDARY--"
-		) | sendmail -t -f $SENDER -F "$FULLNAME")
+		uuencode $ATTACH $(basename $ATTACH)
+	done
+	echo "--$BOUNDARY--"
+	) | sendmail -t -f $SENDER -F "$FULLNAME"
 
-	if [ -z $EMAIL ]; then
+	if [ $? -eq 0 ]; then
 		echo "[SUCCESS] $1: E-mail report sent."
 	else
 		echo "[ERROR] $1: E-mail report failed."
