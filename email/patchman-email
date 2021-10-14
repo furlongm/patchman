@@ -26,6 +26,8 @@ email() {
 		if [ ! -z $RECIPIENT ]; then
 			ATTACHMENTS=()
 			BOUNDARY=$(uuidgen)
+			CC=$(getConfig $1 cc)
+                        BCC=$(getConfig $1 bcc)
 			FULLNAME=$(getConfig General fullname)
 			SUBJECT=$(echo "[$1] $(getConfig General subject)" | base64)
 			BODY="<html><style>
@@ -56,6 +58,8 @@ email() {
 			echo "[INFO] $1: E-mailing report..."
 
 			(echo "To: $RECIPIENT"
+			echo "Cc: $CC"
+                        echo "Bcc: $BCC"
 			echo "Subject: =?UTF-8?B?$SUBJECT?="
 			echo "MIME-Version: 1.0"
 			echo "Content-Type: multipart/mixed; boundary=\"$BOUNDARY\""
