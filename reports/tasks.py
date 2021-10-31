@@ -1,5 +1,5 @@
 # Copyright 2012 VPAC, http://www.vpac.org
-# Copyright 2013-2020 Marcus Furlong <furlongm@gmail.com>
+# Copyright 2013-2021 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of Patchman.
 #
@@ -20,10 +20,10 @@ from django.conf import settings
 from reports.models import Report
 
 if settings.USE_ASYNC_PROCESSING:
-    from celery.task import task
-    from patchman.celery import app
+    from celery import shared_task
+    from patchman.celery import app  # noqa
 
-    @app.task()
+    @shared_task
     def process_report(report_id):
         report = Report.objects.get(id=report_id)
         report.process(verbose=True)

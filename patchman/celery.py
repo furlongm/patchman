@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Marcus Furlong <furlongm@gmail.com>
+# Copyright 2019-2021 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of Patchman.
 #
@@ -18,7 +18,7 @@ import os
 from celery import Celery
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')  # noqa
-from django.conf import settings
+from django.conf import settings   # noqa
 
 
 app = Celery('patchman')

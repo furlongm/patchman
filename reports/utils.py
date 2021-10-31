@@ -1,5 +1,5 @@
 # Copyright 2012 VPAC, http://www.vpac.org
-# Copyright 2013-2020 Marcus Furlong <furlongm@gmail.com>
+# Copyright 2013-2021 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of Patchman.
 #
@@ -99,8 +99,8 @@ def process_packages(report, host):
 def process_updates(report, host):
     """ Processes the update strings sent with a report
     """
-    bug_updates = ''
-    sec_updates = ''
+    bug_updates = {}
+    sec_updates = {}
     if report.bug_updates:
         bug_updates = parse_updates(report.bug_updates, False)
     if report.sec_updates:
@@ -116,18 +116,20 @@ def merge_updates(sec_updates, bug_updates):
     for u in sec_updates:
         if u in bug_updates:
             del(bug_updates[u])
-    return sec_updates + bug_updates
+    return dict(list(sec_updates.items()) + list(bug_updates.items()))
 
 
 def add_updates(updates, host):
     """ Add updates to a Host
     """
+    for host_update in host.updates.all():
+        host.updates.remove(host_update)
     ulen = len(updates)
     if ulen > 0:
         ptext = '{0!s} updates'.format(str(host)[0:25])
         progress_info_s.send(sender=None, ptext=ptext, plen=ulen)
 
-        for i, (u, sec) in enumerate(updates.items):
+        for i, (u, sec) in enumerate(updates.items()):
             update = process_update(host, u, sec)
             if update:
                 host.updates.add(update)
@@ -139,7 +141,7 @@ def parse_updates(updates_string, security):
         specifying whether it is a security update or not
     """
     updates = {}
-    ulist = updates_string.split()
+    ulist = updates_string.lower().split()
     while ulist:
         name = '{0!s} {1!s} {2!s}\n'.format(ulist[0],
                                             ulist[1],
@@ -151,7 +153,7 @@ def parse_updates(updates_string, security):
 
 def process_update(host, update_string, security):
     """ Processes a single sanitized update string and converts to an update
-    object
+    object. Only works if the original package exists. Returns None otherwise
     """
     update_str = update_string.split()
     repo_id = update_str[2]
@@ -187,15 +189,17 @@ def process_update(host, update_string, security):
             with transaction.atomic():
                 MirrorPackage.objects.create(mirror=mirror, package=package)
 
-    installed_package = host.packages.filter(name=p_name,
-                                             arch=p_arch,
-                                             packagetype='R')[0]
-    updates = PackageUpdate.objects.all()
-    with transaction.atomic():
-        update, c = updates.get_or_create(oldpackage=installed_package,
-                                          newpackage=package,
-                                          security=security)
-    return update
+    installed_packages = host.packages.filter(name=p_name,
+                                              arch=p_arch,
+                                              packagetype='R')
+    if installed_packages:
+        installed_package = installed_packages[0]
+        updates = PackageUpdate.objects.all()
+        with transaction.atomic():
+            update, c = updates.get_or_create(oldpackage=installed_package,
+                                              newpackage=package,
+                                              security=security)
+        return update
 
 
 def parse_repos(repos_string):
@@ -215,9 +219,6 @@ def process_repo(repo, arch):
     """
     repository = r_id = None
 
-    if repo[2] == '':
-        r_priority = 0
-
     if repo[0] == 'deb':
         r_type = Repository.DEB
         r_priority = int(repo[2])
@@ -225,6 +226,10 @@ def process_repo(repo, arch):
         r_type = Repository.RPM
         r_id = repo.pop(2)
         r_priority = int(repo[2]) * -1
+    elif repo[0] == 'arch':
+        r_type = Repository.ARCH
+        r_id = repo[2]
+        r_priority = 0
 
     if repo[1]:
         r_name = repo[1]
@@ -269,7 +274,8 @@ def process_repo(repo, arch):
 
     for mirror in Mirror.objects.filter(repo=repository).values('url'):
         if mirror['url'].find('cdn.redhat.com') != -1 or \
-                mirror['url'].find('nu.novell.com') != -1:
+                mirror['url'].find('nu.novell.com') != -1 or \
+                mirror['url'].find('updates.suse.com') != -1:
             repository.auth_required = True
             with transaction.atomic():
                 repository.save()
@@ -296,26 +302,24 @@ def process_package(pkg, protocol):
     """
     if protocol == '1':
         epoch = ver = rel = ''
+        arch = 'unknown'
+
         name = pkg[0]
-
-        if pkg[4] != '':
-            arch = pkg[4]
-        else:
-            arch = 'unknown'
-
         if pkg[1]:
             epoch = pkg[1]
-
         if pkg[2]:
             ver = pkg[2]
-
         if pkg[3]:
             rel = pkg[3]
+        if pkg[4]:
+            arch = pkg[4]
 
         if pkg[5] == 'deb':
             p_type = Package.DEB
         elif pkg[5] == 'rpm':
             p_type = Package.RPM
+        elif pkg[5] == 'arch':
+            p_type = Package.ARCH
         else:
             p_type = Package.UNKNOWN
 

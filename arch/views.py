@@ -1,4 +1,4 @@
-# Copyright 2016-2020 Marcus Furlong <furlongm@gmail.com>
+# Copyright 2016-2021 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of Patchman.
 #

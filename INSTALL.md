@@ -5,9 +5,9 @@ mysql or postgresql instead, see the database configuration section.
 
 
 ## Supported Install Options
-  - [Ubuntu 20.04](#ubuntu-2004-bionic)
-  - [Debian 10](#debian-10-buster)
-  - [CentOS 7](#centos-7)
+  - [Ubuntu 20.04](#ubuntu-2004-focal)
+  - [Debian 11](#debian-11-bullseye)
+  - [CentOS 8](#centos-8)
   - [virtualenv + pip](#virtualenv--pip)
   - [Source](#source)
 
@@ -16,30 +16,29 @@ mysql or postgresql instead, see the database configuration section.
 
 ```shell
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0412F522
-echo "deb https://repo.openbytes.ie/ubuntu focal main" > /etc/apt/sources.list.d/patchman.list
+echo "deb https://repo.openbytes.ie/patchman/ubuntu focal main" > /etc/apt/sources.list.d/patchman.list
 apt update
 apt -y install python3-patchman patchman-client
 patchman-manage createsuperuser
 ```
 
-### Debian 10 (buster)
+### Debian 11 (bullseye)
 
 ```shell
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0412F522
-echo "deb https://repo.openbytes.ie/debian buster main" > /etc/apt/sources.list.d/patchman.list
+echo "deb https://repo.openbytes.ie/patchman/debian bullseye main" > /etc/apt/sources.list.d/patchman.list
 apt update
-apt -t buster-backports -y install python3-django
 apt -y install python3-patchman patchman-client
 patchman-manage createsuperuser
 ```
 
-### CentOS 7
+### CentOS 8
 
 ```shell
 cat <<EOF >> /etc/yum.repos.d/openbytes.repo
 [openbytes]
 name=openbytes
-baseurl=https://repo.openbytes.ie/yum
+baseurl=https://repo.openbytes.ie/patchman/el8
 enabled=1
 gpgcheck=0
 EOF
@@ -312,21 +311,23 @@ Install Celery for realtime processing of reports from clients:
 
 ```shell
 apt -y install python3-celery redis python3-redis python-celery-common
-C_FORCE_ROOT=1 celery worker --loglevel=info -b redis://127.0.0.1:6379/0 -E -A patchman
+C_FORCE_ROOT=1 celery -b redis://127.0.0.1:6379/0 -A patchman worker -l INFO -E
 ```
 
 #### CentOS / RHEL
 
 ```shell
 dnf -y install python3-celery redis python3-redis
-systemctl restart redis-server
+systemctl restart redis
 semanage port -a -t http_port_t -p tcp 6379
-C_FORCE_ROOT=1 celery worker --loglevel=info -b redis://127.0.0.1:6379/0 -E -A patchman
-
+setsebool -P httpd_can_network_connect 1
+C_FORCE_ROOT=1 celery -b redis://127.0.0.1:6379/0 -A patchman worker -l INFO -E
 ```
 
 Add the last command to an initscript (e.g. /etc/rc.local) to make celery
 persistent over reboot.
+
+Enable celery by adding `USE_ASYNC_PROCESSING = True` to `/etc/patchman/local_settings.py`
 
 ### Memcached
 

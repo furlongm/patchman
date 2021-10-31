@@ -19,7 +19,7 @@ gbp buildpackage -uc -us
 # Build RPM packages
 
 ```shell
-sudo yum -y install rpm-build git python3-setuptools
-python3 setup.py bdist_rpm
+sudo dnf -y install rpm-build git python3-setuptools
+python3 setup.py bdist_rpm --python=/usr/bin/python3
 rpmbuild -bb patchman-client.spec
 ```

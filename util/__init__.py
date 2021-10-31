@@ -1,5 +1,5 @@
 # Copyright 2012 VPAC, http://www.vpac.org
-# Copyright 2013-2020 Marcus Furlong <furlongm@gmail.com>
+# Copyright 2013-2021 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of Patchman.
 #
@@ -28,13 +28,20 @@ except ImportError:
     except ImportError:
         lzma = None
 from colorama import Fore, Style
-from hashlib import sha1, sha256
+from enum import Enum
+from hashlib import md5, sha1, sha256
 from progressbar import Bar, ETA, Percentage, ProgressBar
-
 from patchman.signals import error_message
+
+
+if ProgressBar.__dict__.get('maxval'):
+    pbar2 = False
+else:
+    pbar2 = True
 
 pbar = None
 verbose = None
+Checksum = Enum('Checksum', 'md5 sha sha1 sha256')
 
 
 def get_verbosity():
@@ -57,9 +64,14 @@ def create_pbar(ptext, plength, **kwargs):
     global pbar, verbose
     if verbose and plength > 0:
         jtext = str(ptext).ljust(35)
-        pbar = ProgressBar(widgets=[Style.RESET_ALL + Fore.YELLOW + jtext,
-                                    Percentage(), Bar(), ETA()],
-                           maxval=plength).start()
+        if pbar2:
+            pbar = ProgressBar(widgets=[Style.RESET_ALL + Fore.YELLOW + jtext,
+                                        Percentage(), Bar(), ETA()],
+                               max_value=plength).start()
+        else:
+            pbar = ProgressBar(widgets=[Style.RESET_ALL + Fore.YELLOW + jtext,
+                                        Percentage(), Bar(), ETA()],
+                               maxval=plength).start()
         return pbar
 
 
@@ -69,7 +81,11 @@ def update_pbar(index, **kwargs):
     global pbar, verbose
     if verbose and pbar:
         pbar.update(index)
-        if index == pbar.maxval:
+        if pbar2:
+            pmax = pbar.max_value
+        else:
+            pmax = pbar.maxval
+        if index == pmax:
             pbar.finish()
             print_nocr(Fore.RESET)
             pbar = None
@@ -190,6 +206,21 @@ def extract(data, fmt):
     return data
 
 
+def get_checksum(data, checksum_type):
+    """ Returns the checksum of the data. Returns None otherwise.
+    """
+    if checksum_type == Checksum.sha or checksum_type == Checksum.sha1:
+        checksum = get_sha1(data)
+    elif checksum_type == Checksum.sha256:
+        checksum = get_sha256(data)
+    elif checksum_type == Checksum.md5:
+        checksum = get_md5(data)
+    else:
+        text = 'Unknown checksum type: {0!s}'.format(checksum_type)
+        error_message.send(sender=None, text=text)
+    return checksum
+
+
 def get_sha1(data):
     """ Return the sha1 checksum for data
     """
@@ -200,3 +231,9 @@ def get_sha256(data):
     """ Return the sha256 checksum for data
     """
     return sha256(data).hexdigest()
+
+
+def get_md5(data):
+    """ Return the md5 checksum for data
+    """
+    return md5(data).hexdigest()

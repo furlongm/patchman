@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright 2019-2020 Marcus Furlong <furlongm@gmail.com>
+# Copyright 2019-2021 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of Patchman.
 #
