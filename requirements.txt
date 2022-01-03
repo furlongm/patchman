@@ -7,7 +7,7 @@ python-debian==0.1.40
 lxml==4.6.3
 defusedxml==0.7.1
 chardet==4.0.0
-requests==2.26.0
+requests==2.27.0
 colorama==0.4.4
 djangorestframework==3.12.4
 humanize==3.11.0
