@@ -311,8 +311,7 @@ def host_updates_alt(host=None):
                 phosts.append(fhost)
 
             for phost in phosts:
-                phost.updates.clear()
-                phost.updates = updates
+                phost.updates.set(updates)
                 phost.updated_at = ts
                 phost.save()
                 updated_hosts.append(phost)
