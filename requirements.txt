@@ -9,7 +9,7 @@ defusedxml==0.7.1
 chardet==4.0.0
 requests==2.26.0
 colorama==0.4.4
-djangorestframework==3.12.4
+djangorestframework==3.13.1
 humanize==3.13.1
 version-utils==0.3.0
 python-magic==0.4.24
