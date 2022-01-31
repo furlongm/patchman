@@ -14,6 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
+from os import getenv
 
 import sys
 import requests
@@ -33,6 +34,11 @@ from hashlib import md5, sha1, sha256
 from progressbar import Bar, ETA, Percentage, ProgressBar
 from patchman.signals import error_message
 
+http_proxy=getenv('http_proxy')
+proxies = {
+   'http': http_proxy,
+   'https': http_proxy,
+}
 
 if ProgressBar.__dict__.get('maxval'):
     pbar2 = False
@@ -130,7 +136,7 @@ def get_url(url):
     """
     res = None
     try:
-        res = requests.get(url, stream=True)
+        res = requests.get(url,proxies=proxies, stream=True)
     except requests.exceptions.Timeout:
         error_message.send(sender=None, text='Timeout - {0!s}'.format(url))
     except requests.exceptions.TooManyRedirects:
