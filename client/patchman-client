@@ -246,7 +246,7 @@ get_host_data() {
     if [ -f /etc/os-release ] ; then
         . /etc/os-release
         if [ "${ID}" == "debian" ] ; then
-            os="Debian $(cat /etc/debian_version)"
+            os="Debian $(cat /etc/debian_version | sed -e 's/\//-/')"
         elif [ "${ID}" == "raspbian" ] ; then
             os="Raspbian $(cat /etc/debian_version)"
         elif [ "${ID}" == "ubuntu" ] ; then
