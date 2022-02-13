@@ -19,6 +19,7 @@ import re
 from defusedxml.lxml import _etree as etree
 
 from django.conf import settings
+from django.core.exceptions import MultipleObjectsReturned
 from django.db import IntegrityError, DatabaseError, transaction
 
 from util import bunzip2, get_url, download_url, get_sha1
@@ -282,6 +283,59 @@ def get_or_create_package(name, epoch, version, release, arch, p_type):
         except DatabaseError as e:
             error_message.send(sender=None, text=e)
     return package
+
+
+def get_or_create_package_update(oldpackage, newpackage, security):
+    """ Get or create a PackageUpdate object. Returns the object. Returns None
+        if it cannot be created
+    """
+    updates = PackageUpdate.objects.all()
+    # see if any version of this update exists
+    # if it's already marked as a security update, leave it that way
+    # if not, mark it as a security update if security==True
+    # this could be an issue if different distros mark the same update
+    # in different ways (security vs bugfix) but in reality this is not
+    # very likely to happen. if it does, we err on the side of caution
+    # and mark it as the security update
+    try:
+        update = updates.get(
+            oldpackage=oldpackage,
+            newpackage=newpackage
+        )
+    except PackageUpdate.DoesNotExist:
+        update = None
+    except MultipleObjectsReturned:
+        e = 'MultipleObjectsReturned Error when adding package update \n'
+        e += f'with oldpackage={package} | newpackage={highest_package}:'
+        error_message.send(sender=None, text=e)
+        updates = updates.filter(
+            oldpackage=oldpackage,
+            newpackage=newpackage
+        )
+        for update in updates:
+            e = str(update)
+            error_message.send(sender=None, text=e)
+        return
+    try:
+        if update:
+            if security and not update.security:
+                update.security = True
+                with transaction.atomic():
+                    update.save()
+        else:
+            with transaction.atomic():
+                update, c = updates.get_or_create(
+                    oldpackage=package,
+                    newpackage=highest_package,
+                    security=security)
+    except IntegrityError as e:
+        error_message.send(sender=None, text=e)
+        update = updates.get(oldpackage=oldpackage,
+                             newpackage=newpackage,
+                             security=security)
+    except DatabaseError as e:
+        error_message.send(sender=None, text=e)
+    return update
 
 
 def mark_errata_security_updates():
