@@ -206,7 +206,14 @@ class Host(models.Model):
             Q(name__name='kernel-core') | \
             Q(name__name='kernel-modules') | \
             Q(name__name='virtualbox-kmp-default') | \
-            Q(name__name='virtualbox-kmp-preempt')
+            Q(name__name='virtualbox-kmp-preempt') | \
+            Q(name__name='kernel-uek') | \
+            Q(name__name='kernel-uek-devel') | \
+            Q(name__name='kernel-uek-debug') | \
+            Q(name__name='kernel-uek-debug-devel') | \
+            Q(name__name='kernel-uek-container') | \
+            Q(name__name='kernel-uek-container-debug') | \
+            Q(name__name='kernel-uek-doc')
         repo_packages = self.get_host_repo_packages()
         host_packages = self.packages.exclude(kernels_q).distinct()
         kernel_packages = self.packages.filter(kernels_q)
