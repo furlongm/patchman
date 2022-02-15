@@ -108,17 +108,13 @@ def download_url(res, text=''):
         chunk_size = 16384
         i = 0
         data = b''
-        while i < clen:
-            chunk = res.raw.read(chunk_size)
+        for chunk in res.iter_content(chunk_size=chunk_size, decode_unicode=False):
             i += len(chunk)
-            if i <= clen:
+            if i > clen:
+                update_pbar(clen)
+            else:
                 update_pbar(i)
             data += chunk
-        if i != clen:
-            update_pbar(clen)
-            text = 'Data length != Content-Length '
-            text += '({0!s} != {1!s})'.format(i, clen)
-            error_message.send(sender=None, text=text)
         return data
     else:
         return res.content
