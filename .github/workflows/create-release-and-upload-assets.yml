@@ -143,7 +143,7 @@ jobs:
     needs: update-version-and-changelog
     runs-on: ubuntu-latest
     container:
-      image: centos:8
+      image: quay.io/centos/centos:stream8
     steps:
       - name: Install build dependencies
         run: |
