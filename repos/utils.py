@@ -17,13 +17,6 @@
 
 import re
 import tarfile
-try:
-    import lzma
-except ImportError:
-    try:
-        from backports import lzma
-    except ImportError:
-        lzma = None
 from datetime import datetime
 from io import BytesIO
 from defusedxml.lxml import _etree as etree
@@ -571,18 +564,16 @@ def refresh_rpm_repo(repo):
     """
 
     formats = [
+        'repodata/repomd.xml.xz'
         'repodata/repomd.xml.bz2',
         'repodata/repomd.xml.gz',
         'repodata/repomd.xml',
+        'suse/repodata/repomd.xml.xz'
         'suse/repodata/repomd.xml.bz2',
         'suse/repodata/repomd.xml.gz',
         'suse/repodata/repomd.xml',
         'content',
     ]
-
-    if lzma is not None:
-        formats.insert(0, 'repodata/repomd.xml.xz')
-        formats.insert(4, 'suse/repodata/repomd.xml.xz')
 
     check_for_mirrorlists(repo)
     check_for_metalinks(repo)
@@ -626,9 +617,7 @@ def refresh_deb_repo(repo):
         are and then downloads and extracts packages from those files.
     """
 
-    formats = ['Packages.bz2', 'Packages.gz', 'Packages']
-    if lzma is not None:
-        formats.insert(0, 'Packages.xz')
+    formats = ['Packages.xz', 'Packages.bz2', 'Packages.gz', 'Packages']
 
     ts = datetime.now().replace(microsecond=0)
     for mirror in repo.mirror_set.filter(refresh=True):
