@@ -79,18 +79,14 @@ class Package(models.Model):
 
     def __str__(self):
         if self.epoch:
-            epo = '{0!s}:'.format(self.epoch)
+            epo = f'{self.epoch!s}:'
         else:
             epo = ''
         if self.release:
-            rel = '-{0!s}'.format(self.release)
+            rel = f'-{self.release!s}'
         else:
             rel = ''
-        return '{0!s}-{1!s}{2!s}{3!s}-{4!s}'.format(self.name,
-                                                    epo,
-                                                    self.version,
-                                                    rel,
-                                                    self.arch)
+        return f'{self.name!s}-{epo!s}{self.version!s}{rel!s}-{self.arch!s}'
 
     def get_absolute_url(self):
         return self.name.get_absolute_url()
@@ -170,18 +166,14 @@ class PackageString(models.Model):
 
     def __str__(self):
         if self.epoch:
-            epo = '{0!s}:'.format(self.epoch)
+            epo = f'{self.epoch!s}:'
         else:
             epo = ''
         if self.release:
-            rel = '-{0!s}'.format(self.release)
+            rel = f'-{self.release!s}'
         else:
             rel = ''
-        return '{0!s}-{1!s}{2!s}{3!s}-{4!s}'.format(self.name,
-                                                    epo,
-                                                    self.version,
-                                                    rel,
-                                                    self.arch)
+        return f'{self.name!s}-{epo!s}{self.version!s}{rel!s}-{self.arch!s}'
 
     def __key(self):
         return (self.name, self.epoch, self.version, self.release, self.arch,
@@ -217,9 +209,7 @@ class PackageUpdate(models.Model):
             update_type = 'Security'
         else:
             update_type = 'Bugfix'
-        return '{0!s} -> {1!s} ({2!s})'.format(self.oldpackage,
-                                               self.newpackage,
-                                               update_type)
+        return f'{self.oldpackage!s} -> {self.newpackage!s} ({update_type!s})'
 
 
 class ErratumReference(models.Model):
@@ -247,10 +237,8 @@ class Erratum(models.Model):
         verbose_name_plural = 'Errata'
 
     def __str__(self):
-        text = '{0!s} {1!s} ({2!s}) : '.format(self.name,
-                                               self.issue_date,
-                                               self.etype)
-        text += '{0!s} packages, '.format(self.packages.count())
-        text += '{0!s} arches, '.format(self.arches.count())
-        text += '{0!s} releases'.format(self.releases.count())
+        text = f'{self.name!s} {self.issue_date!s} ({self.etype!s}) : '
+        text += f'{self.packages.count()!s} packages, '
+        text += f'{self.arches.count()!s} arches, '
+        text += f'{self.releases.count()!s} releases'
         return text

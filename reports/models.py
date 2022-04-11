@@ -53,7 +53,7 @@ class Report(models.Model):
         ordering = ('-created',)
 
     def __str__(self):
-        return '{0!s} {1!s}'.format(self.host, self.created.strftime('%c'))
+        return f"{self.host!s} {self.created.strftime('%c')!s}"
 
     def get_absolute_url(self):
         return reverse('reports:report_detail', args=[str(self.id)])
@@ -146,7 +146,7 @@ class Report(models.Model):
 
             if verbose:
                 text = 'Processing report '
-                text += '{0!s} - {1!s}'.format(self.id, self.host)
+                text += f'{self.id!s} - {self.host!s}'
                 info_message.send(sender=None, text=text)
 
             from reports.utils import process_packages, \
@@ -165,15 +165,15 @@ class Report(models.Model):
             if find_updates:
                 if verbose:
                     text = 'Finding updates for report '
-                    text += '{0!s} - {1!s}'.format(self.id, self.host)
+                    text += f'{self.id!s} - {self.host!s}'
                     info_message.send(sender=None, text=text)
                 host.find_updates()
         else:
             if self.processed:
-                text = 'Report {0!s} '.format(self.id)
+                text = f'Report {self.id!s} '
                 text += 'has already been processed'
                 info_message.send(sender=None, text=text)
             else:
                 text = 'Error: OS, kernel or arch not sent '
-                text += 'with report {0!s}'.format(self.id)
+                text += f'with report {self.id!s}'
                 error_message.send(sender=None, text=text)

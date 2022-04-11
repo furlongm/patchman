@@ -37,5 +37,5 @@ def report_alert(lastreport):
     else:
         days = 14
     if lastreport < (timezone.now() - timedelta(days=days)):
-        html = '<img src="{0!s}" alt="Outdated Report" />'.format(alert_icon)
+        html = f'<img src="{alert_icon!s}" alt="Outdated Report" />'
     return format_html(html)

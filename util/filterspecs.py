@@ -22,7 +22,7 @@ from operator import itemgetter
 
 
 def get_query_string(qs):
-    newqs = ['{0!s}={1!s}'.format(k, v) for k, v in list(qs.items())]
+    newqs = [f'{k!s}={v!s}' for k, v in list(qs.items())]
     return '?' + '&amp;'.join(newqs).replace(' ', '%20')
 
 
@@ -58,10 +58,10 @@ class Filter(object):
 
         output = '<div class="panel panel-default">\n'
         output += '<div class="panel-heading">'
-        output += '{0!s}</div>\n'.format(self.header.replace('_', ' '))
+        output += f"{self.header.replace('_', ' ')!s}</div>\n"
         output += '<div class="panel-body">\n'
         output += '<div class="list-group list-group-info">\n'
-        output += '<a href="{0!s}" '.format(get_query_string(qs))
+        output += f'<a href="{get_query_string(qs)!s}" '
         output += 'class="list-group-item'
         if self.selected is None:
             output += ' list-group-item-success'
@@ -73,8 +73,8 @@ class Filter(object):
             if str(self.selected) == str(k):
                 style = 'list-group-item-success'
             qs[self.name] = k
-            output += '<a href="{0!s}" class='.format(get_query_string(qs))
-            output += '"list-group-item {0!s}">{1!s}</a>\n'.format(style, v)
+            output += f'<a href="{get_query_string(qs)!s}" class='
+            output += f'"list-group-item {style!s}">{v!s}</a>\n'
         output += '</div></div></div>'
         return output
 

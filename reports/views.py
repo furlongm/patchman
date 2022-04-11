@@ -138,7 +138,7 @@ def report_delete(request, report_id):
     if request.method == 'POST':
         if 'delete' in request.POST:
             report.delete()
-            text = 'Report {0!s} has been deleted'.format(report)
+            text = f'Report {report!s} has been deleted'
             messages.info(request, text)
             return redirect(reverse('reports:report_list'))
         elif 'cancel' in request.POST:
