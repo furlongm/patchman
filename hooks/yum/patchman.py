@@ -28,5 +28,5 @@ def posttrans_hook(conduit):
                                     'servicecmd',
                                     '/usr/sbin/patchman-client')
     args = '-n'
-    command = '{0!s} {1!s}> /dev/null'.format(servicecmd, args)
+    command = f'{servicecmd!s} {args!s}> /dev/null'
     os.system(command)

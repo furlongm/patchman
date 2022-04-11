@@ -122,13 +122,13 @@ def get_url(url):
     try:
         res = requests.get(url, stream=True)
     except requests.exceptions.Timeout:
-        error_message.send(sender=None, text='Timeout - {0!s}'.format(url))
+        error_message.send(sender=None, text=f'Timeout - {url!s}')
     except requests.exceptions.TooManyRedirects:
         error_message.send(sender=None,
-                           text='Too many redirects - {0!s}'.format(url))
+                           text=f'Too many redirects - {url!s}')
     except requests.exceptions.RequestException as e:
         error_message.send(sender=None,
-                           text='Error ({0!s}) - {1!s}'.format(e, url))
+                           text=f'Error ({e!s}) - {url!s}')
     return res
 
 
@@ -206,7 +206,7 @@ def get_checksum(data, checksum_type):
     elif checksum_type == Checksum.md5:
         checksum = get_md5(data)
     else:
-        text = 'Unknown checksum type: {0!s}'.format(checksum_type)
+        text = f'Unknown checksum type: {checksum_type!s}'
         error_message.send(sender=None, text=text)
     return checksum
 
