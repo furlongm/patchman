@@ -11,6 +11,6 @@ requests==2.27.1
 colorama==0.4.4
 djangorestframework==3.13.1
 humanize==3.13.1
-version-utils==0.3.0
+version-utils==0.3.2
 python-magic==0.4.25
 python-memcached==1.59
