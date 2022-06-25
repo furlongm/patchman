@@ -6,7 +6,7 @@ progressbar==2.5
 python-debian==0.1.43
 lxml==4.7.1
 defusedxml==0.7.1
-chardet==4.0.0
+chardet==5.0.0
 requests==2.27.1
 colorama==0.4.4
 djangorestframework==3.13.1
