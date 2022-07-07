@@ -15,6 +15,41 @@ getConfig() {
         echo ${val#$2=}
 }
 
+getPackages() {
+	# Gets the database credentials configured in /etc/patchman/local_settings.py
+	DATABASE=$(grep -E "NAME" /etc/patchman/local_settings.py | grep -v "#" | sed -e "s/'\|,//g" | awk -F " " '{print $2}')
+	USERNAME=$(grep -E "USER" /etc/patchman/local_settings.py | grep -v "#" | sed -e "s/'\|,//g" | awk -F " " '{print $2}')
+	PASSWORD=$(grep -E "PASSWORD" /etc/patchman/local_settings.py | grep -v "#" | sed -e "s/'\|,//g" | awk -F " " '{print $2}')
+	HOSTNAME=$1
+
+	echo "$(MYSQL_PWD=$PASSWORD mysql -u $USERNAME $DATABASE -Nrse \
+			"SELECT \`update\`
+			FROM hosts_host
+			LEFT JOIN (
+				SELECT host_id, package.\`update\`
+				FROM hosts_host_updates
+				LEFT JOIN (
+					SELECT packages_packageupdate.id, CONCAT(oldpackage.package, \" -> \", newpackage.package, \" \", IF(security=0, \"(Bugfix)\", \"(Security)\")) AS \`update\`
+					FROM packages_packageupdate
+					LEFT JOIN (
+						SELECT packages_package.id, CONCAT_WS(\"\", packages_packagename.name, \"-\", NULLIF(CONCAT(epoch, \":\"), ':'), version, \"-\", \`release\`, \"-\", arch_packagearchitecture.name) 
+						AS package
+						FROM packages_package
+						LEFT JOIN packages_packagename ON packages_package.name_id=packages_packagename.id
+						LEFT JOIN arch_packagearchitecture ON packages_package.arch_id=arch_packagearchitecture.id
+					) AS oldpackage ON packages_packageupdate.oldpackage_id=oldpackage.id
+					RIGHT JOIN (
+						SELECT packages_package.id, CONCAT_WS(\"\", packages_packagename.name, \"-\", NULLIF(CONCAT(epoch, \":\"), ':'), version, \"-\", \`release\`, \"-\", arch_packagearchitecture.name)
+						AS package
+						FROM packages_package
+						LEFT JOIN packages_packagename ON packages_package.name_id=packages_packagename.id
+						LEFT JOIN arch_packagearchitecture ON packages_package.arch_id=arch_packagearchitecture.id
+					) AS newpackage ON packages_packageupdate.newpackage_id=newpackage.id
+				) AS package ON hosts_host_updates.packageupdate_id=package.id
+			) AS updates ON hosts_host.id=updates.host_id
+			WHERE hosts_host.hostname=\"$HOSTNAME\";")"
+}
+
 email() {
         SENDER=$(getConfig General sender)
 
@@ -109,6 +144,9 @@ report() {
                 FILE=$DIR/$TAG/$1-$DATE.html
                 mkdir -p $(echo $FILE | sed 's|\(.*\)/.*|\1|')
 
+		# Queries the database for available package updates
+		QUERY=$(getPackages $1)
+
                 # Creates the report if it doesnt exist
                 if [ ! -f $FILE ]; then
                         echo "$(date '+%d/%m/%Y %R') [INFO] $TAG $1: Creating report..."
@@ -125,7 +163,7 @@ report() {
                         echo "</table></div><br>" >> $FILE
                         echo "<div id=\"updates\"><table>" >> $FILE
                         echo "<tr><th>Current Version</th><th>New Version</th><th>Type</th></tr>" >> $FILE
-                        patchman -u -H $1 | tail -n +3 | head -n -1 | sort -n | uniq | sed 's/[()]//g' | sed 's/\x1b\[[0-9;]*m//g' | awk '{ print "<tr><td>"$1"</td><td>"$3"</td><td>"$4"</td></tr>" }' >> $FILE
+			echo "$QUERY" | sort -n | uniq | sed 's/[()]//g' | awk '{ print "<tr><td>"$1"</td><td>"$3"</td><td>"$4"</td></tr>" }' >> $FILE
                         echo "</table></div><br>" >> $FILE
                         echo "</body></html>" >> $FILE
                 else
