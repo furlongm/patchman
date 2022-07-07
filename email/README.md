@@ -27,3 +27,5 @@ Dependencies:
 - Postfix configured and running
 
 - GNU coreutils and sharutils installed
+
+- Package uuid-runtime installed on Debian-based distributions
