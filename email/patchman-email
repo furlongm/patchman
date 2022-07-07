@@ -16,38 +16,32 @@ getConfig() {
 }
 
 getPackages() {
-	# Gets the database credentials configured in /etc/patchman/local_settings.py
-	DATABASE=$(grep -E "NAME" /etc/patchman/local_settings.py | grep -v "#" | sed -e "s/'\|,//g" | awk -F " " '{print $2}')
-	USERNAME=$(grep -E "USER" /etc/patchman/local_settings.py | grep -v "#" | sed -e "s/'\|,//g" | awk -F " " '{print $2}')
-	PASSWORD=$(grep -E "PASSWORD" /etc/patchman/local_settings.py | grep -v "#" | sed -e "s/'\|,//g" | awk -F " " '{print $2}')
-	HOSTNAME=$1
-
 	echo "$(MYSQL_PWD=$PASSWORD mysql -u $USERNAME $DATABASE -Nrse \
-			"SELECT \`update\`
-			FROM hosts_host
+		"SELECT \`update\`
+		FROM hosts_host
+		LEFT JOIN (
+			SELECT host_id, package.\`update\`
+			FROM hosts_host_updates
 			LEFT JOIN (
-				SELECT host_id, package.\`update\`
-				FROM hosts_host_updates
+				SELECT packages_packageupdate.id, CONCAT(oldpackage.package, \" -> \", newpackage.package, \" \", IF(security=0, \"(Bugfix)\", \"(Security)\")) AS \`update\`
+				FROM packages_packageupdate
 				LEFT JOIN (
-					SELECT packages_packageupdate.id, CONCAT(oldpackage.package, \" -> \", newpackage.package, \" \", IF(security=0, \"(Bugfix)\", \"(Security)\")) AS \`update\`
-					FROM packages_packageupdate
-					LEFT JOIN (
-						SELECT packages_package.id, CONCAT_WS(\"\", packages_packagename.name, \"-\", NULLIF(CONCAT(epoch, \":\"), ':'), version, \"-\", \`release\`, \"-\", arch_packagearchitecture.name) 
-						AS package
-						FROM packages_package
-						LEFT JOIN packages_packagename ON packages_package.name_id=packages_packagename.id
-						LEFT JOIN arch_packagearchitecture ON packages_package.arch_id=arch_packagearchitecture.id
-					) AS oldpackage ON packages_packageupdate.oldpackage_id=oldpackage.id
-					RIGHT JOIN (
-						SELECT packages_package.id, CONCAT_WS(\"\", packages_packagename.name, \"-\", NULLIF(CONCAT(epoch, \":\"), ':'), version, \"-\", \`release\`, \"-\", arch_packagearchitecture.name)
-						AS package
-						FROM packages_package
-						LEFT JOIN packages_packagename ON packages_package.name_id=packages_packagename.id
-						LEFT JOIN arch_packagearchitecture ON packages_package.arch_id=arch_packagearchitecture.id
-					) AS newpackage ON packages_packageupdate.newpackage_id=newpackage.id
-				) AS package ON hosts_host_updates.packageupdate_id=package.id
-			) AS updates ON hosts_host.id=updates.host_id
-			WHERE hosts_host.hostname=\"$HOSTNAME\";")"
+					SELECT packages_package.id, CONCAT_WS(\"\", packages_packagename.name, \"-\", NULLIF(CONCAT(epoch, \":\"), ':'), version, \"-\", \`release\`, \"-\", arch_packagearchitecture.name) 
+					AS package
+					FROM packages_package
+					LEFT JOIN packages_packagename ON packages_package.name_id=packages_packagename.id
+					LEFT JOIN arch_packagearchitecture ON packages_package.arch_id=arch_packagearchitecture.id
+				) AS oldpackage ON packages_packageupdate.oldpackage_id=oldpackage.id
+				RIGHT JOIN (
+					SELECT packages_package.id, CONCAT_WS(\"\", packages_packagename.name, \"-\", NULLIF(CONCAT(epoch, \":\"), ':'), version, \"-\", \`release\`, \"-\", arch_packagearchitecture.name)
+					AS package
+					FROM packages_package
+					LEFT JOIN packages_packagename ON packages_package.name_id=packages_packagename.id
+					LEFT JOIN arch_packagearchitecture ON packages_package.arch_id=arch_packagearchitecture.id
+				) AS newpackage ON packages_packageupdate.newpackage_id=newpackage.id
+			) AS package ON hosts_host_updates.packageupdate_id=package.id
+		) AS updates ON hosts_host.id=updates.host_id
+		WHERE hosts_host.reversedns=\"$1\";")"
 }
 
 email() {
@@ -159,7 +153,7 @@ report() {
                         echo "#updates th, #updates td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }" >> $FILE
                         echo "</style><head><meta charset=\"UTF-8\"></head><body>" >> $FILE
                         echo "<div id=\"details\"><table>" >> $FILE
-                        echo "$HOST" | awk -F ' : ' 'NR!=7 && NR!=9 && NR!=11 && NR!=13 && NR!=14 { print "<tr><th>"$1"</th><th>:&nbsp;</th><td>"$2"</td></tr>" }' | sed 's/Reverse DNS/Hostname/g' >> $FILE
+                        echo "$HOST" | awk -F ' : ' 'NR!=7 && NR!=9 && NR!=11 && NR!=12 && NR!=13 && NR!=14 { print "<tr><th>"$1"</th><th>:&nbsp;</th><td>"$2"</td></tr>" }' | sed 's/Reverse DNS/Hostname/g' >> $FILE
                         echo "</table></div><br>" >> $FILE
                         echo "<div id=\"updates\"><table>" >> $FILE
                         echo "<tr><th>Current Version</th><th>New Version</th><th>Type</th></tr>" >> $FILE
@@ -176,22 +170,26 @@ report() {
 
 # Checks if there are any parameters and if they start with "-"
 if [ $# -gt 0 ] && [[ $1 == -* ]]; then
-        CONF="/etc/patchman/patchman-email.conf"
+	CONF="/etc/patchman/patchman-email.conf"
 
-        while getopts 'aH:T:h' arg; do
-                case $arg in
-                        a)
-                                if [ ! -f $CONF ]; then
-                                        echo "$(date '+%d/%m/%Y %R') [ERROR] Configuration file not found."
-                                        exit
+	# Database credentials configured in /etc/patchman/local_settings.py
+	DATABASE=$(grep -E "NAME" /etc/patchman/local_settings.py | grep -v "#" | sed -e "s/'\|,//g" | awk -F " " '{print $2}')
+	USERNAME=$(grep -E "USER" /etc/patchman/local_settings.py | grep -v "#" | sed -e "s/'\|,//g" | awk -F " " '{print $2}')
+	PASSWORD=$(grep -E "PASSWORD" /etc/patchman/local_settings.py | grep -v "#" | sed -e "s/'\|,//g" | awk -F " " '{print $2}')
+
+	while getopts 'aH:T:h' arg; do
+        	case $arg in
+                	a)
+                        	if [ ! -f $CONF ]; then
+                                	echo "$(date '+%d/%m/%Y %R') [ERROR] Configuration file not found."
+                                	exit
                                 else
                                         DIR=$(getConfig General dir)
                                         DATE=$(date +%Y%m%d)
                                         HOSTS=()
                                         TAGS=()
                                         HOSTS+=$(patchman -lh | tail -n +3 | awk -F ' : ' 'NR%16==3 { print $2 }' | sed 's/\x1b\[[0-9;]*m//g')
-                                        TAGS=$(patchman -lh | tail -n +3 | awk -F ' : ' 'NR%16==12 { print $2 }' | sed 's/\x1b\[[0-9;]*m//g' | sort -n | uniq)
-
+					TAGS=$(patchman -lh | tail -n +3 | awk -F ' : ' 'NR%16==12 { print $2 }' | sort -n | uniq | sed 's/\x1b\[[0-9;]*m//g')
                                         # Generate report
                                         for HOST in $HOSTS; do
                                                 report $HOST
