@@ -12,9 +12,7 @@ usage() {
 getConfig() {
         # Gets the configuration of section $1, parameter $2
         val=$(sed -nr "/\[$1\]/,/\[/{/^(\W|)$2=/p}" $CONF)
-        val=${val#$2=}
-
-        echo $val
+        echo ${val#$2=}
 }
 
 email() {
@@ -79,7 +77,7 @@ email() {
                                 uuencode $ATTACH $(basename $ATTACH)
                         done
                         echo "--$BOUNDARY--"
-                        ) | sendmail -t -f $SENDER -F "$FULLNAME"
+                        ) | /usr/sbin/sendmail -t -f $SENDER -F "$FULLNAME"
 
                         if [ $? -eq 0 ]; then
                                 echo "$(date '+%d/%m/%Y %R') [SUCCESS] $1: E-mail report sent."
