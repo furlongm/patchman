@@ -1,3 +1,59 @@
+patchman (2.0.3-1) stable; urgency=medium
+
+  * use centos:stream8 docker image
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Wed, 16 Feb 2022 04:07:40 +0000
+
+patchman (2.0.2-1) stable; urgency=medium
+
+  [ pyup-bot ]
+  * Update python-magic from 0.4.15 to 0.4.24
+  * Update django-extensions from 3.1.3 to 3.1.5
+
+  [ Dr. Jens Harbott ]
+  * Fix host updates (Closes: #356)
+
+  [ pyup-bot ]
+  * Update humanize from 3.11.0 to 3.13.1
+
+  [ dependabot[bot] ]
+  * Bump lxml from 4.6.3 to 4.6.5
+  * Update lxml from 4.6.3 to 4.7.1
+  * Update requests from 2.26.0 to 2.27.0
+
+  [ dependabot[bot] ]
+  * Bump django from 2.2.24 to 2.2.25
+
+  [ Marcus Furlong ]
+  * bump django to 2.2.26
+
+  [ pyup.io bot ]
+  * Update djangorestframework from 3.12.4 to 3.13.1 (#365)
+
+  [ pyup-bot ]
+  * Update requests from 2.27.0 to 2.27.1
+  * Update python-debian from 0.1.40 to 0.1.43
+  * Update python-magic from 0.4.24 to 0.4.25
+
+  [ dependabot[bot] ]
+  * Bump django from 2.2.26 to 2.2.27
+
+  [ Marcus Furlong ]
+  * handle debian unstable as os
+
+  [ Marcus Wellhardh ]
+  * Added Oracle Unbreakable Enterprise Kernel UEK to list of kernels
+
+  [ Marcus Furlong ]
+  * prefer requests iter_content over over raw.read
+  * lint all prs
+  * update codeql github action
+  * update flake8 commands
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Wed, 16 Feb 2022 03:45:31 +0000
+
 patchman (2.0.1-1) stable; urgency=medium
 
   * auto-commit to update version skip-checks: true

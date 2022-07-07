@@ -20,13 +20,7 @@ import requests
 import bz2
 import magic
 import zlib
-try:
-    import lzma
-except ImportError:
-    try:
-        from backports import lzma
-    except ImportError:
-        lzma = None
+import lzma
 from colorama import Fore, Style
 from enum import Enum
 from hashlib import md5, sha1, sha256
@@ -102,17 +96,13 @@ def download_url(res, text=''):
         chunk_size = 16384
         i = 0
         data = b''
-        while i < clen:
-            chunk = res.raw.read(chunk_size)
+        for chunk in res.iter_content(chunk_size=chunk_size, decode_unicode=False):
             i += len(chunk)
-            if i <= clen:
+            if i > clen:
+                update_pbar(clen)
+            else:
                 update_pbar(i)
             data += chunk
-        if i != clen:
-            update_pbar(clen)
-            text = 'Data length != Content-Length '
-            text += '({0!s} != {1!s})'.format(i, clen)
-            error_message.send(sender=None, text=text)
         return data
     else:
         return res.content
@@ -197,7 +187,7 @@ def extract(data, fmt):
         m = magic.open(magic.MAGIC_MIME)
         m.load()
         mime = m.buffer(data).split(';')[0]
-    if (mime == 'application/x-xz' or fmt.endswith('xz')) and lzma is not None:
+    if (mime == 'application/x-xz' or fmt.endswith('xz')):
         return unxz(data)
     elif mime == 'application/x-bzip2' or fmt.endswith('bz2'):
         return bunzip2(data)
