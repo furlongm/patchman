@@ -1,14 +1,12 @@
-Usage:
-----------------
-patchman-email [-a] [-H hostname] [-T tag] [-h]
+Dependencies:
+-----------------
+- Patchman configured with MySQL
 
--a: E-mails all recipients with available updates
+- Postfix configured and running
 
--H hostname: E-mails recipient with all available updates for given host
+- GNU coreutils and sharutils installed
 
--T tag: E-mails recipient with all available updates for given tag
-
--h: Shows this help message and exits
+- Package uuid-runtime installed on Debian-based distributions
 
 
 Setup:
@@ -21,13 +19,17 @@ $ chmod +x /usr/bin/patchman-email
 
 Open the configuration file and edit the parameters to fit your needs.
 
+Configure crontab with scripts/patchman-email.sh to automate e-mail reports.
 
-Dependencies:
------------------
-- Patchman configured with MySQL
 
-- Postfix configured and running
+Usage:
+----------------
+patchman-email [-a] [-H hostname] [-T tag] [-h]
 
-- GNU coreutils and sharutils installed
+-a: E-mails all recipients with available updates
 
-- Package uuid-runtime installed on Debian-based distributions
+-H hostname: E-mails recipient with all available updates for given host
+
+-T tag: E-mails recipient with all available updates for given tag
+
+-h: Shows this help message and exits
