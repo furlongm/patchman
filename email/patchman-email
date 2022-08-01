@@ -182,7 +182,7 @@ if [ $# -gt 0 ] && [[ $1 == -* ]]; then
 			a)
 				if [ ! -f $CONF ]; then
 					echo "$(date '+%d/%m/%Y %R') [ERROR] Configuration file not found."
-					exit
+					exit 1
 				else
 					DIR=$(getConfig General dir)
 					DATE=$(date +%Y%m%d)
@@ -205,7 +205,7 @@ if [ $# -gt 0 ] && [[ $1 == -* ]]; then
 			H)
 				if [ ! -f $CONF ]; then
 					echo "$(date '+%d/%m/%Y %R') [ERROR] Configuration file not found."
-					exit
+					exit 1
 				else
 					DIR=$(getConfig General dir)
 					DATE=$(date +%Y%m%d)
@@ -219,7 +219,7 @@ if [ $# -gt 0 ] && [[ $1 == -* ]]; then
 			T)
 				if [ ! -f $CONF ]; then
 					echo "$(date '+%d/%m/%Y %R') [ERROR] Configuration file not found."
-					exit
+					exit 1
 				else
 					DIR=$(getConfig General dir)
 					DATE=$(date +%Y%m%d)
@@ -228,6 +228,7 @@ if [ $# -gt 0 ] && [[ $1 == -* ]]; then
 
 					if [ -z "$HOSTS" ]; then
 						echo "$(date '+%d/%m/%Y %R') [ERROR] ${OPTARG}: Tag not found."
+						exit 1
 					else
 						for HOST in $HOSTS; do
 							report $HOST
@@ -239,12 +240,15 @@ if [ $# -gt 0 ] && [[ $1 == -* ]]; then
 				;;
 			h)
 				usage
+				exit 0
 				;;
 			*)
 				usage
+				exit 2
 				;;
 		esac
 	done
 else
 	usage
+	exit 2
 fi
