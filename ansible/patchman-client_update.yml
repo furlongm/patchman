@@ -1,0 +1,93 @@
+---
+- name: Update Patchman Client 
+  hosts: all
+  gather_facts: yes
+  become: yes
+  ignore_errors: true
+  vars:
+    package: patchman-client
+    path: /usr/sbin 
+    command: patchman-client
+    url: https://raw.githubusercontent.com/furlongm/patchman/master/client/patchman-client
+
+  pre_tasks:
+    - name: Downloads patchman-client to localhost
+      ansible.builtin.get_url:
+        url: "{{ url }}"
+        dest: /tmp/{{ command }}
+        mode: '0755'
+      delegate_to: localhost
+      become: no
+      run_once: yes
+
+  tasks:
+    - name: Check if the package was installed via Package Manager (RedHat) 
+      ansible.builtin.shell: rpm -q {{ package }}
+      args:
+        executable: /bin/bash
+      register: redhat_check
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: Check if the package was installed via Package Manager (SUSE) 
+      ansible.builtin.shell: rpm -q {{ package }}
+      args:
+        executable: /bin/bash
+      register: suse_check
+      when: ansible_facts['os_family'] == "Suse"
+
+    - name: Check if the package was installed via Package Manager (Debian) 
+      ansible.builtin.shell: dpkg-query -l {{ package }}
+      args:
+        executable: /bin/bash
+      register: debian_check
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Update package (Package Manager)
+      ansible.builtin.package:
+        name: "{{ package }}"
+        state: latest
+      register: packagemanager_check
+      failed_when: (not packagemanager_check.changed)
+      when: (redhat_check is succeeded and ansible_facts['os_family'] == "RedHat") or (suse_check is succeeded and ansible_facts['os_family'] == "Suse") or (debian_check is succeeded and ansible_facts['os_family'] == "Debian") 
+
+    - name: Update package (wget)
+      ansible.builtin.shell: |
+        if command -v {{ command }} &> /dev/null; then
+          wget -T 10 {{ url }};
+          mv {{ command }} {{ path }}/{{ command }};
+          chmod +x {{ path }}/{{ command }};
+        else
+          >&2 echo "{{ command }}: command not found";
+          exit 1;
+        fi
+      args:
+        executable: /bin/bash
+      register: wget_check
+      failed_when: "('Connection timed out' in wget_check.stderr) or ('Network is unreachable' in wget_check.stderr) or ('command not found' in wget_check.stderr)"
+      when: (redhat_check is failed and ansible_facts['os_family'] == "RedHat") or (suse_check is failed and ansible_facts['os_family'] == "Suse") or (debian_check is failed and ansible_facts['os_family'] == "Debian") or (packagemanager_check is failed) or (not packagemanager_check.changed)
+
+    - name: Update package (sftp)
+      ansible.builtin.copy:
+        src: /tmp/{{ command }}
+        dest: "{{ path }}/{{ command }}"
+      when: "('Connection timed out' in wget_check.stderr) or ('Network is unreachable' in wget_check.stderr) or ('wget: command not found' in wget_check.stderr)"
+
+  post_tasks:
+    - name: Check package information
+      ansible.builtin.shell: ls -l {{ path }}/{{ command }}
+      args:
+        executable: /bin/bash
+      register: package_check 
+      ignore_errors: false
+
+    - name: Print package information
+      ansible.builtin.debug:
+        msg: "{{ package_check.stdout }}"
+
+    - name: Remove patchman-client from localhost
+      ansible.builtin.file:
+        path: /tmp/{{ command }}
+        state: absent
+      delegate_to: localhost
+      become: no
+      run_once: yes
