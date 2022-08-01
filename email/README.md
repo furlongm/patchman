@@ -24,6 +24,8 @@ Open the configuration file and edit the parameters to fit your needs.
 
 Dependencies:
 -----------------
+- Patchman configured with MySQL
+
 - Postfix configured and running
 
 - GNU coreutils and sharutils installed
