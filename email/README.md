@@ -11,7 +11,7 @@ Dependencies:
 
 Setup:
 -----------------
-- Copy the files to the destination:
+- Copy the files to their destination:
 ```
 mv email/patchman-email /usr/bin
 
@@ -19,7 +19,7 @@ mv etc/patchman/patchman-email.conf /etc/patchman
 
 chmod +x /usr/bin/patchman-email
 ```
-- Edit `/etc/patchman/patchman-email.conf´ and change the parameters to fit your needs.
+- Edit `/etc/patchman/patchman-email.conf` and change the parameters to fit your needs.
 
 - Configure crontab with `scripts/patchman-email.sh` and modify the script to automate e-mail reports.
 
