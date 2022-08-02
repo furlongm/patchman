@@ -11,19 +11,22 @@ Dependencies:
 
 Setup:
 -----------------
+```
 $ mv email/patchman-email /usr/bin
 
 $ mv etc/patchman/patchman-email.conf /etc/patchman
 
 $ chmod +x /usr/bin/patchman-email
 
-Open the configuration file and edit the parameters to fit your needs.
+```
+- Open the configuration file and edit the parameters to fit your needs.
 
-Configure crontab with scripts/patchman-email.sh to automate e-mail reports.
+- Configure crontab with scripts/patchman-email.sh to automate e-mail reports.
 
 
 Usage:
 ----------------
+```
 patchman-email [-a] [-H hostname] [-T tag] [-h]
 
 -a: E-mails all recipients with available updates
@@ -33,3 +36,4 @@ patchman-email [-a] [-H hostname] [-T tag] [-h]
 -T tag: E-mails recipient with all available updates for given tag
 
 -h: Shows this help message and exits
+```
