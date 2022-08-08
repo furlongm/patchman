@@ -8,6 +8,7 @@ License: GPLv3
 URL: http://patchman.openbytes.ie
 Source: %{expand:%%(pwd)}
 BuildArch: noarch
+Requires: curl which mktemp util-linux
 
 %description
 patchman-client provides a client that uploads reports to a patchman server

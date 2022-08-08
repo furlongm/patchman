@@ -509,7 +509,8 @@ if ! check_command_exists which || ! check_command_exists mktemp || ! check_comm
     exit 1
 fi
 
-lock_dir=/var/lock/patchman
+os_lock_dir=/var/lock
+lock_dir=$(dirname $(readlink -f ${os_lock_dir}))/patchman
 mkdir -p "${lock_dir}"
 if [ ! -d "${lock_dir}" ] ; then
     echo "Lock directory does not exist, exiting: ${lock_dir}"
