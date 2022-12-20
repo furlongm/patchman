@@ -74,14 +74,14 @@ def os_detail(request, os_id):
             osgroup = create_form.save()
             os.osgroup = osgroup
             os.save()
-            text = 'Created OS Group {0!s} '.format(osgroup)
-            text += 'and added OS {0!s} to it'.format(os)
+            text = f'Created OS Group {osgroup!s} '
+            text += f'and added OS {os!s} to it'
             messages.info(request, text)
             return redirect(os.get_absolute_url())
         add_form = AddOSToOSGroupForm(request.POST, instance=os, prefix='add')
         if add_form.is_valid():
             add_form.save()
-            text = 'OS {0!s} added to OS Group {1!s}'.format(os, os.osgroup)
+            text = f'OS {os!s} added to OS Group {os.osgroup!s}'
             messages.info(request, text)
             return redirect(os.get_absolute_url())
     else:
@@ -109,7 +109,7 @@ def os_delete(request, os_id):
         if 'delete' in request.POST:
             if os:
                 os.delete()
-                messages.info(request, 'OS {0!s} has been deleted'.format(os))
+                messages.info(request, f'OS {os!s} has been deleted')
                 return redirect(reverse('operatingsystems:os_list'))
             else:
                 if not oses:
@@ -118,7 +118,7 @@ def os_delete(request, os_id):
                     return redirect(reverse('operatingsystems:os_list'))
                 for os in oses:
                     os.delete()
-                text = '{0!s} OS\'s have been deleted'.format(len(oses))
+                text = f'{len(oses)!s} OS\'s have been deleted'
                 messages.info(request, text)
                 return redirect(reverse('operatingsystems:os_list'))
         elif 'cancel' in request.POST:
@@ -189,7 +189,7 @@ def osgroup_delete(request, osgroup_id):
     if request.method == 'POST':
         if 'delete' in request.POST:
             osgroup.delete()
-            text = 'OS Group {0!s} has been deleted'.format(osgroup)
+            text = f'OS Group {osgroup!s} has been deleted'
             messages.info(request, text)
             return redirect(reverse('operatingsystems:os_list'))
         elif 'cancel' in request.POST:

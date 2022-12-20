@@ -37,7 +37,7 @@ def process_repos(report, host):
         repos = parse_repos(report.repos)
 
         progress_info_s.send(sender=None,
-                             ptext='{0!s} repos'.format(str(host)[0:25]),
+                             ptext=f'{str(host)[0:25]!s} repos',
                              plen=len(repos))
         for i, repo_str in enumerate(repos):
             repo, priority = process_repo(repo_str, report.arch)
@@ -72,7 +72,7 @@ def process_packages(report, host):
 
         packages = parse_packages(report.packages)
         progress_info_s.send(sender=None,
-                             ptext='{0!s} packages'.format(str(host)[0:25]),
+                             ptext=f'{str(host)[0:25]!s} packages',
                              plen=len(packages))
         for i, pkg_str in enumerate(packages):
             package = process_package(pkg_str, report.protocol)
@@ -87,7 +87,7 @@ def process_packages(report, host):
                     error_message.send(sender=None, text=e)
             else:
                 if pkg_str[0].lower() != 'gpg-pubkey':
-                    text = 'No package returned for {0!s}'.format(pkg_str)
+                    text = f'No package returned for {pkg_str!s}'
                     info_message.send(sender=None, text=text)
             progress_update_s.send(sender=None, index=i + 1)
 
@@ -126,7 +126,7 @@ def add_updates(updates, host):
         host.updates.remove(host_update)
     ulen = len(updates)
     if ulen > 0:
-        ptext = '{0!s} updates'.format(str(host)[0:25])
+        ptext = f'{str(host)[0:25]!s} updates'
         progress_info_s.send(sender=None, ptext=ptext, plen=ulen)
 
         for i, (u, sec) in enumerate(updates.items()):
@@ -143,9 +143,7 @@ def parse_updates(updates_string, security):
     updates = {}
     ulist = updates_string.lower().split()
     while ulist:
-        name = '{0!s} {1!s} {2!s}\n'.format(ulist[0],
-                                            ulist[1],
-                                            ulist[2])
+        name = f'{ulist[0]!s} {ulist[1]!s} {ulist[2]!s}\n'
         del ulist[:3]
         updates[name] = security
     return updates

@@ -61,12 +61,12 @@ def find_version(s, epoch, release):
     """ Given a package version string, return the version
     """
     try:
-        es = '{0!s}:'.format(epoch)
+        es = f'{epoch!s}:'
         e = s.index(es) + len(epoch) + 1
     except ValueError:
         e = 0
     try:
-        rs = '-{0!s}'.format(release)
+        rs = f'-{release!s}'
         r = s.index(rs)
     except ValueError:
         r = len(s)
@@ -117,7 +117,7 @@ def parse_errata(data, force):
     result = etree.XML(data)
     errata_xml = result.findall('*')
     elen = len(errata_xml)
-    ptext = 'Processing {0!s} Errata:'.format(elen)
+    ptext = f'Processing {elen!s} Errata:'
     progress_info_s.send(sender=None, ptext=ptext, plen=elen)
     for i, child in enumerate(errata_xml):
         progress_update_s.send(sender=None, index=i + 1)
@@ -165,7 +165,7 @@ def parse_errata_children(e, children):
         elif c.tag == 'os_release':
             from operatingsystems.models import OSGroup
             osgroups = OSGroup.objects.all()
-            osgroup_name = 'CentOS {0!s}'.format(c.text)
+            osgroup_name = f'CentOS {c.text!s}'
             with transaction.atomic():
                 osgroup, c = osgroups.get_or_create(name=osgroup_name)
             e.releases.add(osgroup)
@@ -177,11 +177,11 @@ def parse_errata_children(e, children):
                 name, epoch, ver, rel, dist, arch = m.groups()
             else:
                 e = 'Error parsing errata: '
-                e += 'could not parse package "{0!s}"'.format(pkg_str)
+                e += f'could not parse package "{pkg_str!s}"'
                 error_message.send(sender=None, text=e)
                 continue
             if dist:
-                rel = '{0!s}.{1!s}'.format(rel, dist)
+                rel = f'{rel!s}.{dist!s}'
             p_type = Package.RPM
             pkg = get_or_create_package(name, epoch, ver, rel, arch, p_type)
             e.packages.add(pkg)
@@ -291,7 +291,7 @@ def mark_errata_security_updates():
     package_updates = PackageUpdate.objects.all()
     errata = Erratum.objects.all()
     elen = Erratum.objects.count()
-    ptext = 'Scanning {0!s} Errata:'.format(elen)
+    ptext = f'Scanning {elen!s} Errata:'
     progress_info_s.send(sender=None, ptext=ptext, plen=elen)
     for i, erratum in enumerate(errata):
         progress_update_s.send(sender=None, index=i + 1)
