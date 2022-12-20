@@ -59,9 +59,9 @@ class Repository(models.Model):
     def show(self):
         """ Show info about this repo, including mirrors
         """
-        text = '{0!s} : {1!s}\n'.format(self.id, self.name)
-        text += 'security: {0!s}    '.format(self.security)
-        text += 'arch: {0!s}\n'.format(self.arch)
+        text = f'{self.id!s} : {self.name!s}\n'
+        text += f'security: {self.security!s}    '
+        text += f'arch: {self.arch!s}\n'
         text += 'Mirrors:'
 
         info_message.send(sender=None, text=text)
@@ -88,7 +88,7 @@ class Repository(models.Model):
                 refresh_arch_repo(self)
             else:
                 text = 'Error: unknown repo type for repo '
-                text += '{0!s}: {1!s}'.format(self.id, self.repotype)
+                text += f'{self.id!s}: {self.repotype!s}'
                 error_message.send(sender=None, text=text)
         else:
             text = 'Repo requires certificate authentication, not updating'
@@ -147,17 +147,16 @@ class Mirror(models.Model):
     def show(self):
         """ Show info about this mirror
         """
-        text = ' {0!s} : {1!s}\n'.format(self.id, self.url)
+        text = f' {self.id!s} : {self.url!s}\n'
         text += ' last updated: '
-        text += '{0!s}    checksum: {1!s}\n'.format(self.timestamp,
-                                                    self.file_checksum)
+        text += f'{self.timestamp!s}    checksum: {self.file_checksum!s}\n'
         info_message.send(sender=None, text=text)
 
     def fail(self):
         """ Records that the mirror has failed
             Disables refresh on a mirror if it fails more than 28 times
         """
-        text = 'No usable mirror found at {0!s}'.format(self.url)
+        text = f'No usable mirror found at {self.url!s}'
         error_message.send(sender=None, text=text)
         self.fail_count = self.fail_count + 1
         if self.fail_count > 28:

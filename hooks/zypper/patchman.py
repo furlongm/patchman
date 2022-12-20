@@ -26,23 +26,23 @@ from zypp_plugin import Plugin
 class MyPlugin(Plugin):
 
     def PLUGINBEGIN(self, headers, body):
-        logging.info("PLUGINBEGIN")
-        logging.debug("headers: {0!s}".format(headers))
+        logging.info('PLUGINBEGIN')
+        logging.debug(f'headers: {headers!s}')
         self.ack()
 
     def PACKAGESETCHANGED(self, headers, body):
-        logging.info("PACKAGESETCHANGED")
-        logging.debug("headers: {0!s}".format(headers))
+        logging.info('PACKAGESETCHANGED')
+        logging.debug(f'headers: {headers!s}')
         print('patchman: sending data')
         servicecmd = '/usr/sbin/patchman-client'
         args = '-n'
-        command = '{0!s} {1!s}> /dev/null'.format(servicecmd, args)
+        command = f'{servicecmd!s} {args!s}> /dev/null'
         os.system(command)
         self.ack()
 
     def PLUGINEND(self, headers, body):
-        logging.info("PLUGINEND")
-        logging.debug("headers: {0!s}".format(headers))
+        logging.info('PLUGINEND')
+        logging.debug(f'headers: {headers!s}')
         self.ack()
 
 
