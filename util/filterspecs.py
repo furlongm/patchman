@@ -54,7 +54,7 @@ class Filter(object):
 
     def output(self, qs):
         if self.name in qs:
-            del(qs[self.name])
+            del qs[self.name]
 
         output = '<div class="panel panel-default">\n'
         output += '<div class="panel-heading">'
