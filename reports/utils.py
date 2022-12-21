@@ -115,7 +115,7 @@ def merge_updates(sec_updates, bug_updates):
     """
     for u in sec_updates:
         if u in bug_updates:
-            del(bug_updates[u])
+            del bug_updates[u]
     return dict(list(sec_updates.items()) + list(bug_updates.items()))
 
 
