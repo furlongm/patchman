@@ -306,22 +306,20 @@ get_host_data() {
 
 get_yum_updates() {
     yum -q makecache 2>/dev/null
-    yum -C --security list updates --disablerepo="*" --enablerepo="${1}" 2>&1 \
-    | grep -v 'excluded' \
-    | grep -v 'Available Upgrades' \
+    let yum_major_version=$(yum --version | head -n 1 | cut -d "." -f 1)
+    if [ ${yum_major_version} -gt 3 ] ; then
+        yum -q -C --security list updates --disablerepo="*" --enablerepo="${1}" 2>&1 \
+        | tr "\n" "#" | sed -e 's/# / /g' | tr "#" "\n" \
+        | grep -v ': ' \
+        | grep -v 'Limiting package lists to security relevant ones' \
+        } grep -v 'Updated Packages' \
+        >> "${tmpfile_sec}"
+    fi
+    yum -q -C list updates --disablerepo="*" --enablerepo="${1}" 2>&1 \
+    | tr "\n" "#" | sed -e 's/# / /g' | tr "#" "\n" \
+    | grep -v ': ' \
+    | grep -v 'Limiting package lists to security relevant ones' \
     | grep -v 'Updated Packages' \
-    | grep -v 'Last metadata expiration check' \
-    | grep -v 'needed for security' \
-    | grep -v 'Loaded plugins' \
-    | grep -v 'Subscription Management' \
-    >> "${tmpfile_sec}"
-    yum -C list updates --disablerepo="*" --enablerepo="${1}" 2>&1 \
-    | grep -v 'excluded' \
-    | grep -v 'Available Upgrades' \
-    | grep -v 'Updated Packages' \
-    | grep -v 'Last metadata expiration check' \
-    | grep -v 'Loaded plugins' \
-    | grep -v 'Subscription Management' \
     >> "${tmpfile_bug}"
     if [ ! -z ${CPE_NAME} ] ; then
         sed -i -e "s#${1}#${CPE_NAME}-${1}#g" "${tmpfile_sec}"
