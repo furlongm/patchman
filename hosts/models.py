@@ -32,6 +32,7 @@ from repos.models import Repository
 from operatingsystems.models import OS
 from arch.models import MachineArchitecture
 from patchman.signals import info_message, error_message
+from packages.utils import get_or_create_package_update
 from repos.utils import find_best_repo
 from hosts.utils import update_rdns, remove_reports
 
@@ -141,45 +142,14 @@ class Host(models.Model):
                 Q(repo__host=self)
         mirrors = highest_package.mirror_set.filter(host_repos)
         security = False
-        # If any of the containing repos are security,
-        # mark the update as security
+        # if any of the containing repos are security, mark the update as
+        # security
         for mirror in mirrors:
             if mirror.repo.security:
                 security = True
-        updates = PackageUpdate.objects.all()
-        # see if any version of this update exists
-        # if it's already marked as a security update, leave it that way
-        # if not, mark it as a security update
-        # this could be an issue if different distros mark the same update
-        # in different ways (security vs bugfix) but in reality this is not
-        # very likely to happen. if it does, we err on the side of caution
-        # and mark it as the security update
-        try:
-            update = updates.get(
-                oldpackage=package,
-                newpackage=highest_package
-            )
-        except PackageUpdate.DoesNotExist:
-            update = None
-        try:
-            if update:
-                if security and not update.security:
-                    update.security = True
-                    with transaction.atomic():
-                        update.save()
-            else:
-                with transaction.atomic():
-                    update, c = updates.get_or_create(
-                        oldpackage=package,
-                        newpackage=highest_package,
-                        security=security)
-        except IntegrityError as e:
-            error_message.send(sender=None, text=e)
-            update = updates.get(oldpackage=package,
-                                 newpackage=highest_package,
-                                 security=security)
-        except DatabaseError as e:
-            error_message.send(sender=None, text=e)
+        update = get_or_create_package_update(oldpackage=package,
+                                              newpackage=highest_package,
+                                              security=security)
         try:
             with transaction.atomic():
                 self.updates.add(update)

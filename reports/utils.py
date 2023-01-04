@@ -20,10 +20,10 @@ import re
 from django.db import IntegrityError, DatabaseError, transaction
 
 from hosts.models import HostRepo
-from arch.models import MachineArchitecture, PackageArchitecture
+from arch.models import MachineArchitecture
 from repos.models import Repository, Mirror, MirrorPackage
-from packages.models import Package, PackageName, PackageUpdate
-from packages.utils import find_evr, get_or_create_package
+from packages.models import Package
+from packages.utils import find_evr, get_or_create_package, get_or_create_package_update
 from patchman.signals import progress_info_s, progress_update_s, \
     error_message, info_message
 
@@ -157,27 +157,16 @@ def process_update(host, update_string, security):
     repo_id = update_str[2]
 
     parts = update_str[0].rpartition('.')
-    package_str = parts[0]
-    arch_str = parts[2]
+    p_name = parts[0]
+    p_arch = parts[2]
 
     p_epoch, p_version, p_release = find_evr(update_str[1])
-
-    package_arches = PackageArchitecture.objects.all()
-    with transaction.atomic():
-        p_arch, c = package_arches.get_or_create(name=arch_str)
-
-    package_names = PackageName.objects.all()
-    with transaction.atomic():
-        p_name, c = package_names.get_or_create(name=package_str)
-
-    packages = Package.objects.all()
-    with transaction.atomic():
-        package, c = packages.get_or_create(name=p_name,
-                                            arch=p_arch,
-                                            epoch=p_epoch,
-                                            version=p_version,
-                                            release=p_release,
-                                            packagetype='R')
+    package = get_or_create_package(name=p_name,
+                                    epoch=p_epoch,
+                                    version=p_version,
+                                    release=p_release,
+                                    arch=p_arch,
+                                    p_type='R')
     try:
         repo = Repository.objects.get(repo_id=repo_id)
     except Repository.DoesNotExist:
@@ -187,14 +176,12 @@ def process_update(host, update_string, security):
             with transaction.atomic():
                 MirrorPackage.objects.create(mirror=mirror, package=package)
 
-    installed_packages = host.packages.filter(name=p_name,
-                                              arch=p_arch,
+    installed_packages = host.packages.filter(name=package.name,
+                                              arch=package.arch,
                                               packagetype='R')
     if installed_packages:
         installed_package = installed_packages[0]
-        updates = PackageUpdate.objects.all()
-        with transaction.atomic():
-            update, c = updates.get_or_create(oldpackage=installed_package,
+        update = get_or_create_package_update(oldpackage=installed_package,
                                               newpackage=package,
                                               security=security)
         return update
