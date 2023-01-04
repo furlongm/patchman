@@ -323,6 +323,10 @@ get_yum_updates() {
     | grep -v 'Loaded plugins' \
     | grep -v 'Subscription Management' \
     >> "${tmpfile_bug}"
+    if [ ! -z ${CPE_NAME} ] ; then
+        sed -i -e "s#${1}#${CPE_NAME}-${1}#g" "${tmpfile_sec}"
+        sed -i -e "s#${1}#${CPE_NAME}-${1}#g" "${tmpfile_bug}"
+    fi
 }
 
 get_zypper_updates() {
@@ -351,6 +355,9 @@ get_repos() {
         for i in $(echo "${yum_repolist}" | awk '{ if ($1=="Repo-id") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'"'"' "} if ($1=="Repo-name") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'" ${host_arch}'"' "} if ($1=="Repo-mirrors" || $1=="Repo-metalink:") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'"'"' "} if ($1=="Repo-baseurl" || $1=="Repo-baseurl:") { url=1; comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else { if (url==1) { if ($1==":") { comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else {url=0; print "";} } } }' | sed -e "s/\/'/'/g" | sed -e "s/ ' /' /") ; do
             full_id=$(echo ${i} | cut -d \' -f 2)
             id=$(echo ${i} | cut -d \' -f 2 | cut -d \/ -f 1)
+            if [ ! -z ${CPE_NAME} ] ; then
+                id="${CPE_NAME}-${id}"
+            fi
             name=$(echo ${i} | cut -d \' -f 4)
             if [ "${priorities}" != "" ] ; then
                 priority=$(echo "${priorities}" | grep "'${name}'" | sed -e "s/priority=\(.*\) '${name}'/\1/")
