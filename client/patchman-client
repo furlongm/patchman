@@ -312,15 +312,30 @@ get_yum_updates() {
         | tr "\n" "#" | sed -e 's/# / /g' | tr "#" "\n" \
         | grep -v ': ' \
         | grep -v 'Limiting package lists to security relevant ones' \
-        } grep -v 'Updated Packages' \
+        | grep -v 'Available Upgrades' \
+        | grep -v 'Updated Packages' \
+        | grep -v 'excluded' \
+        | grep -v 'Last metadata expiration check' \
+        | grep -v 'needed for security' \
+        | grep -v 'Loaded plugins' \
+        | grep -v 'Subscription Management' \
+        | grep -v 'Failed to set locale' \
         >> "${tmpfile_sec}"
+        sed -i '/^$/d' "${tmpfile_sec}"
     fi
     yum -q -C list updates --disablerepo="*" --enablerepo="${1}" 2>&1 \
     | tr "\n" "#" | sed -e 's/# / /g' | tr "#" "\n" \
     | grep -v ': ' \
-    | grep -v 'Limiting package lists to security relevant ones' \
+    | grep -v 'Available Upgrades' \
     | grep -v 'Updated Packages' \
+    | grep -v 'excluded' \
+    | grep -v 'Last metadata expiration check' \
+    | grep -v 'needed for security' \
+    | grep -v 'Loaded plugins' \
+    | grep -v 'Subscription Management' \
+    | grep -v 'Failed to set locale' \
     >> "${tmpfile_bug}"
+    sed -i '/^$/d' "${tmpfile_bug}"
     if [ ! -z ${CPE_NAME} ] ; then
         sed -i -e "s#${1}#${CPE_NAME}-${1}#g" "${tmpfile_sec}"
         sed -i -e "s#${1}#${CPE_NAME}-${1}#g" "${tmpfile_bug}"
@@ -353,9 +368,6 @@ get_repos() {
         for i in $(echo "${yum_repolist}" | awk '{ if ($1=="Repo-id") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'"'"' "} if ($1=="Repo-name") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'" ${host_arch}'"' "} if ($1=="Repo-mirrors" || $1=="Repo-metalink:") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'"'"' "} if ($1=="Repo-baseurl" || $1=="Repo-baseurl:") { url=1; comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else { if (url==1) { if ($1==":") { comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else {url=0; print "";} } } }' | sed -e "s/\/'/'/g" | sed -e "s/ ' /' /") ; do
             full_id=$(echo ${i} | cut -d \' -f 2)
             id=$(echo ${i} | cut -d \' -f 2 | cut -d \/ -f 1)
-            if [ ! -z ${CPE_NAME} ] ; then
-                id="${CPE_NAME}-${id}"
-            fi
             name=$(echo ${i} | cut -d \' -f 4)
             if [ "${priorities}" != "" ] ; then
                 priority=$(echo "${priorities}" | grep "'${name}'" | sed -e "s/priority=\(.*\) '${name}'/\1/")
@@ -364,14 +376,17 @@ get_repos() {
             if [ "${priority}" == "" ] ; then
                 priority=99
             fi
-            j=$(echo ${i} | sed -e "s#'${full_id}' '${name}'#'${name}' '${id}' '${priority}'#")
-            redhat_repo=$(echo ${j} | grep -e "https://.*/XMLRPC.*\|https://cdn.redhat.com/.*")
+            redhat_repo=$(echo ${i} | grep -e "https://.*/XMLRPC.*\|https://cdn.redhat.com/.*")
             if [ ${?} == 0 ] || ${local_updates} ; then
                 if ${verbose} ; then
                     echo "Finding updates locally for ${id}"
                 fi
                 get_yum_updates ${id}
             fi
+            if [ ! -z ${CPE_NAME} ] ; then
+                id="${CPE_NAME}-${id}"
+            fi
+            j=$(echo ${i} | sed -e "s#'${full_id}' '${name}'#'${name}' '${id}' '${priority}'#")
             echo "'rpm' ${j}" >> "${tmpfile_rep}"
             unset priority
         done
