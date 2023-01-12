@@ -23,7 +23,7 @@ import zlib
 import lzma
 from colorama import Fore, Style
 from enum import Enum
-from hashlib import md5, sha1, sha256
+from hashlib import md5, sha1, sha256, sha512
 from progressbar import Bar, ETA, Percentage, ProgressBar
 from patchman.signals import error_message
 
@@ -35,7 +35,7 @@ else:
 
 pbar = None
 verbose = None
-Checksum = Enum('Checksum', 'md5 sha sha1 sha256')
+Checksum = Enum('Checksum', 'md5 sha sha1 sha256 sha512')
 
 
 def get_verbosity():
@@ -203,6 +203,8 @@ def get_checksum(data, checksum_type):
         checksum = get_sha1(data)
     elif checksum_type == Checksum.sha256:
         checksum = get_sha256(data)
+    elif checksum_type == Checksum.sha512:
+        checksum = get_sha512(data)
     elif checksum_type == Checksum.md5:
         checksum = get_md5(data)
     else:
@@ -221,6 +223,12 @@ def get_sha256(data):
     """ Return the sha256 checksum for data
     """
     return sha256(data).hexdigest()
+
+
+def get_sha512(data):
+    """ Return the sha512 checksum for data
+    """
+    return sha512(data).hexdigest()
 
 
 def get_md5(data):
