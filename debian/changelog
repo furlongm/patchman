@@ -1,3 +1,11 @@
+patchman (2.0.7-1) stable; urgency=medium
+
+  * fix failing CI due to upgraded git
+  * use correct package names on debian
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Wed, 18 Jan 2023 16:13:27 +0000
+
 patchman (2.0.6-1) stable; urgency=medium
 
   * auto-commit to update version skip-checks: true
