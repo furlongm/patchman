@@ -93,6 +93,7 @@ jobs:
           ref: master
       - name: git fetch --all
         run: |
+          git config --global --add safe.directory /__w/patchman/patchman
           git fetch --all
       - name: Get version
         run: |
@@ -156,6 +157,7 @@ jobs:
           ref: master
       - name: git fetch --all
         run: |
+          git config --global --add safe.directory /__w/patchman/patchman
           git fetch --all
       - name: Get version
         run: |
