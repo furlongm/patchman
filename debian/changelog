@@ -1,3 +1,29 @@
+patchman (2.0.5-1) stable; urgency=medium
+
+  [ Marcus Furlong ]
+  * remove python2 lzma support
+  * use full path for lock dir
+  * add rpm dependencies for client
+  * add deb dependencies for client
+  * switch to f-strings
+
+  [ dependabot[bot] ]
+  * Bump django from 2.2.27 to 2.2.28
+  * update del statements for flake8
+  * update python reqs
+  * switch patchman cli to f-strings
+  * add static to objectlist template
+  * avoid duplicate updates
+  * add CPE_NAME to repo id to fix duplicate ids
+  * fix yum multiline failures
+  * fix client yum parsing
+  * add support for repos with sha512 checksums
+  * auto-commit to update version skip-checks: true
+  * add email for debian changelog
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Wed, 18 Jan 2023 03:13:37 +0000
+
 patchman (2.0.3-1) stable; urgency=medium
 
   * use centos:stream8 docker image
