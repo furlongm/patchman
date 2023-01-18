@@ -64,6 +64,7 @@ jobs:
           git push origin master
       - name: Update debian changelog
         env:
+          EMAIL: furlongm@gmail.com
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COMMIT_MSG: |
             auto-commit to update debian changelog
