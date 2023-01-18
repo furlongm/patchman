@@ -15,8 +15,8 @@ mysql or postgresql instead, see the database configuration section.
 ### Ubuntu 20.04 (focal)
 
 ```shell
-apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0412F522
-echo "deb https://repo.openbytes.ie/patchman/ubuntu focal main" > /etc/apt/sources.list.d/patchman.list
+curl -sS https://repo.openbytes.ie/openbytes.gpg > /usr/share/keyrings/openbytes.gpg
+echo "deb [signed-by=/usr/share/keyrings/openbytes.gpg] https://repo.openbytes.ie/patchman/ubuntu focal main" > /etc/apt/sources.list.d/patchman.list
 apt update
 apt -y install python3-patchman patchman-client
 patchman-manage createsuperuser
@@ -25,8 +25,8 @@ patchman-manage createsuperuser
 ### Debian 11 (bullseye)
 
 ```shell
-apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0412F522
-echo "deb https://repo.openbytes.ie/patchman/debian bullseye main" > /etc/apt/sources.list.d/patchman.list
+curl -sS https://repo.openbytes.ie/openbytes.gpg > /usr/share/keyrings/openbytes.gpg
+echo "deb [signed-by=/usr/share/keyrings/openbytes.gpg] https://repo.openbytes.ie/patchman/debian bullseye main" > /etc/apt/sources.list.d/patchman.list
 apt update
 apt -y install python3-patchman patchman-client
 patchman-manage createsuperuser
