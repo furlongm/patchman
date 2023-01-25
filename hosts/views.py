@@ -23,7 +23,7 @@ from django.db.models import Q
 from django.contrib import messages
 
 from tagging.models import Tag, TaggedItem
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets
 
 from util.filterspecs import Filter, FilterBar
 from hosts.models import Host, HostRepo
@@ -183,7 +183,7 @@ class HostViewSet(viewsets.ModelViewSet):
     """
     queryset = Host.objects.all()
     serializer_class = HostSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    filterset_fields = ['hostname']
 
 
 class HostRepoViewSet(viewsets.ModelViewSet):
@@ -192,4 +192,3 @@ class HostRepoViewSet(viewsets.ModelViewSet):
     """
     queryset = HostRepo.objects.all()
     serializer_class = HostRepoSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
