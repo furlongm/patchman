@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets
 
 from arch.models import PackageArchitecture, MachineArchitecture
 from arch.serializers import PackageArchitectureSerializer, \
@@ -27,7 +27,7 @@ class PackageArchitectureViewSet(viewsets.ModelViewSet):
     """
     queryset = PackageArchitecture.objects.all()
     serializer_class = PackageArchitectureSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    filterset_fields = ['name']
 
 
 class MachineArchitectureViewSet(viewsets.ModelViewSet):
@@ -36,4 +36,4 @@ class MachineArchitectureViewSet(viewsets.ModelViewSet):
     """
     queryset = MachineArchitecture.objects.all()
     serializer_class = MachineArchitectureSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    filterset_fields = ['name']

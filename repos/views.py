@@ -24,7 +24,7 @@ from django.db.models import Q
 from django.contrib import messages
 from django.db import IntegrityError
 
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets
 
 from util.filterspecs import Filter, FilterBar
 from hosts.models import HostRepo
@@ -386,7 +386,6 @@ class RepositoryViewSet(viewsets.ModelViewSet):
     """
     queryset = Repository.objects.all()
     serializer_class = RepositorySerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
 
 class MirrorViewSet(viewsets.ModelViewSet):
@@ -395,7 +394,6 @@ class MirrorViewSet(viewsets.ModelViewSet):
     """
     queryset = Mirror.objects.all()
     serializer_class = MirrorSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
 
 class MirrorPackageViewSet(viewsets.ModelViewSet):
@@ -404,4 +402,3 @@ class MirrorPackageViewSet(viewsets.ModelViewSet):
     """
     queryset = MirrorPackage.objects.all()
     serializer_class = MirrorPackageSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
