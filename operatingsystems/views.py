@@ -22,7 +22,7 @@ from django.db.models import Q
 from django.contrib import messages
 from django.urls import reverse
 
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets
 
 from operatingsystems.models import OS, OSGroup
 from operatingsystems.forms import AddOSToOSGroupForm, \
@@ -206,7 +206,7 @@ class OSViewSet(viewsets.ModelViewSet):
     """
     queryset = OS.objects.all()
     serializer_class = OSSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    filterset_fields = ['name']
 
 
 class OSGroupViewSet(viewsets.ModelViewSet):
@@ -215,4 +215,4 @@ class OSGroupViewSet(viewsets.ModelViewSet):
     """
     queryset = OSGroup.objects.all()
     serializer_class = OSGroupSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    filterset_fields = ['name']
