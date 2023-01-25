@@ -96,7 +96,8 @@ def download_url(res, text=''):
         chunk_size = 16384
         i = 0
         data = b''
-        for chunk in res.iter_content(chunk_size=chunk_size, decode_unicode=False):
+        for chunk in res.iter_content(chunk_size=chunk_size,
+                                      decode_unicode=False):
             i += len(chunk)
             if i > clen:
                 update_pbar(clen)

@@ -23,7 +23,8 @@ from hosts.models import HostRepo
 from arch.models import MachineArchitecture
 from repos.models import Repository, Mirror, MirrorPackage
 from packages.models import Package
-from packages.utils import find_evr, get_or_create_package, get_or_create_package_update
+from packages.utils import find_evr, get_or_create_package, \
+    get_or_create_package_update
 from patchman.signals import progress_info_s, progress_update_s, \
     error_message, info_message
 
