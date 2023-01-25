@@ -20,7 +20,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q
 
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets
 
 from util.filterspecs import Filter, FilterBar
 from packages.models import PackageName, Package, PackageUpdate, \
@@ -99,7 +99,7 @@ class PackageNameViewSet(viewsets.ModelViewSet):
     """
     queryset = PackageName.objects.all()
     serializer_class = PackageNameSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    filterset_fields = ['name']
 
 
 class PackageViewSet(viewsets.ModelViewSet):
@@ -108,7 +108,14 @@ class PackageViewSet(viewsets.ModelViewSet):
     """
     queryset = Package.objects.all()
     serializer_class = PackageSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    filterset_fields = [
+        'name',
+        'epoch',
+        'version',
+        'release',
+        'arch',
+        'packagetype'
+    ]
 
 
 class PackageUpdateViewSet(viewsets.ModelViewSet):
@@ -117,7 +124,7 @@ class PackageUpdateViewSet(viewsets.ModelViewSet):
     """
     queryset = PackageUpdate.objects.all()
     serializer_class = PackageUpdateSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    filterset_fields = ['oldpackage', 'newpackage', 'security']
 
 
 class ErratumViewSet(viewsets.ModelViewSet):
@@ -126,7 +133,6 @@ class ErratumViewSet(viewsets.ModelViewSet):
     """
     queryset = Erratum.objects.all()
     serializer_class = ErratumSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
 
 class ErratumReferenceViewSet(viewsets.ModelViewSet):
@@ -135,4 +141,3 @@ class ErratumReferenceViewSet(viewsets.ModelViewSet):
     """
     queryset = ErratumReference.objects.all()
     serializer_class = ErratumReferenceSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
