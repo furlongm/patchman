@@ -482,7 +482,7 @@ def mirror_checksum_is_valid(computed, provided, mirror):
         text = f'Checksum failed for mirror {mirror.id!s}'
         text += ', not refreshing package metadata'
         error_message.send(sender=None, text=text)
-        text = f'Found checksum:    {computed!s}\nExpected checksum: {provided!s}'
+        text = f'Found checksum:    {computed}\nExpected checksum: {provided}'
         error_message.send(sender=None, text=text)
         mirror.last_access_ok = False
         mirror.fail()
