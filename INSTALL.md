@@ -5,43 +5,48 @@ mysql or postgresql instead, see the database configuration section.
 
 
 ## Supported Install Options
-  - [Ubuntu 20.04](#ubuntu-2004-focal)
-  - [Debian 11](#debian-11-bullseye)
-  - [CentOS 8](#centos-8)
+  - [Ubuntu 22.04](#ubuntu-2204-jammy)
+  - [Debian 12](#debian-12-bookworm)
+  - [CentOS 9](#centos-9)
   - [virtualenv + pip](#virtualenv--pip)
   - [Source](#source)
 
 
-### Ubuntu 20.04 (focal)
+### Ubuntu 22.04 (jammy)
 
 ```shell
 curl -sS https://repo.openbytes.ie/openbytes.gpg > /usr/share/keyrings/openbytes.gpg
-echo "deb [signed-by=/usr/share/keyrings/openbytes.gpg] https://repo.openbytes.ie/patchman/ubuntu focal main" > /etc/apt/sources.list.d/patchman.list
+echo "deb [signed-by=/usr/share/keyrings/openbytes.gpg] https://repo.openbytes.ie/patchman/ubuntu jammy main" > /etc/apt/sources.list.d/patchman.list
 apt update
 apt -y install python3-patchman patchman-client
 patchman-manage createsuperuser
 ```
 
-### Debian 11 (bullseye)
+### Debian 12 (bookworm)
 
 ```shell
 curl -sS https://repo.openbytes.ie/openbytes.gpg > /usr/share/keyrings/openbytes.gpg
-echo "deb [signed-by=/usr/share/keyrings/openbytes.gpg] https://repo.openbytes.ie/patchman/debian bullseye main" > /etc/apt/sources.list.d/patchman.list
+echo "deb [signed-by=/usr/share/keyrings/openbytes.gpg] https://repo.openbytes.ie/patchman/debian bookworm main" > /etc/apt/sources.list.d/patchman.list
 apt update
 apt -y install python3-patchman patchman-client
 patchman-manage createsuperuser
 ```
 
-### CentOS 8
+### CentOS 9
+
+This also applies to Rocky/Alma/RHEL
 
 ```shell
+curl -sS https://repo.openbytes.ie/openbytes.gpg > /etc/pki/rpm-gpg/RPM-GPG-KEY-openbytes
 cat <<EOF >> /etc/yum.repos.d/openbytes.repo
 [openbytes]
 name=openbytes
-baseurl=https://repo.openbytes.ie/patchman/el8
+baseurl=https://repo.openbytes.ie/patchman/el9
 enabled=1
-gpgcheck=0
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-openbytes
 EOF
+update-crypto-policies --set DEFAULT:SHA1
 dnf -y install epel-release
 dnf makecache
 dnf -y install patchman patchman-client
@@ -55,7 +60,7 @@ TBD - not working yet
 
 ```shell
 apt -y install gcc libxml2-dev libxslt1-dev virtualenv python3-dev zlib1g-dev  # (debian/ubuntu)
-dnf -y install gcc libxml2-devel libxslt-devel python3-virtualenv              # (centos/rhel)
+dnf -y install gcc libxml2-devel libxslt-devel python3-virtualenv              # (centos/rocky/alma)
 mkdir /srv/patchman
 cd /srv/patchman
 virtualenv .
@@ -69,7 +74,7 @@ gunicorn patchman.wsgi -b 0.0.0.0:80
 
 ### Source
 
-#### Ubuntu 20.04 (focal)
+#### Ubuntu 22.04 (jammy)
 
 1. Install dependencies
 
@@ -111,7 +116,7 @@ be configured:
 
    * ADMINS - set up an admin email address
    * SECRET_KEY - create a random secret key
-   * STATICFILES_DIRS - should point to /srv/patchman/patchman/static if installing from
+   * STATIC_ROOT - should point to `/srv/patchman/run/static` if installing from
      source
 
 
@@ -211,6 +216,8 @@ ALTER ROLE
 postgres=# ALTER ROLE patchman SET timezone TO 'UTC';
 ALTER ROLE
 postgres=# GRANT ALL PRIVILEGES ON DATABASE patchman to patchman;
+GRANT
+postgres=# GRANT ALL ON SCHEMA public TO patchman;
 GRANT
 ```
 
@@ -314,7 +321,9 @@ apt -y install python3-celery redis python3-redis python-celery-common
 C_FORCE_ROOT=1 celery -b redis://127.0.0.1:6379/0 -A patchman worker -l INFO -E
 ```
 
-#### CentOS / RHEL
+#### CentOS / Rocky / Alma
+
+Currently waiting on https://bugzilla.redhat.com/show_bug.cgi?id=2032543
 
 ```shell
 dnf -y install python3-celery redis python3-redis
@@ -334,8 +343,8 @@ Enable celery by adding `USE_ASYNC_PROCESSING = True` to `/etc/patchman/local_se
 Memcached can optionally be run to reduce the load on the server.
 
 ```shell
-apt -y install memcached python3-memcache   # (debian/ubuntu)
-dnf -y install memcached python3-memcached  # (centos/rhel)
+apt -y install memcached python3-pymemcache  # (debian/ubuntu)
+dnf -y install memcached python3-pymemcache  # (centos/rocky/alma)
 systemctl restart memcached
 ```
 
@@ -344,8 +353,11 @@ and add the following to `/etc/patchman/local_settings.py`
 ```
 CACHES = {
    'default': {
-       'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+       'BACKEND': 'django.core.cache.backends.memcached.PyMemcacheCache',
        'LOCATION': '127.0.0.1:11211',
+        'OPTIONS': {
+            'ignore_exc': True,
+        },
    }
 }
 ```
