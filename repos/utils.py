@@ -46,7 +46,7 @@ def update_mirror_packages(mirror, packages):
     mirror_packages = mirror.packages.all()
     mlen = mirror_packages.count()
 
-    ptext = 'Obtaining stored packages: '
+    ptext = 'Fetching existing packages:'
     progress_info_s.send(sender=None, ptext=ptext, plen=mlen)
     for i, package in enumerate(mirror_packages):
         progress_update_s.send(sender=None, index=i + 1)
