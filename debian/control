@@ -3,17 +3,17 @@ Section: python
 Priority: optional
 Maintainer: Marcus Furlong <furlongm@gmail.com>
 Uploaders: Marcus Furlong <furlongm@gmail.com>
-Build-Depends: debhelper (>=12), python3 (>= 3.6), dh-python, dh-exec
-Standards-Version: 4.3.0
+Build-Depends: debhelper (>=13), python3 (>= 3.10), dh-python, dh-exec
+Standards-Version: 4.6.2
 Homepage: https://github.com/furlongm/patchman
 Vcs-Git: git://github.com/furlongm/patchman
 Vcs-Browser: https://github.com/furlongm/patchman
-X-Python3-Version: >= 3.6
+X-Python3-Version: >= 3.10
 
 Package: python3-patchman
 Architecture: all
 Homepage: https://github.com/furlongm/patchman
-Depends: ${misc:Depends}, python3 (>= 3.6), python3-django (>= 2.2),
+Depends: ${misc:Depends}, python3 (>= 3.10), python3-django (>= 3.2),
  python3-django-tagging, python3-django-extensions, python3-django-bootstrap3,
  python3-djangorestframework, python3-django-filters, python3-debian,
  python3-rpm, python3-progressbar, python3-lxml, python3-defusedxml,

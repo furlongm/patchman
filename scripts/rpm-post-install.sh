@@ -4,12 +4,13 @@ if [ ! -e /etc/httpd/conf.d/patchman.conf ] ; then
     cp /etc/patchman/apache.conf.example /etc/httpd/conf.d/patchman.conf
 fi
 
-if ! grep /usr/lib/python3.6/site-packages /etc/httpd/conf.d/patchman.conf >/dev/null 2>&1 ; then
-    sed -i -e "s/^\(Define patchman_pythonpath\).*/\1 \/usr\/lib\/python3.6\/site-packages/" \
+if ! grep /usr/lib/python3.9/site-packages /etc/httpd/conf.d/patchman.conf >/dev/null 2>&1 ; then
+    sed -i -e "s/^\(Define patchman_pythonpath\).*/\1 \/usr\/lib\/python3.9\/site-packages/" \
     /etc/httpd/conf.d/patchman.conf
 fi
 
-service httpd reload
+systemctl enable httpd
+systemctl restart httpd
 
 patchman-set-secret-key
 chown apache /etc/patchman/local_settings.py
