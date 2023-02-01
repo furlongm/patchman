@@ -265,7 +265,7 @@ def get_or_create_package(name, epoch, version, release, arch, p_type):
         release=release,
         packagetype=p_type,
     ).order_by('-epoch')
-    if potential_packages:
+    if potential_packages.exists():
         package = potential_packages[0]
         if epoch and package.epoch != epoch:
             package.epoch = epoch
