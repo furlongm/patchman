@@ -61,7 +61,7 @@ def process_repos(report, host):
             progress_update_s.send(sender=None, index=i + 1)
 
         for hostrepo in host_repos:
-            if hostrepo.repo.id not in repo_ids:
+            if hostrepo.repo_id not in repo_ids:
                 hostrepo.delete()
 
 
