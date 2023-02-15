@@ -139,7 +139,8 @@ else:
             sitepackages = [s for s in sys.path if s.endswith(sp)][0]
         conf_path = os.path.join(sitepackages, 'etc/patchman')
 local_settings = os.path.join(conf_path, 'local_settings.py')
-exec(compile(open(local_settings).read(), local_settings, 'exec'))
+with open(local_settings, 'r', encoding='utf_8') as ls:
+    exec(compile(ls.read(), local_settings, 'exec'))
 
 INSTALLED_APPS = DEFAULT_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
