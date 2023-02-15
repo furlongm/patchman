@@ -19,13 +19,13 @@
 import os
 from setuptools import setup, find_packages
 
-with open('VERSION.txt', 'r') as v:
+with open('VERSION.txt', 'r', encoding='utf_8') as v:
     version = v.readline().strip()
 
-with open('README.md', 'r') as r:
+with open('README.md', 'r', encoding='utf_8') as r:
     long_description = r.read()
 
-with open('requirements.txt') as rt:
+with open('requirements.txt', 'r', encoding='utf_8') as rt:
     install_requires = rt.read().splitlines()
 
 

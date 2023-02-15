@@ -26,7 +26,7 @@ def get_query_string(qs):
     return '?' + '&amp;'.join(newqs).replace(' ', '%20')
 
 
-class Filter(object):
+class Filter:
 
     def __init__(self, request, name, filters, header=''):
         if header == '':
@@ -79,7 +79,7 @@ class Filter(object):
         return output
 
 
-class FilterBar(object):
+class FilterBar:
 
     def __init__(self, request, filter_list):
         self.request = request
