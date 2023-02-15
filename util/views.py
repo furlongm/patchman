@@ -85,8 +85,8 @@ def dashboard(request):
     # report issues
     unprocessed_reports = Report.objects.filter(processed=False)
 
-    checksums = dict()
-    possible_mirrors = dict()
+    checksums = {}
+    possible_mirrors = {}
 
     for csvalue in Mirror.objects.all().values('file_checksum').distinct():
         checksum = csvalue['file_checksum']
