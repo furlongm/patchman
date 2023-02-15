@@ -35,7 +35,7 @@ class EditRepoForm(ModelForm):
         widget=FilteredSelectMultiple('Mirrors', is_stacked=False))
 
     def __init__(self, *args, **kwargs):
-        super(EditRepoForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['name'].widget = TextInput(attrs={'size': 100})
         self.fields['repo_id'].widget = TextInput(attrs={'size': 100})
 
@@ -57,7 +57,7 @@ class CreateRepoForm(ModelForm):
     def __init__(self, *args, **kwargs):
         arch = kwargs.pop('arch', False)
         repotype = kwargs.pop('repotype', False)
-        super(CreateRepoForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.arch = arch
         self.repotype = repotype
         self.fields['name'].label = 'New Repository'
@@ -89,7 +89,7 @@ class EditMirrorForm(ModelForm):
         js = ('animations.js', 'actions.js')
 
     def __init__(self, *args, **kwargs):
-        super(EditMirrorForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['url'].widget = TextInput(attrs={'size': 150},)
         self.fields['file_checksum'].widget = TextInput(attrs={'size': 100},)
 
