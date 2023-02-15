@@ -79,6 +79,7 @@ THIRD_PARTY_APPS = [
     'bootstrap3',
     'rest_framework',
     'django_filters',
+    'debug_toolbar',
 ]
 
 LOCAL_APPS = [
@@ -157,6 +158,7 @@ if RUN_GUNICORN or (len(sys.argv) > 1 and sys.argv[1] == 'runserver'):  # noqa
         'django.middleware.cache.UpdateCacheMiddleware',
         'django.middleware.http.ConditionalGetMiddleware',
         'django.contrib.sessions.middleware.SessionMiddleware',
+        'debug_toolbar.middleware.DebugToolbarMiddleware',
         'django.middleware.common.CommonMiddleware',
         'django.middleware.csrf.CsrfViewMiddleware',
         'django.contrib.auth.middleware.AuthenticationMiddleware',
