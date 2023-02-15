@@ -561,11 +561,11 @@ def refresh_rpm_repo(repo):
     """
 
     formats = [
-        'repodata/repomd.xml.xz'
+        'repodata/repomd.xml.xz',
         'repodata/repomd.xml.bz2',
         'repodata/repomd.xml.gz',
         'repodata/repomd.xml',
-        'suse/repodata/repomd.xml.xz'
+        'suse/repodata/repomd.xml.xz',
         'suse/repodata/repomd.xml.bz2',
         'suse/repodata/repomd.xml.gz',
         'suse/repodata/repomd.xml',
