@@ -10,8 +10,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEBUG = True
 ALLOWED_HOSTS = ['127.0.0.1']
 
-ADMINS = []
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.cache.UpdateCacheMiddleware',
@@ -124,8 +122,6 @@ STATICFILES_DIRS = [os.path.abspath(os.path.join(BASE_DIR, 'patchman/static'))]
 # Absolute path to the directory static files should be collected to.
 STATIC_ROOT = '/var/lib/patchman/static/'
 
-TEST_RUNNER = 'django.test.runner.DiscoverRunner'
-
 if sys.prefix == '/usr':
     conf_path = '/etc/patchman'
 else:
@@ -145,7 +141,6 @@ else:
 local_settings = os.path.join(conf_path, 'local_settings.py')
 exec(compile(open(local_settings).read(), local_settings, 'exec'))
 
-MANAGERS = ADMINS
 INSTALLED_APPS = DEFAULT_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 if RUN_GUNICORN or (len(sys.argv) > 1 and sys.argv[1] == 'runserver'):  # noqa
