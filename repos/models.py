@@ -46,7 +46,7 @@ class Repository(models.Model):
     repo_id = models.CharField(max_length=255, null=True, blank=True)
     auth_required = models.BooleanField(default=False)
 
-    class Meta(object):
+    class Meta:
         verbose_name_plural = 'Repository'
         verbose_name_plural = 'Repositories'
 
@@ -134,7 +134,7 @@ class Mirror(models.Model):
     refresh = models.BooleanField(default=True)
     fail_count = models.IntegerField(default=0)
 
-    class Meta(object):
+    class Meta:
         verbose_name_plural = 'Mirror'
         verbose_name_plural = 'Mirrors'
 

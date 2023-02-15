@@ -56,7 +56,7 @@ class Host(models.Model):
     tags = TagField()
     updated_at = models.DateTimeField(default=timezone.now)
 
-    class Meta(object):
+    class Meta:
         verbose_name = 'Host'
         verbose_name_plural = 'Hosts'
         ordering = ('hostname',)
@@ -321,7 +321,7 @@ class HostRepo(models.Model):
     enabled = models.BooleanField(default=True)
     priority = models.IntegerField(default=0)
 
-    class Meta(object):
+    class Meta:
         unique_together = ('host', 'repo')
 
     def __str__(self):

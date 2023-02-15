@@ -21,31 +21,31 @@ from packages.models import PackageName, Package, PackageUpdate, \
 
 
 class PackageNameSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta(object):
+    class Meta:
         model = PackageName
         fields = ('id', 'name')
 
 
 class PackageSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta(object):
+    class Meta:
         model = Package
         fields = ('id', 'name', 'epoch', 'version', 'release', 'arch')
 
 
 class PackageUpdateSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta(object):
+    class Meta:
         model = PackageUpdate
         fields = ('id', 'oldpackage', 'newpackage', 'security')
 
 
 class ErratumSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta(object):
+    class Meta:
         model = Erratum
         fields = ('id', 'name', 'etype', 'issue_date', 'synopsis', 'arches',
                   'releases', 'references')
 
 
 class ErratumReferenceSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta(object):
+    class Meta:
         model = ErratumReference
         fields = ('id', 'url')

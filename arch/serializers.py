@@ -20,12 +20,12 @@ from arch.models import PackageArchitecture, MachineArchitecture
 
 
 class PackageArchitectureSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta(object):
+    class Meta:
         model = PackageArchitecture
         fields = ('id', 'name')
 
 
 class MachineArchitectureSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta(object):
+    class Meta:
         model = MachineArchitecture
         fields = ('id', 'name')
