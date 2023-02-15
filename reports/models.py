@@ -37,7 +37,7 @@ class Report(models.Model):
     kernel = models.CharField(max_length=255, null=True)
     arch = models.CharField(max_length=255, null=True)
     os = models.CharField(max_length=255, null=True)
-    report_ip = models.GenericIPAddressField(null=True)
+    report_ip = models.GenericIPAddressField(null=True, blank=True)
     protocol = models.CharField(max_length=255, null=True)
     useragent = models.CharField(max_length=255, null=True)
     processed = models.BooleanField(default=False)
