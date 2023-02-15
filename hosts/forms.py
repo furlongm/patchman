@@ -28,7 +28,7 @@ class EditHostForm(ModelForm):
         self.fields['reversedns'].widget = TextInput(attrs={'size': 50},)
         self.fields['kernel'].widget = TextInput(attrs={'size': 50},)
 
-    class Meta(object):
+    class Meta:
         model = Host
         fields = ('hostname',
                   'reversedns',

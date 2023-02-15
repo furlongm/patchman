@@ -32,7 +32,7 @@ class PackageName(models.Model):
 
     name = models.CharField(unique=True, max_length=255)
 
-    class Meta(object):
+    class Meta:
         verbose_name = 'Package'
         verbose_name_plural = 'Packages'
         ordering = ('name',)
@@ -72,7 +72,7 @@ class Package(models.Model):
 
     objects = PackageManager()
 
-    class Meta(object):
+    class Meta:
         ordering = ('name', 'epoch', 'version', 'release', 'arch')
         unique_together = (
             'name', 'epoch', 'version', 'release', 'arch', 'packagetype',)
@@ -152,7 +152,7 @@ class Package(models.Model):
 
 class PackageString(models.Model):
 
-    class Meta(object):
+    class Meta:
         managed = False
 
     name = models.CharField(max_length=255)
@@ -201,7 +201,7 @@ class PackageUpdate(models.Model):
                                    related_name='newpackage')
     security = models.BooleanField(default=False)
 
-    class Meta(object):
+    class Meta:
         unique_together = (('oldpackage', 'newpackage', 'security'))
 
     def __str__(self):
@@ -232,7 +232,7 @@ class Erratum(models.Model):
     releases = models.ManyToManyField(OSGroup, blank=True)
     references = models.ManyToManyField(ErratumReference, blank=True)
 
-    class Meta(object):
+    class Meta:
         verbose_name = 'Erratum'
         verbose_name_plural = 'Errata'
 
