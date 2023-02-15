@@ -83,8 +83,10 @@ def update_mirror_packages(mirror, packages):
                                 release=release,
                                 packagetype=packagetype)
         from repos.models import MirrorPackage
-        with transaction.atomic():
-            MirrorPackage.objects.get(mirror=mirror, package=p).delete()
+        mirror_packages = MirrorPackage.objects.filter(mirror=mirror, package=p)
+        for mirror_package in mirror_packages:
+            with transaction.atomic():
+                mirror_package.delete()
 
     ptext = f'Adding {nlen!s} new packages:'
     progress_info_s.send(sender=None, ptext=ptext, plen=nlen)
@@ -120,7 +122,7 @@ def update_mirror_packages(mirror, packages):
                 package_id.save()
         from repos.models import MirrorPackage  # noqa
         with transaction.atomic():
-            MirrorPackage.objects.create(mirror=mirror, package=p)
+            mirror_package, c = MirrorPackage.objects.get_or_create(mirror=mirror, package=p)
 
 
 def get_primary_url(mirror_url, data):
