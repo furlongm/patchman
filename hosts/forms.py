@@ -23,7 +23,7 @@ from hosts.models import Host
 class EditHostForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
-        super(EditHostForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['hostname'].widget = TextInput(attrs={'size': 50},)
         self.fields['reversedns'].widget = TextInput(attrs={'size': 50},)
         self.fields['kernel'].widget = TextInput(attrs={'size': 50},)
