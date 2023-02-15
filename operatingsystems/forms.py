@@ -25,10 +25,10 @@ from repos.models import Repository
 class AddOSToOSGroupForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
-        super(AddOSToOSGroupForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['osgroup'].label = 'OS Groups'
 
-    class Meta(object):
+    class Meta:
         model = OS
         fields = ('osgroup',)
 
@@ -36,10 +36,10 @@ class AddOSToOSGroupForm(ModelForm):
 class CreateOSGroupForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
-        super(CreateOSGroupForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['name'].label = 'New OS Group'
 
-    class Meta(object):
+    class Meta:
         model = OSGroup
         fields = ('name',)
 
@@ -53,9 +53,9 @@ class AddReposToOSGroupForm(ModelForm):
         widget=FilteredSelectMultiple('Repos', False))
 
     def __init__(self, *args, **kwargs):
-        super(AddReposToOSGroupForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['repos'].label = ''
 
-    class Meta(object):
+    class Meta:
         model = OSGroup
         fields = ('repos',)

@@ -20,12 +20,12 @@ from operatingsystems.models import OS, OSGroup
 
 
 class OSSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta(object):
+    class Meta:
         model = OS
         fields = ('id', 'name', 'osgroup')
 
 
 class OSGroupSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta(object):
+    class Meta:
         model = OSGroup
         fields = ('id', 'name', 'repos')
