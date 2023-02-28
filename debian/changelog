@@ -1,3 +1,10 @@
+patchman (2.0.12-1) stable; urgency=medium
+
+  * fix client deps on el8/el9
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Tue, 28 Feb 2023 18:26:08 +0000
+
 patchman (2.0.11-1) stable; urgency=medium
 
   * fix mirror_package creation and deletion
