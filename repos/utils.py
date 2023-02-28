@@ -313,7 +313,11 @@ def extract_yum_packages(data, url):
 def extract_deb_packages(data, url):
     """ Extract package metadata from debian Packages file
     """
-    extracted = extract(data, url).decode('utf-8')
+    try:
+        extracted = extract(data, url).decode('utf-8')
+    except UnicodeDecodeError as e:
+        error_message.send(sender=None, text=f'Skipping {url} : {e}')
+        return
     package_re = re.compile('^Package: ', re.M)
     plen = len(package_re.findall(extracted))
     packages = set()
@@ -638,11 +642,14 @@ def refresh_deb_repo(repo):
                 warning_message.send(sender=None, text=text)
             else:
                 packages = extract_deb_packages(data, mirror_url)
-                mirror.last_access_ok = True
-                mirror.timestamp = ts
-                update_mirror_packages(mirror, packages)
-                mirror.file_checksum = computed_checksum
-                packages.clear()
+                if packages is None:
+                    mirror.fail()
+                else:
+                    mirror.last_access_ok = True
+                    mirror.timestamp = ts
+                    update_mirror_packages(mirror, packages)
+                    mirror.file_checksum = computed_checksum
+                    packages.clear()
         else:
             mirror.fail()
         mirror.save()
