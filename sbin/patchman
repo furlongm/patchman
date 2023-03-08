@@ -26,6 +26,7 @@ from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned
 from django.db.models import Count
 from django import setup as django_setup
+from django.core.mail import mail_admins
 
 django_setup()
 
@@ -326,10 +327,25 @@ def host_updates(host=None):
     """ Find updates for all hosts, specify host for a single host
     """
     hosts = get_hosts(host, 'Finding updates')
+    updates = []
     for host in hosts:
         info_message.send(sender=None, text=str(host))
-        host.find_updates()
+        var = host.find_updates()
+        if var:
+            updates.append({'host': str(host), 'updates': var})
         info_message.send(sender=None, text='')
+    # send notif
+    if updates:
+        subject = "Avaibles updates for {} hosts".format(str(len(updates)))
+        msg = ""
+        html_msg = ""
+        for update in updates:
+            msg += update['host'] + ' :\n'
+            html_msg += '<h1>' + update['host'] + ' :</h1>\n'
+            for update_avaible in update['updates']:
+                msg += '\t' + str(update_avaible) + '\n'
+                html_msg += '\t' + str(update_avaible) + '\n'
+        mail_admins(subject=subject, message=msg, html_message=html_msg)
 
 
 def diff_hosts(hosts):
