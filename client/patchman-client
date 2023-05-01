@@ -71,17 +71,20 @@ cleanup() {
         echo "Debug: not deleting ${tmpfile_rep} (repos)"
         echo "Debug: not deleting ${tmpfile_sec} (security updates)"
         echo "Debug: not deleting ${tmpfile_bug} (updates)"
+        echo "Debug: not deleting ${tmpfile_mod} (modules)"
     elif ${verbose} && ! ${debug} ; then
         echo "Deleting ${tmpfile_pkg}"
         echo "Deleting ${tmpfile_rep}"
         echo "Deleting ${tmpfile_sec}"
         echo "Deleting ${tmpfile_bug}"
+        echo "Deleting ${tmpfile_mod}"
     fi
     if ! ${debug} ; then
         rm -fr "${tmpfile_pkg}"
         rm -fr "${tmpfile_rep}"
         rm -fr "${tmpfile_sec}"
         rm -fr "${tmpfile_bug}"
+        rm -fr "${tmpfile_mod}"
     fi
     flock -u 200
     rm -fr "${lock_dir}/patchman.lock"
@@ -170,6 +173,58 @@ check_command_exists() {
     fi
 }
 
+check_for_modularity() {
+    modularity=false
+    if check_command_exists yum ; then
+        if ${verbose} ; then
+            echo 'Checking for modularity...'
+        fi
+        if yum module 2>&1 | grep -q 'No such command' ; then
+            modularity=false
+        else
+            modularity=true
+        fi
+    fi
+}
+
+get_enabled_modules() {
+    if ${verbose} ; then
+        echo 'Finding enabled yum modules...'
+    fi
+    enabled_modules=$(yum module list --enabled \
+        | grep "\[e\]" \
+        | grep -v ^Hint \
+        | awk {'print $1'})
+
+    OLDIFS=${IFS}
+    IFS="
+"
+    for module in ${enabled_modules} ; do
+        IFS=${OLDIFS}
+        module_info=$(yum module info ${module})
+        module_arch=$(echo ${module_info} | grep Architecture | cut -d : -f 2 | awk '{$1=$1};1')
+        module_repo=$(echo ${module_info} | grep Repo | cut -d : -f 2 | awk '{$1=$1};1')
+        module_stream=$(echo ${module_info} | grep Stream | cut -d : -f 2 | sed -e 's/ \[.*//g' | awk '{$1=$1};1')
+        module_version=$(echo ${module_info} | grep Version | cut -d : -f 2 | awk '{$1=$1};1')
+        module_context=$(echo ${module_info} | grep Context | cut -d : -f 2 | awk '{$1=$1};1')
+        module_packages=$(echo $module_info} | sed -n '/Artifacts/,$p' | grep -v Hint | sed -e 's/.* : //g' | grep -v ^$)
+        OLDIFS=${IFS}
+        IFS="
+"
+        for package in ${module_packages} ; do
+            module_package_str="${module_package_str} '${package}'"
+        done
+        IFS=${OLDIFS}
+        echo "'${module}' '${module_stream}' '${module_version}' '${module_context}' '${module_arch}' '${module_repo}' ${module_package_str}" >> ${tmpfile_mod}
+    done
+    if [ ! -z ${CPE_NAME} ] ; then
+        sed -i -e "s#${module_repo}#${CPE_NAME}-${module_repo}#g" "${tmpfile_mod}"
+    fi
+    if ${debug} ; then
+        cat "${tmpfile_mod}"
+    fi
+}
+
 get_installed_rpm_packages() {
     if check_command_exists rpm ; then
         if ${verbose} ; then
@@ -209,11 +264,16 @@ get_installed_deb_packages() {
             fi
         done
     fi
+    IFS=${OLDIFS}
 }
 
 get_installed_archlinux_packages() {
     if check_command_exists pacman ; then
+        OLDIFS=${IFS}
+        IFS="
+"
         pacman -Q -i | awk -v q="'" -v s=" " '/^Name/{n=$3} /^Version/{l=split($3, e, ":"); if (l==2) {ep=e[1]; v=e[2]} else {ep=""; v=$3}; split(v, r, "-")} /^Architecture/{a=$3} /^$/{print q n q s q ep q s q r[1] q s q r[2] q s q a q s q"arch"q}' >> "${tmpfile_pkg}"
+        IFS=${OLDIFS}
     fi
 }
 
@@ -221,6 +281,13 @@ get_packages() {
     get_installed_rpm_packages
     get_installed_deb_packages
     get_installed_archlinux_packages
+}
+
+get_modules() {
+    check_for_modularity
+    if ${modularity} ; then
+        get_enabled_modules
+    fi
 }
 
 get_hostname() {
@@ -500,6 +567,7 @@ post_data() {
     curl_opts="${curl_opts} -F repos=\<${tmpfile_rep}"
     curl_opts="${curl_opts} -F sec_updates=\<${tmpfile_sec}"
     curl_opts="${curl_opts} -F bug_updates=\<${tmpfile_bug}"
+    curl_opts="${curl_opts} -F modules=\<${tmpfile_mod}"
     curl_opts="${curl_opts} -F reboot=\"${reboot}\""
     post_command="curl ${curl_opts} ${server%/}/reports/upload/"
 
@@ -524,8 +592,11 @@ post_data() {
     fi
 }
 
-if ! check_command_exists which || ! check_command_exists mktemp || ! check_command_exists curl ; then
-    echo "which, mktemp or curl was not found, exiting."
+if ! check_command_exists which || \
+   ! check_command_exists mktemp || \
+   ! check_command_exists curl || \
+   ! check_command_exists flock ; then
+    echo "which, mktemp, flock or curl was not found, exiting."
     exit 1
 fi
 
@@ -553,9 +624,11 @@ tmpfile_pkg=$(mktemp)
 tmpfile_rep=$(mktemp)
 tmpfile_sec=$(mktemp)
 tmpfile_bug=$(mktemp)
+tmpfile_mod=$(mktemp)
 
 get_host_data
 get_packages
+get_modules
 if ${repo_check} ; then
     get_repos
 fi

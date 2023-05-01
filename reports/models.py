@@ -45,6 +45,7 @@ class Report(models.Model):
     sec_updates = models.TextField(null=True, blank=True)
     bug_updates = models.TextField(null=True, blank=True)
     repos = models.TextField(null=True, blank=True)
+    modules = models.TextField(null=True, blank=True)
     reboot = models.TextField(null=True, blank=True)
 
     class Meta:
@@ -71,8 +72,18 @@ class Report(models.Model):
         self.useragent = meta['HTTP_USER_AGENT']
         self.domain = None
 
-        attrs = ['arch', 'host', 'os', 'kernel', 'protocol', 'packages',
-                 'tags', 'sec_updates', 'bug_updates', 'repos', 'reboot']
+        attrs = ['arch',
+                 'host',
+                 'os',
+                 'kernel',
+                 'protocol',
+                 'packages',
+                 'tags',
+                 'sec_updates',
+                 'bug_updates',
+                 'repos',
+                 'modules',
+                 'reboot']
 
         for attr in attrs:
             setattr(self, attr, data.get(attr).strip())
@@ -150,9 +161,11 @@ class Report(models.Model):
                 info_message.send(sender=None, text=text)
 
             from reports.utils import process_packages, \
-                process_repos, process_updates
+                process_repos, process_updates, process_modules
             with transaction.atomic():
                 process_repos(report=self, host=host)
+            with transaction.atomic():
+                process_modules(report=self, host=host)
             with transaction.atomic():
                 process_packages(report=self, host=host)
             with transaction.atomic():

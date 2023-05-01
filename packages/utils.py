@@ -23,7 +23,7 @@ from django.core.exceptions import MultipleObjectsReturned
 from django.db import IntegrityError, DatabaseError, transaction
 
 from util import bunzip2, get_url, download_url, get_sha1
-from packages.models import ErratumReference, Erratum, PackageName, \
+from packages.models import ErratumReference, PackageName, \
     Package, PackageUpdate
 from arch.models import MachineArchitecture, PackageArchitecture
 from patchman.signals import error_message, progress_info_s, progress_update_s
@@ -72,6 +72,26 @@ def find_version(s, epoch, release):
     except ValueError:
         r = len(s)
     return s[e:r]
+
+
+def parse_package_string(pkg_str):
+    """ Parse a package string and return
+        name, epoch, ver, release, dist, arch
+    """
+
+    for suffix in ['rpm', 'deb']:
+        pkg_str = re.sub(f'.{suffix}$', '', pkg_str)
+    pkg_re = re.compile('(\S+)-(?:(\d*):)?(.*)-(~?\w+)[.+]?(~?\S+)?\.(\S+)$')  # noqa
+    m = pkg_re.match(pkg_str)
+    if m:
+        name, epoch, ver, rel, dist, arch = m.groups()
+    else:
+        e = f'Error parsing package string: "{pkg_str}"'
+        error_message.send(sender=None, text=e)
+        return
+    if dist:
+        rel = f'{rel}.{dist}'
+    return name, epoch, ver, rel, dist, arch
 
 
 def update_errata(force=False):
@@ -211,6 +231,7 @@ def create_erratum(name, etype, issue_date, synopsis, force=False):
     """ Create an Erratum object. Returns the object or None if it already
         exists. To force update the erratum, set force=True
     """
+    from packages.models import Erratum
     errata = Erratum.objects.all()
     with transaction.atomic():
         e, c = errata.get_or_create(name=name,
@@ -343,6 +364,7 @@ def mark_errata_security_updates():
         should be marked as a security update.
     """
     package_updates = PackageUpdate.objects.all()
+    from packages.models import Erratum
     errata = Erratum.objects.all()
     elen = Erratum.objects.count()
     ptext = f'Scanning {elen!s} Errata:'
