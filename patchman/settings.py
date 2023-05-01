@@ -85,6 +85,7 @@ LOCAL_APPS = [
     'arch.apps.ArchConfig',
     'domains.apps.DomainsConfig',
     'hosts.apps.HostsConfig',
+    'modules.apps.ModulesConfig',
     'operatingsystems.apps.OperatingsystemsConfig',
     'packages.apps.PackagesConfig',
     'repos.apps.ReposConfig',

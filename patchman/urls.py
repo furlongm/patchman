@@ -58,6 +58,7 @@ urlpatterns = [
     path('reports/', include('reports.urls', namespace='reports')),
     path('hosts/', include('hosts.urls', namespace='hosts')),
     path('packages/', include('packages.urls', namespace='packages')),
+    path('modules/', include('modules.urls', namespace='modules')),
     path('repos/', include('repos.urls', namespace='repos')),
     path('os/', include('operatingsystems.urls', namespace='operatingsystems')),  # noqa
 ]

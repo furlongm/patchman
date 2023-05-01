@@ -20,11 +20,12 @@ import re
 from django.db import IntegrityError, DatabaseError, transaction
 
 from hosts.models import HostRepo
-from arch.models import MachineArchitecture
+from arch.models import MachineArchitecture, PackageArchitecture
 from repos.models import Repository, Mirror, MirrorPackage
+from modules.models import Module
 from packages.models import Package
 from packages.utils import find_evr, get_or_create_package, \
-    get_or_create_package_update
+    get_or_create_package_update, parse_package_string
 from patchman.signals import progress_info_s, progress_update_s, \
     error_message, info_message
 
@@ -63,6 +64,34 @@ def process_repos(report, host):
         for hostrepo in host_repos:
             if hostrepo.repo_id not in repo_ids:
                 hostrepo.delete()
+
+
+def process_modules(report, host):
+    """ Processes the quoted modules string sent with a report
+    """
+    if report.modules:
+        module_ids = []
+        modules = parse_modules(report.modules)
+
+        progress_info_s.send(sender=None,
+                             ptext=f'{str(host)[0:25]!s} modules',
+                             plen=len(modules))
+        for i, module_str in enumerate(modules):
+            module = process_module(module_str)
+            if module:
+                module_ids.append(module.id)
+                try:
+                    with transaction.atomic():
+                        host.modules.add(module)
+                except IntegrityError as e:
+                    error_message.send(sender=None, text=e)
+                except DatabaseError as e:
+                    error_message.send(sender=None, text=e)
+            progress_update_s.send(sender=None, index=i + 1)
+
+        for module in host.modules.all():
+            if module.id not in module_ids:
+                host.modules.remove(module)
 
 
 def process_packages(report, host):
@@ -107,7 +136,8 @@ def process_updates(report, host):
     if report.sec_updates:
         sec_updates = parse_updates(report.sec_updates, True)
     updates = merge_updates(sec_updates, bug_updates)
-    add_updates(updates, host)
+    if updates:
+        add_updates(updates, host)
 
 
 def merge_updates(sec_updates, bug_updates):
@@ -271,6 +301,74 @@ def process_repo(repo, arch):
                 repository.save()
 
     return repository, r_priority
+
+
+def parse_modules(modules_string):
+    """ Parses modules string in a report and returns a sanitized version
+    """
+    modules = []
+    for module in modules_string.splitlines():
+        module_string = [m for m in module.replace('\'', '').split(' ') if m]
+        if module_string:
+            modules.append(module_string)
+    return modules
+
+
+def process_module(module_str):
+    """ Processes a single sanitied module string and converts to a module
+    """
+    m_name = module_str[0]
+    m_stream = module_str[1]
+    m_version = module_str[2]
+    m_context = module_str[3]
+    arch = module_str[4]
+    repo_id = module_str[5]
+
+    package_arches = PackageArchitecture.objects.all()
+    with transaction.atomic():
+        m_arch, c = package_arches.get_or_create(name=arch)
+
+    try:
+        m_repo = Repository.objects.get(repo_id=repo_id)
+    except Repository.DoesNotExist:
+        m_repo = None
+
+    packages = set()
+    for pkg_str in module_str[6:-1]:
+        p_type = Package.RPM
+        p_name, p_epoch, p_ver, p_rel, p_dist, p_arch = parse_package_string(pkg_str)
+        package = get_or_create_package(p_name, p_epoch, p_ver, p_rel, p_arch, p_type)
+        packages.add(package)
+
+    modules = Module.objects.all()
+    try:
+        with transaction.atomic():
+            module, c = modules.get_or_create(name=m_name,
+                                              stream=m_stream,
+                                              version=m_version,
+                                              context=m_context,
+                                              arch=m_arch,
+                                              repo=m_repo)
+    except IntegrityError as e:
+        error_message.send(sender=None, text=e)
+        module = modules.get(name=m_name,
+                             stream=m_stream,
+                             version=m_version,
+                             context=m_context,
+                             arch=m_arch,
+                             repo=m_repo)
+    except DatabaseError as e:
+        error_message.send(sender=None, text=e)
+
+    for package in packages:
+        try:
+            with transaction.atomic():
+                module.packages.add(package)
+        except IntegrityError as e:
+            error_message.send(sender=None, text=e)
+        except DatabaseError as e:
+            error_message.send(sender=None, text=e)
+    return module
 
 
 def parse_packages(packages_string):
