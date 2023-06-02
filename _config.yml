@@ -1,8 +1,7 @@
 title: Patchman
 description: Patchman is a Linux Patch Status Monitoring System
-google_analytics: UA-2677549-3
+google_analytics: G-Y75CF2S8D5
 show_downloads: true
 theme: jekyll-theme-minimal
-
 gems:
   - jekyll-mentions
