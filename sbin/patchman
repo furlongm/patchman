@@ -17,6 +17,7 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 
+import click
 import os
 import sys
 import argparse
@@ -122,7 +123,7 @@ def refresh_repos(repo=None, force=False):
         info_message.send(sender=None, text='')
 
 
-def list_repos(repos=None):
+def show_repos(repos=None):
     """ Print info about a list of repositories
         Defaults to all repos
     """
@@ -132,8 +133,17 @@ def list_repos(repos=None):
 
 
 def list_hosts(hosts=None):
-    """ Print info about a list of hosts
-        Defaults to all hosts
+    """ Print a list of hosts
+        Defaults to all hosts but hosts can be specified
+    """
+    matching_hosts = get_hosts(hosts, 'Printing information')
+    for host in matching_hosts:
+        text = f'Host ID:{host.id!s} | hostname:{host!s}'
+        info_message.send(sender=None, text=text)
+
+
+def show_hosts(hosts):
+    """ Print detailed info about a list of hosts
     """
     matching_hosts = get_hosts(hosts, 'Printing information')
     for host in matching_hosts:
@@ -224,6 +234,21 @@ def clean_repos():
             repo.delete()
             update_pbar(i + 1)
 
+def list_reports(s_host=None, processed=False):
+    """ List reports for all hosts, specify host for a single host.
+    """
+    hosts = get_hosts(s_host, 'Listing Reports')
+
+    for host in hosts:
+        info_message.send(sender=None, text=str(host))
+        reports = Report.objects.filter(host=host, processed=processed)
+
+    if s_host is None:
+        reports = Report.objects.filter(processed=processed)
+
+    for i, report in enumerate(reports):
+        print(report)
+
 
 def clean_reports(s_host=None):
     """ Delete old reports for all hosts, specify host for a single host.
@@ -270,8 +295,9 @@ def clean_tags():
             update_pbar(i + 1)
 
 
-def host_updates_alt(host=None):
+def find_host_updates_bulk(host=None):
     """ Find updates for all hosts, specify host for a single host
+        This algo works faster for updating multiple similar hosts
     """
     updated_hosts = []
     hosts = get_hosts(host, 'Finding updates')
@@ -322,7 +348,7 @@ def host_updates_alt(host=None):
             info_message.send(sender=None, text=text)
 
 
-def host_updates(host=None):
+def find_host_updates(host=None):
     """ Find updates for all hosts, specify host for a single host
     """
     hosts = get_hosts(host, 'Finding updates')
@@ -436,7 +462,7 @@ def toggle_host_check_dns(hosts=None, check_dns=True):
             host.save()
 
 
-def dns_checks(host=None):
+def check_host_dns(host=None):
     """ Check all hosts for reverse DNS mismatches, specify host for a single
         host
     """
@@ -476,7 +502,7 @@ def clean_updates():
     """ Removes PackageUpdate objects that are no longer
         linked to any hosts
     """
-    package_updates = list(PackageUpdate.objects.all())
+    package_updates = list(PackageUpdate.objects.all().distinct())
 
     for update in package_updates:
         if update.host_set.count() == 0:
@@ -497,7 +523,7 @@ def clean_updates():
                 duplicate.delete()
 
 
-def dbcheck():
+def clean_db():
     """ Runs all clean_* functions to check database consistency
     """
     clean_updates()
@@ -509,7 +535,7 @@ def dbcheck():
     clean_tags()
 
 
-def collect_args():
+def collect_args1():
     """ Collect argparse arguments
     """
     parser = argparse.ArgumentParser(description='Patchman CLI tool')
@@ -588,7 +614,7 @@ def collect_args():
     return parser
 
 
-def process_args(args):
+def process_args1(args):
     """ Process command line arguments
     """
 
@@ -672,15 +698,132 @@ def process_args(args):
     return showhelp
 
 
-def main():
+@click.group()
+@click.option('-q', '--quiet', is_flag=True, default=False)
+@click.option('-f', '--force', is_flag=True, default=False)
+@click.pass_context
+def cli(ctx, quiet, force):
+    set_verbosity(not quiet)
+    ctx.ensure_object(dict)
+    ctx.obj['force'] = force
 
-    parser = collect_args()
-    args = parser.parse_args()
-    set_verbosity(not args.quiet)
-    showhelp = process_args(args)
-    if showhelp:
-        parser.print_help()
+@cli.group('host')
+def host():
+    pass
 
+@host.command()
+@click.option('-H', '--host')
+def list(host):
+    list_hosts(host)
+
+@host.command()
+@click.option('-H', '--host', required=True)
+def show(host):
+    show_hosts(host)
+
+@host.command()
+@click.option('-H', '--host')
+def find_updates(host):
+    find_host_updates(host)
+
+@host.command()
+@click.option('-H', '--host')
+def find_updates_bulk(host):
+    find_host_updates_bulk(host)
+
+@host.command()
+@click.option('-A', required=True)
+@click.option('-B', required=True)
+def diff(A, B):
+    diff_hosts(A, B)
+
+@host.command()
+@click.option('-H', '--host')
+def check_dns(host):
+    check_host_dns(host)
+
+@host.group('set')
+@click.option('-H', '--host')
+@click.option('--use-host-repos-only', 'repos_to_use', flag_value='host_repos')
+@click.option('--use-osgroup-repos-only', 'repos_to_use', flag_value='osgroup_repos')
+@click.option('--check-dns/--no-check-dns', is_flag=True)
+def host_set(check_dns, repos_to_use):
+    if not check_dns or not repos_to_use:
+        text = 'Nothing to set, please pass an option'
+        info_message.send(sender=None, text=text)
+        sys.exit(1)
+    if check_dns:
+        toggle_host_check_dns(host, True)
+    else:
+        toggle_host_check_dns(args.host, False)
+    #FIXME
+
+@host_set.command()
+@click.pass_context
+@click.option('--true/--false', is_flag=True, default=True)
+def check_dns(ctx, true):
+    click.echo('Settings host DNS')
+    #FIXME
+
+@cli.group('repo')
+def repo():
+    pass
+
+@repo.command()
+@click.option('-R', '--repo')
+@click.pass_context
+def refresh(ctx, repo):
+    refresh_repos(repo, ctx.obj['force'])
+
+@repo.command()
+@click.option('-R', '--repo')
+def show(repo):
+    show_repos(repo)
+
+@cli.group('report')
+@click.pass_context
+@click.option('-H', '--host')
+def report(ctx, host=None):
+    pass
+
+@report.command()
+@click.option('-H', '--host')
+@click.option('-a', '--all-reports', is_flag=True, default=False, help='include processed reports')
+def list(host, all_reports):
+    list_reports(host, not all_reports)
+    #FIXME
+
+@report.command()
+@click.option('-H', '--host')
+@click.pass_context
+def process(ctx, host):
+    process_reports(host, ctx.obj['force'])
+
+@report.command()
+@click.option('-H', '--host')
+def clean(host):
+    clean_reports(host)
+
+@cli.group('database')
+def database():
+    pass
+
+@database.command()
+def clean():
+    clean_db()
+
+@cli.group('errata')
+def errata():
+    pass
+
+@errata.command()
+@click.pass_context
+def download(ctx):
+    update_errata(ctx.obj['force'])
+
+@errata.command()
+def apply():
+    mark_errata_security_updates()
 
 if __name__ == '__main__':
-    main()
+    cli()
