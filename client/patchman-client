@@ -191,23 +191,34 @@ get_installed_deb_packages() {
         if ${verbose} ; then
             echo 'Finding installed debs...'
         fi
-        OLDIFS=${IFS}
-        IFS="
-"
-        dpkg_query_output=$(dpkg-query -W --showformat="\${Status}\|\${Package} \${Version} \${Architecture}\n" \
-                            | egrep '^(install)|(hold) ok installed' \
-                            | sed -e 's/^\(install\|hold\) ok installed|//g')
-        for i in ${dpkg_query_output} ; do
-            IFS=${OLDIFS}
-            read -r name fullversion arch <<<$(echo "${i}" | cut -d " " -f 1,2,3)
-            read -r remaining release <<<$(echo "${fullversion}" | sed -e "s/\(.*\)-\(.*\)/\1 \2/")
-            epoch=$(echo "${remaining}" | cut -d ":" -f 1 -s)
-            version=$(echo "${remaining}" | sed -e "s/.*:\(.*\)/\1/")
-            echo \'${name}\' \'${epoch}\' \'${version}\' \'${release}\' \'${arch}\' \'deb\'>> "${tmpfile_pkg}"
-            if ${debug} ; then
-                echo \'${name}\' \'${epoch}\' \'${version}\' \'${release}\' \'${arch}\' \'deb\'
-            fi
-        done
+        dpkg-query -W --showformat='${Status}|${Package}|${Version}|${Architecture}\n' |
+            awk -f <(cat <<'AWK'
+                /^(install|hold) ok installed\|/ {
+                    split($0, parts, "|");
+                    package = parts[2];
+                    version = parts[3];
+                    architecture = parts[4];
+                    epoch = "";
+                    release = "";
+
+                    if (split(version, epoch_t, ":") > 1) {
+                        epoch = epoch_t[1];
+                        version = substr(version, length(epoch) + 2);
+                    }
+                    n = split(version, version_t, "-");
+                    if (n > 1) {
+                        release = version_t[n]
+                        version = substr(version, 1, length(version) - length(release) - 1);
+                    }
+
+                    print "'" package "'", "'" epoch "'", "'" version "'", "'" release "'", "'" architecture "'", "'deb'"
+                }
+AWK
+            ) >> "${tmpfile_pkg}"
+        if ${debug} ; then
+            echo "'name' 'epoch' 'version' 'release' 'arch' 'type'"
+            cat "${tmpfile_pkg}"
+        fi
     fi
 }
 
