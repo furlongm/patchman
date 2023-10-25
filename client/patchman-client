@@ -399,9 +399,20 @@ get_repos() {
         fi
         IFS=${OLDIFS} read -r osname shortversion <<<$(echo "${os}" | awk '{print $1,$2}' | cut -d . -f 1,2)
         repo_string="'deb\' \'${osname} ${shortversion} ${host_arch} repo at"
-        repos=$(apt-cache policy | grep -E "[0-9]{1,5} http(s)?:" | grep -v Translation | sed -e "s/^ *//g" -e "s/ *$//g" | cut -d " " -f 1,2,3,4)
-        dist_repos=$(echo "${repos}" | grep -v -e "Packages$")
-        nondist_repos=$(echo "${repos}" | grep -e "Packages$")
+        repos=$(apt-cache policy | grep -E "[0-9]{1,5} mirror\+file|http(s)?:" | grep -v Translation | sed -e "s/^ *//g" -e "s/ *$//g" | cut -d " " -f 1,2,3,4)
+        non_mirror_repos=$(echo "${repos}" | grep -Ev "mirror\+file")
+        dist_repos=$(echo "${non_mirror_repos}" | grep -v -e "Packages$")
+        nondist_repos=$(echo "${non_mirror_repos}" | grep -e "Packages$")
+        mirror_repos=$(echo "${repos}" | grep -E "mirror\+file")
+        for mirror_repo in ${mirror_repos} ; do
+            mirror_file=$(echo "${mirror_repo}" | sed -e "s/.* mirror+file://g" | cut -d " " -f 1)
+            if [ -f "${mirror_file}" ] ; then
+                for url in $(cat ${mirror_file}) ; do
+                    dist_repo=$(echo "${mirror_repo}" | sed -e "s#mirror+file:${mirror_file}#${url}#g")
+                    dist_repos="${dist_repos}"$'\n'"${dist_repo}"
+                done
+            fi
+        done
         echo "${dist_repos}" | sed -e "s/\([0-9]*\) \(http:.*\|https:.*\)[\/]\? \(.*\/.*\) \(.*\)/${repo_string} \2\/dists\/\3\/binary-\4' '\1' '\2\/dists\/\3\/binary-\4'/" >> "${tmpfile_rep}"
         echo "${nondist_repos}" | sed -e "s/\([0-9]*\) \(http:.*\|https:.*\)[\/]\? \(.*\/\?.*\) Packages/${repo_string} \2\/\3' '\1' '\2\/\3'/" >> "${tmpfile_rep}"
     fi
