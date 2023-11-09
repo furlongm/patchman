@@ -383,8 +383,8 @@ def extract_arch_packages(data):
     """ Extract package metadata from an arch linux tarfile
     """
     from packages.utils import find_evr
-    extracted = BytesIO(extract(data, 'gz'))
-    tf = tarfile.open(fileobj=extracted, mode='r:*')
+    bio = BytesIO(data)
+    tf = tarfile.open(fileobj=bio, mode='r:*')
     packages = set()
     plen = len(tf.getnames())
     if plen > 0:
