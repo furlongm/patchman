@@ -248,9 +248,10 @@ class Host(models.Model):
                         # proceed only if the package is from a repo with a
                         # priority and that priority is >= the repo priority
                         pu_best_repo = find_best_repo(pu, hostrepos)
-                        pu_priority = pu_best_repo.priority
-                        if pu_priority >= priority:
-                            highest_package = pu
+                        if pu_best_repo:
+                            pu_priority = pu_best_repo.priority
+                            if pu_priority >= priority:
+                                highest_package = pu
                     else:
                         highest_package = pu
 
