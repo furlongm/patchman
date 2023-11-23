@@ -410,7 +410,7 @@ get_repos() {
         fi
         IFS=${OLDIFS} read -r osname shortversion <<<$(echo "${os}" | awk '{print $1,$2}' | cut -d . -f 1,2)
         repo_string="'deb\' \'${osname} ${shortversion} ${host_arch} repo at"
-        repos=$(apt-cache policy | grep -E "[0-9]{1,5} mirror\+file|http(s)?:" | grep -v Translation | sed -e "s/^ *//g" -e "s/ *$//g" | cut -d " " -f 1,2,3,4)
+        repos=$(apt-cache policy | grep -v Translation | grep -E "^ *[0-9]{1,5}" | grep -E " mirror\+file|http(s)?:" | sed -e "s/^ *//g" -e "s/ *$//g" | cut -d " " -f 1,2,3,4)
         non_mirror_repos=$(echo "${repos}" | grep -Ev "mirror\+file")
         dist_repos=$(echo "${non_mirror_repos}" | grep -v -e "Packages$")
         nondist_repos=$(echo "${non_mirror_repos}" | grep -e "Packages$")
