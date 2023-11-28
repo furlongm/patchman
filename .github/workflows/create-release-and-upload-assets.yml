@@ -50,9 +50,8 @@ jobs:
           git config user.name 'Marcus Furlong'
       - name: Install dependencies
         run: |
-          apt update
-          export DEBIAN_FRONTEND=noninteractive
-          apt -y install python3-setuptools debhelper dh-exec dh-python git-buildpackage
+          sudo apt update
+          sudo apt -y install python3-setuptools debhelper dh-exec dh-python git-buildpackage
       - name: Update repo version if required
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
