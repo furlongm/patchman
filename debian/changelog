@@ -1,3 +1,12 @@
+patchman (3.0.0-1) stable; urgency=medium
+
+  * modularity support
+  * django3 / 2023 distro support
+  * bump django and requests to address security issues
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Thu, 07 Dec 2023 03:54:41 +0000
+
 patchman (2.0.18-1) stable; urgency=medium
 
   [ Alex Uebergang ]
