@@ -766,7 +766,7 @@ def find_best_repo(package, hostrepos):
         repo. Returns the best repo.
     """
     best_repo = None
-    package_repos = hostrepos.filter(repo__mirror__packages=package)
+    package_repos = hostrepos.filter(repo__mirror__packages=package).distinct()
 
     if package_repos:
         best_repo = package_repos[0]
