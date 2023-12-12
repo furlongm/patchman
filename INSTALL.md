@@ -249,7 +249,7 @@ collect static files:
 
 ```shell
 patchman-manage makemigrations
-patchman-manage migrate --run-syncdb
+patchman-manage migrate --run-syncdb --fake-initial
 patchman-manage createsuperuser
 patchman-manage collectstatic
 ```
