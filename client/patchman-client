@@ -597,7 +597,7 @@ post_data() {
         echo "${post_command}"
     fi
 
-    result=$(eval ${post_command})
+    result=$(eval "${post_command}")
     retval=${?}
 
     if [ ! ${retval} -eq 0 ] ; then
