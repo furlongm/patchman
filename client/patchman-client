@@ -207,7 +207,7 @@ get_enabled_modules() {
         module_stream=$(echo ${module_info} | grep Stream | cut -d : -f 2 | sed -e 's/ \[.*//g' | awk '{$1=$1};1')
         module_version=$(echo ${module_info} | grep Version | cut -d : -f 2 | awk '{$1=$1};1')
         module_context=$(echo ${module_info} | grep Context | cut -d : -f 2 | awk '{$1=$1};1')
-        module_packages=$(echo $module_info} | sed -n '/Artifacts/,$p' | grep -v Hint | sed -e 's/.* : //g' | grep -v ^$)
+        module_packages=$(echo ${module_info} | sed -n '/Artifacts/,$p' | grep -v Hint | sed -e 's/.* : //g' | grep -v ^$)
         OLDIFS=${IFS}
         IFS="
 "
