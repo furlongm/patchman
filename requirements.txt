@@ -6,7 +6,7 @@ progressbar==2.5
 python-debian==0.1.49
 lxml==4.9.2
 defusedxml==0.7.1
-PyYAML==6.0
+PyYAML==6.0.1
 chardet==4.0.0
 requests==2.31.0
 colorama==0.4.4
