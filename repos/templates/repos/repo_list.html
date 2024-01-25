@@ -2,6 +2,6 @@
 
 {% block page_title %}Repositories{% endblock %}
 
-{% block breadcrumbs %} {{ block.super }} <li class="active"><a href="{% url 'repos:repo_list' %}">Repositories</a></li>{% endblock %}
+{% block breadcrumbs %} {{ block.super }} <li class="breadcrumb-item active"><a href="{% url 'repos:repo_list' %}">Repositories</a></li> {% endblock %}
 
 {% block content_title %} Repositories {% endblock %}

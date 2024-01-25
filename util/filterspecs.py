@@ -56,10 +56,10 @@ class Filter:
         if self.name in qs:
             del qs[self.name]
 
-        output = '<div class="panel panel-default">\n'
-        output += '<div class="panel-heading">'
+        output = '<div class="card">\n'
+        output += '<div class="card-header">'
         output += f"{self.header.replace('_', ' ')!s}</div>\n"
-        output += '<div class="panel-body">\n'
+        output += '<div class="card-body">\n'
         output += '<div class="list-group list-group-info">\n'
         output += f'<a href="{get_query_string(qs)!s}" '
         output += 'class="list-group-item'

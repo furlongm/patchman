@@ -1,6 +1,6 @@
 {% extends "repos/mirror_list.html" %}
 
-{% load common bootstrap3 %}
+{% load common django_bootstrap5 %}
 
 {% block content %}
 
@@ -8,20 +8,20 @@
 
 {% if user.is_authenticated and perms.is_admin %}
   {% if link_form and create_form %}
-    <div class="well well-sm">
+    <div class="card">
       <form action={{ request.path }} method="post">
         {% csrf_token %}
         <input type="hidden" name="checksum" value="{{ checksum }}" />
-        {% bootstrap_form link_form size='small' %}
-        <button name="link" type="submit" class="btn btn-primary btn-sm">{% bootstrap_icon "link" %} Link all Mirrors above to an existing Repository</button>
+        {% bootstrap_form link_form size='sm' %}
+        <button name="link" type="submit" class="btn btn-outline-primary btn-sm">{% icon "link" %} Link all Mirrors above to an existing Repository</button>
       </form>
     </div>
-    <div class="well well-sm">
+    <div class="card">
       <form action={{ request.path }} method="post">
         {% csrf_token %}
         <input type="hidden" name="checksum" value="{{ checksum }}" />
-        {% bootstrap_form create_form size='small' %}
-        <button name="create" type="submit" class="btn btn-primary btn-sm">{% bootstrap_icon "flash" %} Create a new Repository and link all Mirrors above to it</button>
+        {% bootstrap_form create_form size='sm' %}
+        <button name="create" type="submit" class="btn btn-outline-primary btn-sm">{% icon "flash" %} Create a new Repository and link all Mirrors above to it</button>
       </form>
     </div>
   {% endif %}

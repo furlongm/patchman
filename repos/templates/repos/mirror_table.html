@@ -1,15 +1,15 @@
-{% load common bootstrap3 %}
-<table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+{% load common django_bootstrap5 icons %}
+<table class="table table-striped table-bordered table-hover table-sm table-responsive">
   <thead>
     <tr>
-      <th class="col-sm-1">ID</th>
+      <th class="col-sm">ID</th>
       <th class="col-sm-1">URL</th>
       <th class="col-sm-1">Packages</th>
-      <th class="col-sm-1">Enabled</th>
-      <th class="col-sm-1">Refresh</th>
-      <th class="col-sm-1">Mirrorlist/Metalink</th>
-      <th class="col-sm-1">Last Access OK</th>
-      <th class="col-sm-4">Timestamp</th>
+      <th class="col-sm">Enabled</th>
+      <th class="col-sm">Refresh</th>
+      <th class="col-sm">Mirrorlist/Metalink</th>
+      <th class="col-sm">Last Access OK</th>
+      <th class="col-sm-1">Timestamp</th>
       <th class="col-sm-1">Checksum</th>
       <th class="col-sm-1">Delete</th>
       <th class="col-sm-1">Edit</th>
@@ -27,8 +27,8 @@
         <td class="centered">{% yes_no_img mirror.last_access_ok 'Yes' 'No' %}</td>
         <td>{{ mirror.timestamp }}</td>
         <td>{{ mirror.file_checksum|truncatechars:16 }}</td>
-        <td><a class="btn btn-primary btn-xs" role="button" href="{% url 'repos:mirror_delete' mirror.id %}">{% bootstrap_icon "trash" %} Delete this Mirror</a></td>
-        <td><a class="btn btn-primary btn-xs" role="button" href="{% url 'repos:mirror_edit' mirror.id %}">{% bootstrap_icon "edit" %} Edit this Mirror</a></td>
+        <td><a class="btn btn-outline-primary btn-sm text-nowrap" role="button" href="{% url 'repos:mirror_delete' mirror.id %}">{% icon "trash" %} Delete this Mirror</a></td>
+        <td><a class="btn btn-outline-primary btn-sm text-nowrap" role="button" href="{% url 'repos:mirror_edit' mirror.id %}">{% icon "edit" %} Edit this Mirror</a></td>
       </tr>
     {% endfor %}
   </tbody>

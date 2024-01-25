@@ -1,38 +1,40 @@
-    <nav class="navbar navbar-inverse">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
       <div class="container-fluid">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="https://github.com/furlongm/patchman">Patchman</a>
-        </div>
-        <div class="collapse navbar-collapse" id="myNavbar">
-          <ul class="nav navbar-nav">
-            <li class="{% if '/dashboard' in request.path %}active{% endif %}"><a href="{% url 'util:dashboard' %}">Dashboard</a></li>
-            <li class="{% if '/hosts' in request.path %}active{% endif %}">    <a href="{% url 'hosts:host_list' %}">Hosts</a></li>
-            <li class="{% if '/repos' in request.path %}active{% endif %}">    <a href="{% url 'repos:repo_list' %}">Repositories</a></li>
-            <li class="{% if '/packages' in request.path %}active{% endif %}"> <a href="{% url 'packages:package_list' %}">Packages</a></li>
-            <li class="{% if '/os' in request.path %}active{% endif %}">       <a href="{% url 'operatingsystems:os_list' %}">Operating Systems</a></li>
-            <li class="{% if '/reports' in request.path %}active{% endif %}">  <a href="{% url 'reports:report_list' %}">Reports</a></li>
-            {% if user.is_superuser %}
-              <li><a href="{% url 'admin:index' %}">Django Admin</a></li>
-            {% endif %}
+        <a class="navbar-brand" href="https://github.com/furlongm/patchman">Patchman</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="#navbarSupportedContent">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item"><a class="nav-link{% if '/dashboard' in request.path %} active" aria-current="page{% endif %}"  href="{% url 'util:dashboard' %}">Dashboard</a></li>
+            <li class="nav-item"><a class="nav-link{% if '/hosts' in request.path %} active" aria-current="page{% endif %}"      href="{% url 'hosts:host_list' %}">Hosts</a></li>
+            <li class="nav-item"><a class="nav-link{% if '/repos' in request.path %} active" aria-current="page{% endif %}"      href="{% url 'repos:repo_list' %}">Repositories</a></li>
+            <li class="nav-item"><a class="nav-link{% if '/packages' in request.path %} active" aria-current="page{% endif %}"   href="{% url 'packages:package_list' %}">Packages</a></li>
+            <li class="nav-item"><a class="nav-link{% if '/os' in request.path %} active" aria-current="page{% endif %}"         href="{% url 'operatingsystems:os_list' %}">Operating Systems</a></li>
+            <li class="nav-item"><a class="nav-link{% if '/reports' in request.path %} active" aria-current="page{% endif %}"    href="{% url 'reports:report_list' %}">Reports</a></li>
           </ul>
-          <div class="pull-right navbar-text">
-            {% if user.is_authenticated %}
+	</div>
+      </div>
+      <div class="float-right navbar-text">
+        {% if user.is_authenticated %}
+          <div class="nav-item float-end dropdown">
+            <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
               {% if user.first_name %}
-                Welcome, {{ user.first_name }}
+                {{ user.first_name }}
               {% else %}
-                Welcome, {{ user }}
+                {{ user }}
               {% endif %}
-              / <a href="{% url 'logout' %}">Log out</a>
-            {% else %}
-              Welcome, Guest
-              / <a href="{% url 'login' %}">Log In</a>
-            {% endif %}
-          </div>
-        </div>
+            </button>
+            <ul class="dropdown-menu">
+              {% if user.is_superuser %}
+                <li><a class="dropdown-item" href="{% url 'admin:index' %}">Django Admin</a></li>
+              {% endif %}
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="{% url 'logout' %}">Log Out</a></li>
+            </ul>
+	  </div>
+        {% else %}
+          <a href="{% url 'login' %}">Log In</a>
+        {% endif %}
       </div>
     </nav>

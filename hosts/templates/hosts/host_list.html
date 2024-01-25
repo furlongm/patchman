@@ -2,6 +2,7 @@
 
 {% block page_title %}Hosts{% endblock %}
 
+{% block breadcrumbs %} {{ block.super }} <li class="breadcrumb-item active"><a href="{% url 'hosts:host_list' %}">Hosts</a></li> {% endblock %}
+
 {% block content_title %} Hosts {% endblock %}
 
-{% block breadcrumbs %} {{ block.super }} <li class="active"><a href="{% url 'hosts:host_list' %}">Hosts</a></li> {% endblock %}

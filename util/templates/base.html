@@ -2,35 +2,39 @@
   <head>
     <meta charset="UTF-8">
     <meta name="author" content="{% block author %}Marcus Furlong{% endblock %}">
-    {% load bootstrap3 %}
+    {% load static django_bootstrap5 icons %}
     {% bootstrap_css %}
-    {% bootstrap_javascript jquery=1 %}
-    {% load static %}
+    {% bootstrap_javascript %}
+    <link rel="stylesheet" type="text/css" href="{% static 'fontawesomefree/css/all.min.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'css/base.css' %}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <title>{% block page_title %}{% endblock %}</title>
     <script type="text/javascript" src="{% static 'js/ajax-jquery.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/button-post.js' %}"></script>
     {% block extrahead %}{% endblock %}
   </head>
   <body>
-    <div>
+    <div class="container">
       {% include "navbar.html" with user=user %}
-      <ul class="breadcrumb">
-        {% block breadcrumbs %}
-          <li class="active"><a href="{% url 'util:dashboard' %}">Home</a></li>
-        {% endblock %}
-      </ul>
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            {% block breadcrumbs %}
+              <li class="breadcrumb-item"><a href="{% url 'util:dashboard' %}">Home</a></li>
+            {% endblock %}
+          </ol>
+        </nav>
+      </div>
       {% bootstrap_messages %}
-      <div class="well well-sm">
-        <div class="panel panel-default">
-          <div class="panel-heading">
-            <strong>{% block content_title %}{% endblock %}</strong>
-          </div>
-          <div class="panel-body">
-            {% block content %}{{ content }}{% endblock %}
-          </div>
-          {% block footer %}{% endblock %}
+      <div class="card">
+        <div class="card-header">
+          <strong>{% block content_title %}{% endblock %}</strong>
         </div>
+        <div class="card-body">
+          {% block content %}{{ content }}{% endblock %}
+        </div>
+        {% block footer %}{% endblock %}
       </div>
     </div>
   </body>

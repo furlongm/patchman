@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% load common bootstrap3 static %}
+{% load common django_bootstrap5 static icons %}
 
 {% block content %}
 
@@ -8,23 +8,23 @@
   <div class="col-sm-10">
     {% searchform terms %}
     {% gen_table page.object_list %}
-    <div class="centered">
+    <div class="card centered">
       {% object_count page %}
     </div>
-    <div class="centered">
+    <div>
       {% get_querystring request as querystring %}
-      {% bootstrap_pagination page size='small' extra=querystring %}
+      {% bootstrap_pagination page size='sm' extra=querystring justify_content='center'%}
     </div>
-    <div class="centered">
+    <div class="card centered">
       Page {{ page.number }} of {{ page.paginator.num_pages }}
     </div>
   </div>
 
   {% if filter_bar %}
     <div class="col-sm-2">
-      <div class="panel panel-primary">
-        <div class="panel-heading">Filter by...</div>
-        <div class="panel-body">
+      <div class="card">
+        <div class="card-header" style="background-color: #006699">Filter by...</div>
+        <div class="card-body">
         {{ filter_bar|safe }}
         </div>
       </div>

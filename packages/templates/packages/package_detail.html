@@ -2,15 +2,15 @@
 
 {% block page_title %}Package - {{ package }} {% endblock %}
 
-{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'packages:package_list' %}">Packages</a></li><li class="active">{{ package }}</li>{% endblock %}
+{% block breadcrumbs %} {{ block.super }} <li class="breadcrumb-item"><a href="{% url 'packages:package_list' %}">Packages</a></li><li class="breadcrumb-item active">{{ package }}</li> {% endblock %}
 
 {% block content_title %} Package - {{ package }} {% endblock %}
 
 {% block content %}
 
-<div class="well well-sm">
+<div class="card">
   {% if allversions %}
-    <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+    <table class="table table-striped table-bordered table-hover table-sm table-responsive">
       <tr>
         <th class="col-sm-1">Epoch</th>
         <th class="col-sm-1">Version</th>

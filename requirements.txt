@@ -1,7 +1,9 @@
-Django==3.2.25
+Django==4.2.15
 django-tagging==0.5.0
 django-extensions==3.2.1
-django-bootstrap3==23.1
+fontawesomefree==6.6.0
+django-icons==23.5
+django_bootstrap5==23.4
 progressbar==2.5
 python-debian==0.1.49
 lxml==5.2.2
@@ -10,7 +12,7 @@ PyYAML==6.0.1
 chardet==4.0.0
 requests==2.32.3
 colorama==0.4.4
-djangorestframework==3.13.1
+djangorestframework==3.14.0
 django-filter==21.1
 humanize==3.13.1
 version-utils==0.3.0

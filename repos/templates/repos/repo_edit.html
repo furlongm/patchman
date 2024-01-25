@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% load common bootstrap3 static %}
+{% load common django_bootstrap5 static %}
 
 {% block extrahead %}
 <script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
@@ -18,13 +18,13 @@
 
 {% block content %}
 
-<div class="well well-sm">
+<div class="card">
   {% if user.is_authenticated and perms.is_admin %}
     <form action={{ request.path }} method="post">
       {% csrf_token %}
-      {% bootstrap_form edit_form size='small' %}
-      <button name="save" type="submit" class="btn btn-primary btn-sm">{% bootstrap_icon "floppy-disk" %} Save</button>
-      <button name="cancel" type="submit" class="btn btn-primary btn-sm">{% bootstrap_icon "stop" %} Cancel</button>
+      {% bootstrap_form edit_form size='sm' %}
+      <button name="save" type="submit" class="btn btn-outline-primary btn-sm">{% icon "floppy-disk" %} Save</button>
+      <button name="cancel" type="submit" class="btn btn-outline-primary btn-sm">{% icon "stop" %} Cancel</button>
     </form>
   {% else %}
     You do not have permission to edit this Repository.

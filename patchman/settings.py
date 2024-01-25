@@ -78,7 +78,9 @@ DEFAULT_APPS = [
 THIRD_PARTY_APPS = [
     'django_extensions',
     'tagging',
-    'bootstrap3',
+    'django_bootstrap5',
+    'django_icons',
+    'fontawesomefree',
     'rest_framework',
     'django_filters',
 ]
@@ -111,6 +113,25 @@ else:
     CELERY_IMPORTS = ['reports.tasks']
     USE_ASYNC_PROCESSING = True
     CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
+
+DJANGO_ICONS = {
+    'ICONS': {
+        'arrow-left':  {'name': 'fa-solid fa-arrow-left'},
+        'edit':        {'name': 'fa-solid fa-pen-to-square'},
+        'flash':       {'name': 'fa-solid fa-bolt'},
+        'floppy-disk': {'name': 'fa-solid fa-floppy-disk'},
+        'link':        {'name': 'fa-solid fa-link'},
+        'ok-sign':     {'name': 'fa-solid fa-circle-check'},
+        'remove-sign': {'name': 'fa-solid fa-circle-xmark'},
+        'search':      {'name': 'fa-solid fa-magnifying-glass'},
+        'star':        {'name': 'fa-solid fa-star'},
+        'star-empty':  {'name': 'fa-regular fa-star'},
+        'stop':        {'name': 'fa-solid fa-stop'},
+        'tasks':       {'name': 'fa-solid fa-bars-progress'},
+        'trash':       {'name': 'fa-solid fa-trash'},
+        'user':        {'name': 'fa-solid fa-user'},
+    },
+}
 
 LOGIN_REDIRECT_URL = '/patchman/'
 LOGOUT_REDIRECT_URL = '/patchman/login/'

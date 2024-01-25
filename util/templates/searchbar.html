@@ -1,10 +1,10 @@
-{% load bootstrap3 %}
+{% load django_bootstrap5 icons %}
 <div>
   <form method="get">
     <div class="input-group">
-      <input type="text" class="form-control input-sm" placeholder="Search" name="search" id="search" value="{{ terms }}">
+      <input type="text" class="form-control form-control-sm" placeholder="Search" name="search" id="search" value="{{ terms }}">
       <div class="input-group-btn">
-        <button class="btn btn-primary btn-sm" type="submit">{% bootstrap_icon "search" %}</button>
+        <button class="btn btn-outline-primary btn-sm" type="submit">{% icon "search" %}</button>
       </div>
     </div>
   </form>

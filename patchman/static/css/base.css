@@ -2,12 +2,10 @@
 .bugupdate { border-radius: 4px; display:block; background:#ff9933; }
 .list-group { margin-bottom: 2px; }
 .list-group-item { padding: 5px; font-size: 12px; }
-.panel-body { padding: 5px; font-size: 12px; }
-.panel { margin-bottom: 5px; font-size: 12px; }
-.panel-heading { padding: 5px; font-size: 13px; }
+.card { margin-bottom: 5px; font-size: 12px; }
+.card-title { padding: 5px; font-size: 13px; }
+.card-body { padding: 5px; font-size: 12px; }
+.card-sm { margin-bottom: 0; }
 .brick { border-radius: 5px; margin: 3px 3px; padding: 2px 5px; height: 25px; border-style:solid; border-width:thin; }
 .label-brick { font-size: 12px; font-weight: normal; margin-bottom: 3px; padding-top: 5px; border-radius: 4px; height:25px; border-style:solid; border-width:thin; border-color: #222; white-space: normal; display: inline-block; }
-.breadcrumb { font-size: 12px; background-color: #222; border-radius: 0; margin-bottom: 3px; }
-.navbar { margin-bottom: 0; padding-bottom: 0; border-radius: 0; }
-.well-sm { margin-bottom: 0; }
 .centered { text-align: center; }

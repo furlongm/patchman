@@ -1,17 +1,17 @@
 {% extends "base.html" %}
 
-{% load bootstrap3 %}
+{% load django_bootstrap5 icons %}
 
 {% block page_title %}Report - {{ report }} {% endblock %}
 
-{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'reports:report_list' %}">Reports</a></li><li class="active">{{ report }}</li>{% endblock %}
+{% block breadcrumbs %} {{ block.super }} <li class="breadcrumb-item"><a href="{% url 'reports:report_list' %}">Reports</a></li><li class="breadcrumb-item active">{{ report }}</li>{% endblock %}
 
-{% block content_title %} Report - {{ report }}{% endblock %}
+{% block content_title %} Report - {{ report }} {% endblock %}
 
 {% block content %}
 
-<div class="well well-sm">
-  <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+<div class="card">
+  <table class="table table-striped table-bordered table-hover table-sm table-responsive">
     <tr><th>Host</th><td> {{ report.host }} </td></tr>
     <tr><th>Reporting IP Address</th><td> {{ report.report_ip }} </td></tr>
     <tr><th>Domain</th><td> {{ report.domain }} </td></tr>
@@ -25,24 +25,24 @@
     <tr><th>Has Been Processed?</th><td> {{ report.processed }} </td></tr>
   </table>
 
-  <div class="panel panel-danger">
+  <div class="card bg-danger">
     {% if user.is_authenticated and perms.is_admin %}
-      <div class="panel-heading">
+      <div class="card-header">
         Are you sure you want to delete this Report?
       </div>
-      <div class="panel-body">
+      <div class="card-body">
         <form action={{ request.path }} method="post">
           {% csrf_token %}
-          <button name="delete" type="submit" class="btn btn-primary btn-sm">{% bootstrap_icon "trash" %} Delete</button>
-          <button name="cancel" type="submit" class="btn btn-primary btn-sm">{% bootstrap_icon "stop" %} Cancel</button>
+          <button name="delete" type="submit" class="btn btn-outline-primary btn-sm">{% icon "trash" %} Delete</button>
+          <button name="cancel" type="submit" class="btn btn-outline-primary btn-sm">{% icon "stop" %} Cancel</button>
         </form>
       </div>
     {% else %}
-      <div class="panel-heading">
+      <div class="card-header">
         You do not have permission to delete this Report.
       </div>
-        <div class="panel-body">
-        <a class="btn btn-primary btn-sm" href="{{ report.get_absolute_url }}">{% bootstrap_icon "arrow-left" %} Back</a>
+        <div class="card-body">
+        <a class="btn btn-outline-primary btn-sm" href="{{ report.get_absolute_url }}">{% icon "arrow-left" %} Back</a>
       </div>
     {% endif %}
   </div>
