@@ -24,10 +24,10 @@ from repos.models import Repository
 
 class Module(models.Model):
 
-    name = models.CharField(unique=True, max_length=255)
-    stream = models.CharField(unique=True, max_length=255)
+    name = models.CharField(max_length=255)
+    stream = models.CharField(max_length=255)
     version = models.CharField(max_length=255)
-    context = models.CharField(unique=True, max_length=255)
+    context = models.CharField(max_length=255)
     arch = models.ForeignKey(PackageArchitecture, on_delete=models.CASCADE)
     repo = models.ForeignKey(Repository, on_delete=models.CASCADE)
     packages = models.ManyToManyField(Package, blank=True)
@@ -35,10 +35,11 @@ class Module(models.Model):
     class Meta:
         verbose_name = 'Module'
         verbose_name_plural = 'Modules'
-        ordering = ('name',)
+        unique_together = ('name', 'stream', 'version', 'context', 'arch',)
+        ordering = ('name', 'stream',)
 
     def __str__(self):
-        return self.name
+        return f'{self.name}-{self.stream}'
 
     def get_absolute_url(self):
         return reverse('modules:module_detail', args=[str(self.id)])
