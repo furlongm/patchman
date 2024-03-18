@@ -35,10 +35,12 @@ from modules.models import Module
 from patchman.signals import info_message, error_message
 from packages.utils import get_or_create_package_update
 from repos.utils import find_best_repo
+from hosts.managers import HostManager
 from hosts.utils import update_rdns, remove_reports
 
 
 class Host(models.Model):
+    objects = HostManager()
 
     hostname = models.CharField(max_length=255, unique=True)
     ipaddress = models.GenericIPAddressField()

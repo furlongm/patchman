@@ -34,7 +34,7 @@ from packages.serializers import PackageNameSerializer, \
 @login_required
 def package_list(request):
 
-    packages = PackageName.objects.select_related()
+    packages = PackageName.objects.select_related().prefetch_related('package_set')
 
     if 'arch' in request.GET:
         packages = packages.filter(

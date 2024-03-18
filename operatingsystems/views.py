@@ -18,12 +18,13 @@
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 from django.contrib import messages
 from django.urls import reverse
 
 from rest_framework import viewsets
 
+from hosts.models import Host
 from operatingsystems.models import OS, OSGroup
 from operatingsystems.forms import AddOSToOSGroupForm, \
     AddReposToOSGroupForm, CreateOSGroupForm
@@ -34,7 +35,8 @@ from operatingsystems.serializers import OSSerializer, \
 @login_required
 def os_list(request):
 
-    oses = OS.objects.select_related()
+    oses = OS.objects.select_related() \
+           .prefetch_related('host_set', 'osgroup__repos')
 
     if 'search' in request.GET:
         terms = request.GET['search'].lower()
@@ -67,6 +69,12 @@ def os_list(request):
 def os_detail(request, os_id):
 
     os = get_object_or_404(OS, id=os_id)
+
+    hosts = Host.objects.with_counts('get_num_security_updates', 'get_num_bugfix_updates')
+    hosts_prefetch = Prefetch('host_set', queryset=hosts)
+    os = OS.objects.select_related() \
+         .prefetch_related(hosts_prefetch) \
+         .get(id=os_id)
 
     if request.method == 'POST':
         create_form = CreateOSGroupForm(request.POST, prefix='create')

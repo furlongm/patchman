@@ -20,14 +20,14 @@ from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.urls import reverse
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 from django.contrib import messages
 from django.db import IntegrityError
 
 from rest_framework import viewsets
 
 from util.filterspecs import Filter, FilterBar
-from hosts.models import HostRepo
+from hosts.models import Host, HostRepo
 from repos.models import Repository, Mirror, MirrorPackage
 from operatingsystems.models import OSGroup
 from arch.models import MachineArchitecture
@@ -40,7 +40,8 @@ from repos.serializers import RepositorySerializer, \
 @login_required
 def repo_list(request):
 
-    repos = Repository.objects.select_related().order_by('name')
+    repos = Repository.objects.select_related() \
+        .prefetch_related('mirror_set').order_by('name')
 
     if 'repotype' in request.GET:
         repos = repos.filter(repotype=request.GET['repotype'])
@@ -279,6 +280,12 @@ def mirror_edit(request, mirror_id):
 def repo_detail(request, repo_id):
 
     repo = get_object_or_404(Repository, id=repo_id)
+
+    hosts = Host.objects.with_counts('get_num_security_updates', 'get_num_bugfix_updates')
+    hosts_prefetch = Prefetch('host_set', queryset=hosts)
+    repo = Repository.objects.select_related() \
+           .prefetch_related(hosts_prefetch) \
+           .get(id=repo_id)
 
     return render(request,
                   'repos/repo_detail.html',

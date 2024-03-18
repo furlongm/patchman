@@ -9,7 +9,7 @@
 {% block content %}
 
 {% with count=lonely_oses.count %}
-  {% if lonely_oses.count > 0 %}
+  {% if count > 0 %}
     <div class="well well-sm">
       <button class="btn btn-sm" data-toggle="collapse" data-target="#lonely_oses"><span class="badge">{{ count }}</span> Operating Systems are not linked to any OS Group</button>
       <div class="collapse" id="lonely_oses">
@@ -20,7 +20,7 @@
 {% endwith %}
 
 {% with count=nohost_oses.count %}
-  {% if nohost_oses.count > 0 %}
+  {% if count > 0 %}
     <div class="well well-sm">
       <button class="btn btn-sm" data-toggle="collapse" data-target="#nohost_oses"><span class="badge">{{ count }}</span> Operating Systems are not installed on any Host</button>
         <div class="collapse" id="nohost_oses">
