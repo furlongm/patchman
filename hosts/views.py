@@ -37,7 +37,9 @@ from hosts.serializers import HostSerializer, HostRepoSerializer
 
 @login_required
 def host_list(request):
-    hosts = Host.objects.select_related()
+    hosts = Host.objects.with_counts('get_num_security_updates',
+                                     'get_num_bugfix_updates') \
+            .select_related()
 
     if 'domain_id' in request.GET:
         hosts = hosts.filter(domain=request.GET['domain_id'])
@@ -111,7 +113,7 @@ def host_list(request):
 def host_detail(request, hostname):
     host = get_object_or_404(Host, hostname=hostname)
     reports = Report.objects.filter(host=hostname).order_by('-created')[:3]
-    hostrepos = HostRepo.objects.filter(host=host)
+    hostrepos = HostRepo.objects.filter(host=host).select_related('repo')
     return render(request,
                   'hosts/host_detail.html',
                   {'host': host,

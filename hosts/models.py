@@ -37,9 +37,11 @@ from packages.utils import get_or_create_package_update
 from patchman.signals import info_message
 from repos.models import Repository
 from repos.utils import find_best_repo
+from hosts.managers import HostManager
 
 
 class Host(models.Model):
+    objects = HostManager()
 
     hostname = models.CharField(max_length=255, unique=True)
     ipaddress = models.GenericIPAddressField()
@@ -59,9 +61,6 @@ class Host(models.Model):
     tags = TaggableManager(blank=True)
     updated_at = models.DateTimeField(default=timezone.now)
     errata = models.ManyToManyField(Erratum, blank=True)
-
-    from hosts.managers import HostManager
-    objects = HostManager()
 
     class Meta:
         verbose_name = 'Host'

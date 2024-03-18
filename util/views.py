@@ -19,13 +19,15 @@ from datetime import datetime, timedelta
 
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
+
 from django.contrib.sites.models import Site
-from django.db.models import F
+from django.db.models import Count, Exists, F, OuterRef
+from django.db.models.functions import Coalesce
 
 from hosts.models import Host
 from operatingsystems.models import OSVariant, OSRelease
 from repos.models import Repository, Mirror
-from packages.models import Package
+from packages.models import Package, PackageUpdate
 from reports.models import Report
 from util import get_setting_of_type
 
@@ -38,10 +40,12 @@ def dashboard(request):
     except Site.DoesNotExist:
         site = {'name': '', 'domainname': ''}
 
-    hosts = Host.objects.all()
+    hosts = Host.objects.with_counts('get_num_security_updates',
+                                     'get_num_bugfix_updates') \
+            .select_related()
     osvariants = OSVariant.objects.all()
     osreleases = OSRelease.objects.all()
-    repos = Repository.objects.all()
+    repos = Repository.objects.all().prefetch_related('mirror_set')
     packages = Package.objects.all()
 
     # host issues
@@ -79,8 +83,19 @@ def dashboard(request):
     nohost_repos = repos.filter(host__isnull=True)
 
     # package issues
-    norepo_packages = packages.filter(mirror__isnull=True, oldpackage__isnull=True, host__isnull=False).distinct()  # noqa
-    orphaned_packages = packages.filter(mirror__isnull=True, host__isnull=True).distinct()  # noqa
+    nohost_packages = Host.packages.through.objects \
+        .filter(package=OuterRef('pk'), host__isnull=False)
+    nomirror_packages = Mirror.packages.through.objects \
+        .filter(package=OuterRef('pk'), mirror__isnull=False)
+    nooldpackage_packages = PackageUpdate.objects \
+        .filter(oldpackage=OuterRef('pk'), oldpackage__isnull=False)
+    norepo_packages = packages.filter(Exists(nohost_packages),
+                                      ~Exists(nomirror_packages),
+                                      ~Exists(nooldpackage_packages)) \
+                      .distinct()
+    orphaned_packages = packages.filter(~Exists(nohost_packages),
+                                        ~Exists(nomirror_packages)) \
+                        .distinct()
 
     # report issues
     unprocessed_reports = Report.objects.filter(processed=False)
@@ -88,14 +103,14 @@ def dashboard(request):
     checksums = {}
     possible_mirrors = {}
 
-    for csvalue in Mirror.objects.all().values('packages_checksum').distinct():
-        checksum = csvalue['packages_checksum']
-        if checksum is not None and checksum != 'yast':
-            for mirror in Mirror.objects.filter(packages_checksum=checksum):
-                if mirror.packages.count() > 0:
-                    if checksum not in checksums:
-                        checksums[checksum] = []
-                    checksums[checksum].append(mirror)
+    mirrors = Mirror.objects.all() \
+              .annotate(packages_count=Coalesce(Count('packages', distinct=True), 0)) \
+              .select_related()
+    for mirror in mirrors:
+        if mirror.packages_checksum != 'yast' and mirror.packages_count > 0:
+            if mirror.packages_checksum not in checksums:
+                checksums[mirror.packages_checksum] = []
+            checksums[mirror.packages_checksum].append(mirror)
 
     for checksum in checksums:
         first_mirror = checksums[checksum][0]
