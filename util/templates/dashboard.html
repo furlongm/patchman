@@ -217,7 +217,7 @@
 {% endwith %}
 
 {% with count=orphaned_packages.count %}
-  {% if count < 0 %}
+  {% if count > 0 %}
   <div class="well well-sm">
     <button class="btn btn-sm" data-toggle="collapse" data-target="#orphaned_packages"><span class="badge">{{ count }}</span> Packages are orphaned (not from any Repository, not installed on any Host)</button>
       <div class="collapse" id="orphaned_packages">
@@ -232,7 +232,7 @@
 {% endwith %}
 
 {% with count=unprocessed_reports.count %}
-  {% if count < 0 %}
+  {% if count > 0 %}
   <div class="well well-sm">
     <button class="btn btn-sm" data-toggle="collapse" data-target="#unprocessed_reports"><span class="badge">{{ count }}</span> Reports have not yet been processed</button>
       <div class="collapse" id="unprocessed_reports">

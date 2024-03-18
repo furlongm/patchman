@@ -28,6 +28,7 @@ class Migration(migrations.Migration):
                 ('fail_count', models.IntegerField(default=0)),
             ],
             options={
+                'verbose_name': 'Mirror',
                 'verbose_name_plural': 'Mirrors',
             },
         ),
@@ -44,6 +45,7 @@ class Migration(migrations.Migration):
                 ('arch', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='arch.machinearchitecture')),
             ],
             options={
+                'verbose_name': 'Repository',
                 'verbose_name_plural': 'Repositories',
             },
         ),
