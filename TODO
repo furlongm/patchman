@@ -11,4 +11,5 @@
 * helper script to change paths (e.g. /usr/lib/python3/dist-packages/patchman)
 * Dockerfile/Dockerimage
 * compressed reports
-* modularity support
+* add cronjobs to built packages
+* install celery/rabbit/memcache with packages

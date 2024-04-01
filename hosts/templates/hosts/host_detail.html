@@ -14,6 +14,7 @@
   <li class="active"><a data-toggle="tab" href="#host_details">Details</a></li>
   <li><a data-toggle="tab" href="#host_updates">Updates Available</a></li>
   <li><a data-toggle="tab" href="#host_repos">Repos</a></li>
+  <li><a data-toggle="tab" href="#host_modules">Modules</a></li>
   <li><a data-toggle="tab" href="#host_packages">Packages</a></li>
 </ul>
 
@@ -132,6 +133,14 @@
         {% endwith %}
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <div class="tab-pane fade in" id="host_modules">
+    <div class="well well-sm">
+        <div class="well">
+          {% gen_table host.modules.all %}
+        </div>
     </div>
   </div>
 

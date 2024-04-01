@@ -31,6 +31,7 @@ from domains.models import Domain
 from repos.models import Repository
 from operatingsystems.models import OS
 from arch.models import MachineArchitecture
+from modules.models import Module
 from patchman.signals import info_message, error_message
 from packages.utils import get_or_create_package_update
 from repos.utils import find_best_repo
@@ -50,6 +51,7 @@ class Host(models.Model):
     lastreport = models.DateTimeField()
     packages = models.ManyToManyField(Package, blank=True)
     repos = models.ManyToManyField(Repository, blank=True, through='HostRepo')
+    modules = models.ManyToManyField(Module, blank=True)
     updates = models.ManyToManyField(PackageUpdate, blank=True)
     reboot_required = models.BooleanField(default=False)
     host_repos_only = models.BooleanField(default=True)
@@ -122,15 +124,18 @@ class Host(models.Model):
     def get_host_repo_packages(self):
         if self.host_repos_only:
             hostrepos_q = Q(mirror__repo__in=self.repos.all(),
-                            mirror__enabled=True, mirror__repo__enabled=True,
+                            mirror__enabled=True,
+                            mirror__repo__enabled=True,
                             mirror__repo__hostrepo__enabled=True)
         else:
             hostrepos_q = \
                 Q(mirror__repo__osgroup__os__host=self,
-                  mirror__repo__arch=self.arch, mirror__enabled=True,
+                  mirror__repo__arch=self.arch,
+                  mirror__enabled=True,
                   mirror__repo__enabled=True) | \
                 Q(mirror__repo__in=self.repos.all(),
-                  mirror__enabled=True, mirror__repo__enabled=True)
+                  mirror__enabled=True,
+                  mirror__repo__enabled=True)
         return Package.objects.select_related().filter(hostrepos_q).distinct()
 
     def process_update(self, package, highest_package):
@@ -221,10 +226,21 @@ class Host(models.Model):
                 priority = best_repo.priority
 
             # find the packages that are potential updates
-            pu_q = Q(name=package.name, arch=package.arch,
+            pu_q = Q(name=package.name,
+                     arch=package.arch,
                      packagetype=package.packagetype)
             potential_updates = repo_packages.filter(pu_q)
             for pu in potential_updates:
+                pu_is_module_package = False
+                pu_in_enabled_modules = False
+                if pu.module_set.exists():
+                    pu_is_module_package = True
+                    for module in pu.module_set.all():
+                        if module in self.modules.all():
+                            pu_in_enabled_modules = True
+                if pu_is_module_package:
+                    if not pu_in_enabled_modules:
+                        continue
                 if highest_package.compare_version(pu) == -1 \
                         and package.compare_version(pu) == -1:
 
@@ -232,9 +248,10 @@ class Host(models.Model):
                         # proceed only if the package is from a repo with a
                         # priority and that priority is >= the repo priority
                         pu_best_repo = find_best_repo(pu, hostrepos)
-                        pu_priority = pu_best_repo.priority
-                        if pu_priority >= priority:
-                            highest_package = pu
+                        if pu_best_repo:
+                            pu_priority = pu_best_repo.priority
+                            if pu_priority >= priority:
+                                highest_package = pu
                     else:
                         highest_package = pu
 
@@ -257,6 +274,16 @@ class Host(models.Model):
                      packagetype=package.packagetype)
             potential_updates = repo_packages.filter(pu_q)
             for pu in potential_updates:
+                pu_is_module_package = False
+                pu_in_enabled_modules = False
+                if pu.module_set.exists():
+                    pu_is_module_package = True
+                    for module in pu.module_set.all():
+                        if module in self.modules.all():
+                            pu_in_enabled_modules = True
+                if pu_is_module_package:
+                    if not pu_in_enabled_modules:
+                        continue
                 if highest_package.compare_version(pu) == -1 \
                         and package.compare_version(pu) == -1:
                     highest_package = pu

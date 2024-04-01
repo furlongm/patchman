@@ -15,6 +15,7 @@
   <li><a data-toggle="tab" href="#repo_mirrors">Mirrors</a></li>
   <li><a data-toggle="tab" href="#repo_hosts">Hosts with this Repository</a></li>
   <li><a data-toggle="tab" href="#repo_osgroups">OS Groups with this Repository</a></li>
+  <li><a data-toggle="tab" href="#repo_modules">Modules in this Repository</a></li>
 </ul>
 
 <div class="tab-content">
@@ -62,6 +63,14 @@
   <div class="tab-pane fade in" id="repo_osgroups">
     <div class="well well-sm">
       {% gen_table repo.osgroup_set.all.distinct %}
+    </div>
+  </div>
+
+  <div class="tab-pane fade in" id="repo_modules">
+    <div class="well well-sm">
+        <div class="well">
+          {% gen_table repo.module_set.all %}
+        </div>
     </div>
   </div>
 </div>

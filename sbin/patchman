@@ -37,6 +37,7 @@ from hosts.models import Host
 from packages.models import Package, PackageName, PackageUpdate
 from packages.utils import update_errata, mark_errata_security_updates
 from repos.models import Repository
+from modules.models import Module
 from arch.models import PackageArchitecture, MachineArchitecture
 from reports.models import Report
 from util import print_nocr, create_pbar, update_pbar, \
@@ -146,7 +147,8 @@ def clean_packages():
     """
     packages = Package.objects.filter(mirror__isnull=True,
                                       host__isnull=True,
-                                      erratum__isnull=True)
+                                      erratum__isnull=True,
+                                      module__isnull=True)
     plen = packages.count()
     if plen == 0:
         info_message.send(sender=None, text='No orphaned Packages found.')
@@ -247,6 +249,22 @@ def clean_reports(s_host=None):
             for i, report in enumerate(reports):
                 report.delete()
                 update_pbar(i + 1)
+
+
+def clean_modules():
+    """ Delete modules that have no host or no repo
+    """
+    modules = Module.objects.filter(host__isnull=True, repo__isnull=True)
+    mlen = modules.count()
+
+    if mlen == 0:
+        text = 'No orphaned Modules found.'
+        info_message.send(sender=None, text=text)
+    else:
+        create_pbar(f'Removing {mlen!s} empty Modules:', mlen)
+        for i, module in enumerate(modules):
+            module.delete()
+            update_pbar(i + 1)
 
 
 def clean_tags():
@@ -521,6 +539,7 @@ def dbcheck():
     clean_package_names()
     clean_arches()
     clean_repos()
+    clean_modules()
     clean_updates()
     clean_tags()
 

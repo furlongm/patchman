@@ -1,0 +1,7 @@
+{% extends "objectlist.html" %}
+
+{% block page_title %}Modules{% endblock %}
+
+{% block breadcrumbs %} {{ block.super }} <li class="active"><a href="{% url 'modules:module_list' %}">Modules</a></li>{% endblock %}
+
+{% block content_title %} Modules {% endblock %}

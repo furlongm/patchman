@@ -61,6 +61,8 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = False
 
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
 DEFAULT_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -85,6 +87,7 @@ LOCAL_APPS = [
     'arch.apps.ArchConfig',
     'domains.apps.DomainsConfig',
     'hosts.apps.HostsConfig',
+    'modules.apps.ModulesConfig',
     'operatingsystems.apps.OperatingsystemsConfig',
     'packages.apps.PackagesConfig',
     'repos.apps.ReposConfig',
