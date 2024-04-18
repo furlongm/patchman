@@ -1,7 +1,7 @@
 Django==3.2.24
 django-tagging==0.5.0
 django-extensions==3.2.1
-django-bootstrap3==23.1
+django-bootstrap3==24.2
 progressbar==2.5
 python-debian==0.1.49
 lxml==4.9.2
