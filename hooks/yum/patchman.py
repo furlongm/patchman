@@ -1,4 +1,6 @@
-# Copyright 2013-2016 Marcus Furlong <furlongm@gmail.com>
+#!/usr/bin/env python3
+#
+# Copyright 2013-2024 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of Patchman.
 #
@@ -13,11 +15,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
+#
+# yum plugin for patchman
 
 import os
 from yum.plugins import TYPE_CORE
 
-requires_api_version = '2.1'
+requires_api_version = '2.3'
 plugin_type = (TYPE_CORE,)
 
 
@@ -27,5 +31,5 @@ def posttrans_hook(conduit):
                                     'servicecmd',
                                     '/usr/sbin/patchman-client')
     args = '-n'
-    command = f'{servicecmd!s} {args!s}> /dev/null'
+    command = f'{servicecmd} {args} > /dev/null'
     os.system(command)

@@ -20,8 +20,12 @@ cp -af %{SOURCEURL0}/. .
 %install
 mkdir -p %{buildroot}/usr/sbin
 mkdir -p %{buildroot}/etc/patchman
+mkdir -p %{buildroot}/etc/dnf/plugins/post-transaction-actions.d/
+mkdir -p %{buildroot}/usr/lib/zypp/plugins/system/
 cp ./client/%{name} %{buildroot}/usr/sbin
 cp ./client/%{name}.conf %{buildroot}/etc/patchman
+cp ./hooks/dnf/patchman.action %{buildroot}/etc/dnf/plugins/post-transaction-actions.d/
+cp ./hooks/zypper/patchman.py %{buildroot}/usr/lib/zypp/plugins/system/
 
 %files
 %defattr(755,root,root)

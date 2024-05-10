@@ -1,6 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
-# Copyright 2016 Marcus Furlong <furlongm@gmail.com>
+# Copyright 2024 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of Patchman.
 #
@@ -18,31 +18,22 @@
 #
 # zypp system plugin for patchman
 
-import os
 import logging
+import os
+import sys
 from zypp_plugin import Plugin
 
 
 class MyPlugin(Plugin):
 
-    def PLUGINBEGIN(self, headers, body):
-        logging.info('PLUGINBEGIN')
-        logging.debug(f'headers: {headers!s}')
-        self.ack()
-
     def PACKAGESETCHANGED(self, headers, body):
-        logging.info('PACKAGESETCHANGED')
-        logging.debug(f'headers: {headers!s}')
-        print('Sending report to patchman server...')
+        s = 'Sending report to patchman server...'
+        logging.info(s)
+        sys.stderr.write(s)
         servicecmd = '/usr/sbin/patchman-client'
         args = '-n'
-        command = f'{servicecmd!s} {args!s}> /dev/null'
+        command = f'{servicecmd} {args}'
         os.system(command)
-        self.ack()
-
-    def PLUGINEND(self, headers, body):
-        logging.info('PLUGINEND')
-        logging.debug(f'headers: {headers!s}')
         self.ack()
 
 
