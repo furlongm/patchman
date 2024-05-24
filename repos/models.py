@@ -55,7 +55,7 @@ class Repository(models.Model):
     objects = RepositoryManager()
 
     class Meta:
-        verbose_name = 'Repository'
+        verbose_name_plural = 'Repository'
         verbose_name_plural = 'Repositories'
 
     def __str__(self):
@@ -153,7 +153,7 @@ class Mirror(models.Model):
     fail_count = models.IntegerField(default=0)
 
     class Meta:
-        verbose_name = 'Mirror'
+        verbose_name_plural = 'Mirror'
         verbose_name_plural = 'Mirrors'
 
     def __str__(self):
