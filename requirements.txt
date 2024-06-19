@@ -4,7 +4,7 @@ django-extensions==3.2.1
 django-bootstrap3==23.1
 progressbar==2.5
 python-debian==0.1.49
-lxml==4.9.2
+lxml==4.9.4
 defusedxml==0.7.1
 PyYAML==6.0.1
 chardet==4.0.0
