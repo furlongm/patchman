@@ -86,9 +86,12 @@ class Report(models.Model):
                  'reboot']
 
         for attr in attrs:
-            setattr(self, attr, data.get(attr).strip())
+            if data.get(attr):
+                setattr(self, attr, data.get(attr))
+            else:
+                setattr(self, attr, '')
 
-        if self.host is not None:
+        if self.host:
             self.host = self.host.lower()
             fqdn = self.host.split('.', 1)
             if len(fqdn) == 2:
