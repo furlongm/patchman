@@ -1,6 +1,8 @@
 #!/bin/bash
 
 export LC_ALL=C
+export FULL_IFS=$' \t\n'
+export NL_IFS=$'\n'
 
 conf=/etc/patchman/patchman-client.conf
 protocol=1
@@ -215,14 +217,12 @@ get_enabled_modules() {
         module_context=$(echo "${module_info}" | grep ^Context | cut -d : -f 2 | awk '{$1=$1};1')
         module_packages=$(echo "${module_info}" | sed -n '/Artifacts/,$p' | sed -e 's/.* *: //g' | grep -v ^$)
 
-        OLDIFS=${IFS}
-        IFS="
-"
+        IFS=${NL_IFS}
         module_package_str=""
         for package in ${module_packages} ; do
             module_package_str="${module_package_str} '${package}'"
         done
-        IFS=${OLDIFS}
+        IFS=${FULL_IFS}
         echo "'${module}' '${module_stream}' '${module_version}' '${module_context}' '${module_arch}' '${module_repo}' ${module_package_str}" >> ${tmpfile_mod}
     done
     if [ ! -z ${CPE_NAME} ] ; then
@@ -283,16 +283,13 @@ AWK
             cat "${tmpfile_pkg}"
         fi
     fi
-    IFS=${OLDIFS}
 }
 
 get_installed_archlinux_packages() {
     if check_command_exists pacman ; then
-        OLDIFS=${IFS}
-        IFS="
-"
+        IFS=${NL_IFS}
         pacman -Q -i | awk -v q="'" -v s=" " '/^Name/{n=$3} /^Version/{l=split($3, e, ":"); if (l==2) {ep=e[1]; v=e[2]} else {ep=""; v=$3}; split(v, r, "-")} /^Architecture/{a=$3} /^$/{print q n q s q ep q s q r[1] q s q r[2] q s q a q s q"arch"q}' >> "${tmpfile_pkg}"
-        IFS=${OLDIFS}
+        IFS=${FULL_IFS}
     fi
 }
 
@@ -435,9 +432,7 @@ get_zypper_updates() {
 }
 
 get_repos() {
-    OLDIFS=${IFS}
-    IFS="
-"
+    IFS=${NL_IFS}
 
     # Red Hat / CentOS
     if check_command_exists yum ; then
@@ -483,7 +478,7 @@ get_repos() {
         if ${verbose} ; then
             echo 'Finding apt repos...'
         fi
-        IFS=${OLDIFS} read -r osname shortversion <<<$(echo "${os}" | awk '{print $1,$2}' | cut -d . -f 1,2)
+        IFS=${FULL_IFS} read -r osname shortversion <<<$(echo "${os}" | awk '{print $1,$2}' | cut -d . -f 1,2)
         repo_string="'deb\' \'${osname} ${shortversion} ${host_arch} repo at"
         repos=$(apt-cache policy | grep -v Translation | grep -E "^ *[0-9]{1,5}" | grep -E " mirror\+file|http(s)?:" | sed -e "s/^ *//g" -e "s/ *$//g" | cut -d " " -f 1,2,3,4)
         non_mirror_repos=$(echo "${repos}" | grep -Ev "mirror\+file")
@@ -551,7 +546,7 @@ get_repos() {
         done
     fi
 
-    IFS=${OLDIFS}
+    IFS=${FULL_IFS}
 
     sed -i -e '/^$/d' "${tmpfile_rep}"
 
