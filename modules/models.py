@@ -39,7 +39,7 @@ class Module(models.Model):
         ordering = ('name', 'stream',)
 
     def __str__(self):
-        return f'{self.name}-{self.stream}'
+        return f'{self.name}-{self.stream}-{self.version}-{self.version}-{self.context}'
 
     def get_absolute_url(self):
         return reverse('modules:module_detail', args=[str(self.id)])
