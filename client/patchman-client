@@ -189,6 +189,26 @@ check_for_modularity() {
     fi
 }
 
+parse_module() {
+    module_info=$(echo -e ${1})
+    module_arch=$(echo "${module_info}" | grep ^Architecture | cut -d : -f 2 | awk '{$1=$1};1')
+    module_repo=$(echo "${module_info}" | grep ^Repo | cut -d : -f 2 | awk '{$1=$1};1')
+    module_stream=$(echo "${module_info}" | grep ^Stream | cut -d : -f 2 | sed -e 's/ \[.*//g' | awk '{$1=$1};1')
+    module_version=$(echo "${module_info}" | grep ^Version | cut -d : -f 2 | awk '{$1=$1};1')
+    module_context=$(echo "${module_info}" | grep ^Context | cut -d : -f 2 | awk '{$1=$1};1')
+    module_packages=$(echo "${module_info}" | sed -n '/Artifacts/,$p' | sed -e 's/Artifacts //' | sed -e 's/^: *//g' | grep -v ^$)
+    IFS=${NL_IFS}
+    module_package_str=""
+    for package in ${module_packages} ; do
+        module_package_str="${module_package_str} '${package}'"
+    done
+    IFS=${FULL_IFS}
+    if [ ! -z ${CPE_NAME} ] ; then
+        module_repo="${CPE_NAME}-${module_repo}"
+    fi
+    echo "'${module}' '${module_stream}' '${module_version}' '${module_context}' '${module_arch}' '${module_repo}'${module_package_str}" >> ${tmpfile_mod}
+}
+
 get_enabled_modules() {
     if ${verbose} ; then
         echo 'Finding enabled yum modules...'
@@ -197,37 +217,21 @@ get_enabled_modules() {
     enabled_modules=$(yum module list --enabled \
         | grep "\[e\]" \
         | grep -v ^Hint \
-        | awk {'print $1'})
+        | awk '{print $1}')
 
     for module in ${enabled_modules} ; do
         modules_info=$(yum module info ${module} | grep -v ^Hint)
         unset x
         while read -r line ; do
-            if [ -z "$line" ] ; then
-                echo -e ${x} | grep -q -E "^Stream.*\[e\]" && break || unset x
+            if [ -z "${line}" ] ; then
+                echo -e "${x}" | grep -q -E "^Stream.*\[e\]" && parse_module "${x}"
+                unset x
             else
-                x="$x$line\n"
+                x="${x}${line}\n"
             fi
-        done < <(echo -n "${modules_info}")
-        module_info=$(echo -e ${x})
-        module_arch=$(echo "${module_info}" | grep ^Architecture | cut -d : -f 2 | awk '{$1=$1};1')
-        module_repo=$(echo "${module_info}" | grep ^Repo | cut -d : -f 2 | awk '{$1=$1};1')
-        module_stream=$(echo "${module_info}" | grep ^Stream | cut -d : -f 2 | sed -e 's/ \[.*//g' | awk '{$1=$1};1')
-        module_version=$(echo "${module_info}" | grep ^Version | cut -d : -f 2 | awk '{$1=$1};1')
-        module_context=$(echo "${module_info}" | grep ^Context | cut -d : -f 2 | awk '{$1=$1};1')
-        module_packages=$(echo "${module_info}" | sed -n '/Artifacts/,$p' | sed -e 's/.* *: //g' | grep -v ^$)
-
-        IFS=${NL_IFS}
-        module_package_str=""
-        for package in ${module_packages} ; do
-            module_package_str="${module_package_str} '${package}'"
-        done
-        IFS=${FULL_IFS}
-        echo "'${module}' '${module_stream}' '${module_version}' '${module_context}' '${module_arch}' '${module_repo}' ${module_package_str}" >> ${tmpfile_mod}
+        done < <(echo "${modules_info}")
     done
-    if [ ! -z ${CPE_NAME} ] ; then
-        sed -i -e "s#${module_repo}#${CPE_NAME}-${module_repo}#g" "${tmpfile_mod}"
-    fi
+
     if ${debug} ; then
         cat "${tmpfile_mod}"
     fi
@@ -239,7 +243,7 @@ get_installed_rpm_packages() {
             echo 'Finding installed rpms...'
         fi
 
-        rpm -qa --queryformat "'%{NAME}' '%{EPOCH}' '%{version}' '%{RELEASE}' '%{ARCH}' 'rpm'\n" 2>/dev/null \
+        rpm -qa --queryformat "'%{NAME}' '%{EPOCH}' '%{VERSION}' '%{RELEASE}' '%{ARCH}' 'rpm'\n" 2>/dev/null \
         | sed -e 's/(none)//g' \
         | sed -e 's/\+/%2b/g' >> "${tmpfile_pkg}"
 
