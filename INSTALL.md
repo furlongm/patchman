@@ -166,7 +166,10 @@ $ mysql
 mysql> CREATE DATABASE patchman CHARACTER SET utf8 COLLATE utf8_general_ci;
 Query OK, 1 row affected (0.00 sec)
 
-mysql> GRANT ALL PRIVILEGES ON patchman.* TO patchman@localhost IDENTIFIED BY 'changeme';
+mysql> CREATE USER patchman@localhost IDENTIFIED BY 'changeme';
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> GRANT ALL PRIVILEGES ON patchman.* TO patchman@localhost;
 Query OK, 0 rows affected (0.00 sec)
 ```
 
