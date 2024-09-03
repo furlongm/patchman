@@ -67,7 +67,7 @@ def no_yes_img(boolean, alt_yes='Not Required', alt_no='Required'):
 
 @register.simple_tag
 def gen_table(object_list, template_name=None):
-    if object_list == '':
+    if not object_list:
         return ''
     if not template_name:
         app_label = object_list.model._meta.app_label
