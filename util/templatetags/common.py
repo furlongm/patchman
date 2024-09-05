@@ -18,6 +18,7 @@
 
 from humanize import naturaltime
 from datetime import datetime, timedelta
+from urllib.parse import urlencode
 
 from django.conf import settings
 from django.template import Library
@@ -25,11 +26,6 @@ from django.template.loader import get_template
 from django.utils.html import format_html
 from django.templatetags.static import static
 from django.core.paginator import Paginator
-
-try:
-    from urllib.parse import urlencode
-except ImportError:
-    from urllib import urlencode
 
 register = Library()
 
