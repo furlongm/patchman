@@ -311,10 +311,6 @@ def extract_module_metadata(data, url, repo):
             raw_packages = modulemd.get('artifacts', {}).get('rpms', '')
             # raw_profiles = list(modulemd.get('profiles', {}).keys())
 
-            package_arches = PackageArchitecture.objects.all()
-            with transaction.atomic():
-                m_arch, c = package_arches.get_or_create(name=arch)
-
             packages = set()
             p_type = Package.RPM
             for pkg_str in raw_packages:
@@ -322,26 +318,8 @@ def extract_module_metadata(data, url, repo):
                 package = get_or_create_package(p_name, p_epoch, p_ver, p_rel, p_arch, p_type)
                 packages.add(package)
 
-            from modules.models import Module
-            all_modules = Module.objects.all()
-            try:
-                with transaction.atomic():
-                    module, c = all_modules.get_or_create(name=m_name,
-                                                          stream=m_stream,
-                                                          version=m_version,
-                                                          context=m_context,
-                                                          arch=m_arch,
-                                                          repo=repo)
-            except IntegrityError as e:
-                error_message.send(sender=None, text=e)
-                module = all_modules.get(name=m_name,
-                                         stream=m_stream,
-                                         version=m_version,
-                                         context=m_context,
-                                         arch=m_arch,
-                                         repo=repo)
-            except DatabaseError as e:
-                error_message.send(sender=None, text=e)
+            from modules.utils import get_or_create_module
+            module, created = get_or_create_module(m_name, m_stream, m_version, m_context, arch, repo)
 
             package_ids = []
             for package in packages:
