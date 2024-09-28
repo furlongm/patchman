@@ -31,10 +31,10 @@ class HostSerializer(serializers.HyperlinkedModelSerializer):
                   'updated_at', 'bugfix_update_count', 'security_update_count')
 
     def get_bugfix_update_count(self, obj):
-        return len([u for u in obj.updates.all() if not u.security])
+        return obj.updates.filter(security=False).count()
 
     def get_security_update_count(self, obj):
-        return len([u for u in obj.updates.all() if u.security])
+        return obj.updates.filter(security=True).count()
 
 
 class HostRepoSerializer(serializers.HyperlinkedModelSerializer):
