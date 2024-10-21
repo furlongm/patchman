@@ -161,7 +161,7 @@ report() {
             echo "</table></div><br>" >> $FILE
             echo "</body></html>" >> $FILE
         else
-       	    echo "$(date '+%d/%m/%Y %R') [INFO] $TAG $1: Report exists, skipping."
+            echo "$(date '+%d/%m/%Y %R') [INFO] $TAG $1: Report exists, skipping."
         fi
     else
         echo "$(date '+%d/%m/%Y %R') [INFO] $TAG $1: There are no updates available."
@@ -193,7 +193,7 @@ if [ $# -gt 0 ] && [[ $1 == -* ]]; then
                     
                     # Generate report
                     for HOST in $HOSTS; do
-                   	    report $HOST
+                        report $HOST
                     done
                     
                     # E-mails the report
@@ -204,8 +204,8 @@ if [ $# -gt 0 ] && [[ $1 == -* ]]; then
                 ;;
             H)
                 if [ ! -f $CONF ]; then
-                   	echo "$(date '+%d/%m/%Y %R') [ERROR] Configuration file not found."
-                   	exit 1
+                    echo "$(date '+%d/%m/%Y %R') [ERROR] Configuration file not found."
+                    exit 1
                 else
                     DIR=$(getConfig General dir)
                     DATE=$(date +%Y%m%d)
@@ -250,5 +250,5 @@ if [ $# -gt 0 ] && [[ $1 == -* ]]; then
     done
 else
     usage
-	exit 2
+    exit 2
 fi
