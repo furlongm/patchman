@@ -1,49 +1,5 @@
 #!/bin/bash
 
-usage() {
-    # Shows all available arguments
-    echo "$0 [-a] [-H hostname] [-T tag] [-h]"
-    echo "-a: E-mails all recipients with available updates"
-    echo "-H hostname: E-mails recipient with all available updates for given host"
-    echo "-T tag: E-mails recipient with all available updates for given tag"
-    echo "-h: Shows this help message and exits"
-}
-
-getConfig() {
-    # Gets the configuration of section $1, parameter $2
-    val=$(sed -nr "/\[$1\]/,/\[/{/^(\W|)$2=/p}" $CONF)
-    echo ${val#$2=}
-}
-
-getPackages() {
-    MYSQL_PWD="$PASSWORD" mysql -u "$USERNAME" "$DATABASE" -Nrse \
-        "SELECT \`update\`
-        FROM hosts_host
-        LEFT JOIN (
-            SELECT host_id, package.\`update\`
-            FROM hosts_host_updates
-            LEFT JOIN (
-                SELECT packages_packageupdate.id, CONCAT(oldpackage.package, \" -> \", newpackage.package, \" \", IF(security=0, \"(Bugfix)\", \"(Security)\")) AS \`update\`
-                FROM packages_packageupdate
-                LEFT JOIN (
-                    SELECT packages_package.id, CONCAT_WS(\"\", packages_packagename.name, \"-\", NULLIF(CONCAT(epoch, \":\"), ':'), version, \"-\", \`release\`, \"-\", arch_packagearchitecture.name) 
-                    AS package
-                    FROM packages_package
-                    LEFT JOIN packages_packagename ON packages_package.name_id=packages_packagename.id
-                    LEFT JOIN arch_packagearchitecture ON packages_package.arch_id=arch_packagearchitecture.id
-                ) AS oldpackage ON packages_packageupdate.oldpackage_id=oldpackage.id
-                RIGHT JOIN (
-                    SELECT packages_package.id, CONCAT_WS(\"\", packages_packagename.name, \"-\", NULLIF(CONCAT(epoch, \":\"), ':'), version, \"-\", \`release\`, \"-\", arch_packagearchitecture.name)
-                    AS package
-                    FROM packages_package
-                    LEFT JOIN packages_packagename ON packages_package.name_id=packages_packagename.id
-                    LEFT JOIN arch_packagearchitecture ON packages_package.arch_id=arch_packagearchitecture.id
-                ) AS newpackage ON packages_packageupdate.newpackage_id=newpackage.id
-            ) AS package ON hosts_host_updates.packageupdate_id=package.id
-        ) AS updates ON hosts_host.id=updates.host_id
-        WHERE hosts_host.reversedns=\"$1\";"
-}
-
 email() {
     SENDER=$(getConfig General sender)
 
@@ -121,6 +77,41 @@ email() {
     fi
 }
 
+getConfig() {
+    # Gets the configuration of section $1, parameter $2
+    val=$(sed -nr "/\[$1\]/,/\[/{/^(\W|)$2=/p}" $CONF)
+    echo ${val#$2=}
+}
+
+getPackages() {
+    MYSQL_PWD="$PASSWORD" mysql -u "$USERNAME" "$DATABASE" -Nrse \
+        "SELECT \`update\`
+        FROM hosts_host
+        LEFT JOIN (
+            SELECT host_id, package.\`update\`
+            FROM hosts_host_updates
+            LEFT JOIN (
+                SELECT packages_packageupdate.id, CONCAT(oldpackage.package, \" -> \", newpackage.package, \" \", IF(security=0, \"(Bugfix)\", \"(Security)\")) AS \`update\`
+                FROM packages_packageupdate
+                LEFT JOIN (
+                    SELECT packages_package.id, CONCAT_WS(\"\", packages_packagename.name, \"-\", NULLIF(CONCAT(epoch, \":\"), ':'), version, \"-\", \`release\`, \"-\", arch_packagearchitecture.name) 
+                    AS package
+                    FROM packages_package
+                    LEFT JOIN packages_packagename ON packages_package.name_id=packages_packagename.id
+                    LEFT JOIN arch_packagearchitecture ON packages_package.arch_id=arch_packagearchitecture.id
+                ) AS oldpackage ON packages_packageupdate.oldpackage_id=oldpackage.id
+                RIGHT JOIN (
+                    SELECT packages_package.id, CONCAT_WS(\"\", packages_packagename.name, \"-\", NULLIF(CONCAT(epoch, \":\"), ':'), version, \"-\", \`release\`, \"-\", arch_packagearchitecture.name)
+                    AS package
+                    FROM packages_package
+                    LEFT JOIN packages_packagename ON packages_package.name_id=packages_packagename.id
+                    LEFT JOIN arch_packagearchitecture ON packages_package.arch_id=arch_packagearchitecture.id
+                ) AS newpackage ON packages_packageupdate.newpackage_id=newpackage.id
+            ) AS package ON hosts_host_updates.packageupdate_id=package.id
+        ) AS updates ON hosts_host.id=updates.host_id
+        WHERE hosts_host.reversedns=\"$1\";"
+}
+
 report() {
     # Gets host info
     HOST=$(patchman -lh -H "$1" | tail -n +3 | head -n -1 | sed 's/\x1b\[[0-9;]*m//g')
@@ -168,6 +159,15 @@ report() {
     else
         echo "$(date '+%d/%m/%Y %R') [INFO] $TAG $1: There are no updates available."
     fi
+}
+
+usage() {
+    # Shows all available arguments
+    echo "$0 [-a] [-H hostname] [-T tag] [-h]"
+    echo "-a: E-mails all recipients with available updates"
+    echo "-H hostname: E-mails recipient with all available updates for given host"
+    echo "-T tag: E-mails recipient with all available updates for given tag"
+    echo "-h: Shows this help message and exits"
 }
 
 # Checks if there are any parameters and if they start with "-"
