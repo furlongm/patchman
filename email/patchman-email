@@ -33,9 +33,9 @@ email() {
                 </div></body></html>"
             
             if [ -z "$2" ]; then
-                mapfile -t ATTACHMENTS < <(ls "$DIR"/"$1"/*-"$DATE".html)
+                mapfile -t ATTACHMENTS < <(ls "$DIR"/"$1"/*-"$DATE".pdf)
             else
-                mapfile -t ATTACHMENTS < <(ls "$DIR"/"$1"/"$2"-"$DATE".html)
+                mapfile -t ATTACHMENTS < <(ls "$DIR"/"$1"/"$2"-"$DATE".pdf)
             fi
             
             echo "$(date '+%d/%m/%Y %R') [INFO] $1: E-mailing report..."
@@ -126,23 +126,24 @@ report() {
         TAG=$(echo "$HOST" | awk -F ' : ' 'NR==11 { print $2 }')
         
         # Creates the directory where the e-mail file will be stored, if it doesnt exist
-        FILE=$DIR/$TAG/$1-$DATE.html
-        mkdir -p "$DIR"/"$TAG"
+        mkdir -p "$DIR/$TAG"
+        FILE=$DIR/$TAG/$1-$DATE
         
         # Queries the database for available package updates
         QUERY=$(getPackages "$1")
         
         # Creates the report if it doesnt exist
-        if [ ! -f "$FILE" ]; then
+        if [ ! -f "$FILE.pdf" ]; then
             echo "$(date '+%d/%m/%Y %R') [INFO] $TAG $1: Creating report..."
             
-            cat <<-EOF > "$FILE"
+            cat <<-EOF > "$FILE.html"
 				<html><style>
 				body { font-family: "Calibri" }
 				#details table { border-collapse: collapse; width: 20em; white-space: nowrap;}
 				#updates table { border-collapse: collapse; width: 100%; }
 				#details th, #details tr, #details td { text-align: left; }
 				#updates th, #updates td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+                @page { size: A4 landscape; }
 				</style><head><meta charset="UTF-8"></head><body>
 				<div id="details"><table>
 				$(echo "$HOST" | awk -F ' : ' 'NR!=7 && NR!=9 && NR!=11 && NR!=12 && NR!=13 && NR!=14 { print "<tr><th>"$1"</th><th>:&nbsp;</th><td>"$2"</td></tr>" }' | sed 's/Reverse DNS/Hostname/g')
@@ -153,6 +154,10 @@ report() {
 				</table></div><br>
 				</body></html>
 			EOF
+
+            if weasyprint "$FILE.html" "$FILE.pdf"; then
+                rm "$FILE.html"
+            fi
         else
             echo "$(date '+%d/%m/%Y %R') [INFO] $TAG $1: Report exists, skipping."
         fi
