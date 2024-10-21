@@ -1,0 +1,52 @@
+---
+networks:
+  patchman:
+    name: patchman
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 10.0.0.0/24
+        gateway: 10.0.0.1
+
+services:
+  patchman:
+    container_name: patchman
+    image: patchman:latest
+    build:
+      context: ./patchman
+    restart: unless-stopped
+    entrypoint: ["/usr/sbin/apache2ctl", "-DFOREGROUND"]
+    networks:
+      patchman:
+        ipv4_address: '10.0.0.10'
+    volumes:
+      - /opt/docker/patchman/conf/local_settings.py:/etc/patchman/local_settings.py:ro
+      - /opt/docker/patchman/conf/patchman.nos.mgt.conf:/etc/apache2/sites-enabled/000-default.conf:ro
+    depends_on:
+      - patchman-db
+      - memcached
+
+  patchman-db:
+    container_name: patchman-db
+    image: mysql:latest
+    restart: unless-stopped
+    command: ["mysqld", "--character-set-server=utf8", "--collation-server=utf8_general_ci"]
+    networks:
+      patchman:
+        ipv4_address: '10.0.0.11'
+    environment:
+      MYSQL_ROOT_PASSWORD: changeme 
+      MYSQL_DATABASE: changeme 
+      MYSQL_USER: changeme
+      MYSQL_PASSWORD: changeme
+    volumes:
+      - /opt/docker/patchman/data:/var/lib/mysql:rw
+
+  memcached:
+    container_name: memcached
+    image: memcached:latest
+    restart: unless-stopped
+    networks:
+      patchman:
+        ipv4_address: '10.0.0.12'
