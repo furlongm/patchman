@@ -1,0 +1,27 @@
+{% load common %}
+<table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+  <thead>
+    <tr>
+      <th class="col-sm-auto">Name</th>
+      <th class="col-sm-auto">Stream</th>
+      <th class="col-sm-auto">Version</th>
+      <th class="col-sm-auto">Context</th>
+      <th class="col-sm-auto">Repo</th>
+      <th class="col-sm-auto">Packages</th>
+      <th class="col-md-auto">Enabled on Hosts</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for module in object_list %}
+      <tr>
+        <td><a href="{{ module.get_absolute_url }}">{{ module.name }}</a></td>
+        <td>{{ module.stream }}</td>
+        <td>{{ module.version }}</td>
+        <td>{{ module.context }}</td>
+        <td><a href="{{ module.repo.get_absolute_url }}">{{ module.repo }}</a></td>
+        <td>{{ module.packages.count }}</td>
+        <td>{{ module.host_set.count }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>

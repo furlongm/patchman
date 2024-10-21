@@ -1,3 +1,235 @@
+patchman (3.0.10-1) stable; urgency=medium
+
+  * fix module parsing
+  * don't cut last package in a module
+  * update module string and table
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Thu, 08 Aug 2024 03:39:26 +0000
+
+patchman (3.0.9-1) stable; urgency=medium
+
+  [ dependabot[bot] ]
+  * Bump django from 3.2.23 to 3.2.24
+
+  [ Marcus Furlong ]
+  * bump packages for security updates
+  * bump python versions
+  * bump lxml to 4.9.4
+  * add quotes for all python versions
+  * fix module parsing on rhel 8 and similar
+  * better handle attrs in reports
+  * update IFS usage
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Sun, 23 Jun 2024 21:22:32 +0000
+
+patchman (3.0.8-1) stable; urgency=medium
+
+  * bump pyyaml to 6.0.1
+  * use correct module uniqeness constraint
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Mon, 05 Feb 2024 03:47:54 +0000
+
+patchman (3.0.7-1) stable; urgency=medium
+
+  [ Jasper Hafkenscheid ]
+  * Fix post_data curl eval with quotes
+
+  [ Marcus Furlong ]
+  * add missing brace to client
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Fri, 05 Jan 2024 04:10:19 +0000
+
+patchman (3.0.6-1) stable; urgency=medium
+
+  * update django migrate command
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Tue, 12 Dec 2023 03:53:31 +0000
+
+patchman (3.0.5-1) stable; urgency=medium
+
+  [ Marcus Furlong ]
+  * fix for when there is no repo for a package update
+
+  [ Alex Uebergang ]
+  * Remove duplicate results from mirror packages query
+
+  [ Marcus Furlong ]
+  * add migrations from v2
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Tue, 12 Dec 2023 03:37:44 +0000
+
+patchman (3.0.4-1) stable; urgency=medium
+
+  * add correct debian package for python memcache
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Thu, 07 Dec 2023 04:56:46 +0000
+
+patchman (3.0.3-1) stable; urgency=medium
+
+  * add missing email address for debian changelog
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Thu, 07 Dec 2023 04:16:19 +0000
+
+patchman (3.0.2-1) stable; urgency=medium
+
+  * add missing email for debian changelog
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Thu, 07 Dec 2023 04:10:39 +0000
+
+patchman (3.0.1-1) stable; urgency=medium
+
+  * bump build images to latest
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Thu, 07 Dec 2023 03:59:50 +0000
+
+patchman (3.0.0-1) stable; urgency=medium
+
+  * modularity support
+  * django3 / 2023 distro support
+  * bump django and requests to address security issues
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Thu, 07 Dec 2023 03:54:41 +0000
+
+patchman (2.0.18-1) stable; urgency=medium
+
+  [ Alex Uebergang ]
+  * Update yum repo config parsing
+
+  [ Marcus Furlong ]
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Thu, 07 Dec 2023 03:17:25 +0000
+
+patchman (2.0.17-1) stable; urgency=medium
+
+  * fix apt repo parsing
+  * ensure apt cache is up to date
+  * use sudo for apt operations not in a container
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Tue, 28 Nov 2023 00:10:39 +0000
+
+patchman (2.0.14-1) stable; urgency=medium
+
+  [ Marcus Furlong ]
+  * ensure text is stringified before printing
+  * update build instructions
+
+  [ David Sinquin ]
+  * Speed up debian package list parsing
+
+  [ Marcus Furlong ]
+  * add support for mirror+file:/ style apt repos
+  * use transparent decompression for opening arch linux db files
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Tue, 14 Nov 2023 20:56:02 +0000
+
+patchman (2.0.13-1) stable; urgency=medium
+
+  * handle UnicodeDecodeError in deb repo content
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Tue, 28 Feb 2023 19:44:34 +0000
+
+patchman (2.0.12-1) stable; urgency=medium
+
+  * fix client deps on el8/el9
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Tue, 28 Feb 2023 18:26:08 +0000
+
+patchman (2.0.11-1) stable; urgency=medium
+
+  * fix mirror_package creation and deletion
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Wed, 15 Feb 2023 03:51:24 +0000
+
+patchman (2.0.10-1) stable; urgency=medium
+
+  * fix repomd.xml.xz retrieval
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Wed, 15 Feb 2023 03:27:40 +0000
+
+patchman (2.0.9-1) stable; urgency=medium
+
+  * improve output for fetching existing packages
+  * djangodoctor performance improvements
+  * remove redundent explicit inheriting from object
+  * remove unnecessary arguments when calling super for the parent class
+  * remove redundent default settings
+  * specify encoding when open files in context
+  * allow blank for report_ip
+  * use dict literal syntax
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Wed, 15 Feb 2023 03:05:06 +0000
+
+patchman (2.0.8-1) stable; urgency=medium
+
+  * update gpg installation instructions
+  * flake8 fixes
+  * update github actions
+  * enable caching middleware
+  * allow filtering on specific fields using the api
+  * update github codeql actions
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Wed, 25 Jan 2023 19:09:07 +0000
+
+patchman (2.0.7-1) stable; urgency=medium
+
+  * fix failing CI due to upgraded git
+  * use correct package names on debian
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Wed, 18 Jan 2023 16:13:27 +0000
+
+patchman (2.0.6-1) stable; urgency=medium
+
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Wed, 18 Jan 2023 03:29:35 +0000
+
+patchman (2.0.5-1) stable; urgency=medium
+
+  [ Marcus Furlong ]
+  * remove python2 lzma support
+  * use full path for lock dir
+  * add rpm dependencies for client
+  * add deb dependencies for client
+  * switch to f-strings
+
+  [ dependabot[bot] ]
+  * Bump django from 2.2.27 to 2.2.28
+  * update del statements for flake8
+  * update python reqs
+  * switch patchman cli to f-strings
+  * add static to objectlist template
+  * avoid duplicate updates
+  * add CPE_NAME to repo id to fix duplicate ids
+  * fix yum multiline failures
+  * fix client yum parsing
+  * add support for repos with sha512 checksums
+  * auto-commit to update version skip-checks: true
+  * add email for debian changelog
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Wed, 18 Jan 2023 03:13:37 +0000
+
 patchman (2.0.3-1) stable; urgency=medium
 
   * use centos:stream8 docker image

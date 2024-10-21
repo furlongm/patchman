@@ -37,7 +37,7 @@ class Report(models.Model):
     kernel = models.CharField(max_length=255, null=True)
     arch = models.CharField(max_length=255, null=True)
     os = models.CharField(max_length=255, null=True)
-    report_ip = models.GenericIPAddressField(null=True)
+    report_ip = models.GenericIPAddressField(null=True, blank=True)
     protocol = models.CharField(max_length=255, null=True)
     useragent = models.CharField(max_length=255, null=True)
     processed = models.BooleanField(default=False)
@@ -45,15 +45,16 @@ class Report(models.Model):
     sec_updates = models.TextField(null=True, blank=True)
     bug_updates = models.TextField(null=True, blank=True)
     repos = models.TextField(null=True, blank=True)
+    modules = models.TextField(null=True, blank=True)
     reboot = models.TextField(null=True, blank=True)
 
-    class Meta(object):
+    class Meta:
         verbose_name_plural = 'Report'
         verbose_name_plural = 'Reports'
         ordering = ('-created',)
 
     def __str__(self):
-        return '{0!s} {1!s}'.format(self.host, self.created.strftime('%c'))
+        return f"{self.host!s} {self.created.strftime('%c')!s}"
 
     def get_absolute_url(self):
         return reverse('reports:report_detail', args=[str(self.id)])
@@ -71,13 +72,26 @@ class Report(models.Model):
         self.useragent = meta['HTTP_USER_AGENT']
         self.domain = None
 
-        attrs = ['arch', 'host', 'os', 'kernel', 'protocol', 'packages',
-                 'tags', 'sec_updates', 'bug_updates', 'repos', 'reboot']
+        attrs = ['arch',
+                 'host',
+                 'os',
+                 'kernel',
+                 'protocol',
+                 'packages',
+                 'tags',
+                 'sec_updates',
+                 'bug_updates',
+                 'repos',
+                 'modules',
+                 'reboot']
 
         for attr in attrs:
-            setattr(self, attr, data.get(attr).strip())
+            if data.get(attr):
+                setattr(self, attr, data.get(attr))
+            else:
+                setattr(self, attr, '')
 
-        if self.host is not None:
+        if self.host:
             self.host = self.host.lower()
             fqdn = self.host.split('.', 1)
             if len(fqdn) == 2:
@@ -146,13 +160,15 @@ class Report(models.Model):
 
             if verbose:
                 text = 'Processing report '
-                text += '{0!s} - {1!s}'.format(self.id, self.host)
+                text += f'{self.id!s} - {self.host!s}'
                 info_message.send(sender=None, text=text)
 
             from reports.utils import process_packages, \
-                process_repos, process_updates
+                process_repos, process_updates, process_modules
             with transaction.atomic():
                 process_repos(report=self, host=host)
+            with transaction.atomic():
+                process_modules(report=self, host=host)
             with transaction.atomic():
                 process_packages(report=self, host=host)
             with transaction.atomic():
@@ -165,15 +181,15 @@ class Report(models.Model):
             if find_updates:
                 if verbose:
                     text = 'Finding updates for report '
-                    text += '{0!s} - {1!s}'.format(self.id, self.host)
+                    text += f'{self.id!s} - {self.host!s}'
                     info_message.send(sender=None, text=text)
                 host.find_updates()
         else:
             if self.processed:
-                text = 'Report {0!s} '.format(self.id)
+                text = f'Report {self.id!s} '
                 text += 'has already been processed'
                 info_message.send(sender=None, text=text)
             else:
                 text = 'Error: OS, kernel or arch not sent '
-                text += 'with report {0!s}'.format(self.id)
+                text += f'with report {self.id!s}'
                 error_message.send(sender=None, text=text)

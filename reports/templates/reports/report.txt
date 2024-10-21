@@ -1,4 +1,5 @@
 The following data has been submitted for processing:
+
 host:     {{ data.host }}
 os:       {{ data.os }}
 kernel:   {{ data.kernel }}
@@ -6,11 +7,23 @@ report:   {{ data.report }}
 tags:     {{ data.tags }}
 protocol: {{ data.protocol }}
 reboot:   {{ data.reboot }}
+{% if repos %}
 repos:
-{% for r in repos.splitlines %}
-{{ r }}
-{% endfor %}
+{% for r in repos.splitlines %} {{ r|safe }}
+{% endfor %}{% endif %}
+{% if modules %}
+modules:
+{% for m in modules.splitlines %} {{ m|safe }}
+{% endfor %}{% endif %}
+{% if packages %}
 packages:
 {% for p in packages %}{% for info in p %} {{ info }} |{% endfor %}
-{% endfor %}
-
+{% endfor %}{% endif %}
+{% if sec_updates %}
+security updates:
+{% for u in sec_updates.splitlines %} {{ u|safe }}
+{% endfor %}{% endif %}
+{% if bug_updates %}
+bugfix updates:
+{% for u in bug_updates.splitlines %} {{ u|safe }}
+{% endfor %}{% endif %}

@@ -64,7 +64,7 @@ def dashboard(request):
 
     # osgroup issues
     norepo_osgroups = None
-    if hosts.filter(host_repos_only=False):
+    if hosts.filter(host_repos_only=False).exists():
         norepo_osgroups = osgroups.filter(repos__isnull=True)
 
     # mirror issues
@@ -85,8 +85,8 @@ def dashboard(request):
     # report issues
     unprocessed_reports = Report.objects.filter(processed=False)
 
-    checksums = dict()
-    possible_mirrors = dict()
+    checksums = {}
+    possible_mirrors = {}
 
     for csvalue in Mirror.objects.all().values('file_checksum').distinct():
         checksum = csvalue['file_checksum']

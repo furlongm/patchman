@@ -51,7 +51,7 @@ def progress_update_r(**kwargs):
 def print_info_message(sender=None, **kwargs):
     """ Receiver to print an info message, no color
     """
-    text = kwargs.get('text')
+    text = str(kwargs.get('text'))
     if get_verbosity():
         print(Style.RESET_ALL + Fore.RESET + text)
 
@@ -60,7 +60,7 @@ def print_info_message(sender=None, **kwargs):
 def print_warning_message(**kwargs):
     """ Receiver to print a warning message in yellow text
     """
-    text = kwargs.get('text')
+    text = str(kwargs.get('text'))
     if get_verbosity():
         print(Style.BRIGHT + Fore.YELLOW + text)
 
@@ -69,7 +69,7 @@ def print_warning_message(**kwargs):
 def print_error_message(**kwargs):
     """ Receiver to print an error message in red text
     """
-    text = kwargs.get('text')
+    text = str(kwargs.get('text'))
     if text:
         print(Style.BRIGHT + Fore.RED + text)
 
@@ -78,6 +78,6 @@ def print_error_message(**kwargs):
 def print_debug_message(**kwargs):
     """ Receiver to print a debug message in blue, if verbose and DEBUG are set
     """
-    text = kwargs.get('text')
+    text = str(kwargs.get('text'))
     if get_verbosity() and settings.DEBUG and text:
         print(Style.BRIGHT + Fore.BLUE + text)

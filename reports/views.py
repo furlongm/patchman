@@ -45,18 +45,22 @@ def upload(request):
             from reports.tasks import process_report
             process_report.delay(report.id)
 
-        if 'report' in data and data['report'] == '1':
+        if 'report' in data and data['report'] == 'true':
             packages = []
-            repos = []
             if 'packages' in data:
                 for p in data['packages'].splitlines():
                     packages.append(p.replace('\'', '').split(' '))
-            if 'repos' in data:
-                repos = data['repos']
+            repos = data.get('repos')
+            modules = data.get('modules')
+            sec_updates = data.get('sec_updates')
+            bug_updates = data.get('bug_updates')
             return render(request,
                           'reports/report.txt',
                           {'data': data,
                            'packages': packages,
+                           'modules': modules,
+                           'sec_updates': sec_updates,
+                           'bug_updates': bug_updates,
                            'repos': repos},
                           content_type='text/plain')
         else:
@@ -138,7 +142,7 @@ def report_delete(request, report_id):
     if request.method == 'POST':
         if 'delete' in request.POST:
             report.delete()
-            text = 'Report {0!s} has been deleted'.format(report)
+            text = f'Report {report!s} has been deleted'
             messages.info(request, text)
             return redirect(reverse('reports:report_list'))
         elif 'cancel' in request.POST:

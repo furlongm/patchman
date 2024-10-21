@@ -24,7 +24,7 @@ from django.db.models import Q
 from django.contrib import messages
 from django.db import IntegrityError
 
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets
 
 from util.filterspecs import Filter, FilterBar
 from hosts.models import HostRepo
@@ -191,7 +191,7 @@ def mirror_list(request):
             repo.security = security
             repo.save()
             move_mirrors(repo)
-            text = 'Mirrors linked to new Repository {0!s}'.format(repo)
+            text = f'Mirrors linked to new Repository {repo!s}'
             messages.info(request, text)
             return redirect(repo.get_absolute_url())
 
@@ -199,7 +199,7 @@ def mirror_list(request):
         if link_form.is_valid():
             repo = link_form.cleaned_data['name']
             move_mirrors(repo)
-            text = 'Mirrors linked to Repository {0!s}'.format(repo)
+            text = f'Mirrors linked to Repository {repo!s}'
             messages.info(request, text)
             return redirect(repo.get_absolute_url())
     else:
@@ -238,7 +238,7 @@ def mirror_delete(request, mirror_id):
     if request.method == 'POST':
         if 'delete' in request.POST:
             mirror.delete()
-            text = 'Mirror {0!s} has been deleted'.format(mirror)
+            text = f'Mirror {mirror!s} has been deleted'
             messages.info(request, text)
             return redirect(reverse('repos:mirror_list'))
         elif 'cancel' in request.POST:
@@ -260,7 +260,7 @@ def mirror_edit(request, mirror_id):
             if edit_form.is_valid():
                 mirror = edit_form.save()
                 mirror.save()
-                text = 'Saved changes to Mirror {0!s}'.format(mirror)
+                text = f'Saved changes to Mirror {mirror!s}'
                 messages.info(request, text)
                 return redirect(mirror.get_absolute_url())
             else:
@@ -304,7 +304,7 @@ def repo_edit(request, repo_id):
                     repo.enable()
                 else:
                     repo.disable()
-                text = 'Saved changes to Repository {0!s}'.format(repo)
+                text = f'Saved changes to Repository {repo!s}'
                 messages.info(request, text)
                 return redirect(repo.get_absolute_url())
             else:
@@ -330,7 +330,7 @@ def repo_delete(request, repo_id):
             for mirror in repo.mirror_set.all():
                 mirror.delete()
             repo.delete()
-            text = 'Repository {0!s} has been deleted'.format(repo)
+            text = f'Repository {repo!s} has been deleted'
             messages.info(request, text)
             return redirect(reverse('repos:repo_list'))
         elif 'cancel' in request.POST:
@@ -355,7 +355,7 @@ def repo_toggle_enabled(request, repo_id):
     if request.is_ajax():
         return HttpResponse(status=204)
     else:
-        text = 'Repository {0!s} has been {1!s}'.format(repo, status)
+        text = f'Repository {repo!s} has been {status!s}'
         messages.info(request, text)
         return redirect(repo.get_absolute_url())
 
@@ -374,8 +374,8 @@ def repo_toggle_security(request, repo_id):
     if request.is_ajax():
         return HttpResponse(status=204)
     else:
-        text = 'Repository {0!s} has been marked'.format(repo)
-        text += ' as a {0!s} update repo'.format(sectype)
+        text = f'Repository {repo!s} has been marked'
+        text += f' as a {sectype!s} update repo'
         messages.info(request, text)
         return redirect(repo.get_absolute_url())
 
@@ -386,7 +386,6 @@ class RepositoryViewSet(viewsets.ModelViewSet):
     """
     queryset = Repository.objects.all()
     serializer_class = RepositorySerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
 
 class MirrorViewSet(viewsets.ModelViewSet):
@@ -395,7 +394,6 @@ class MirrorViewSet(viewsets.ModelViewSet):
     """
     queryset = Mirror.objects.all()
     serializer_class = MirrorSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
 
 class MirrorPackageViewSet(viewsets.ModelViewSet):
@@ -404,4 +402,3 @@ class MirrorPackageViewSet(viewsets.ModelViewSet):
     """
     queryset = MirrorPackage.objects.all()
     serializer_class = MirrorPackageSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)

@@ -8,7 +8,7 @@ jobs:
   create-release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
           ref: master
@@ -37,7 +37,7 @@ jobs:
     needs: create-release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
           ref: master
@@ -50,6 +50,7 @@ jobs:
           git config user.name 'Marcus Furlong'
       - name: Install dependencies
         run: |
+          sudo apt update
           sudo apt -y install python3-setuptools debhelper dh-exec dh-python git-buildpackage
       - name: Update repo version if required
         env:
@@ -64,6 +65,7 @@ jobs:
           git push origin master
       - name: Update debian changelog
         env:
+          EMAIL: furlongm@gmail.com
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COMMIT_MSG: |
             auto-commit to update debian changelog
@@ -75,7 +77,7 @@ jobs:
     needs: update-version-and-changelog
     runs-on: ubuntu-latest
     container:
-      image: debian:buster
+      image: debian:bookworm
     steps:
       - name: Install build dependencies
         run: |
@@ -86,12 +88,13 @@ jobs:
         run: |
           rm /bin/sh
           ln -sf /bin/bash /bin/sh
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
           ref: master
       - name: git fetch --all
         run: |
+          git config --global --add safe.directory /__w/patchman/patchman
           git fetch --all
       - name: Get version
         run: |
@@ -109,6 +112,7 @@ jobs:
           echo "upload_url=${upload_url}" >> $GITHUB_ENV
       - name: Build deb packages
         env:
+          EMAIL: furlongm@gmail.com
           COMMIT_MSG: |
             auto-commit
             skip-checks: true
@@ -143,18 +147,19 @@ jobs:
     needs: update-version-and-changelog
     runs-on: ubuntu-latest
     container:
-      image: quay.io/centos/centos:stream8
+      image: quay.io/centos/centos:stream9
     steps:
       - name: Install build dependencies
         run: |
           dnf -y install epel-release
           dnf -y install rpm-build python3 python3-setuptools git
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
           ref: master
       - name: git fetch --all
         run: |
+          git config --global --add safe.directory /__w/patchman/patchman
           git fetch --all
       - name: Get version
         run: |
@@ -196,9 +201,9 @@ jobs:
     needs: update-version-and-changelog
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up python
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v4
         with:
           python-version: '3.x'
       - name: Set version

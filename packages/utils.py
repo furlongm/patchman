@@ -19,10 +19,11 @@ import re
 from defusedxml.lxml import _etree as etree
 
 from django.conf import settings
+from django.core.exceptions import MultipleObjectsReturned
 from django.db import IntegrityError, DatabaseError, transaction
 
 from util import bunzip2, get_url, download_url, get_sha1
-from packages.models import ErratumReference, Erratum, PackageName, \
+from packages.models import ErratumReference, PackageName, \
     Package, PackageUpdate
 from arch.models import MachineArchitecture, PackageArchitecture
 from patchman.signals import error_message, progress_info_s, progress_update_s
@@ -61,16 +62,36 @@ def find_version(s, epoch, release):
     """ Given a package version string, return the version
     """
     try:
-        es = '{0!s}:'.format(epoch)
+        es = f'{epoch!s}:'
         e = s.index(es) + len(epoch) + 1
     except ValueError:
         e = 0
     try:
-        rs = '-{0!s}'.format(release)
+        rs = f'-{release!s}'
         r = s.index(rs)
     except ValueError:
         r = len(s)
     return s[e:r]
+
+
+def parse_package_string(pkg_str):
+    """ Parse a package string and return
+        name, epoch, ver, release, dist, arch
+    """
+
+    for suffix in ['rpm', 'deb']:
+        pkg_str = re.sub(f'.{suffix}$', '', pkg_str)
+    pkg_re = re.compile('(\S+)-(?:(\d*):)?(.*)-(~?\w+)[.+]?(~?\S+)?\.(\S+)$')  # noqa
+    m = pkg_re.match(pkg_str)
+    if m:
+        name, epoch, ver, rel, dist, arch = m.groups()
+    else:
+        e = f'Error parsing package string: "{pkg_str}"'
+        error_message.send(sender=None, text=e)
+        return
+    if dist:
+        rel = f'{rel}.{dist}'
+    return name, epoch, ver, rel, dist, arch
 
 
 def update_errata(force=False):
@@ -117,7 +138,7 @@ def parse_errata(data, force):
     result = etree.XML(data)
     errata_xml = result.findall('*')
     elen = len(errata_xml)
-    ptext = 'Processing {0!s} Errata:'.format(elen)
+    ptext = f'Processing {elen!s} Errata:'
     progress_info_s.send(sender=None, ptext=ptext, plen=elen)
     for i, child in enumerate(errata_xml):
         progress_update_s.send(sender=None, index=i + 1)
@@ -165,7 +186,7 @@ def parse_errata_children(e, children):
         elif c.tag == 'os_release':
             from operatingsystems.models import OSGroup
             osgroups = OSGroup.objects.all()
-            osgroup_name = 'CentOS {0!s}'.format(c.text)
+            osgroup_name = f'CentOS {c.text!s}'
             with transaction.atomic():
                 osgroup, c = osgroups.get_or_create(name=osgroup_name)
             e.releases.add(osgroup)
@@ -177,11 +198,11 @@ def parse_errata_children(e, children):
                 name, epoch, ver, rel, dist, arch = m.groups()
             else:
                 e = 'Error parsing errata: '
-                e += 'could not parse package "{0!s}"'.format(pkg_str)
+                e += f'could not parse package "{pkg_str!s}"'
                 error_message.send(sender=None, text=e)
                 continue
             if dist:
-                rel = '{0!s}.{1!s}'.format(rel, dist)
+                rel = f'{rel!s}.{dist!s}'
             p_type = Package.RPM
             pkg = get_or_create_package(name, epoch, ver, rel, arch, p_type)
             e.packages.add(pkg)
@@ -210,6 +231,7 @@ def create_erratum(name, etype, issue_date, synopsis, force=False):
     """ Create an Erratum object. Returns the object or None if it already
         exists. To force update the erratum, set force=True
     """
+    from packages.models import Erratum
     errata = Erratum.objects.all()
     with transaction.atomic():
         e, c = errata.get_or_create(name=name,
@@ -264,7 +286,7 @@ def get_or_create_package(name, epoch, version, release, arch, p_type):
         release=release,
         packagetype=p_type,
     ).order_by('-epoch')
-    if potential_packages:
+    if potential_packages.exists():
         package = potential_packages[0]
         if epoch and package.epoch != epoch:
             package.epoch = epoch
@@ -284,14 +306,68 @@ def get_or_create_package(name, epoch, version, release, arch, p_type):
     return package
 
 
+def get_or_create_package_update(oldpackage, newpackage, security):
+    """ Get or create a PackageUpdate object. Returns the object. Returns None
+        if it cannot be created
+    """
+    updates = PackageUpdate.objects.all()
+    # see if any version of this update exists
+    # if it's already marked as a security update, leave it that way
+    # if not, mark it as a security update if security==True
+    # this could be an issue if different distros mark the same update
+    # in different ways (security vs bugfix) but in reality this is not
+    # very likely to happen. if it does, we err on the side of caution
+    # and mark it as the security update
+    try:
+        update = updates.get(
+            oldpackage=oldpackage,
+            newpackage=newpackage
+        )
+    except PackageUpdate.DoesNotExist:
+        update = None
+    except MultipleObjectsReturned:
+        e = 'Error: MultipleObjectsReturned when attempting to add package \n'
+        e += f'update with oldpackage={oldpackage} | newpackage={newpackage}:'
+        error_message.send(sender=None, text=e)
+        updates = updates.filter(
+            oldpackage=oldpackage,
+            newpackage=newpackage
+        )
+        for update in updates:
+            e = str(update)
+            error_message.send(sender=None, text=e)
+        return
+    try:
+        if update:
+            if security and not update.security:
+                update.security = True
+                with transaction.atomic():
+                    update.save()
+        else:
+            with transaction.atomic():
+                update, c = updates.get_or_create(
+                    oldpackage=oldpackage,
+                    newpackage=newpackage,
+                    security=security)
+    except IntegrityError as e:
+        error_message.send(sender=None, text=e)
+        update = updates.get(oldpackage=oldpackage,
+                             newpackage=newpackage,
+                             security=security)
+    except DatabaseError as e:
+        error_message.send(sender=None, text=e)
+    return update
+
+
 def mark_errata_security_updates():
     """ For each set of erratum packages, modify any PackageUpdate that
         should be marked as a security update.
     """
     package_updates = PackageUpdate.objects.all()
+    from packages.models import Erratum
     errata = Erratum.objects.all()
     elen = Erratum.objects.count()
-    ptext = 'Scanning {0!s} Errata:'.format(elen)
+    ptext = f'Scanning {elen!s} Errata:'
     progress_info_s.send(sender=None, ptext=ptext, plen=elen)
     for i, erratum in enumerate(errata):
         progress_update_s.send(sender=None, index=i + 1)

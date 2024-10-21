@@ -10,16 +10,17 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEBUG = True
 ALLOWED_HOSTS = ['127.0.0.1']
 
-ADMINS = []
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'django.middleware.cache.UpdateCacheMiddleware',
+    'django.middleware.http.ConditionalGetMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.cache.FetchFromCacheMiddleware',
 ]
 
 # SECURE_BROWSER_XSS_FILTER = True
@@ -60,6 +61,8 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = False
 
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
 DEFAULT_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -77,12 +80,14 @@ THIRD_PARTY_APPS = [
     'tagging',
     'bootstrap3',
     'rest_framework',
+    'django_filters',
 ]
 
 LOCAL_APPS = [
     'arch.apps.ArchConfig',
     'domains.apps.DomainsConfig',
     'hosts.apps.HostsConfig',
+    'modules.apps.ModulesConfig',
     'operatingsystems.apps.OperatingsystemsConfig',
     'packages.apps.PackagesConfig',
     'repos.apps.ReposConfig',
@@ -91,8 +96,9 @@ LOCAL_APPS = [
 ]
 
 REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAdminUser',),  # noqa
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',  # noqa
+    'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'],  # noqa
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],        # noqa
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',            # noqa
     'PAGE_SIZE': 100,
 }
 
@@ -119,8 +125,6 @@ STATICFILES_DIRS = [os.path.abspath(os.path.join(BASE_DIR, 'patchman/static'))]
 # Absolute path to the directory static files should be collected to.
 STATIC_ROOT = '/var/lib/patchman/static/'
 
-TEST_RUNNER = 'django.test.runner.DiscoverRunner'
-
 if sys.prefix == '/usr':
     conf_path = '/etc/patchman'
 else:
@@ -138,9 +142,9 @@ else:
             sitepackages = [s for s in sys.path if s.endswith(sp)][0]
         conf_path = os.path.join(sitepackages, 'etc/patchman')
 local_settings = os.path.join(conf_path, 'local_settings.py')
-exec(compile(open(local_settings).read(), local_settings, 'exec'))
+with open(local_settings, 'r', encoding='utf_8') as ls:
+    exec(compile(ls.read(), local_settings, 'exec'))
 
-MANAGERS = ADMINS
 INSTALLED_APPS = DEFAULT_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 if RUN_GUNICORN or (len(sys.argv) > 1 and sys.argv[1] == 'runserver'):  # noqa
@@ -153,11 +157,14 @@ if RUN_GUNICORN or (len(sys.argv) > 1 and sys.argv[1] == 'runserver'):  # noqa
     MIDDLEWARE = [
         'django.middleware.security.SecurityMiddleware',
         'whitenoise.middleware.WhiteNoiseMiddleware',
+        'django.middleware.cache.UpdateCacheMiddleware',
+        'django.middleware.http.ConditionalGetMiddleware',
         'django.contrib.sessions.middleware.SessionMiddleware',
         'django.middleware.common.CommonMiddleware',
         'django.middleware.csrf.CsrfViewMiddleware',
         'django.contrib.auth.middleware.AuthenticationMiddleware',
         'django.contrib.messages.middleware.MessageMiddleware',
         'django.middleware.clickjacking.XFrameOptionsMiddleware',
+        'django.middleware.cache.FetchFromCacheMiddleware',
     ]
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'  # noqa

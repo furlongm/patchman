@@ -23,7 +23,7 @@ from django.db.models import Q
 from django.contrib import messages
 
 from tagging.models import Tag, TaggedItem
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets
 
 from util.filterspecs import Filter, FilterBar
 from hosts.models import Host, HostRepo
@@ -138,7 +138,7 @@ def host_edit(request, hostname):
             if edit_form.is_valid():
                 host = edit_form.save()
                 host.save()
-                text = 'Saved changes to Host {0!s}'.format(host)
+                text = f'Saved changes to Host {host!s}'
                 messages.info(request, text)
                 return redirect(host.get_absolute_url())
             else:
@@ -163,7 +163,7 @@ def host_delete(request, hostname):
     if request.method == 'POST':
         if 'delete' in request.POST:
             host.delete()
-            text = 'Host {0!s} has been deleted'.format(hostname)
+            text = f'Host {hostname!s} has been deleted'
             messages.info(request, text)
             return redirect(reverse('hosts:host_list'))
         elif 'cancel' in request.POST:
@@ -183,7 +183,7 @@ class HostViewSet(viewsets.ModelViewSet):
     """
     queryset = Host.objects.all()
     serializer_class = HostSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    filterset_fields = ['hostname']
 
 
 class HostRepoViewSet(viewsets.ModelViewSet):
@@ -192,4 +192,3 @@ class HostRepoViewSet(viewsets.ModelViewSet):
     """
     queryset = HostRepo.objects.all()
     serializer_class = HostRepoSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
