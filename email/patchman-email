@@ -143,7 +143,7 @@ report() {
 				#updates table { border-collapse: collapse; width: 100%; }
 				#details th, #details tr, #details td { text-align: left; }
 				#updates th, #updates td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
-                @page { size: A4 landscape; }
+				@page { size: A4 landscape; }
 				</style><head><meta charset="UTF-8"></head><body>
 				<div id="details"><table>
 				$(echo "$HOST" | awk -F ' : ' 'NR!=7 && NR!=9 && NR!=11 && NR!=12 && NR!=13 && NR!=14 { print "<tr><th>"$1"</th><th>:&nbsp;</th><td>"$2"</td></tr>" }' | sed 's/Reverse DNS/Hostname/g')
@@ -195,7 +195,7 @@ if [ $# -gt 0 ] && [[ $1 == -* ]]; then
                     DATE=$(date +%Y%m%d)
                     HOSTS=()
                     TAGS=()
-                    mapfile -t HOSTS < <(patchman -lh | tail -n +3 | awk -F ' : ' 'NR%16==3 { print $2 }' | sed 's/\x1b\[[0-9;]*m//g')
+                    mapfile -t HOSTS < <(patchman -lh | tail -n +3 | awk -F ' : ' 'NR%16==1 { print $1 }' | cut -d "." -f 1 | tr -d ":" | sed 's/\x1b\[[0-9;]*m//g')
                     mapfile -t TAGS < <(patchman -lh | tail -n +3 | awk -F ' : ' 'NR%16==12 { print $2 }' | sort -n | uniq | sed 's/\x1b\[[0-9;]*m//g')
                     
                     # Generate report
