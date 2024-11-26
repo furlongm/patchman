@@ -109,7 +109,7 @@ getPackages() {
                 ) AS newpackage ON packages_packageupdate.newpackage_id=newpackage.id
             ) AS package ON hosts_host_updates.packageupdate_id=package.id
         ) AS updates ON hosts_host.id=updates.host_id
-        WHERE hosts_host.reversedns=\"$1\";"
+        WHERE hosts_host.hostname=\"$1\";"
 }
 
 report() {
