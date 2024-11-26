@@ -197,7 +197,7 @@ if [ $# -gt 0 ] && [[ $1 == -* ]]; then
                     DATE=$(date +%Y%m%d)
                     HOSTS=()
                     TAGS=()
-                    mapfile -t HOSTS < <(patchman -lh | tail -n +3 | awk -F ' : ' 'NR%16==1 { print $1 }' | cut -d "." -f 1 | tr -d ":" | sed 's/\x1b\[[0-9;]*m//g')
+                    mapfile -t HOSTS < <(patchman -lh | tail -n +3 | awk -F ' : ' 'NR%16==1 { print $1 }' | tr -d ":" | sed 's/\x1b\[[0-9;]*m//g')
                     mapfile -t TAGS < <(patchman -lh | tail -n +3 | awk -F ' : ' 'NR%16==12 { print $2 }' | sort -n | uniq | sed 's/\x1b\[[0-9;]*m//g')
                     
                     # Generate report
@@ -232,7 +232,7 @@ if [ $# -gt 0 ] && [[ $1 == -* ]]; then
                     DIR=$(getConfig General dir)
                     DATE=$(date +%Y%m%d)
                     HOSTS=()
-                    mapfile -t HOSTS < <(patchman -lh | tail -n +3 | awk -F ' : ' 'NR%16==1 {print $1; next} NR%16==12 {print $2}' | cut -d "." -f 1 | tr -d ":" | paste -d : - - | awk -F ':' '{ if( $2 == "'"${OPTARG}"'" ){ print $1 }}' | sed 's/\x1b\[[0-9;]*m//g')
+                    mapfile -t HOSTS < <(patchman -lh | tail -n +3 | awk -F ' : ' 'NR%16==1 {print $1; next} NR%16==12 {print $2}' | tr -d ":" | paste -d : - - | awk -F ':' '{ if( $2 == "'"${OPTARG}"'" ){ print $1 }}' | sed 's/\x1b\[[0-9;]*m//g')
                     
                     if [ "${#HOSTS[@]}" -gt 0 ]; then
                         for HOST in "${HOSTS[@]}"; do
