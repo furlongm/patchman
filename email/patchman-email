@@ -84,7 +84,7 @@ getConfig() {
 }
 
 getPackages() {
-    MYSQL_PWD="$PASSWORD" mysql -u "$USERNAME" "$DATABASE" -Nrse \
+    MYSQL_PWD="$PASSWORD" mysql -u "$USERNAME" -h "$HOST" -P "$PORT" -D "$DATABASE" -Nrse \
         "SELECT \`update\`
         FROM hosts_host
         LEFT JOIN (
@@ -180,9 +180,11 @@ if [ $# -gt 0 ] && [[ $1 == -* ]]; then
     CONF="/etc/patchman/patchman-email.conf"
     
     # Database credentials configured in /etc/patchman/local_settings.py
-    DATABASE=$(grep -E "NAME" /etc/patchman/local_settings.py | grep -v "#" | sed -e "s/'\|,//g" | awk -F " " '{print $2}')
-    USERNAME=$(grep -E "USER" /etc/patchman/local_settings.py | grep -v "#" | sed -e "s/'\|,//g" | awk -F " " '{print $2}')
-    PASSWORD=$(grep -E "PASSWORD" /etc/patchman/local_settings.py | grep -v "#" | sed -e "s/'\|,//g" | awk -F " " '{print $2}')
+    DATABASE=$(grep -E "'NAME'" /etc/patchman/local_settings.py | grep -v "#" | sed -e "s/'\|,//g" | awk -F " " '{print $2}')
+    USERNAME=$(grep -E "'USER'" /etc/patchman/local_settings.py | grep -v "#" | sed -e "s/'\|,//g" | awk -F " " '{print $2}')
+    PASSWORD=$(grep -E "'PASSWORD'" /etc/patchman/local_settings.py | grep -v "#" | sed -e "s/'\|,//g" | awk -F " " '{print $2}')
+    HOST=$(grep -E "'HOST'" /etc/patchman/local_settings.py | grep -v "#" | sed -e "s/'\|,//g" | awk -F " " '{print $2}')
+    PORT=$(grep -E "'PORT'" /etc/patchman/local_settings.py | grep -v "#" | sed -e "s/'\|,//g" | awk -F " " '{print $2}')
     
     while getopts 'aH:T:h' arg; do
         case $arg in
