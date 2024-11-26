@@ -114,7 +114,7 @@ getPackages() {
 
 report() {
     # Gets host info
-    HOST=$(patchman -lh -H "$1" | tail -n +3 | head -n -1 | sed 's/\x1b\[[0-9;]*m//g')
+    HOST=$(patchman -lh -H "$1" | tail -n +2 | head -n -1 | sed 's/\x1b\[[0-9;]*m//g')
     
     # Gets the number of updates available for the host
     UPDATES=$(echo "$HOST" | awk -F ' : ' 'NR==10 { print $2 }')
@@ -123,7 +123,7 @@ report() {
         echo "$(date '+%d/%m/%Y %R') [ERROR] $1: Hostname not found."
     elif [ "$UPDATES" -gt 0 ]; then
         # Gets the hosts tags to determine the recipient and directory
-        TAG=$(echo "$HOST" | awk -F ' : ' 'NR==11 { print $2 }')
+        TAG=$(echo "$HOST" | awk -F ' : ' 'NR==12 { print $2 }')
         
         # Creates the directory where the e-mail file will be stored, if it doesnt exist
         mkdir -p "$DIR/$TAG"
@@ -146,7 +146,7 @@ report() {
 				@page { size: A4 landscape; }
 				</style><head><meta charset="UTF-8"></head><body>
 				<div id="details"><table>
-				$(echo "$HOST" | awk -F ' : ' 'NR!=7 && NR!=9 && NR!=11 && NR!=12 && NR!=13 && NR!=14 { print "<tr><th>"$1"</th><th>:&nbsp;</th><td>"$2"</td></tr>" }' | sed 's/Reverse DNS/Hostname/g')
+				$(echo "$HOST" | awk -F ' : ' 'NR==1 {print "<tr><th>"$1"</th></tr>"; next} NR==2 || NR==4 || NR==5 || NR==6 || NR==7 || NR==9 || NR==11 { print "<tr><th>"$1"</th><th>:&nbsp;</th><td>"$2"</td></tr>" }')
 				</table></div><br>
 				<div id=\"updates\"><table>
 				<tr><th>Current Version</th><th>New Version</th><th>Type</th></tr>
