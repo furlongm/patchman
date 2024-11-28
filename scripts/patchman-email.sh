@@ -2,7 +2,7 @@
 
 LOGDIR="/var/log/patchman"
 
-while [[ $(pgrep 'patchman -a') ]]; do 
+while [[ $(pgrep patchman -a) ]]; do 
 	echo "$(date '+%d/%m/%Y %R') [INFO] Patchman running, sleeping for 30 minutes" >> $LOGDIR/patchman-email.log 
 	sleep 1800
 done
