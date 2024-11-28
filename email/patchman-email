@@ -45,7 +45,8 @@ email() {
             
             echo "$(date '+%d/%m/%Y %R') [INFO] $1: E-mailing report..."
             
-            (echo "To: $RECIPIENT"
+            (echo "From: $FULLNAME"
+            echo "To: $RECIPIENT"
             echo "Cc: $CC"
             echo "Bcc: $BCC"
             echo "Subject: =?UTF-8?B?$SUBJECT?="
@@ -67,7 +68,7 @@ email() {
                 uuencode "$ATTACH" "$(basename "$ATTACH")"
             done
             echo "--$BOUNDARY--"
-            ) | /usr/sbin/sendmail -t -f "$SENDER" -F "$FULLNAME"
+            ) | /usr/sbin/sendmail -t -f "$SENDER"
             
             if [ $? -eq 0 ]; then
                 echo "$(date '+%d/%m/%Y %R') [SUCCESS] $1: E-mail report sent."
@@ -142,22 +143,22 @@ report() {
             echo "$(date '+%d/%m/%Y %R') [INFO] $TAG $1: Creating report..."
             
             cat <<-EOF > "$FILE.html"
-				<html><style>
-				body { font-family: "Calibri" }
-				#details table { border-collapse: collapse; width: 20em; white-space: nowrap;}
-				#updates table { border-collapse: collapse; width: 100%; }
-				#details th, #details tr, #details td { text-align: left; }
-				#updates th, #updates td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
-				@page { size: A4 landscape; }
-				</style><head><meta charset="UTF-8"></head><body>
-				<div id="details"><table>
-				$(echo "$HOST" | awk -F ' : ' 'NR==1 {print "<tr><th>"$1"</th></tr>"; next} NR==2 || NR==4 || NR==5 || NR==6 || NR==7 || NR==9 || NR==11 { print "<tr><th>"$1"</th><th>:&nbsp;</th><td>"$2"</td></tr>" }')
-				</table></div><br>
-				<div id=\"updates\"><table>
-				<tr><th>Current Version</th><th>New Version</th><th>Type</th></tr>
-				$(echo "$QUERY" | sort -n | uniq | sed 's/[()]//g' | awk '{ print "<tr><td>"$1"</td><td>"$3"</td><td>"$4"</td></tr>" }')
-				</table></div><br>
-				</body></html>
+			<html><style>
+			body { font-family: "Calibri" }
+			#details table { border-collapse: collapse; width: 20em; white-space: nowrap;}
+			#updates table { border-collapse: collapse; width: 100%; }
+			#details th, #details tr, #details td { text-align: left; }
+			#updates th, #updates td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+			@page { size: A4 landscape; }
+			</style><head><meta charset="UTF-8"></head><body>
+			<div id="details"><table>
+			$(echo "$HOST" | awk -F ' : ' 'NR==1 {print "<tr><th>"$1"</th></tr>"; next} NR==2 || NR==4 || NR==5 || NR==6 || NR==7 || NR==9 || NR==11 { print "<tr><th>"$1"</th><th>:&nbsp;</th><td>"$2"</td></tr>" }')
+			</table></div><br>
+			<div id=\"updates\"><table>
+			<tr><th>Current Version</th><th>New Version</th><th>Type</th></tr>
+			$(echo "$QUERY" | sort -n | uniq | sed 's/[()]//g' | awk '{ print "<tr><td>"$1"</td><td>"$3"</td><td>"$4"</td></tr>" }')
+			</table></div><br>
+			</body></html>
 			EOF
 
             if weasyprint "$FILE.html" "$FILE.pdf"; then
