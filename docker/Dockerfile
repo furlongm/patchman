@@ -1,7 +1,7 @@
 FROM debian:bookworm-slim
 
 RUN apt update \
-    && apt install -y curl mariadb-client python3-mysqldb python3-pymemcache python3-celery python3-redis python-celery-common
+    && apt install -y curl mariadb-client python-celery-common python3-celery python3-mysqldb python3-pymemcache python3-redis sendmail sharutils uuid-runtime weasyprint
 
 RUN curl -sS https://repo.openbytes.ie/openbytes.gpg > /usr/share/keyrings/openbytes.gpg
 RUN echo "deb [signed-by=/usr/share/keyrings/openbytes.gpg] https://repo.openbytes.ie/patchman/debian bookworm main" > /etc/apt/sources.list.d/patchman.list
