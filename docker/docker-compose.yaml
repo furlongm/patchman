@@ -20,12 +20,10 @@ services:
     networks:
       patchman:
         ipv4_address: '10.0.0.10'
-    volumes:
-      - /opt/docker/patchman/conf/local_settings.py:/etc/patchman/local_settings.py:ro
-      - /opt/docker/patchman/conf/patchman.nos.mgt.conf:/etc/apache2/sites-enabled/000-default.conf:ro
     depends_on:
       - patchman-db
       - memcached
+      - redis
 
   patchman-db:
     container_name: patchman-db
@@ -40,8 +38,6 @@ services:
       MYSQL_DATABASE: changeme 
       MYSQL_USER: changeme
       MYSQL_PASSWORD: changeme
-    volumes:
-      - /opt/docker/patchman/data:/var/lib/mysql:rw
 
   memcached:
     container_name: memcached
@@ -50,3 +46,11 @@ services:
     networks:
       patchman:
         ipv4_address: '10.0.0.12'
+
+  redis:
+    container_name: redis
+    image: redis:latest
+    restart: unless-stopped
+    networks:
+      patchman:
+        ipv4_address: '10.0.0.13'
