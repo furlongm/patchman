@@ -14,7 +14,7 @@ services:
     container_name: patchman
     image: patchman:latest
     build:
-      context: ./patchman
+      context: .
     restart: unless-stopped
     entrypoint: ["/usr/sbin/apache2ctl", "-DFOREGROUND"]
     networks:
