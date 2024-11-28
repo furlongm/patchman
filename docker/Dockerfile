@@ -9,6 +9,10 @@ RUN echo "deb [signed-by=/usr/share/keyrings/openbytes.gpg] https://repo.openbyt
 RUN apt update \
     && apt install -y python3-patchman
 
+RUN curl -sS https://raw.githubusercontent.com/RicardoJeronimo/patchman/master/email/patchman-email > /usr/bin/patchman-email \
+    && curl -sS https://raw.githubusercontent.com/RicardoJeronimo/patchman/master/etc/patchman/patchman-email.conf > /etc/patchman/patchman-email.conf
+RUN chmod +x /usr/bin/patchman-email
+
 EXPOSE 80
 
 COPY ./docker-entrypoint.sh docker-entrypoint.sh
