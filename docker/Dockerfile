@@ -10,3 +10,6 @@ RUN apt update \
     && apt install -y python3-patchman
 
 EXPOSE 80
+
+COPY ./docker-entrypoint.sh docker-entrypoint.sh
+ENTRYPOINT ./docker-entrypoint.sh
