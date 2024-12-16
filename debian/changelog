@@ -1,3 +1,24 @@
+patchman (3.0.13-1) stable; urgency=medium
+
+  [ Marcus Furlong ]
+  * update mysql instructions
+
+  [ dependabot[bot] ]
+  * Bump actions/download-artifact from 1 to 4.1.7 in /.github/workflows
+
+  [ dawnstrider ]
+  * Created documentation for client configuration
+
+  [ Tom Fifield ]
+  * Update signals.py
+
+  [ Marcus Furlong ]
+  * Release v3.0.11
+  * Release v3.0.12
+  * Release v3.0.13
+
+ -- Marcus Furlong <furlongm@gmail.com>  Mon, 16 Dec 2024 16:36:27 +0000
+
 patchman (3.0.10-1) stable; urgency=medium
 
   * fix module parsing
