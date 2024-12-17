@@ -17,7 +17,7 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 #
 # zypp system plugin for patchman
-#
+
 import os
 import logging
 from zypp_plugin import Plugin
@@ -33,7 +33,7 @@ class MyPlugin(Plugin):
     def PACKAGESETCHANGED(self, headers, body):
         logging.info('PACKAGESETCHANGED')
         logging.debug(f'headers: {headers!s}')
-        print('patchman: sending data')
+        print('Sending report to patchman server...')
         servicecmd = '/usr/sbin/patchman-client'
         args = '-n'
         command = f'{servicecmd!s} {args!s}> /dev/null'
