@@ -22,7 +22,7 @@ from django.urls import reverse
 from django.db.models import Q
 from django.contrib import messages
 
-from tagging.models import Tag, TaggedItem
+from taggit.models import Tag
 from rest_framework import viewsets
 
 from util.filterspecs import Filter, FilterBar
@@ -62,7 +62,7 @@ def host_list(request):
         hosts = hosts.filter(os__osgroup=int(request.GET['osgroup']))
 
     if 'tag' in request.GET:
-        hosts = TaggedItem.objects.get_by_model(hosts, request.GET['tag'])
+        hosts = hosts.filter(tags__name__in=[request.GET['tag']])
 
     if 'reboot_required' in request.GET:
         reboot_required = request.GET['reboot_required'] == 'True'
@@ -89,10 +89,10 @@ def host_list(request):
         page = paginator.page(paginator.num_pages)
 
     filter_list = []
-    mytags = {}
-    for tag in Tag.objects.usage_for_model(Host):
-        mytags[tag.name] = tag.name
-    filter_list.append(Filter(request, 'tag', mytags))
+    tags = {}
+    for tag in Tag.objects.all():
+        tags[tag.name] = tag.name
+    filter_list.append(Filter(request, 'tag', tags))
     filter_list.append(Filter(request, 'domain', Domain.objects.all()))
     filter_list.append(Filter(request, 'os', OS.objects.all()))
     filter_list.append(Filter(request, 'osgroup', OSGroup.objects.all()))
