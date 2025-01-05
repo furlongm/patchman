@@ -24,7 +24,7 @@ try:
     from version_utils.rpm import labelCompare
 except ImportError:
     from rpm import labelCompare
-from tagging.fields import TagField
+from taggit.managers import TaggableManager
 
 from packages.models import Package, PackageUpdate
 from domains.models import Domain
@@ -55,7 +55,7 @@ class Host(models.Model):
     updates = models.ManyToManyField(PackageUpdate, blank=True)
     reboot_required = models.BooleanField(default=False)
     host_repos_only = models.BooleanField(default=True)
-    tags = TagField()
+    tags = TaggableManager()
     updated_at = models.DateTimeField(default=timezone.now)
 
     from hosts.managers import HostManager
