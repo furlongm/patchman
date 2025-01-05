@@ -77,7 +77,7 @@ DEFAULT_APPS = [
 
 THIRD_PARTY_APPS = [
     'django_extensions',
-    'tagging',
+    'taggit',
     'django_bootstrap5',
     'django_icons',
     'fontawesomefree',
@@ -103,6 +103,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',            # noqa
     'PAGE_SIZE': 100,
 }
+
+TAGGIT_CASE_INSENSITIVE = True
 
 try:
     from celery import Celery  # noqa

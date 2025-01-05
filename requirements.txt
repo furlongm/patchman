@@ -1,5 +1,6 @@
 Django==4.2.15
 django-tagging==0.5.0
+django-taggit==4.0.0
 django-extensions==3.2.1
 fontawesomefree==6.6.0
 django-icons==23.5
