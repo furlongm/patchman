@@ -33,9 +33,7 @@
         <tr>
           <th>Tags</th>
           <td>
-          {% load tagging_tags %}
-          {% tags_for_object host as tags %}
-          {% for tag in tags %}
+          {% for tag in host.tags.all %}
             <a href="{% url 'hosts:host_list' %}?tag={{ tag }}">{{ tag }}</a>
           {% endfor %}
           </td>
