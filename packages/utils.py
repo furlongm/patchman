@@ -15,18 +15,20 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+import json
 import re
 from defusedxml.lxml import _etree as etree
+from urllib.parse import urlparse
 
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned
 from django.db import IntegrityError, DatabaseError, transaction
 
-from util import bunzip2, get_url, download_url, get_sha1
+from util import bunzip2, get_url, download_url, get_sha1, tz_aware_datetime
 from packages.models import ErratumReference, PackageName, \
     Package, PackageUpdate
 from arch.models import MachineArchitecture, PackageArchitecture
-from patchman.signals import error_message, progress_info_s, progress_update_s
+from patchman.signals import error_message, info_message, progress_info_s, progress_update_s
 
 
 def find_evr(s):
@@ -78,7 +80,6 @@ def parse_package_string(pkg_str):
     """ Parse a package string and return
         name, epoch, ver, release, dist, arch
     """
-
     for suffix in ['rpm', 'deb']:
         pkg_str = re.sub(f'.{suffix}$', '', pkg_str)
     pkg_re = re.compile('(\S+)-(?:(\d*):)?(.*)-(~?\w+)[.+]?(~?\S+)?\.(\S+)$')  # noqa
@@ -95,36 +96,204 @@ def parse_package_string(pkg_str):
 
 
 def update_errata(force=False):
+    """ Update all distros errata
+    """
+    update_rocky_errata(force)
+    update_alma_errata(force)
+    update_debian_errata(force)
+    update_ubuntu_errata(force)
+    update_arch_errata(force)
+    update_centos_errata(force)
+
+
+def update_rocky_errata(force):
+    """ Update Rocky Linux errata
+    """
+    rocky_errata_api_host = 'https://apollo.build.resf.org'
+    rocky_errata_api_url = '/api/v3/'
+    if check_rocky_errata_endpoint_health(rocky_errata_api_host):
+        advisories = download_rocky_advisories(rocky_errata_api_host, rocky_errata_api_url)
+        process_rocky_errata(advisories, force)
+
+
+def check_rocky_errata_endpoint_health(rocky_errata_api_host):
+    """ Check Rocky Linux errata endpoint health
+    """
+    rocky_errata_healthcheck_path = '/_/healthz'
+    rocky_errata_healthcheck_url = rocky_errata_api_host + rocky_errata_healthcheck_path
+    headers = {'Accept': 'application/json'}
+    res = get_url(rocky_errata_healthcheck_url, headers=headers)
+    data = download_url(res, 'Rocky Linux Errata API healthcheck')
+    try:
+        health = json.loads(data)
+        if health.get('status') == 'ok':
+            s = f'Rocky Linux Errata API healthcheck OK: {rocky_errata_healthcheck_url}'
+            info_message.send(sender=None, text=s)
+            return True
+        else:
+            s = f'Rocky Linux Errata API healthcheck FAILED: {rocky_errata_healthcheck_url}'
+            error_message.send(sender=None, text=s)
+            return False
+    except Exception as e:
+        s = f'Rocky Linux Errata API healthcheck exception occured: {rocky_errata_healthcheck_url}\n'
+        s += str(e)
+        error_message.send(sender=None, text=s)
+        return False
+
+
+def download_rocky_advisories(rocky_errata_api_host, rocky_errata_api_url):
+    """ Download Rocky Linux advisories and return the list
+    """
+    rocky_errata_advisories_url = rocky_errata_api_host + rocky_errata_api_url + 'advisories/'
+    headers = {'Accept': 'application/json'}
+    page = 1
+    pages = None
+    advisories = []
+    params = {'page': 1, 'size': 100}
+    while True:
+        res = get_url(rocky_errata_advisories_url, headers=headers, params=params)
+        data = download_url(res, f'Rocky Linux Advisories {page}{"/"+pages if pages else ""}')
+        advisories_dict = json.loads(data)
+        advisories += advisories_dict.get('advisories')
+        links = advisories_dict.get('links')
+        if page == 1:
+            last_link = links.get('last')
+            pages = last_link.split('=')[-1]
+        next_link = links.get('next')
+        if next_link:
+            rocky_errata_advisories_url = rocky_errata_api_host + next_link
+            params = {}
+            page += 1
+        else:
+            break
+    return advisories
+
+
+def process_rocky_errata(advisories, force):
+    """ Process Rocky Linux errata
+    """
+    elen = len(advisories)
+    ptext = f'Processing {elen} Errata:'
+    progress_info_s.send(sender=None, ptext=ptext, plen=elen)
+    for i, advisory in enumerate(advisories):
+        progress_update_s.send(sender=None, index=i + 1)
+        erratum_name = advisory.get('name')
+        etype = advisory.get('kind').lower()
+        issue_date = advisory.get('published_at')
+        synopsis = advisory.get('synopsis')
+        e, created = get_or_create_erratum(
+            name=erratum_name,
+            etype=etype,
+            issue_date=issue_date,
+            synopsis=synopsis,
+        )
+        if created or force:
+            add_rocky_errata_references(e, advisory)
+            add_rocky_errata_oses(e, advisory)
+            add_rocky_errata_packages(e, advisory)
+
+
+def add_rocky_errata_references(e, advisory):
+    """ Add Rocky Linux errata references
+    """
+    references = []
+    cves = advisory.get('cves')
+    for cve in cves:
+        cve_id = cve.get('cve')
+        references.append({'er_type': 'cve', 'url': f'https://www.cve.org/CVERecord?id={cve_id}'})
+    fixes = advisory.get('fixes')
+    for fix in fixes:
+        fix_url = fix.get('source')
+        references.append({'er_type': 'bugzilla', 'url': fix_url})
+    add_erratum_refs(e, references)
+
+
+def add_rocky_errata_oses(e, advisory):
+    """ Update OS, OSGroup and MachineArch for Rocky Linux errata
+    """
+    affected_oses = advisory.get('affected_products')
+    from operatingsystems.models import OS, OSGroup
+    osgroups = OSGroup.objects.all()
+    oses = OS.objects.all()
+    m_arches = MachineArchitecture.objects.all()
+    for affected_os in affected_oses:
+        m_arch = affected_os.get('arch')
+        variant = affected_os.get('variant')
+        major_version = affected_os.get('major_version')
+        osgroup_name = f'{variant} {major_version}'
+        os_name = affected_os.get('name').replace(f' {m_arch}', '').replace(' (Legacy)', '')
+        with transaction.atomic():
+            osgroup, c = osgroups.get_or_create(name=osgroup_name)
+        with transaction.atomic():
+            os, c = oses.get_or_create(name=os_name)
+        with transaction.atomic():
+            m_arch, c = m_arches.get_or_create(name=m_arch)
+        e.releases.add(osgroup)
+        e.arches.add(m_arch)
+    e.save()
+
+
+def add_rocky_errata_packages(e, advisory):
+    """ Parse and add packages for Rocky Linux errata
+    """
+    packages = advisory.get('packages')
+    for package in packages:
+        package_name = package.get('nevra')
+        if package_name:
+            name, epoch, ver, rel, dist, arch = parse_package_string(package_name)
+            p_type = Package.RPM
+            pkg = get_or_create_package(name, epoch, ver, rel, arch, p_type)
+            e.packages.add(pkg)
+    e.save()
+
+
+def update_alma_errata(force=False):
+    pass
+
+
+def update_debian_errata(force=False):
+    pass
+
+
+def update_ubuntu_errata(force=False):
+    pass
+
+
+def update_arch_errata(force=False):
+    pass
+
+
+def update_centos_errata(force=False):
     """ Update CentOS errata from https://cefs.steve-meier.de/
         and mark packages that are security updates
     """
-    data = download_errata_checksum()
-    expected_checksum = parse_errata_checksum(data)
-    data = download_errata()
+    data = download_centos_errata_checksum()
+    expected_checksum = parse_centos_errata_checksum(data)
+    data = download_centos_errata()
     actual_checksum = get_sha1(data)
     if actual_checksum != expected_checksum:
-        e = 'CEFS checksum did not match, skipping errata parsing'
+        e = 'CEFS checksum did not match, skipping CentOS errata parsing'
         error_message.send(sender=None, text=e)
     else:
         if data:
-            parse_errata(bunzip2(data), force)
+            parse_centos_errata(bunzip2(data), force)
 
 
-def download_errata_checksum():
+def download_centos_errata_checksum():
     """ Download CentOS errata checksum from https://cefs.steve-meier.de/
     """
     res = get_url('https://cefs.steve-meier.de/errata.latest.sha1')
-    return download_url(res, 'Downloading Errata Checksum:')
+    return download_url(res, 'Downloading CentOS Errata Checksum:')
 
 
-def download_errata():
+def download_centos_errata():
     """ Download CentOS errata from https://cefs.steve-meier.de/
     """
     res = get_url('https://cefs.steve-meier.de/errata.latest.xml.bz2')
     return download_url(res, 'Downloading CentOS Errata:')
 
 
-def parse_errata_checksum(data):
+def parse_centos_errata_checksum(data):
     """ Parse the errata checksum and return the bz2 checksum
     """
     for line in data.decode('utf-8').splitlines():
@@ -132,7 +301,7 @@ def parse_errata_checksum(data):
             return line.split()[0]
 
 
-def parse_errata(data, force):
+def parse_centos_errata(data, force):
     """ Parse CentOS errata from https://cefs.steve-meier.de/
     """
     result = etree.XML(data)
@@ -144,19 +313,19 @@ def parse_errata(data, force):
         progress_update_s.send(sender=None, index=i + 1)
         if not check_centos_release(child.findall('os_release')):
             continue
-        e = parse_errata_tag(child.tag, child.attrib, force)
+        e = parse_centos_errata_tag(child.tag, child.attrib, force)
         if e is not None:
-            parse_errata_children(e, child.getchildren())
+            parse_centos_errata_children(e, child.getchildren())
 
 
-def parse_errata_tag(name, attribs, force):
+def parse_centos_errata_tag(name, attribs, force):
     """ Parse all tags that contain errata. If the erratum already exists,
         we assume that it already has all refs, packages, releases and arches.
     """
     e = None
     if name.startswith('CE'):
         issue_date = attribs['issue_date']
-        references = attribs['references']
+        refs = attribs['references']
         synopsis = attribs['synopsis']
         if name.startswith('CEBA'):
             etype = 'bugfix'
@@ -164,17 +333,44 @@ def parse_errata_tag(name, attribs, force):
             etype = 'security'
         elif name.startswith('CEEA'):
             etype = 'enhancement'
-        e = create_erratum(name=name,
-                           etype=etype,
-                           issue_date=issue_date,
-                           synopsis=synopsis,
-                           force=force)
-        if e is not None:
+        e, created = get_or_create_erratum(
+            name=name,
+            etype=etype,
+            issue_date=issue_date,
+            synopsis=synopsis,
+        )
+        if created or force:
+            references = create_centos_errata_references(refs)
             add_erratum_refs(e, references)
-    return e
+        return e
 
 
-def parse_errata_children(e, children):
+def create_centos_errata_references(refs):
+    """ Create references for CentOS errata. Return references
+        Skip lists.centos.org references
+    """
+    references = []
+    for ref_url in refs.split(' '):
+        url = urlparse(ref_url)
+        if url.hostname == 'lists.centos.org':
+            continue
+        if url.hostname == 'rhn.redhat.com':
+            netloc = url.netloc.replace('rhn', 'access')
+            path = url.path.replace('.html', '')
+            url = url._replace(netloc=netloc, path=path)
+        if url.hostname == 'access.redhat.com':
+            old_ref = url.path.split('/')[-1]
+            refs = old_ref.split('-')
+            if ':' not in url.path:
+                new_ref = f'{refs[0]}-{refs[1]}:{refs[2]}'
+                path = url.path.replace(old_ref, new_ref)
+                url = url._replace(path=path)
+            er_type = refs[0].lower()
+        references.append({'er_type': er_type, 'url': url.geturl()})
+    return references
+
+
+def parse_centos_errata_children(e, children):
     """ Parse errata children to obtain architecture, release and packages
     """
     for c in children:
@@ -191,18 +387,7 @@ def parse_errata_children(e, children):
                 osgroup, c = osgroups.get_or_create(name=osgroup_name)
             e.releases.add(osgroup)
         elif c.tag == 'packages':
-            pkg_str = c.text.replace('.rpm', '')
-            pkg_re = re.compile('(\S+)-(?:(\d*):)?(.*)-(~?\w+)[.+]?(~?\S+)?\.(\S+)$')  # noqa
-            m = pkg_re.match(pkg_str)
-            if m:
-                name, epoch, ver, rel, dist, arch = m.groups()
-            else:
-                e = 'Error parsing errata: '
-                e += f'could not parse package "{pkg_str!s}"'
-                error_message.send(sender=None, text=e)
-                continue
-            if dist:
-                rel = f'{rel!s}.{dist!s}'
+            name, epoch, ver, rel, dist, arch = parse_package_string(c.text)
             p_type = Package.RPM
             pkg = get_or_create_package(name, epoch, ver, rel, arch, p_type)
             e.packages.add(pkg)
@@ -227,28 +412,28 @@ def check_centos_release(releases_xml):
     return wanted_release
 
 
-def create_erratum(name, etype, issue_date, synopsis, force=False):
-    """ Create an Erratum object. Returns the object or None if it already
-        exists. To force update the erratum, set force=True
+def get_or_create_erratum(name, etype, issue_date, synopsis):
+    """ Get or create an Erratum object. Returns the object and created
     """
     from packages.models import Erratum
     errata = Erratum.objects.all()
     with transaction.atomic():
-        e, c = errata.get_or_create(name=name,
-                                    etype=etype,
-                                    issue_date=issue_date,
-                                    synopsis=synopsis)
-    if c or force:
-        return e
+        e, created = errata.get_or_create(
+            name=name,
+            etype=etype,
+            issue_date=tz_aware_datetime(issue_date),
+            synopsis=synopsis,
+        )
+    return e, created
 
 
 def add_erratum_refs(e, references):
     """ Add references to an Erratum object
     """
-    for reference in references.split(' '):
+    for reference in references:
         erratarefs = ErratumReference.objects.all()
         with transaction.atomic():
-            er, c = erratarefs.get_or_create(url=reference)
+            er, c = erratarefs.get_or_create(er_type=reference.get('er_type'), url=reference.get('url'))
         e.references.add(er)
 
 
