@@ -248,7 +248,100 @@ def add_rocky_errata_packages(e, advisory):
 
 
 def update_alma_errata(force=False):
-    pass
+    """ Update Alma Linux advisories from errata.almalinux.org:
+           https://errata.almalinux.org/8/errata.full.json
+           https://errata.almalinux.org/9/errata.full.json
+        and process advisories
+    """
+    default_alma_releases = [8, 9]
+    if has_setting_of_type('ALMA_RELEASES', list):
+        alma_releases = settings.ALMA_RELEASES
+    else:
+        alma_releases = default_alma_releases
+    for release in alma_releases:
+        advisories = download_alma_advisories(release)
+        process_alma_errata(release, advisories, force)
+
+
+def download_alma_advisories(release):
+    """ Download Alma Linux advisories
+    """
+    alma_errata_url = f'https://errata.almalinux.org/{release}/errata.full.json'
+    headers = {'Accept': 'application/json', 'Cache-Control': 'no-cache, no-tranform'}
+    res = get_url(alma_errata_url, headers=headers)
+    data = download_url(res, 'Downloading Alma Linux Errata:')
+    advisories = json.loads(data).get('data')
+    return advisories
+
+
+def process_alma_errata(release, advisories, force):
+    """ Process Alma Linux Errata
+    """
+    elen = len(advisories)
+    ptext = f'Processing {elen} Errata:'
+    progress_info_s.send(sender=None, ptext=ptext, plen=elen)
+    for i, advisory in enumerate(advisories):
+        progress_update_s.send(sender=None, index=i + 1)
+        erratum_name = advisory.get('id')
+        issue_date = advisory.get('issued_date')
+        synopsis = advisory.get('title')
+        etype = advisory.get('type')
+        e, created = get_or_create_erratum(
+            name=erratum_name,
+            etype=etype,
+            issue_date=issue_date,
+            synopsis=synopsis,
+        )
+        if created or force:
+            add_alma_errata_osgroups(e, release)
+            add_alma_errata_references(e, advisory)
+            add_alma_errata_packages(e, advisory)
+            modules = advisory.get('modules')
+            for modules in modules:
+                pass
+
+
+def add_alma_errata_osgroups(e, release):
+    """ Update OSGroup foe Alma Linux errata
+    """
+    from operatingsystems.models import OSGroup
+    osgroups = OSGroup.objects.all()
+    with transaction.atomic():
+        osgroup, c = osgroups.get_or_create(name=f'Alma Linux {release}')
+    e.releases.add(osgroup)
+    e.save()
+
+
+def add_alma_errata_references(e, advisory):
+    """ Add references for Alma Linux errata
+    """
+    references = []
+    refs = advisory.get('references')
+    for ref in refs:
+        er_type = ref.get('type')
+        name = ref.get('id')
+        if er_type == 'self':
+            er_type = name.split('-')[0].lower()
+        if er_type == 'cve':
+            url = f'https://www.cve.org/CVERecord?id={name}'
+        else:
+            url = ref.get('href')
+        references.append({'er_type': er_type, 'url': url})
+    add_erratum_refs(e, references)
+
+
+def add_alma_errata_packages(e, advisory):
+    """ Parse and add packages for Alma Linux errata
+    """
+    packages = advisory.get('packages')
+    for package in packages:
+        package_name = package.get('filename')
+        if package_name:
+            name, epoch, ver, rel, dist, arch = parse_package_string(package_name)
+            p_type = Package.RPM
+            pkg = get_or_create_package(name, epoch, ver, rel, arch, p_type)
+            e.packages.add(pkg)
+    e.save()
 
 
 def update_debian_errata(force=False):
