@@ -22,10 +22,14 @@ import magic
 import zlib
 import lzma
 from colorama import Fore, Style
+from datetime import datetime
 from enum import Enum
 from hashlib import md5, sha1, sha256, sha512
 from progressbar import Bar, ETA, Percentage, ProgressBar
 from patchman.signals import error_message, info_message
+
+from django.utils.timezone import make_aware
+from django.utils.dateparse import parse_datetime
 
 
 if ProgressBar.__dict__.get('maxval'):
@@ -239,3 +243,16 @@ def get_md5(data):
     """ Return the md5 checksum for data
     """
     return md5(data).hexdigest()
+
+
+def tz_aware_datetime(date):
+    """ Ensure a datetime is timezone-aware
+        Returns the tz-aware datetime object
+    """
+    if isinstance(date, int):
+        parsed_date = datetime.fromtimestamp(date)
+    else:
+        parsed_date = parse_datetime(date)
+    if not parsed_date.tzinfo:
+        parsed_date = make_aware(parsed_date)
+    return parsed_date
