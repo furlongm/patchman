@@ -1,0 +1,58 @@
+[
+  {
+    "model": "operatingsystems.osgroup",
+    "fields": {
+      "name": "CentOS 7",
+      "codename": "",
+      "repos": []
+    }
+  },
+  {
+    "model": "operatingsystems.osgroup",
+    "fields": {
+      "name": "CentOS 8",
+      "codename": "",
+      "repos": []
+    }
+  },
+  {
+    "model": "operatingsystems.osgroup",
+    "fields": {
+      "name": "Rocky Linux 8",
+      "codename": "Green Obsidian",
+      "repos": []
+    }
+  },
+  {
+    "model": "operatingsystems.osgroup",
+    "fields": {
+      "name": "Rocky Linux 9",
+      "codename": "Blue Onyx",
+      "repos": []
+    }
+  },
+  {
+    "model": "operatingsystems.osgroup",
+    "fields": {
+      "name": "AlmaLinux 8",
+      "codename": "Cerulean Leopard",
+      "repos": []
+    }
+  },
+  {
+    "model": "operatingsystems.osgroup",
+    "fields": {
+      "name": "AlmaLinux 9",
+      "codename": "Teal Serval",
+      "repos": []
+    }
+  },
+  {
+    "model": "operatingsystems.osgroup",
+    "fields": {
+      "name": "Debian 12",
+      "codename": "bookworm",
+      "repos": []
+    }
+  }
+]

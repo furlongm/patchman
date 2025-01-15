@@ -46,6 +46,9 @@ class Repository(models.Model):
     repo_id = models.CharField(max_length=255, null=True, blank=True)
     auth_required = models.BooleanField(default=False)
 
+    from repos.managers import RepositoryManager
+    objects = RepositoryManager()
+
     class Meta:
         verbose_name_plural = 'Repository'
         verbose_name_plural = 'Repositories'
