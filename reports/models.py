@@ -15,12 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+import re
+
 from django.db import models, IntegrityError, DatabaseError, transaction
 from django.urls import reverse
 
 from hosts.models import Host
 from arch.models import MachineArchitecture
-from operatingsystems.models import OS
+from operatingsystems.models import OS, OSGroup
 from domains.models import Domain
 from patchman.signals import error_message, info_message
 
@@ -105,10 +107,20 @@ class Report(models.Model):
         """
 
         if self.os and self.kernel and self.arch and not self.processed:
-
+            osgroup_codename = None
+            match = re.match(r'(.*) \((.*)\)', self.os)
+            if match:
+                os_name = match.group(1)
+                osgroup_codename = match.group(2)
+            else:
+                os_name = self.os
             oses = OS.objects.all()
             with transaction.atomic():
-                os, c = oses.get_or_create(name=self.os)
+                os, c = oses.get_or_create(name=os_name)
+            if osgroup_codename:
+                osgroups = OSGroup.objects.filter(codename=osgroup_codename)
+                if osgroups.count() == 1:
+                    os.osgroup = osgroups[0]
 
             machine_arches = MachineArchitecture.objects.all()
             with transaction.atomic():
