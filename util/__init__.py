@@ -268,4 +268,3 @@ def tz_aware_datetime(date):
     if not parsed_date.tzinfo:
         parsed_date = make_aware(parsed_date)
     return parsed_date
-

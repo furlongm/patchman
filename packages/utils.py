@@ -583,7 +583,8 @@ def parse_centos_errata(data, force):
     progress_info_s.send(sender=None, ptext=ptext, plen=elen)
     for i, child in enumerate(errata_xml):
         progress_update_s.send(sender=None, index=i + 1)
-        if not check_centos_release(child.findall('os_release')):
+        releases = get_centos_erratum_releases(child.findall('os_release'))
+        if not accepted_centos_release(releases):
             continue
         e = parse_centos_errata_tag(child.tag, child.attrib, force)
         if e is not None:
@@ -634,9 +635,12 @@ def create_centos_errata_references(refs):
             old_ref = url.path.split('/')[-1]
             refs = old_ref.split('-')
             if ':' not in url.path:
-                new_ref = f'{refs[0]}-{refs[1]}:{refs[2]}'
-                path = url.path.replace(old_ref, new_ref)
-                url = url._replace(path=path)
+                try:
+                    new_ref = f'{refs[0]}-{refs[1]}:{refs[2]}'
+                    path = url.path.replace(old_ref, new_ref)
+                    url = url._replace(path=path)
+                except IndexError:
+                    pass
             er_type = refs[0].lower()
         references.append({'er_type': er_type, 'url': url.geturl()})
     return references
@@ -652,36 +656,46 @@ def parse_centos_errata_children(e, children):
                 m_arch, c = m_arches.get_or_create(name=c.text)
             e.arches.add(m_arch)
         elif c.tag == 'os_release':
-            from operatingsystems.models import OSGroup
-            osgroups = OSGroup.objects.all()
-            osgroup_name = f'CentOS {c.text!s}'
-            with transaction.atomic():
-                osgroup, c = osgroups.get_or_create(name=osgroup_name)
-            e.releases.add(osgroup)
+            if accepted_centos_release([c.text]):
+                from operatingsystems.models import OSGroup
+                osgroups = OSGroup.objects.all()
+                osgroup_name = f'CentOS {c.text}'
+                with transaction.atomic():
+                    osgroup, c = osgroups.get_or_create(name=osgroup_name)
+                e.releases.add(osgroup)
         elif c.tag == 'packages':
             name, epoch, ver, rel, dist, arch = parse_package_string(c.text)
-            p_type = Package.RPM
-            pkg = get_or_create_package(name, epoch, ver, rel, arch, p_type)
-            e.packages.add(pkg)
+            match = re.match(r'.*el([0-9]+).*', rel)
+            if match:
+                release = match.group(1)
+                if accepted_centos_release([release]):
+                    p_type = Package.RPM
+                    pkg = get_or_create_package(name, epoch, ver, rel, arch, p_type)
+                    e.packages.add(pkg)
 
 
-def check_centos_release(releases_xml):
-    """ Check if we care about the release that the erratum affects
+def get_centos_erratum_releases(releases_xml):
+    """ Collect the releases a given erratum pertains to
     """
     releases = set()
     for release in releases_xml:
         releases.add(int(release.text))
-    if hasattr(settings, 'MIN_CENTOS_RELEASE') and \
-            isinstance(settings.MIN_CENTOS_RELEASE, int):
+    return releases
+
+
+def accepted_centos_release(releases):
+    """ Check if we accept the releases that the erratum pertains to
+        If any release is accepted we return True, else False
+    """
+    if has_setting_of_type('MIN_CENTOS_RELEASE', int):
         min_release = settings.MIN_CENTOS_RELEASE
     else:
-        # defaults to CentOS 6
-        min_release = 6
-    wanted_release = False
+        min_release = 7
+    acceptable_release = False
     for release in releases:
-        if release >= min_release:
-            wanted_release = True
-    return wanted_release
+        if int(release) >= min_release:
+            acceptable_release = True
+    return acceptable_release
 
 
 def get_or_create_erratum(name, etype, issue_date, synopsis):
