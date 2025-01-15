@@ -26,17 +26,28 @@ class OSGroup(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
     repos = models.ManyToManyField(Repository, blank=True)
+    codename = models.CharField(max_length=255, blank=True)
+
+    from operatingsystems.managers import OSGroupManager
+    objects = OSGroupManager()
 
     class Meta:
         verbose_name = 'Operating System Group'
         verbose_name_plural = 'Operating System Groups'
+        unique_together = ('name', 'codename')
         ordering = ('name',)
 
     def __str__(self):
-        return self.name
+        if self.codename:
+            return f'{self.name} ({self.codename})'
+        else:
+            return self.name
 
     def get_absolute_url(self):
         return reverse('operatingsystems:osgroup_detail', args=[str(self.id)])
+
+    def natural_key(self):
+        return (self.name, self.codename)
 
 
 class OS(models.Model):

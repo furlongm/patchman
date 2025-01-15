@@ -58,6 +58,9 @@ class Host(models.Model):
     tags = TagField()
     updated_at = models.DateTimeField(default=timezone.now)
 
+    from hosts.managers import HostManager
+    objects = HostManager()
+
     class Meta:
         verbose_name = 'Host'
         verbose_name_plural = 'Hosts'
