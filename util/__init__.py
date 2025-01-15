@@ -57,12 +57,12 @@ def set_verbosity(value):
     verbose = value
 
 
-def create_pbar(ptext, plength, **kwargs):
+def create_pbar(ptext, plength, ljust=35, **kwargs):
     """ Create a global progress bar if global verbose is True
     """
     global pbar, verbose
     if verbose and plength > 0:
-        jtext = str(ptext).ljust(35)
+        jtext = str(ptext).ljust(ljust)
         if pbar2:
             pbar = ProgressBar(widgets=[Style.RESET_ALL + Fore.YELLOW + jtext,
                                         Percentage(), Bar(), ETA()],
@@ -84,13 +84,13 @@ def update_pbar(index, **kwargs):
             pmax = pbar.max_value
         else:
             pmax = pbar.maxval
-        if index == pmax:
+        if index >= pmax:
             pbar.finish()
             print_nocr(Fore.RESET)
             pbar = None
 
 
-def download_url(res, text=''):
+def download_url(res, text='', ljust=35):
     """ Display a progress bar to download the request content if verbose is
         True. Otherwise, just return the request content
     """
@@ -99,7 +99,7 @@ def download_url(res, text=''):
         content_length = res.headers.get('content-length')
         if content_length:
             clen = int(content_length)
-            create_pbar(text, clen)
+            create_pbar(text, clen, ljust)
             chunk_size = 16384
             i = 0
             data = b''
