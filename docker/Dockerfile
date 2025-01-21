@@ -22,6 +22,7 @@ RUN chown -R :www-data /var/lib/patchman && chmod -R g+w /var/lib/patchman/db
 RUN chmod +x /srv/patchman/patchman/*.py
 
 EXPOSE 80
+EXPOSE 443
 
 COPY ./docker/docker-entrypoint.sh docker-entrypoint.sh
 ENTRYPOINT ["docker-entrypoint.sh"]
