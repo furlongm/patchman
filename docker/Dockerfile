@@ -24,4 +24,4 @@ RUN chmod +x /srv/patchman/patchman/*.py
 EXPOSE 80
 
 COPY ./docker/docker-entrypoint.sh docker-entrypoint.sh
-ENTRYPOINT ./docker-entrypoint.sh
+ENTRYPOINT ["docker-entrypoint.sh"]
