@@ -5,10 +5,10 @@ RUN apt install -y apache2 libapache2-mod-wsgi-py3 mariadb-client python-celery-
 
 RUN pip3 install django-bootstrap3 --break-system-packages
 
-RUN mkdir -p /srv/patchman
+RUN mkdir -p /srv/patchman/patchman
 RUN mkdir -p /var/lib/patchman/db
 
-COPY ./patchman /srv/patchman
+COPY ./patchman /srv/patchman/patchman
 COPY ./sbin/* /usr/bin/
 COPY ./email/patchman-email /usr/bin/
 COPY ./etc/patchman/local_settings.py /etc/patchman/
