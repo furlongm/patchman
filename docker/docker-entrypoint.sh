@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Starts Apache httpd process
 /usr/sbin/apache2ctl -DFOREGROUND &
