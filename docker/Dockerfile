@@ -14,11 +14,14 @@ COPY ./etc/patchman/apache.conf.example /etc/apache2/sites-available/patchman.co
 
 RUN a2enmod wsgi
 RUN a2ensite patchman
+
 RUN chown -R :www-data /etc/patchman
 RUN chmod -R g+r /etc/patchman
 RUN mkdir -p /var/lib/patchman/db
 RUN chown -R :www-data /var/lib/patchman
 RUN chmod -R g+w /var/lib/patchman/db
+
+RUN service apache2 reload
 
 EXPOSE 80
 
