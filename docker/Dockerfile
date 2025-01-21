@@ -21,8 +21,6 @@ RUN mkdir -p /var/lib/patchman/db
 RUN chown -R :www-data /var/lib/patchman
 RUN chmod -R g+w /var/lib/patchman/db
 
-RUN service apache2 reload
-
 EXPOSE 80
 
 COPY ./docker/docker-entrypoint.sh docker-entrypoint.sh
