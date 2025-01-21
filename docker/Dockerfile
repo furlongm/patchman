@@ -10,10 +10,10 @@ COPY ./sbin/* /usr/bin/
 COPY ./email/patchman-email /usr/bin/
 COPY ./etc/patchman/local_settings.py /etc/patchman/
 COPY ./etc/patchman/patchman-email.conf /etc/patchman/
-COPY ./etc/patchman/apache.conf.example /etc/apache2/conf-available/patchman.conf
+COPY ./etc/patchman/apache.conf.example /etc/apache2/sites-available/patchman.conf
 
 RUN a2enmod wsgi
-RUN a2enconf patchman
+RUN a2ensite patchman
 RUN chown -R :www-data /etc/patchman
 RUN chmod -R g+r /etc/patchman
 RUN mkdir -p /var/lib/patchman/db
