@@ -1,19 +1,25 @@
 FROM debian:bookworm-slim
 
-RUN apt update \
-    && apt install -y curl mariadb-client python-celery-common python3-celery python3-mysqldb python3-pymemcache python3-redis sendmail sharutils uuid-runtime weasyprint
+RUN apt update && apt upgrade
+RUN apt install -y apache2 libapache2-mod-wsgi-py3 mariadb-client python-celery-common python3-celery python3-colorama python3-debian python3-defusedxml python3-django python3-django-extensions python3-django-tagging python3-djangorestframework python3-humanize python3-lxml python3-magic python3-mysqldb python3-pip python3-progressbar python3-pymemcache python3-redis python3-requests python3-rpm sendmail sharutils uuid-runtime weasyprint
 
-RUN curl -sS https://repo.openbytes.ie/openbytes.gpg > /usr/share/keyrings/openbytes.gpg
-RUN echo "deb [signed-by=/usr/share/keyrings/openbytes.gpg] https://repo.openbytes.ie/patchman/debian bookworm main" > /etc/apt/sources.list.d/patchman.list
+RUN pip3 install django-bootstrap3
 
-RUN apt update \
-    && apt install -y python3-patchman
+COPY ./patchman/* /srv/
+COPY ./sbin/* /usr/bin/
+COPY ./email/patchman-email /usr/bin/
+COPY ./patchman/etc/local_settings.py /etc/patchman/
+COPY ./email/patchman-email.conf /etc/patchman/
+COPY ./patchman/etc/apache.conf.example /etc/apache2/conf-available/patchman.conf
 
-RUN curl -sS https://raw.githubusercontent.com/RicardoJeronimo/patchman/master/email/patchman-email > /usr/bin/patchman-email \
-    && curl -sS https://raw.githubusercontent.com/RicardoJeronimo/patchman/master/etc/patchman/patchman-email.conf > /etc/patchman/patchman-email.conf
-RUN chmod +x /usr/bin/patchman-email
+RUN a2enmod wsgi
+RUN a2enconf patchman
+RUN chown -R :www-data /etc/patchman
+RUN chmod -R g+r /etc/patchman
+RUN chown -R :www-data /var/lib/patchman
+RUN chmod -R g+w /var/lib/patchman/db
 
 EXPOSE 80
 
-COPY ./docker-entrypoint.sh docker-entrypoint.sh
+COPY ./docker/docker-entrypoint.sh docker-entrypoint.sh
 ENTRYPOINT ./docker-entrypoint.sh
