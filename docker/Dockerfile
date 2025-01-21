@@ -8,7 +8,7 @@ RUN pip3 install django-bootstrap3 --break-system-packages
 RUN mkdir -p /srv/patchman
 RUN mkdir -p /var/lib/patchman/db
 
-COPY ./patchman/* /srv/patchman
+COPY ./patchman /srv/patchman
 COPY ./sbin/* /usr/bin/
 COPY ./email/patchman-email /usr/bin/
 COPY ./etc/patchman/local_settings.py /etc/patchman/
@@ -20,6 +20,7 @@ RUN a2ensite patchman
 
 RUN chown -R :www-data /etc/patchman && chmod -R g+r /etc/patchman
 RUN chown -R :www-data /var/lib/patchman && chmod -R g+w /var/lib/patchman/db
+RUN chmod +x /srv/patchman/patchman/*.py
 
 EXPOSE 80
 
