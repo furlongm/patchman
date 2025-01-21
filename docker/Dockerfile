@@ -5,7 +5,10 @@ RUN apt install -y apache2 libapache2-mod-wsgi-py3 mariadb-client python-celery-
 
 RUN pip3 install django-bootstrap3 --break-system-packages
 
-COPY ./patchman/* /srv/
+RUN mkdir -p /srv/patchman
+RUN mkdir -p /var/lib/patchman/db
+
+COPY ./patchman/* /srv/patchman
 COPY ./sbin/* /usr/bin/
 COPY ./email/patchman-email /usr/bin/
 COPY ./etc/patchman/local_settings.py /etc/patchman/
@@ -15,11 +18,8 @@ COPY ./etc/patchman/apache.conf.example /etc/apache2/sites-available/patchman.co
 RUN a2enmod wsgi
 RUN a2ensite patchman
 
-RUN chown -R :www-data /etc/patchman
-RUN chmod -R g+r /etc/patchman
-RUN mkdir -p /var/lib/patchman/db
-RUN chown -R :www-data /var/lib/patchman
-RUN chmod -R g+w /var/lib/patchman/db
+RUN chown -R :www-data /etc/patchman && chmod -R g+r /etc/patchman
+RUN chown -R :www-data /var/lib/patchman && chmod -R g+w /var/lib/patchman/db
 
 EXPOSE 80
 
