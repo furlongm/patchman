@@ -35,7 +35,7 @@ if [ ! -z "${DB_ENGINE}" ]; then
 		DATABASES = {
 		    'default': {
 		        'ENGINE': 'django.db.backends.postgresql_psycopg2'
-	            'NAME': '${DB_DATABASE}',
+		        'NAME': '${DB_DATABASE}',
 		        'USER': '${DB_USER}',
 		        'PASSWORD': '${DB_PASSWORD}',
 		        'HOST': '${DB_HOST}',
