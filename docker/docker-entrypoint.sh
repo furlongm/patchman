@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# Configure SECRET_KEY if not set
+if [ -z $(grep "SECRET_KEY" /etc/patchman/local_settings.py | cut -d " " -f 3 | tr -d "'") ]; then 
+    if [ ! -z "${SECRET_KEY}" ]; then
+        sed -i "s/SECRET_KEY = ''/SECRET_KEY = '"${SECRET_KEY}"'/g" /etc/patchman/local_settings.py 
+    else
+        patchman-set-secret-key
+    fi
+fi
+
 # Starts Apache httpd process
 /usr/sbin/apache2ctl -DFOREGROUND &
 
