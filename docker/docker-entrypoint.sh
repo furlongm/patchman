@@ -14,7 +14,7 @@ fi
 
 # Configure TIME_ZONE
 if [ ! -z "${TIMEZONE}" ]; then
-    sed -i '18 {s/America\/New_York/'"${TIMEZONE}"'/}' /etc/patchman/local_settings.py
+    sed -i '18 {s/America\/New_York/'"${TIMEZONE/\//\\/}"'/}' /etc/patchman/local_settings.py
 fi
 
 # Configure SECRET_KEY if not set
