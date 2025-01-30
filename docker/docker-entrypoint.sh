@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# Configure ADMINS
+# To do
+
+# Configure DATABASES
+# To do
+
+# Configure TIME_ZONE
+# To do
+
 # Configure SECRET_KEY if not set
 if [ -z $(grep "SECRET_KEY" /etc/patchman/local_settings.py | cut -d " " -f 3 | tr -d "'") ]; then 
     if [ ! -z "${SECRET_KEY}" ]; then
@@ -8,6 +17,12 @@ if [ -z $(grep "SECRET_KEY" /etc/patchman/local_settings.py | cut -d " " -f 3 | 
         patchman-set-secret-key
     fi
 fi
+
+# Configure CACHES
+# To do
+
+# Configure ASYNC_PROCESSING
+# To do
 
 # Starts Apache httpd process
 /usr/sbin/apache2ctl -DFOREGROUND &
