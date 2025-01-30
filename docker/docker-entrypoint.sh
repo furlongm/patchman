@@ -19,7 +19,19 @@ if [ -z $(grep "SECRET_KEY" /etc/patchman/local_settings.py | cut -d " " -f 3 | 
 fi
 
 # Configure CACHES
-# To do
+if [ ! -z "${MEMCACHED_ADDR}" ]; then
+    memcachedAddr="${MEMCACHED_ADDR}"
+
+    if [ ! -z "${MEMCACHED_PORT}" ]; then
+        memcachedPort="${MEMCACHED_PORT}"
+    else
+        memcachedPort="11211"
+    fi
+
+    sed -i "s/'LOCATION': '127.0.0.1:11211'/'LOCATION': '"$memcachedAddr":"$memcachedPort"'/g" /etc/patchman/local_settings.py 
+else
+    sed -i '41,49 {s/^/#/}' /etc/patchman/local_settings.py
+fi
 
 # Configure ASYNC_PROCESSING
 # To do
