@@ -8,11 +8,14 @@ RUN pip3 install django-bootstrap3 --break-system-packages
 RUN mkdir -p /srv/patchman && mkdir -p /var/lib/patchman/db
 
 COPY . /srv/patchman/
-COPY ./sbin/* /usr/bin/
-COPY ./email/patchman-email /usr/bin/
 COPY ./etc/patchman/local_settings.py /etc/patchman/
 COPY ./etc/patchman/patchman-email.conf /etc/patchman/
 COPY ./etc/patchman/apache.conf.example /etc/apache2/sites-available/patchman.conf
+
+RUN ln -s /srv/patchman/manage.py /usr/bin/patchman-manage
+RUN ln -s /srv/patchman/sbin/patchman /usr/bin/patchman
+RUN ln -s /srv/patchman/sbin/patchman-set-secret-key /usr/bin/patchman-set-secret-key
+RUN ln -s /srv/patchman/email/patchman-email /usr/bin/patchman-email
 
 RUN a2enmod wsgi
 RUN a2ensite patchman
