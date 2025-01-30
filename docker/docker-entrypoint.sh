@@ -10,14 +10,46 @@ if [ ! -z "${ADMIN_EMAIL}" ]; then
 fi
 
 # Configure DATABASES
-# To do
+if [ ! -z "${DB_ENGINE}"]; then
+    sed -i '9,14 {s/^/#/}' /etc/patchman/local_settings.py
+
+    if [ "${DB_ENGINE}" == "MySQL"]; then
+        cat <<-EOF >> /etc/patchman/local_settings.py
+ 			DATABASES = {
+				'default': {
+					'ENGINE': 'django.db.backends.mysql',
+					'NAME': '"${DB_DATABASE}"',
+					'USER': '"${DB_USER}"',
+					'PASSWORD': '"${DB_PASSWORD}"',
+					'HOST': '"${DB_HOST}"',
+					'PORT': '"${DB_PORT}"',
+					'STORAGE_ENGINE': 'INNODB',
+					'CHARSET' : 'utf8'
+				}
+			}
+		EOF
+    elif [ "${DB_ENGINE}" == "PostgreSQL"]; then
+        cat <<-EOF >> /etc/patchman/local_settings.py
+ 			DATABASES = {
+				'default': {
+					'ENGINE': 'django.db.backends.postgresql_psycopg2'
+					'NAME': '"${DB_DATABASE}"',
+					'USER': '"${DB_USER}"',
+					'PASSWORD': '"${DB_PASSWORD}"',
+					'HOST': '"${DB_HOST}"',
+					'PORT': '"${DB_PORT}"',
+					'CHARSET' : 'utf8'
+				}
+		EOF 
+    fi
+fi
 
 # Configure TIME_ZONE
 if [ ! -z "${TIMEZONE}" ]; then
     sed -i '18 {s/America\/New_York/'"${TIMEZONE/\//\\/}"'/}' /etc/patchman/local_settings.py
 fi
 
-# Configure SECRET_KEY if not set
+# Configure SECRET_KEY 
 if [ -z $(grep "SECRET_KEY" /etc/patchman/local_settings.py | cut -d " " -f 3 | tr -d "'") ]; then 
     if [ ! -z "${SECRET_KEY}" ]; then
         sed -i "s/SECRET_KEY = ''/SECRET_KEY = '"${SECRET_KEY}"'/g" /etc/patchman/local_settings.py 
