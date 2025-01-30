@@ -40,7 +40,7 @@ if [ ! -z "${DB_ENGINE}"]; then
 					'PORT': '"${DB_PORT}"',
 					'CHARSET' : 'utf8'
 				}
-		EOF 
+		EOF
     fi
 fi
 
