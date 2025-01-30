@@ -15,33 +15,34 @@ if [ ! -z "${DB_ENGINE}" ]; then
 
     if [ "${DB_ENGINE}" == "MySQL" ]; then
         cat <<-EOF >> /etc/patchman/local_settings.py
- 			
+
  			DATABASES = {
-				'default': {
-					'ENGINE': 'django.db.backends.mysql',
-					'NAME': '${DB_DATABASE}',
-					'USER': '${DB_USER}',
-					'PASSWORD': '${DB_PASSWORD}',
-					'HOST': '${DB_HOST}',
-					'PORT': '${DB_PORT}',
-					'STORAGE_ENGINE': 'INNODB',
-					'CHARSET' : 'utf8'
-				}
+			    'default': {
+			        'ENGINE': 'django.db.backends.mysql',
+			        'NAME': '${DB_DATABASE}',
+			        'USER': '${DB_USER}',
+			        'PASSWORD': '${DB_PASSWORD}',
+			        'HOST': '${DB_HOST}',
+			        'PORT': '${DB_PORT}',
+			        'STORAGE_ENGINE': 'INNODB',
+			        'CHARSET' : 'utf8'
+                }
 			}
 		EOF
     elif [ "${DB_ENGINE}" == "PostgreSQL" ]; then
         cat <<-EOF >> /etc/patchman/local_settings.py
- 			
+            
  			DATABASES = {
-				'default': {
-					'ENGINE': 'django.db.backends.postgresql_psycopg2'
-					'NAME': '${DB_DATABASE}',
-					'USER': '${DB_USER}',
-					'PASSWORD': '${DB_PASSWORD}',
-					'HOST': '${DB_HOST}',
-					'PORT': '${DB_PORT}',
-					'CHARSET' : 'utf8'
-				}
+			    'default': {
+			        'ENGINE': 'django.db.backends.postgresql_psycopg2'
+		            'NAME': '${DB_DATABASE}',
+			        'USER': '${DB_USER}',
+			        'PASSWORD': '${DB_PASSWORD}',
+			        'HOST': '${DB_HOST}',
+			        'PORT': '${DB_PORT}',
+			        'CHARSET' : 'utf8'
+		        }
+			}
 		EOF
     fi
 fi
