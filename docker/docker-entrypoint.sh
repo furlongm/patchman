@@ -51,8 +51,14 @@ if [ ! -z "${CELERY_BROKER}" ]; then
         brokerPort=6379
     fi
 
-    echo "USE_ASYNC_PROCESSING = True" >> /etc/patchman/local_settings.py
-    echo "CELERY_BROKER_URL = 'redis://"$broker":"$brokerPort"/0" >> /etc/patchman/local_settings.py
+    if [ -z $(grep "USE_ASYNC_PROCESSING" /etc/patchman/local_settings.py | cut -d " " -f 3 | tr -d "'") ]; then 
+        echo "" >> /etc/patchman/local_settings.py
+        echo "USE_ASYNC_PROCESSING = True" >> /etc/patchman/local_settings.py
+    fi
+
+    if [ -z $(grep "CELERY_BROKER_URL" /etc/patchman/local_settings.py | cut -d " " -f 3 | tr -d "'") ]; then 
+        echo "CELERY_BROKER_URL = 'redis://"$broker":"$brokerPort"/0'" >> /etc/patchman/local_settings.py
+    fi
 
     C_FORCE_ROOT=1 celery -b redis://"$broker":"$brokerPort"/0 -A patchman worker -l INFO -E &
 fi
