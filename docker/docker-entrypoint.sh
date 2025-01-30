@@ -41,9 +41,6 @@ else
     sed -i '41,49 {s/^/#/}' /etc/patchman/local_settings.py
 fi
 
-# Configure ASYNC_PROCESSING
-# To do
-
 # Starts Celery for for realtime processing of reports from clients
 if [ ! -z "${CELERY_BROKER}" ]; then
     broker="${CELERY_BROKER}"
@@ -53,6 +50,9 @@ if [ ! -z "${CELERY_BROKER}" ]; then
     else
         brokerPort=6379
     fi
+
+    echo "USE_ASYNC_PROCESSING = True" >> /etc/patchman/local_settings.py
+    echo "CELERY_BROKER_URL = 'redis://"$broker":"$brokerPort"/0" >> /etc/patchman/local_settings.py
 
     C_FORCE_ROOT=1 celery -b redis://"$broker":"$brokerPort"/0 -A patchman worker -l INFO -E &
 fi
