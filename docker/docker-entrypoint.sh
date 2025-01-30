@@ -1,13 +1,21 @@
 #!/bin/bash
 
 # Configure ADMINS
-# To do
+if [ ! -z "${ADMIN_NAME}" ]; then
+    sed -i '6 {s/Your Name/'"${ADMIN_NAME}"'/}' /etc/patchman/local_settings.py
+fi
+
+if [ ! -z "${ADMIN_EMAIL}" ]; then
+    sed -i '6 {s/you@example.com/'"${ADMIN_EMAIL}"'/}' /etc/patchman/local_settings.py
+fi
 
 # Configure DATABASES
 # To do
 
 # Configure TIME_ZONE
-# To do
+if [ ! -z "${TIMEZONE}" ]; then
+    sed -i '18 {s/America\/New_York/'"${TIMEZONE}"'/}' /etc/patchman/local_settings.py
+fi
 
 # Configure SECRET_KEY if not set
 if [ -z $(grep "SECRET_KEY" /etc/patchman/local_settings.py | cut -d " " -f 3 | tr -d "'") ]; then 
