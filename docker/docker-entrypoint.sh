@@ -13,7 +13,7 @@ fi
 if [ ! -z "${DB_ENGINE}" ]; then
     sed -i '9,14 {/^#/ ! s/\(.*\)/#\1/}' /etc/patchman/local_settings.py
 
-    if [ $(grep "ENGINE" /etc/patchman/local_settings.py | wc -l) < 2 ]; then
+    if [[ $(grep "ENGINE" /etc/patchman/local_settings.py | wc -l) < 2 ]]; then
         if [ "${DB_ENGINE}" == "MySQL" ]; then
             cat <<-EOF >> /etc/patchman/local_settings.py
 
