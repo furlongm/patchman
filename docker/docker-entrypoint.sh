@@ -11,7 +11,7 @@ fi
 
 # Configure DATABASES
 if [ ! -z "${DB_ENGINE}" ]; then
-    sed -i '9,14 {s/^/#/}' /etc/patchman/local_settings.py
+    sed -i '9,14 {/^#/ ! s/\(.*\)/#\1/}' /etc/patchman/local_settings.py
 
     if [ "${DB_ENGINE}" == "MySQL" ]; then
         cat <<-EOF >> /etc/patchman/local_settings.py
@@ -73,7 +73,7 @@ if [ ! -z "${MEMCACHED_ADDR}" ]; then
 
     sed -i "s/'LOCATION': '127.0.0.1:11211'/'LOCATION': '"$memcachedAddr":"$memcachedPort"'/g" /etc/patchman/local_settings.py 
 else
-    sed -i '41,49 {s/^/#/}' /etc/patchman/local_settings.py
+    sed -i '41,49 {/^#/ ! s/\(.*\)/#\1/}' /etc/patchman/local_settings.py
 fi
 
 # Starts Celery for for realtime processing of reports from clients
