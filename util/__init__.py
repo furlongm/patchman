@@ -22,10 +22,15 @@ import magic
 import zlib
 import lzma
 from colorama import Fore, Style
+from datetime import datetime
 from enum import Enum
 from hashlib import md5, sha1, sha256, sha512
 from progressbar import Bar, ETA, Percentage, ProgressBar
-from patchman.signals import error_message
+from patchman.signals import error_message, info_message
+
+from django.utils.timezone import make_aware
+from django.utils.dateparse import parse_datetime
+from django.conf import settings
 
 
 if ProgressBar.__dict__.get('maxval'):
@@ -52,12 +57,12 @@ def set_verbosity(value):
     verbose = value
 
 
-def create_pbar(ptext, plength, **kwargs):
+def create_pbar(ptext, plength, ljust=35, **kwargs):
     """ Create a global progress bar if global verbose is True
     """
     global pbar, verbose
     if verbose and plength > 0:
-        jtext = str(ptext).ljust(35)
+        jtext = str(ptext).ljust(ljust)
         if pbar2:
             pbar = ProgressBar(widgets=[Style.RESET_ALL + Fore.YELLOW + jtext,
                                         Percentage(), Bar(), ETA()],
@@ -79,34 +84,37 @@ def update_pbar(index, **kwargs):
             pmax = pbar.max_value
         else:
             pmax = pbar.maxval
-        if index == pmax:
+        if index >= pmax:
             pbar.finish()
             print_nocr(Fore.RESET)
             pbar = None
 
 
-def download_url(res, text=''):
+def download_url(res, text='', ljust=35):
     """ Display a progress bar to download the request content if verbose is
         True. Otherwise, just return the request content
     """
     global verbose
-    if verbose and 'content-length' in res.headers:
-        clen = int(res.headers['content-length'])
-        create_pbar(text, clen)
-        chunk_size = 16384
-        i = 0
-        data = b''
-        for chunk in res.iter_content(chunk_size=chunk_size,
-                                      decode_unicode=False):
-            i += len(chunk)
-            if i > clen:
-                update_pbar(clen)
-            else:
-                update_pbar(i)
-            data += chunk
-        return data
-    else:
-        return res.content
+    if verbose:
+        content_length = res.headers.get('content-length')
+        if content_length:
+            clen = int(content_length)
+            create_pbar(text, clen, ljust)
+            chunk_size = 16384
+            i = 0
+            data = b''
+            for chunk in res.iter_content(chunk_size=chunk_size,
+                                          decode_unicode=False):
+                i += len(chunk)
+                if i > clen:
+                    update_pbar(clen)
+                else:
+                    update_pbar(i)
+                data += chunk
+            return data
+        else:
+            info_message.send(sender=None, text=text)
+    return res.content
 
 
 def print_nocr(text):
@@ -116,12 +124,12 @@ def print_nocr(text):
     sys.stdout.softspace = False
 
 
-def get_url(url):
+def get_url(url, headers={}, params={}):
     """ Perform a http GET on a URL. Return None on error.
     """
     res = None
     try:
-        res = requests.get(url, stream=True)
+        res = requests.get(url, headers=headers, params=params, stream=True)
     except requests.exceptions.Timeout:
         error_message.send(sender=None, text=f'Timeout - {url!s}')
     except requests.exceptions.TooManyRedirects:
@@ -140,6 +148,17 @@ def response_is_valid(res):
         return res.ok
     else:
         return False
+
+
+def has_setting_of_type(setting_name, expected_type):
+    """ Checks if the Django settings module has the specified attribute
+        and if it is of the expected type
+        Returns True if the setting exists and is of the expected type, False otherwise.
+    """
+    if not hasattr(settings, setting_name):
+        return False
+    setting_value = getattr(settings, setting_name)
+    return isinstance(setting_value, expected_type)
 
 
 def gunzip(contents):
@@ -236,3 +255,16 @@ def get_md5(data):
     """ Return the md5 checksum for data
     """
     return md5(data).hexdigest()
+
+
+def tz_aware_datetime(date):
+    """ Ensure a datetime is timezone-aware
+        Returns the tz-aware datetime object
+    """
+    if isinstance(date, int):
+        parsed_date = datetime.fromtimestamp(date)
+    else:
+        parsed_date = parse_datetime(date)
+    if not parsed_date.tzinfo:
+        parsed_date = make_aware(parsed_date)
+    return parsed_date

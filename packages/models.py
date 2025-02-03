@@ -214,6 +214,7 @@ class PackageUpdate(models.Model):
 
 class ErratumReference(models.Model):
 
+    er_type = models.CharField(max_length=255)
     url = models.URLField(max_length=255)
 
     def __str__(self):

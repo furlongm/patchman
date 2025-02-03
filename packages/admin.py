@@ -21,11 +21,19 @@ from packages.models import Package, PackageName, \
 
 
 class ErratumAdmin(admin.ModelAdmin):
-    readonly_fields = ('packages',)
+    readonly_fields = ('packages', 'references')
 
 
-admin.site.register(Package)
+class PackageAdmin(admin.ModelAdmin):
+    readonly_fields = ('name',)
+
+
+class PackageUpdateAdmin(admin.ModelAdmin):
+    readonly_fields = ('oldpackage', 'newpackage')
+
+
+admin.site.register(Package, PackageAdmin)
 admin.site.register(PackageName)
-admin.site.register(PackageUpdate)
+admin.site.register(PackageUpdate, PackageUpdateAdmin)
 admin.site.register(Erratum, ErratumAdmin)
 admin.site.register(ErratumReference)
