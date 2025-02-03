@@ -93,9 +93,9 @@ def get_querystring(request):
 
 
 @register.simple_tag
-def searchform():
+def searchform(terms):
     template = get_template('searchbar.html')
-    html = template.render({'post_url': '.'})
+    html = template.render({'post_url': '.', 'terms': terms})
     return html
 
 
