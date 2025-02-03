@@ -138,9 +138,7 @@
 
   <div class="tab-pane fade in" id="host_modules">
     <div class="well well-sm">
-        <div class="well">
-          {% gen_table host.modules.all %}
-        </div>
+      {% gen_table host.modules.all %}
     </div>
   </div>
 
@@ -148,7 +146,7 @@
     <div class="well well-sm">
       <button class="btn btn-primary btn-sm" data-toggle="collapse" data-target="#packages">Show/Hide Installed Packages</button>
       <div id="packages" class="collapse">
-        <div class="well">
+        <div class="well well-sm">
           {% for package in host.packages.select_related %}
             <span class="label label-brick {% cycle 'bg-info' 'bg-success' %}">
               <a href="{{ package.name.get_absolute_url }}"> {{ package }} </a>
