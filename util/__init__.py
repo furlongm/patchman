@@ -30,6 +30,7 @@ from patchman.signals import error_message, info_message
 
 from django.utils.timezone import make_aware
 from django.utils.dateparse import parse_datetime
+from django.conf import settings
 
 
 if ProgressBar.__dict__.get('maxval'):
@@ -147,6 +148,17 @@ def response_is_valid(res):
         return res.ok
     else:
         return False
+
+
+def has_setting_of_type(setting_name, expected_type):
+    """ Checks if the Django settings module has the specified attribute
+        and if it is of the expected type
+        Returns True if the setting exists and is of the expected type, False otherwise.
+    """
+    if not hasattr(settings, setting_name):
+        return False
+    setting_value = getattr(settings, setting_name)
+    return isinstance(setting_value, expected_type)
 
 
 def gunzip(contents):
