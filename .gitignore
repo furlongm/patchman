@@ -9,3 +9,8 @@ tmp*
 .svn
 .tox
 patchman.egg-info
+build
+dist
+run
+pyvenv.cfg
+.vscode
