@@ -27,6 +27,8 @@ from django.utils.html import format_html
 from django.templatetags.static import static
 from django.core.paginator import Paginator
 
+from util import has_setting_of_type
+
 register = Library()
 
 
@@ -101,8 +103,7 @@ def searchform(terms):
 
 @register.simple_tag
 def reports_timedelta():
-    if hasattr(settings, 'DAYS_WITHOUT_REPORT') and \
-            isinstance(settings.DAYS_WITHOUT_REPORT, int):
+    if has_setting_of_type('DAYS_WITHOUT_REPORT', int):
         days = settings.DAYS_WITHOUT_REPORT
     else:
         days = 14

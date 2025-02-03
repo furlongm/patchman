@@ -32,7 +32,7 @@ from packages.models import Package, PackageName, PackageString
 from packages.utils import parse_package_string, get_or_create_package
 from arch.models import PackageArchitecture
 from util import get_url, download_url, response_is_valid, extract, \
-    get_checksum, Checksum
+    get_checksum, Checksum, has_setting_of_type
 from patchman.signals import progress_info_s, progress_update_s, \
     info_message, warning_message, error_message, debug_message
 
@@ -235,20 +235,17 @@ def get_mirrorlist_urls(url):
 def add_mirrors_from_urls(repo, mirror_urls):
     """ Creates mirrors from a list of mirror urls
     """
+    max_mirrors = get_max_mirrors()
     for mirror_url in mirror_urls:
         mirror_url = mirror_url.replace('$ARCH', repo.arch.name)
         mirror_url = mirror_url.replace('$basearch', repo.arch.name)
-        if hasattr(settings, 'MAX_MIRRORS') and \
-                isinstance(settings.MAX_MIRRORS, int):
-            max_mirrors = settings.MAX_MIRRORS
-            # only add X mirrors, where X = max_mirrors
-            q = Q(mirrorlist=False, refresh=True)
-            existing = repo.mirror_set.filter(q).count()
-            if existing >= max_mirrors:
-                text = f'{max_mirrors!s} mirrors already '
-                text += f'exist, not adding {mirror_url!s}'
-                warning_message.send(sender=None, text=text)
-                continue
+        q = Q(mirrorlist=False, refresh=True)
+        existing = repo.mirror_set.filter(q).count()
+        if existing >= max_mirrors:
+            text = f'{max_mirrors!s} mirrors already '
+            text += f'exist, not adding {mirror_url!s}'
+            warning_message.send(sender=None, text=text)
+            continue
         from repos.models import Mirror
         m, c = Mirror.objects.get_or_create(repo=repo, url=mirror_url)
         if c:
@@ -545,10 +542,8 @@ def refresh_yum_repo(mirror, data, mirror_url, ts):
         if not mirror_checksum_is_valid(computed_checksum, modules_checksum, mirror, 'module'):
             return
 
-    if hasattr(settings, 'MAX_MIRRORS') and \
-            isinstance(settings.MAX_MIRRORS, int):
-        max_mirrors = settings.MAX_MIRRORS
         # only refresh X mirrors, where X = max_mirrors
+        max_mirrors = get_max_mirrors()
         checksum_q = Q(mirrorlist=False, refresh=True, timestamp=ts,
                        file_checksum=primary_checksum)
         have_checksum = mirror.repo.mirror_set.filter(checksum_q).count()
@@ -584,11 +579,9 @@ def mirror_checksum_is_valid(computed, provided, mirror, metadata_type):
 def refresh_arch_repo(repo):
     """ Refresh all mirrors of an arch linux repo
     """
-    if hasattr(settings, 'MAX_MIRRORS') and \
-            isinstance(settings.MAX_MIRRORS, int):
-        max_mirrors = settings.MAX_MIRRORS
+    max_mirrors = get_max_mirrors()
     fname = f'{repo.arch!s}/{repo.repo_id!s}.db'
-    ts = datetime.now().replace(microsecond=0)
+    ts = datetime.now().astimezone().replace(microsecond=0)
     for i, mirror in enumerate(repo.mirror_set.filter(refresh=True)):
         res = find_mirror_url(mirror.url, [fname])
         mirror.last_access_ok = response_is_valid(res)
@@ -665,10 +658,8 @@ def refresh_rpm_repo(repo):
     check_for_mirrorlists(repo)
     check_for_metalinks(repo)
 
-    if hasattr(settings, 'MAX_MIRRORS') and \
-            isinstance(settings.MAX_MIRRORS, int):
-        max_mirrors = settings.MAX_MIRRORS
-    ts = datetime.now().replace(microsecond=0)
+    max_mirrors = get_max_mirrors()
+    ts = datetime.now().astimezone().replace(microsecond=0)
     enabled_mirrors = repo.mirror_set.filter(mirrorlist=False, refresh=True)
     for i, mirror in enumerate(enabled_mirrors):
         res = find_mirror_url(mirror.url, formats)
@@ -706,7 +697,7 @@ def refresh_deb_repo(repo):
 
     formats = ['Packages.xz', 'Packages.bz2', 'Packages.gz', 'Packages']
 
-    ts = datetime.now().replace(microsecond=0)
+    ts = datetime.now().astimezone().replace(microsecond=0)
     for mirror in repo.mirror_set.filter(refresh=True):
         res = find_mirror_url(mirror.url, formats)
         mirror.last_access_ok = response_is_valid(res)
@@ -756,3 +747,13 @@ def find_best_repo(package, hostrepos):
                 if hostrepo.priority > best_repo.priority:
                     best_repo = hostrepo
     return best_repo
+
+
+def get_max_mirrors():
+    """ Find the max number of mirrors for refresh
+    """
+    if has_setting_of_type('MAX_MIRRORS', int):
+        max_mirrors = settings.MAX_MIRRORS
+    else:
+        max_mirrors = 5
+    return max_mirrors

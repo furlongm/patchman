@@ -21,6 +21,7 @@ from django.urls import reverse
 
 from arch.models import MachineArchitecture
 from packages.models import Package
+from util import has_setting_of_type
 
 from repos.utils import refresh_deb_repo, refresh_rpm_repo, \
     refresh_arch_repo, update_mirror_packages
@@ -162,8 +163,7 @@ class Mirror(models.Model):
         text = f'No usable mirror found at {self.url!s}'
         error_message.send(sender=None, text=text)
         default_max_mirror_failures = 28
-        if hasattr(settings, 'MAX_MIRROR_FAILURES') and \
-                isinstance(settings.MAX_MIRROR_FAILURES, int):
+        if has_setting_of_type('MAX_MIRROR_FAILURES', int):
             max_mirror_failures = settings.MAX_MIRROR_FAILURES
         else:
             max_mirror_failures = default_max_mirror_failures
