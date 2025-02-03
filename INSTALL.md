@@ -63,8 +63,8 @@ apt -y install gcc libxml2-dev libxslt1-dev virtualenv python3-dev zlib1g-dev  #
 dnf -y install gcc libxml2-devel libxslt-devel python3-virtualenv              # (centos/rocky/alma)
 mkdir /srv/patchman
 cd /srv/patchman
-virtualenv .
-. bin/activate
+python3 -m venv .venv
+. .venv/bin/activate
 pip install --upgrade pip
 pip install patchman gunicorn whitenoise==3.3.1
 patchman-manage migrate
