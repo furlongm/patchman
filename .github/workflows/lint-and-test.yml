@@ -31,4 +31,6 @@ jobs:
       - name: Set secret key
         run: ./sbin/patchman-set-secret-key
       - name: Test with django
-        run: ./manage.py test
+        run: |
+          pip install legacy-cgi
+          ./manage.py test
