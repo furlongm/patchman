@@ -28,6 +28,7 @@ from operatingsystems.models import OS, OSGroup
 from repos.models import Repository, Mirror
 from packages.models import Package
 from reports.models import Report
+from util import has_setting_of_type
 
 
 @login_required
@@ -45,8 +46,7 @@ def dashboard(request):
     packages = Package.objects.all()
 
     # host issues
-    if hasattr(settings, 'DAYS_WITHOUT_REPORT') and \
-            isinstance(settings.DAYS_WITHOUT_REPORT, int):
+    if has_setting_of_type('DAYS_WITHOUT_REPORT', int):
         days = settings.DAYS_WITHOUT_REPORT
     else:
         days = 14
