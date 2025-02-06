@@ -315,7 +315,7 @@ def parse_modules(modules_string):
 
 
 def process_module(module_str):
-    """ Processes a single sanitied module string and converts to a module
+    """ Processes a single sanitized module string and converts to a module
     """
     m_name = module_str[0]
     m_stream = module_str[1]
@@ -334,7 +334,7 @@ def process_module(module_str):
         m_repo = None
 
     packages = set()
-    for pkg_str in module_str[6:-1]:
+    for pkg_str in module_str[6:]:
         p_type = Package.RPM
         p_name, p_epoch, p_ver, p_rel, p_dist, p_arch = parse_package_string(pkg_str)
         package = get_or_create_package(p_name, p_epoch, p_ver, p_rel, p_arch, p_type)

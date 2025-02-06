@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+from django.conf import settings
 from django.db import models
 from django.urls import reverse
 
@@ -154,15 +155,25 @@ class Mirror(models.Model):
 
     def fail(self):
         """ Records that the mirror has failed
-            Disables refresh on a mirror if it fails more than 28 times
+            Disables refresh on a mirror if it fails more than MAX_MIRROR_FAILURES times
+            Set MAX_MIRROR_FAILURES to -1 to disable marking mirrors as failures
+            Default is 28
         """
         text = f'No usable mirror found at {self.url!s}'
         error_message.send(sender=None, text=text)
+        default_max_mirror_failures = 28
+        if hasattr(settings, 'MAX_MIRROR_FAILURES') and \
+                isinstance(settings.MAX_MIRROR_FAILURES, int):
+            max_mirror_failures = settings.MAX_MIRROR_FAILURES
+        else:
+            max_mirror_failures = default_max_mirror_failures
         self.fail_count = self.fail_count + 1
-        if self.fail_count > 28:
+        if max_mirror_failures == -1:
+            text = f'Mirror has failed {self.fail_count} times, but MAX_MIRROR_FAILURES=-1, not disabling refresh'
+        elif self.fail_count > max_mirror_failures:
             self.refresh = False
-            text = 'Mirror has failed more than 28 times, disabling refresh'
-            error_message.send(sender=None, text=text)
+            text = f'Mirror has failed {self.fail_count} times (max={max_mirror_failures}), disabling refresh'
+        error_message.send(sender=None, text=text)
 
     def update_packages(self, packages):
         """ Update the packages associated with a mirror

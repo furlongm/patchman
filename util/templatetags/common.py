@@ -18,6 +18,7 @@
 
 from humanize import naturaltime
 from datetime import datetime, timedelta
+from urllib.parse import urlencode
 
 from django.conf import settings
 from django.template import Library
@@ -25,11 +26,6 @@ from django.template.loader import get_template
 from django.utils.html import format_html
 from django.templatetags.static import static
 from django.core.paginator import Paginator
-
-try:
-    from urllib.parse import urlencode
-except ImportError:
-    from urllib import urlencode
 
 register = Library()
 
@@ -67,7 +63,7 @@ def no_yes_img(boolean, alt_yes='Not Required', alt_no='Required'):
 
 @register.simple_tag
 def gen_table(object_list, template_name=None):
-    if object_list == '':
+    if not object_list:
         return ''
     if not template_name:
         app_label = object_list.model._meta.app_label
@@ -97,9 +93,9 @@ def get_querystring(request):
 
 
 @register.simple_tag
-def searchform():
+def searchform(terms):
     template = get_template('searchbar.html')
-    html = template.render({'post_url': '.'})
+    html = template.render({'post_url': '.', 'terms': terms})
     return html
 
 

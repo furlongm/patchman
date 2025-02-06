@@ -1,6 +1,8 @@
 #!/bin/bash
 
 export LC_ALL=C
+export FULL_IFS=$' \t\n'
+export NL_IFS=$'\n'
 
 conf=/etc/patchman/patchman-client.conf
 protocol=1
@@ -187,39 +189,49 @@ check_for_modularity() {
     fi
 }
 
+parse_module() {
+    module_info=$(echo -e ${1})
+    module_arch=$(echo "${module_info}" | grep ^Architecture | cut -d : -f 2 | awk '{$1=$1};1')
+    module_repo=$(echo "${module_info}" | grep ^Repo | cut -d : -f 2 | awk '{$1=$1};1')
+    module_stream=$(echo "${module_info}" | grep ^Stream | cut -d : -f 2 | sed -e 's/ \[.*//g' | awk '{$1=$1};1')
+    module_version=$(echo "${module_info}" | grep ^Version | cut -d : -f 2 | awk '{$1=$1};1')
+    module_context=$(echo "${module_info}" | grep ^Context | cut -d : -f 2 | awk '{$1=$1};1')
+    module_packages=$(echo "${module_info}" | sed -n '/Artifacts/,$p' | sed -e 's/Artifacts //' | sed -e 's/^: *//g' | grep -v ^$)
+    IFS=${NL_IFS}
+    module_package_str=""
+    for package in ${module_packages} ; do
+        module_package_str="${module_package_str} '${package}'"
+    done
+    IFS=${FULL_IFS}
+    if [ ! -z ${CPE_NAME} ] ; then
+        module_repo="${CPE_NAME}-${module_repo}"
+    fi
+    echo "'${module}' '${module_stream}' '${module_version}' '${module_context}' '${module_arch}' '${module_repo}'${module_package_str}" >> ${tmpfile_mod}
+}
+
 get_enabled_modules() {
     if ${verbose} ; then
         echo 'Finding enabled yum modules...'
     fi
+
     enabled_modules=$(yum module list --enabled \
         | grep "\[e\]" \
         | grep -v ^Hint \
-        | awk {'print $1'})
+        | awk '{print $1}')
 
-    OLDIFS=${IFS}
-    IFS="
-"
     for module in ${enabled_modules} ; do
-        IFS=${OLDIFS}
-        module_info=$(yum module info ${module})
-        module_arch=$(echo ${module_info} | grep Architecture | cut -d : -f 2 | awk '{$1=$1};1')
-        module_repo=$(echo ${module_info} | grep Repo | cut -d : -f 2 | awk '{$1=$1};1')
-        module_stream=$(echo ${module_info} | grep Stream | cut -d : -f 2 | sed -e 's/ \[.*//g' | awk '{$1=$1};1')
-        module_version=$(echo ${module_info} | grep Version | cut -d : -f 2 | awk '{$1=$1};1')
-        module_context=$(echo ${module_info} | grep Context | cut -d : -f 2 | awk '{$1=$1};1')
-        module_packages=$(echo ${module_info} | sed -n '/Artifacts/,$p' | grep -v Hint | sed -e 's/.* : //g' | grep -v ^$)
-        OLDIFS=${IFS}
-        IFS="
-"
-        for package in ${module_packages} ; do
-            module_package_str="${module_package_str} '${package}'"
-        done
-        IFS=${OLDIFS}
-        echo "'${module}' '${module_stream}' '${module_version}' '${module_context}' '${module_arch}' '${module_repo}' ${module_package_str}" >> ${tmpfile_mod}
+        modules_info=$(yum module info ${module} | grep -v ^Hint)
+        unset x
+        while read -r line ; do
+            if [ -z "${line}" ] ; then
+                echo -e "${x}" | grep -q -E "^Stream.*\[e\]" && parse_module "${x}"
+                unset x
+            else
+                x="${x}${line}\n"
+            fi
+        done < <(echo "${modules_info}")
     done
-    if [ ! -z ${CPE_NAME} ] ; then
-        sed -i -e "s#${module_repo}#${CPE_NAME}-${module_repo}#g" "${tmpfile_mod}"
-    fi
+
     if ${debug} ; then
         cat "${tmpfile_mod}"
     fi
@@ -231,7 +243,7 @@ get_installed_rpm_packages() {
             echo 'Finding installed rpms...'
         fi
 
-        rpm -qa --queryformat "'%{NAME}' '%{EPOCH}' '%{version}' '%{RELEASE}' '%{ARCH}' 'rpm'\n" 2>/dev/null \
+        rpm -qa --queryformat "'%{NAME}' '%{EPOCH}' '%{VERSION}' '%{RELEASE}' '%{ARCH}' 'rpm'\n" 2>/dev/null \
         | sed -e 's/(none)//g' \
         | sed -e 's/\+/%2b/g' >> "${tmpfile_pkg}"
 
@@ -275,16 +287,13 @@ AWK
             cat "${tmpfile_pkg}"
         fi
     fi
-    IFS=${OLDIFS}
 }
 
 get_installed_archlinux_packages() {
     if check_command_exists pacman ; then
-        OLDIFS=${IFS}
-        IFS="
-"
+        IFS=${NL_IFS}
         pacman -Q -i | awk -v q="'" -v s=" " '/^Name/{n=$3} /^Version/{l=split($3, e, ":"); if (l==2) {ep=e[1]; v=e[2]} else {ep=""; v=$3}; split(v, r, "-")} /^Architecture/{a=$3} /^$/{print q n q s q ep q s q r[1] q s q r[2] q s q a q s q"arch"q}' >> "${tmpfile_pkg}"
-        IFS=${OLDIFS}
+        IFS=${FULL_IFS}
     fi
 }
 
@@ -427,9 +436,7 @@ get_zypper_updates() {
 }
 
 get_repos() {
-    OLDIFS=${IFS}
-    IFS="
-"
+    IFS=${NL_IFS}
 
     # Red Hat / CentOS
     if check_command_exists yum ; then
@@ -475,7 +482,7 @@ get_repos() {
         if ${verbose} ; then
             echo 'Finding apt repos...'
         fi
-        IFS=${OLDIFS} read -r osname shortversion <<<$(echo "${os}" | awk '{print $1,$2}' | cut -d . -f 1,2)
+        IFS=${FULL_IFS} read -r osname shortversion <<<$(echo "${os}" | awk '{print $1,$2}' | cut -d . -f 1,2)
         repo_string="'deb\' \'${osname} ${shortversion} ${host_arch} repo at"
         repos=$(apt-cache policy | grep -v Translation | grep -E "^ *[0-9]{1,5}" | grep -E " mirror\+file|http(s)?:" | sed -e "s/^ *//g" -e "s/ *$//g" | cut -d " " -f 1,2,3,4)
         non_mirror_repos=$(echo "${repos}" | grep -Ev "mirror\+file")
@@ -543,7 +550,7 @@ get_repos() {
         done
     fi
 
-    IFS=${OLDIFS}
+    IFS=${FULL_IFS}
 
     sed -i -e '/^$/d' "${tmpfile_rep}"
 

@@ -1,3 +1,76 @@
+patchman (3.0.14-1) stable; urgency=medium
+
+  * simplify conditional
+  * remove python2 handling
+  * fix search terms not appearing in search box
+  * create functions for module matching
+  * increase flake8 max line length
+  * prefer count() over len
+  * remove extra div on modules table
+  * change venv dir
+  * add more options for url downloading
+  * update gitignore
+  * allow configurable progressbar text length
+  * update github actions
+  * add dnf hook and ensure hook consistency
+  * update github actions
+  * make max mirror failure count configurable
+  * Create FUNDING.yml
+  * upgrade setuptools for linting
+  * add missing dev packages for workflow
+  * bump lxml version
+  * install legacy-cgi
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Mon, 03 Feb 2025 20:58:12 +0000
+
+patchman (3.0.13-1) stable; urgency=medium
+
+  [ Marcus Furlong ]
+  * update mysql instructions
+
+  [ dependabot[bot] ]
+  * Bump actions/download-artifact from 1 to 4.1.7 in /.github/workflows
+
+  [ dawnstrider ]
+  * Created documentation for client configuration
+
+  [ Tom Fifield ]
+  * Update signals.py
+
+  [ Marcus Furlong ]
+  * Release v3.0.11
+  * Release v3.0.12
+  * Release v3.0.13
+
+ -- Marcus Furlong <furlongm@gmail.com>  Mon, 16 Dec 2024 16:36:27 +0000
+
+patchman (3.0.10-1) stable; urgency=medium
+
+  * fix module parsing
+  * don't cut last package in a module
+  * update module string and table
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Thu, 08 Aug 2024 03:39:26 +0000
+
+patchman (3.0.9-1) stable; urgency=medium
+
+  [ dependabot[bot] ]
+  * Bump django from 3.2.23 to 3.2.24
+
+  [ Marcus Furlong ]
+  * bump packages for security updates
+  * bump python versions
+  * bump lxml to 4.9.4
+  * add quotes for all python versions
+  * fix module parsing on rhel 8 and similar
+  * better handle attrs in reports
+  * update IFS usage
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Sun, 23 Jun 2024 21:22:32 +0000
+
 patchman (3.0.8-1) stable; urgency=medium
 
   * bump pyyaml to 6.0.1
