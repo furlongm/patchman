@@ -29,7 +29,7 @@ from taggit.managers import TaggableManager
 from packages.models import Package, PackageUpdate
 from domains.models import Domain
 from repos.models import Repository
-from operatingsystems.models import OS
+from operatingsystems.models import OSVariant
 from arch.models import MachineArchitecture
 from modules.models import Module
 from patchman.signals import info_message, error_message
@@ -44,7 +44,7 @@ class Host(models.Model):
     ipaddress = models.GenericIPAddressField()
     reversedns = models.CharField(max_length=255, blank=True, null=True)
     check_dns = models.BooleanField(default=False)
-    os = models.ForeignKey(OS, on_delete=models.CASCADE)
+    osvariant = models.ForeignKey(OSVariant, on_delete=models.CASCADE)
     kernel = models.CharField(max_length=255)
     arch = models.ForeignKey(MachineArchitecture, on_delete=models.CASCADE)
     domain = models.ForeignKey(Domain, on_delete=models.CASCADE)
@@ -76,7 +76,7 @@ class Host(models.Model):
         text += f'IP address   : {self.ipaddress!s}\n'
         text += f'Reverse DNS  : {self.reversedns!s}\n'
         text += f'Domain       : {self.domain!s}\n'
-        text += f'OS           : {self.os!s}\n'
+        text += f'OS Variant   : {self.osvariant!s}\n'
         text += f'Kernel       : {self.kernel!s}\n'
         text += f'Architecture : {self.arch!s}\n'
         text += f'Last report  : {self.lastreport!s}\n'
@@ -132,7 +132,7 @@ class Host(models.Model):
                             mirror__repo__hostrepo__enabled=True)
         else:
             hostrepos_q = \
-                Q(mirror__repo__osgroup__os__host=self,
+                Q(mirror__repo__osrelease__osvariant__host=self,
                   mirror__repo__arch=self.arch,
                   mirror__enabled=True,
                   mirror__repo__enabled=True) | \
@@ -146,7 +146,7 @@ class Host(models.Model):
             host_repos = Q(repo__host=self)
         else:
             host_repos = \
-                Q(repo__osgroup__os__host=self, repo__arch=self.arch) | \
+                Q(repo__osrelease__osvariant__host=self, repo__arch=self.arch) | \
                 Q(repo__host=self)
         mirrors = highest_package.mirror_set.filter(host_repos)
         security = False
@@ -200,8 +200,8 @@ class Host(models.Model):
             update_ids = self.find_host_repo_updates(host_packages,
                                                      repo_packages)
         else:
-            update_ids = self.find_osgroup_repo_updates(host_packages,
-                                                        repo_packages)
+            update_ids = self.find_osgrelease_repo_updates(host_packages,
+                                                           repo_packages)
 
         kernel_update_ids = self.find_kernel_updates(kernel_packages,
                                                      repo_packages)
@@ -265,7 +265,7 @@ class Host(models.Model):
 
         return update_ids
 
-    def find_osgroup_repo_updates(self, host_packages, repo_packages):
+    def find_osrelease_repo_updates(self, host_packages, repo_packages):
 
         update_ids = []
 

@@ -34,16 +34,15 @@ from taggit.models import TaggedItem
 
 from hosts.models import Host
 from packages.models import Package, PackageName, PackageUpdate
-from packages.utils import update_errata, mark_errata_security_updates
+from errata.utils import update_errata, mark_errata_security_updates
 from repos.models import Repository
 from modules.models import Module
 from arch.models import PackageArchitecture, MachineArchitecture
 from reports.models import Report
-from util import print_nocr, create_pbar, update_pbar, \
-    set_verbosity, get_verbosity
-from patchman.signals import \
-    info_message, warning_message, error_message, debug_message, \
-    progress_info_s, progress_update_s
+from security.utils import update_cves, update_cwes
+from util import print_nocr, create_pbar, update_pbar, set_verbosity, get_verbosity, tz_aware_datetime
+from patchman.signals import info_message, warning_message, error_message, debug_message, progress_info_s, \
+    progress_update_s
 
 
 def get_host(host=None, action='Performing action'):
@@ -180,9 +179,10 @@ def clean_arches():
             a.delete()
             update_pbar(i + 1)
 
-    marches = MachineArchitecture.objects.filter(host__isnull=True,
-                                                 repository__isnull=True,
-                                                 erratum__isnull=True)
+    marches = MachineArchitecture.objects.filter(
+        host__isnull=True,
+        repository__isnull=True,
+    )
     mlen = marches.count()
 
     if mlen == 0:
@@ -293,7 +293,7 @@ def host_updates_alt(host=None):
     """
     updated_hosts = []
     hosts = get_hosts(host, 'Finding updates')
-    ts = datetime.now().replace(microsecond=0)
+    ts = tz_aware_datetime(datetime.now().replace(microsecond=0))
     for host in hosts:
         info_message.send(sender=None, text=str(host))
         if host not in updated_hosts:
@@ -596,14 +596,11 @@ def collect_args():
         '-D', '--diff', metavar=('hostA', 'hostB'), nargs=2,
         help='Show differences between two Hosts in diff-like output')
     parser.add_argument(
-        '-ue', '--update-errata', action='store_true',
-        help='Update CentOS errata from https://cefs.steve-meier.de/')
+        '-e', '--update-errata', action='store_true',
+        help='Update Errata')
     parser.add_argument(
-        '-me', '--mark-errata-security-updates', action='store_true',
-        help='Mark updates as security updates based on downloaded errata')
-    parser.add_argument(
-        '-e', '--errata', action='store_true',
-        help='Download CentOS errata from https://cefs.steve-meier.de/')
+        '-v', '--update-cves', action='store_true',
+        help='Update CVEs from https://cve.org')
     return parser
 
 
@@ -678,15 +675,13 @@ def process_args(args):
     if args.dns_checks:
         dns_checks(args.host)
         showhelp = False
-    if args.errata:
-        update_errata(args.force)
-        mark_errata_security_updates()
-        showhelp = False
     if args.update_errata:
-        update_errata(args.force)
-        showhelp = False
-    if args.mark_errata_security_updates:
+        update_errata()
         mark_errata_security_updates()
+        showhelp = False
+    if args.update_cves:
+        update_cves()
+        update_cwes()
         showhelp = False
     return showhelp
 

@@ -29,7 +29,7 @@ from util.filterspecs import Filter, FilterBar
 from hosts.models import Host, HostRepo
 from domains.models import Domain
 from arch.models import MachineArchitecture
-from operatingsystems.models import OS, OSGroup
+from operatingsystems.models import OSVariant, OSRelease
 from reports.models import Report
 from hosts.forms import EditHostForm
 from hosts.serializers import HostSerializer, HostRepoSerializer
@@ -37,7 +37,6 @@ from hosts.serializers import HostSerializer, HostRepoSerializer
 
 @login_required
 def host_list(request):
-
     hosts = Host.objects.select_related()
 
     if 'domain' in request.GET:
@@ -55,11 +54,11 @@ def host_list(request):
     if 'arch' in request.GET:
         hosts = hosts.filter(arch=int(request.GET['arch']))
 
-    if 'os' in request.GET:
-        hosts = hosts.filter(os=int(request.GET['os']))
+    if 'osvariant' in request.GET:
+        hosts = hosts.filter(osvariant=int(request.GET['osvariant']))
 
-    if 'osgroup' in request.GET:
-        hosts = hosts.filter(os__osgroup=int(request.GET['osgroup']))
+    if 'osrelease' in request.GET:
+        hosts = hosts.filter(osvariant__osrelease=int(request.GET['osrelease']))
 
     if 'tag' in request.GET:
         hosts = hosts.filter(tags__name__in=[request.GET['tag']])
@@ -94,10 +93,9 @@ def host_list(request):
         tags[tag.name] = tag.name
     filter_list.append(Filter(request, 'tag', tags))
     filter_list.append(Filter(request, 'domain', Domain.objects.all()))
-    filter_list.append(Filter(request, 'os', OS.objects.all()))
-    filter_list.append(Filter(request, 'osgroup', OSGroup.objects.all()))
-    filter_list.append(Filter(request, 'arch',
-                              MachineArchitecture.objects.all()))
+    filter_list.append(Filter(request, 'osvariant', OSVariant.objects.all()))
+    filter_list.append(Filter(request, 'osrelease', OSRelease.objects.all()))
+    filter_list.append(Filter(request, 'arch', MachineArchitecture.objects.all()))
     filter_list.append(Filter(request, 'reboot_required',
                               {False: 'No', True: 'Yes'}))
     filter_bar = FilterBar(request, filter_list)
@@ -106,30 +104,24 @@ def host_list(request):
                   'hosts/host_list.html',
                   {'page': page,
                    'filter_bar': filter_bar,
-                   'terms': terms}, )
+                   'terms': terms})
 
 
 @login_required
 def host_detail(request, hostname):
-
     host = get_object_or_404(Host, hostname=hostname)
-
     reports = Report.objects.filter(host=hostname).order_by('-created')[:3]
-
     hostrepos = HostRepo.objects.filter(host=host)
-
     return render(request,
                   'hosts/host_detail.html',
                   {'host': host,
                    'reports': reports,
-                   'hostrepos': hostrepos}, )
+                   'hostrepos': hostrepos})
 
 
 @login_required
 def host_edit(request, hostname):
-
     host = get_object_or_404(Host, hostname=hostname)
-
     reports = Report.objects.filter(host=hostname).order_by('-created')[:3]
 
     if request.method == 'POST':
@@ -157,7 +149,6 @@ def host_edit(request, hostname):
 
 @login_required
 def host_delete(request, hostname):
-
     host = get_object_or_404(Host, hostname=hostname)
 
     if request.method == 'POST':
@@ -168,7 +159,6 @@ def host_delete(request, hostname):
             return redirect(reverse('hosts:host_list'))
         elif 'cancel' in request.POST:
             return redirect(host.get_absolute_url())
-
     reports = Report.objects.filter(host=hostname).order_by('-created')[:3]
 
     return render(request,
