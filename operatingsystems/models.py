@@ -18,6 +18,7 @@
 from django.db import models
 from django.urls import reverse
 
+from arch.models import MachineArchitecture
 from repos.models import Repository
 
 
@@ -41,6 +42,7 @@ class OSGroup(models.Model):
 class OS(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
+    arch = models.ForeignKey(MachineArchitecture, blank=True, null=True, on_delete=models.CASCADE)
     osgroup = models.ForeignKey(OSGroup, blank=True, null=True,
                                 on_delete=models.SET_NULL)
 
