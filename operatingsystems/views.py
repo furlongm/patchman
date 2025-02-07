@@ -24,17 +24,14 @@ from django.urls import reverse
 
 from rest_framework import viewsets
 
-from operatingsystems.models import OS, OSGroup
-from operatingsystems.forms import AddOSToOSGroupForm, \
-    AddReposToOSGroupForm, CreateOSGroupForm
-from operatingsystems.serializers import OSSerializer, \
-    OSGroupSerializer
+from operatingsystems.models import OSVariant, OSRelease
+from operatingsystems.forms import AddOSVariantToOSReleaseForm, AddReposToOSReleaseForm, CreateOSReleaseForm
+from operatingsystems.serializers import OSVariantSerializer, OSReleaseSerializer
 
 
 @login_required
-def os_list(request):
-
-    oses = OS.objects.select_related()
+def osvariant_list(request):
+    osvariants = OSVariant.objects.select_related()
 
     if 'search' in request.GET:
         terms = request.GET['search'].lower()
@@ -42,12 +39,12 @@ def os_list(request):
         for term in terms.split(' '):
             q = Q(name__icontains=term)
             query = query & q
-        oses = oses.filter(query)
+        osvariants = osvariants.filter(query)
     else:
         terms = ''
 
     page_no = request.GET.get('page')
-    paginator = Paginator(oses, 50)
+    paginator = Paginator(osvariants, 50)
 
     try:
         page = paginator.page(page_no)
@@ -56,86 +53,88 @@ def os_list(request):
     except EmptyPage:
         page = paginator.page(paginator.num_pages)
 
-    empty_oses = list(OS.objects.filter(host__isnull=True))
+    empty_osvariants = list(OSVariant.objects.filter(host__isnull=True))
 
     return render(request,
-                  'operatingsystems/os_list.html',
-                  {'page': page, 'terms': terms, 'empty_oses': empty_oses}, )
+                  'operatingsystems/osvariant_list.html',
+                  {'page': page,
+                   'terms': terms,
+                   'empty_osvariants': empty_osvariants})
 
 
 @login_required
-def os_detail(request, os_id):
-
-    os = get_object_or_404(OS, id=os_id)
+def osvariant_detail(request, osvariant_id):
+    osvariant = get_object_or_404(OSVariant, id=osvariant_id)
 
     if request.method == 'POST':
-        create_form = CreateOSGroupForm(request.POST, prefix='create')
+        create_form = CreateOSReleaseForm(request.POST, prefix='create')
         if create_form.is_valid():
-            osgroup = create_form.save()
-            os.osgroup = osgroup
-            os.save()
-            text = f'Created OS Group {osgroup!s} '
-            text += f'and added OS {os!s} to it'
+            osrelease = create_form.save()
+            osvariant.osrelease = osrelease
+            osvariant.save()
+            text = f'Created OS Release {osrelease} and added OS Variant {osvariant} to it'
             messages.info(request, text)
-            return redirect(os.get_absolute_url())
-        add_form = AddOSToOSGroupForm(request.POST, instance=os, prefix='add')
+            return redirect(osvariant.get_absolute_url())
+        add_form = AddOSVariantToOSReleaseForm(request.POST, instance=osvariant, prefix='add')
         if add_form.is_valid():
             add_form.save()
-            text = f'OS {os!s} added to OS Group {os.osgroup!s}'
+            text = f'OS Variant {osvariant} added to OS Release {osvariant.osrelease}'
             messages.info(request, text)
-            return redirect(os.get_absolute_url())
+            return redirect(osvariant.get_absolute_url())
     else:
-        add_form = AddOSToOSGroupForm(instance=os, prefix='add')
-        create_form = CreateOSGroupForm(prefix='create')
+        add_form = AddOSVariantToOSReleaseForm(instance=osvariant, prefix='add')
+        create_form = CreateOSReleaseForm(prefix='create')
 
     return render(request,
-                  'operatingsystems/os_detail.html',
-                  {'os': os,
+                  'operatingsystems/osvariant_detail.html',
+                  {'osvariant': osvariant,
                    'add_form': add_form,
-                   'create_form': create_form}, )
+                   'create_form': create_form})
 
 
 @login_required
-def os_delete(request, os_id):
-
-    if os_id == 'empty_oses':
-        os = False
-        oses = list(OS.objects.filter(host__isnull=True))
+def osvariant_delete(request, osvariant_id):
+    if osvariant_id == 'empty_osvariants':
+        osvariant = False
+        osvariants = list(OSVariant.objects.filter(host__isnull=True))
     else:
-        os = get_object_or_404(OS, id=os_id)
-        oses = False
+        osvariant = get_object_or_404(OSVariant, id=osvariant_id)
+        osvariants = False
 
     if request.method == 'POST':
         if 'delete' in request.POST:
-            if os:
-                os.delete()
-                messages.info(request, f'OS {os!s} has been deleted')
-                return redirect(reverse('operatingsystems:os_list'))
+            if osvariant:
+                osvariant.delete()
+                messages.info(request, f'OS Variant {osvariant} has been deleted')
+                return redirect(reverse('operatingsystems:osvariant_list'))
             else:
-                if not oses:
-                    text = 'There are no OS\'s with no Hosts'
+                if not osvariants:
+                    text = 'There are no OS Variants with no Hosts'
                     messages.info(request, text)
-                    return redirect(reverse('operatingsystems:os_list'))
-                for os in oses:
-                    os.delete()
-                text = f'{len(oses)!s} OS\'s have been deleted'
+                    return redirect(reverse('operatingsystems:osvariant_list'))
+                for osvariant in osvariants:
+                    osvariant.delete()
+                text = f'{len(osvariants)} OS Variants have been deleted'
                 messages.info(request, text)
-                return redirect(reverse('operatingsystems:os_list'))
+                return redirect(reverse('operatingsystems:osvariant_list'))
         elif 'cancel' in request.POST:
-            if os_id == 'empty_oses':
-                return redirect(reverse('operatingsystems:os_list'))
+            if osvariant_id == 'empty_oses':
+                return redirect(reverse('operatingsystems:osvariant_list'))
             else:
-                return redirect(os.get_absolute_url())
+                return redirect(osvariant.get_absolute_url())
 
     return render(request,
-                  'operatingsystems/os_delete.html',
-                  {'os': os, 'oses': oses}, )
+                  'operatingsystems/osvariant_delete.html',
+                  {'osvariant': osvariant,
+                   'osvariants': osvariants})
 
 
 @login_required
-def osgroup_list(request):
+def osrelease_list(request):
+    osreleases = OSRelease.objects.select_related()
 
-    osgroups = OSGroup.objects.select_related()
+    if 'erratum_id' in request.GET:
+        osrelease = osreleases.filter(erratum=int(request.GET['erratum_id']))
 
     if 'search' in request.GET:
         terms = request.GET['search'].lower()
@@ -143,12 +142,12 @@ def osgroup_list(request):
         for term in terms.split(' '):
             q = Q(name__icontains=term)
             query = query & q
-        osgroups = osgroups.filter(query)
+        osreleases = osreleases.filter(query)
     else:
         terms = ''
 
     page_no = request.GET.get('page')
-    paginator = Paginator(osgroups, 50)
+    paginator = Paginator(osreleases, 50)
 
     try:
         page = paginator.page(page_no)
@@ -158,61 +157,65 @@ def osgroup_list(request):
         page = paginator.page(paginator.num_pages)
 
     return render(request,
-                  'operatingsystems/osgroup_list.html',
-                  {'page': page, 'terms': terms}, )
+                  'operatingsystems/osrelease_list.html',
+                  {'page': page,
+                   'terms': terms})
 
 
 @login_required
-def osgroup_detail(request, osgroup_id):
-
-    osgroup = get_object_or_404(OSGroup, id=osgroup_id)
+def osrelease_detail(request, osrelease_id):
+    osrelease = get_object_or_404(OSRelease, id=osrelease_id)
 
     if request.method == 'POST':
-        repos_form = AddReposToOSGroupForm(request.POST, instance=osgroup)
+        repos_form = AddReposToOSReleaseForm(request.POST, instance=osrelease)
         if repos_form.is_valid():
             repos_form.save()
             messages.info(request, 'Modified Repositories')
-            return redirect(osgroup.get_absolute_url())
+            return redirect(osrelease.get_absolute_url())
 
-    repos_form = AddReposToOSGroupForm(instance=osgroup)
+    repos_form = AddReposToOSReleaseForm(instance=osrelease)
 
     return render(request,
-                  'operatingsystems/osgroup_detail.html',
-                  {'osgroup': osgroup, 'repos_form': repos_form}, )
+                  'operatingsystems/osrelease_detail.html',
+                  {'osrelease': osrelease,
+                   'repos_form': repos_form})
 
 
 @login_required
-def osgroup_delete(request, osgroup_id):
-
-    osgroup = get_object_or_404(OSGroup, id=osgroup_id)
+def osrelease_delete(request, osrelease_id):
+    osrelease = get_object_or_404(OSRelease, id=osrelease_id)
 
     if request.method == 'POST':
         if 'delete' in request.POST:
-            osgroup.delete()
-            text = f'OS Group {osgroup!s} has been deleted'
+            osrelease.delete()
+            text = f'OS Release {osrelease} has been deleted'
             messages.info(request, text)
-            return redirect(reverse('operatingsystems:os_list'))
+            return redirect(reverse('operatingsystems:osvariant_list'))
         elif 'cancel' in request.POST:
-            return redirect(osgroup.get_absolute_url())
+            return redirect(osrelease.get_absolute_url())
 
     return render(request,
-                  'operatingsystems/osgroup_delete.html',
-                  {'osgroup': osgroup}, )
+                  'operatingsystems/osrelease_delete.html',
+                  {'osrelease': osrelease})
+
+@login_required
+def os_landing(request):
+    return render(request, 'operatingsystems/os_landing.html')
 
 
-class OSViewSet(viewsets.ModelViewSet):
+class OSVariantViewSet(viewsets.ModelViewSet):
     """
-    API endpoint that allows operating systems to be viewed or edited.
+    API endpoint that allows operating system variants to be viewed or edited.
     """
-    queryset = OS.objects.all()
-    serializer_class = OSSerializer
+    queryset = OSVariant.objects.all()
+    serializer_class = OSVariantSerializer
     filterset_fields = ['name']
 
 
-class OSGroupViewSet(viewsets.ModelViewSet):
+class OSReleaseViewSet(viewsets.ModelViewSet):
     """
-    API endpoint that allows operating system groups to be viewed or edited.
+    API endpoint that allows operating system releases to be viewed or edited.
     """
-    queryset = OSGroup.objects.all()
-    serializer_class = OSGroupSerializer
+    queryset = OSRelease.objects.all()
+    serializer_class = OSReleaseSerializer
     filterset_fields = ['name']

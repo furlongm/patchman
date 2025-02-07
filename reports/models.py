@@ -22,7 +22,7 @@ from django.urls import reverse
 
 from hosts.models import Host
 from arch.models import MachineArchitecture
-from operatingsystems.models import OS, OSGroup
+from operatingsystems.models import OSVariant, OSRelease
 from domains.models import Domain
 from patchman.signals import error_message, info_message
 
@@ -105,27 +105,25 @@ class Report(models.Model):
     def process(self, find_updates=True, verbose=False):
         """ Process a report and extract os, arch, domain, packages, repos etc
         """
-
         if self.os and self.kernel and self.arch and not self.processed:
-            osgroup_codename = None
+            osrelease_codename = None
             match = re.match(r'(.*) \((.*)\)', self.os)
             if match:
                 os_name = match.group(1)
-                osgroup_codename = match.group(2)
+                osrelease_codename = match.group(2)
             else:
                 os_name = self.os
-            oses = OS.objects.all()
-            with transaction.atomic():
-                os, c = oses.get_or_create(name=os_name)
-            if osgroup_codename:
-                osgroups = OSGroup.objects.filter(codename=osgroup_codename)
-                if osgroups.count() == 1:
-                    os.osgroup = osgroups[0]
 
-            machine_arches = MachineArchitecture.objects.all()
             with transaction.atomic():
-                arch, c = machine_arches.get_or_create(name=self.arch)
-            os.arch = arch
+                m_arch, created = MachineArchitecture.objects.get_or_create(name=self.arch)
+
+            with transaction.atomic():
+                osvariant, created = OSVariant.objects.get_or_create(name=os_name, arch=m_arch)
+
+            if osrelease_codename:
+                osreleases = OSRelease.objects.filter(codename=osrelease_codename)
+                if osreleases.count() == 1:
+                    osvariant.osrelease = osreleases[0]
 
             if not self.domain:
                 self.domain = 'unknown'
@@ -139,14 +137,13 @@ class Report(models.Model):
                 except herror:
                     self.host = self.report_ip
 
-            hosts = Host.objects.all()
             with transaction.atomic():
-                host, c = hosts.get_or_create(
+                host, c = Hosts.objects.get_or_create(
                     hostname=self.host,
                     defaults={
                         'ipaddress': self.report_ip,
                         'arch': arch,
-                        'os': os,
+                        'osvariant': osvariant,
                         'domain': domain,
                         'lastreport': self.created,
                     })
@@ -154,7 +151,7 @@ class Report(models.Model):
             host.ipaddress = self.report_ip
             host.kernel = self.kernel
             host.arch = arch
-            host.os = os
+            host.osvariant = osvariant
             host.domain = domain
             host.lastreport = self.created
             host.tags = self.tags
