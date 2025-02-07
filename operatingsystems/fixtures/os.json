@@ -1,63 +1,63 @@
 [
   {
-    "model": "operatingsystems.os",
+    "model": "operatingsystems.osvariant",
     "fields": {
       "name": "Rocky Linux 9.3",
-      "osgroup": [
+      "osrelease": [
         "Rocky Linux 9",
         "Blue Onyx"
       ]
     }
   },
   {
-    "model": "operatingsystems.os",
+    "model": "operatingsystems.osvariant",
     "fields": {
       "name": "Rocky Linux 8.9",
-      "osgroup": [
+      "osrelease": [
         "Rocky Linux 8",
         "Green Obsidian"
       ]
     }
   },
   {
-    "model": "operatingsystems.os",
+    "model": "operatingsystems.osvariant",
     "fields": {
       "name": "Debian 12.5",
-      "osgroup": [
+      "osrelease": [
         "Debian 12",
         "bookworm"
       ]
     }
   },
   {
-    "model": "operatingsystems.os",
+    "model": "operatingsystems.osvariant",
     "fields": {
       "name": "Arch Linux",
-      "osgroup": null
+      "osrelease": null
     }
   },
   {
-    "model": "operatingsystems.os",
+    "model": "operatingsystems.osvariant",
     "fields": {
-      "name": "openSUSE Leap 15.5",
-      "osgroup": null
+      "name": "openSUSE Leap 15.6",
+      "osrelease": null
     }
   },
   {
-    "model": "operatingsystems.os",
+    "model": "operatingsystems.osvariant",
     "fields": {
       "name": "AlmaLinux 8.10",
-      "osgroup": [
+      "osrelease": [
         "AlmaLinux 8",
         "Cerulean Leopard"
       ]
     }
   },
   {
-    "model": "operatingsystems.os",
+    "model": "operatingsystems.osvariant",
     "fields": {
       "name": "AlmaLinux 9.5",
-      "osgroup": [
+      "osrelease": [
         "AlmaLinux 9",
         "Teal Serval"
       ]

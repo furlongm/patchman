@@ -87,11 +87,13 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     'arch.apps.ArchConfig',
     'domains.apps.DomainsConfig',
+    'errata.apps.ErrataConfig',
     'hosts.apps.HostsConfig',
     'modules.apps.ModulesConfig',
     'operatingsystems.apps.OperatingsystemsConfig',
     'packages.apps.PackagesConfig',
     'repos.apps.ReposConfig',
+    'security.apps.SecurityConfig',
     'reports.apps.ReportsConfig',
     'util.apps.UtilConfig',
 ]

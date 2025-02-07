@@ -20,20 +20,21 @@ from django.urls import reverse
 
 from arch.models import MachineArchitecture
 from repos.models import Repository
+from arch.models import MachineArchitecture
 
 
-class OSGroup(models.Model):
+class OSRelease(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
     repos = models.ManyToManyField(Repository, blank=True)
     codename = models.CharField(max_length=255, blank=True)
 
-    from operatingsystems.managers import OSGroupManager
-    objects = OSGroupManager()
+    from operatingsystems.managers import OSReleaseManager
+    objects = OSReleaseManager()
 
     class Meta:
-        verbose_name = 'Operating System Group'
-        verbose_name_plural = 'Operating System Groups'
+        verbose_name = 'Operating System Release'
+        verbose_name_plural = 'Operating System Releases'
         unique_together = ('name', 'codename')
         ordering = ('name',)
 
@@ -44,26 +45,25 @@ class OSGroup(models.Model):
             return self.name
 
     def get_absolute_url(self):
-        return reverse('operatingsystems:osgroup_detail', args=[str(self.id)])
+        return reverse('operatingsystems:osrelease_detail', args=[str(self.id)])
 
     def natural_key(self):
         return (self.name, self.codename)
 
 
-class OS(models.Model):
+class OSVariant(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
     arch = models.ForeignKey(MachineArchitecture, blank=True, null=True, on_delete=models.CASCADE)
-    osgroup = models.ForeignKey(OSGroup, blank=True, null=True,
-                                on_delete=models.SET_NULL)
+    osrelease = models.ForeignKey(OSRelease, blank=True, null=True, on_delete=models.SET_NULL)
 
     class Meta:
-        verbose_name = 'Operating System'
-        verbose_name_plural = 'Operating Systems'
+        verbose_name = 'Operating System Variant'
+        verbose_name_plural = 'Operating System Variants'
         ordering = ('name',)
 
     def __str__(self):
         return self.name
 
     def get_absolute_url(self):
-        return reverse('operatingsystems:os_detail', args=[str(self.id)])
+        return reverse('operatingsystems:osvariant_detail', args=[str(self.id)])

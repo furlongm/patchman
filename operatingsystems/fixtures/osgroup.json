@@ -1,6 +1,6 @@
 [
   {
-    "model": "operatingsystems.osgroup",
+    "model": "operatingsystems.osrelease",
     "fields": {
       "name": "CentOS 7",
       "codename": "",
@@ -8,7 +8,7 @@
     }
   },
   {
-    "model": "operatingsystems.osgroup",
+    "model": "operatingsystems.osrelease",
     "fields": {
       "name": "CentOS 8",
       "codename": "",
@@ -16,7 +16,7 @@
     }
   },
   {
-    "model": "operatingsystems.osgroup",
+    "model": "operatingsystems.osrelease",
     "fields": {
       "name": "Rocky Linux 8",
       "codename": "Green Obsidian",
@@ -24,7 +24,7 @@
     }
   },
   {
-    "model": "operatingsystems.osgroup",
+    "model": "operatingsystems.osrelease",
     "fields": {
       "name": "Rocky Linux 9",
       "codename": "Blue Onyx",
@@ -32,7 +32,7 @@
     }
   },
   {
-    "model": "operatingsystems.osgroup",
+    "model": "operatingsystems.osrelease",
     "fields": {
       "name": "AlmaLinux 8",
       "codename": "Cerulean Leopard",
@@ -40,7 +40,7 @@
     }
   },
   {
-    "model": "operatingsystems.osgroup",
+    "model": "operatingsystems.osrelease",
     "fields": {
       "name": "AlmaLinux 9",
       "codename": "Teal Serval",
@@ -48,7 +48,7 @@
     }
   },
   {
-    "model": "operatingsystems.osgroup",
+    "model": "operatingsystems.osrelease",
     "fields": {
       "name": "Debian 12",
       "codename": "bookworm",

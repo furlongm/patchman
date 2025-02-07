@@ -8,34 +8,34 @@
 
 {% block content %}
 
-{% with count=lonely_oses.count %}
-  {% if lonely_oses.count > 0 %}
+{% with count=lonely_osvariants.count %}
+  {% if lonely_osvariants.count > 0 %}
     <div class="well well-sm">
-      <button class="btn btn-sm" data-toggle="collapse" data-target="#lonely_oses"><span class="badge">{{ count }}</span> Operating Systems are not linked to any OS Group</button>
-      <div class="collapse" id="lonely_oses">
-        {% gen_table lonely_oses %}
+      <button class="btn btn-sm" data-toggle="collapse" data-target="#lonely_osvariants"><span class="badge">{{ count }}</span> OS Variants are not linked to any OS Release</button>
+      <div class="collapse" id="lonely_osvariants">
+        {% gen_table lonely_osvariants %}
       </div>
     </div>
   {% endif %}
 {% endwith %}
 
-{% with count=nohost_oses.count %}
-  {% if nohost_oses.count > 0 %}
+{% with count=nohost_osvariants.count %}
+  {% if nohost_osvariants.count > 0 %}
     <div class="well well-sm">
-      <button class="btn btn-sm" data-toggle="collapse" data-target="#nohost_oses"><span class="badge">{{ count }}</span> Operating Systems are not installed on any Host</button>
-        <div class="collapse" id="nohost_oses">
-          {% gen_table nohost_oses %}
+      <button class="btn btn-sm" data-toggle="collapse" data-target="#nohost_osvariants"><span class="badge">{{ count }}</span> OS Variants are not installed on any Host</button>
+        <div class="collapse" id="nohost_osvariants">
+          {% gen_table nohost_osvariants %}
         </div>
     </div>
   {% endif %}
 {% endwith %}
 
-{% with count=norepo_osgroups.count %}
-  {% if count > 0 and norepo_osgroups != None %}
+{% with count=norepo_osreleases.count %}
+  {% if count > 0 and norepo_osreleases != None %}
     <div class="well well-sm">
-      <button class="btn btn-sm" data-toggle="collapse" data-target="#norepo_osgroups"><span class="badge">{{ count }}</span> OS Groups have no associated Repositories</button>
-        <div class="collapse" id="norepo_osgroups">
-          {% gen_table norepo_osgroups %}
+      <button class="btn btn-sm" data-toggle="collapse" data-target="#norepo_osreleases"><span class="badge">{{ count }}</span> OS Releases have no associated Repositories</button>
+        <div class="collapse" id="norepo_osreleases">
+          {% gen_table norepo_osreleases %}
         </div>
     </div>
   {% endif %}

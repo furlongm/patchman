@@ -33,7 +33,7 @@ class EditHostForm(ModelForm):
         fields = ('hostname',
                   'reversedns',
                   'ipaddress',
-                  'os',
+                  'osvariant',
                   'kernel',
                   'arch',
                   'reboot_required',

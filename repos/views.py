@@ -29,7 +29,7 @@ from rest_framework import viewsets
 from util.filterspecs import Filter, FilterBar
 from hosts.models import HostRepo
 from repos.models import Repository, Mirror, MirrorPackage
-from operatingsystems.models import OSGroup
+from operatingsystems.models import OSRelease
 from arch.models import MachineArchitecture
 from repos.forms import EditRepoForm, LinkRepoForm, CreateRepoForm, \
     EditMirrorForm
@@ -48,8 +48,8 @@ def repo_list(request):
     if 'arch' in request.GET:
         repos = repos.filter(arch=request.GET['arch'])
 
-    if 'osgroup' in request.GET:
-        repos = repos.filter(osgroup=request.GET['osgroup'])
+    if 'osrelease' in request.GET:
+        repos = repos.filter(osrelease=request.GET['osrelease'])
 
     if 'security' in request.GET:
         security = request.GET['security'] == 'True'
@@ -96,7 +96,7 @@ def repo_list(request):
                               MachineArchitecture.objects.all()))
     filter_list.append(Filter(request, 'enabled', {False: 'No', True: 'Yes'}))
     filter_list.append(Filter(request, 'security', {False: 'No', True: 'Yes'}))
-    filter_list.append(Filter(request, 'osgroup', OSGroup.objects.all()))
+    filter_list.append(Filter(request, 'osrelease', OSRelease.objects.all()))
     filter_bar = FilterBar(request, filter_list)
 
     return render(request,

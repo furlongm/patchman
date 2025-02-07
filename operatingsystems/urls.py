@@ -22,10 +22,11 @@ from operatingsystems import views
 app_name = 'operatingsystems'
 
 urlpatterns = [
-    path('', views.os_list, name='os_list'),
-    path('<int:os_id>/', views.os_detail, name='os_detail'),
-    path('<int:os_id>/delete/', views.os_delete, name='os_delete'),
-    path('groups/', views.osgroup_list, name='osgroup_list'),
-    path('groups/<int:osgroup_id>/', views.osgroup_detail, name='osgroup_detail'),  # noqa
-    path('groups/<int:osgroup_id>/delete/', views.osgroup_delete, name='osgroup_delete'),  # noqa
+    path('', views.os_landing, name='os_landing'),
+    path('variants/', views.osvariant_list, name='osvariant_list'),
+    path('variants/<int:osvariant_id>/', views.osvariant_detail, name='osvariant_detail'),
+    path('variants/<int:osvariant_id>/delete/', views.osvariant_delete, name='osvariant_delete'),
+    path('releases/', views.osrelease_list, name='osrelease_list'),
+    path('releases/<int:osrelease_id>/', views.osrelease_detail, name='osrelease_detail'),
+    path('releases/<int:osrelease_id>/delete/', views.osrelease_delete, name='osrelease_delete'),
 ]
