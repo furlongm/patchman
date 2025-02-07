@@ -348,6 +348,8 @@ get_host_data() {
             os="${NAME}"
         elif [[ "${ID}" =~ "suse" ]] ; then
             os="${PRETTY_NAME}"
+        elif [ "${ID}" == "astra" ] ; then
+            os="${NAME} $(cat /etc/astra_version)"
         else
             os="${NAME} ${VERSION}"
         fi
