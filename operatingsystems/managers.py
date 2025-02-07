@@ -17,6 +17,6 @@
 from django.db import models
 
 
-class OSGroupManager(models.Manager):
+class OSReleaseManager(models.Manager):
     def get_by_natural_key(self, name, codename):
         return self.get(name=name, codename=codename)

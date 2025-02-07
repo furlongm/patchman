@@ -16,8 +16,8 @@
     <tr><th>Domain</th><td> <a href="{% url 'hosts:host_list' %}?domain={{ host.domain.id }}">{{ host.domain }}</a> </td></tr>
     <tr><th>Reporting IP Address</th><td> {{ host.ipaddress }} </td></tr>
     <tr><th>Reverse DNS</th><td> {{ host.reversedns }} </td></tr>
-    <tr><th>OS</th><td> <a href="{{ host.os.get_absolute_url }}">{{ host.os }}</a> </td></tr>
-    <tr><th>OS Group</th><td> <a href="{{ host.os.osgroup.get_absolute_url }}">{{ host.os.osgroup }}</a> </td></tr>
+    <tr><th>OS Release</th><td> <a href="{{ host.osvariant.osrelease.get_absolute_url }}">{{ host.osvariant.osrelease }}</a> </td></tr>
+    <tr><th>OS Variant</th><td> <a href="{{ host.osvariant.get_absolute_url }}">{{ host.osvariant }}</a> </td></tr>
     <tr><th>Kernel</th><td> {{ host.kernel }} </td></tr>
     <tr><th>Architecture</th><td> {{ host.arch }} </td></tr>
     <tr>
@@ -33,7 +33,7 @@
     <tr><th>Updates Available</th><td> <a data-toggle="tab" href="{{ host.get_absolute_url }}#host_updates">{{ host.updates.count }}</a> </td></tr>
     <tr><th>Reboot Required</th><td> {{ host.reboot_required }} </td></tr>
     <tr><th>Packages Installed</th><td> <a data-toggle="tab" href="{{ host.get_absolute_url }}#host_packages">{{ host.packages.count}}</a> </td></tr>
-    <tr><th>Repos In Use</th><td>{% if host.host_repos_only %}Host Repos{% else %}Host and OS Group Repos{% endif %}</td></tr>
+    <tr><th>Repos In Use</th><td>{% if host.host_repos_only %}Host Repos{% else %}Host and OS Release Repos{% endif %}</td></tr>
     <tr>
       <th>Last 3 reports</th>
       <td>

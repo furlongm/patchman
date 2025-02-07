@@ -9,30 +9,27 @@
 {% block content %}
 
 <div class="well well-sm">
-  {% if allversions %}
-    <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
-      <tr>
-        <th class="col-sm-1">Epoch</th>
-        <th class="col-sm-1">Version</th>
-        <th class="col-sm-1">Release</th>
-        <th class="col-sm-1">Arch</th>
-        <th class="col-sm-1">Type</th>
-        <th class="col-sm-2">Repositories</th>
-        <th class="col-sm-2">Hosts</th>
-      </tr>
-      {% for version in allversions %}
-        <tr>
-          <td> {{ version.epoch }} </td>
-          <td> {{ version.version }} </td><td> {{ version.release }} </td>
-          <td> {{ version.arch }} </td><td> {{ version.get_packagetype_display }} </td>
-          <td> <a href="{% url 'repos:repo_list' %}?package_id={{ version.id }}">Available from {{ version.repo_count }} Repositories</a> </td>
-          <td> <a href="{% url 'hosts:host_list' %}?package_id={{ version.id }}">Installed on {{ version.host_set.count }} Hosts</a> </td>
-        </tr>
-      {% endfor %}
-    </table>
-  {% else %}
-    No versions of this Package exist.
-  {% endif %}
+  <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+    <tr>
+      <th class="col-sm-1">Epoch</th>
+      <th class="col-sm-1">Version</th>
+      <th class="col-sm-1">Release</th>
+      <th class="col-sm-1">Arch</th>
+      <th class="col-sm-1">Type</th>
+      <th class="col-sm-2">Repositories</th>
+      <th class="col-sm-2">Hosts</th>
+      <th class="col-sm-2">Errata</th>
+    </tr>
+    <tr>
+      <td> {{ package.epoch }} </td>
+      <td> {{ package.version }} </td><td> {{ package.release }} </td>
+      <td> {{ package.arch }} </td><td> {{ package.get_packagetype_display }} </td>
+      <td> <a href="{% url 'repos:repo_list' %}?package_id={{ package.id }}">Available from {{ package.repo_count }} Repositories</a> </td>
+      <td> <a href="{% url 'hosts:host_list' %}?package_id={{ package.id }}">Installed on {{ package.host_set.count }} Hosts</a> </td>
+      <td> <a href="{% url 'errata:erratum_list' %}?package_id={{ package.id }}">Affected by {{ package.erratum_set.count }} Errata</a> </td>
+    </tr>
+    <tr><td colspan="9"><a href="{% url 'packages:package_name_detail' package.name %}">See All Versions of this Package</a></td></tr>
+  </table>
 </div>
 
 {% endblock %}

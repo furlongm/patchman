@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block page_title %}CVE - {{ cve }} {% endblock %}
+
+{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'security:security_landing' %}">Security</a></li><li><a href="{% url 'security:cve_list' %}">CVEs</a></li><li class="active">{{ cve }}</li>{% endblock %}
+
+{% block content_title %} CVE - {{ cve }} {% endblock %}
+
+{% block content %}
+
+<ul class="nav nav-tabs">
+  <li class="active"><a data-toggle="tab" href="#cve_details">Details</a></li>
+  <li><a data-toggle="tab" href="#cve_packages">Packages Affected ({{ packages|length }})</a></li>
+</ul>
+
+<div class="tab-content">
+  <div class="tab-pane fade in active" id="cve_details">
+    <div class="well well-sm">
+      <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+        <tr><th class="col-sm-1">CVE ID</th><td>{{ cve.cve_id }}</td></tr>
+        <tr><th class="col-sm-1">Title</th><td>{{ cve.title }}</td></tr>
+        <tr><th class="col-sm-1">Description</th><td>{{ cve.description }}</td></tr>
+        <tr><th class="col-sm-1">Reserved</th><td>{{ cve.reserved_date|default_if_none:'' }}</td></tr>
+        <tr><th class="col-sm-1">Rejected</th><td>{{ cve.rejected_date|default_if_none:'' }}</td></tr>
+        <tr><th class="col-sm-1">Published</th><td>{{ cve.published_date|default_if_none:'' }}</td></tr>
+        <tr><th class="col-sm-1">Updated</th><td>{{ cve.updated_date|default_if_none:'' }}</td></tr>
+        <tr>
+          <th class="col-sm-1">CVSS Scores</th>
+          <td>
+            {% for score in cve.cvss_scores.all %}
+              <a href="https://www.first.org/cvss/calculator/{{ score.version }}#{{ score.vector_string }}">{{ score.score }} - {{ score.severity }} (CVSS {{ score.version }}) </a><br />
+            {% endfor %}
+          </td>
+        </tr>
+        <tr>
+          <th class="col-sm-1">CWEs</th>
+          <td>
+            {% for cwe in cve.cwes.all %}
+              <a href="{{ cwe.get_absolute_url }}">{{ cwe.cwe_id }} - {{ cwe.name }}</a> <a href="https://cwe.mitre.org/data/definitions/{{ cwe.int_id }}.html"><span class="glyphicon glyphicon-link"></span></a><br />
+            {% endfor %}
+          </td>
+        </tr>
+        <tr><th class="col-sm-1">Affected Packages</th><td><a href="{% url 'packages:package_list' %}?cve_id={{ cve.cve_id }}">{{ packages|length }}</a></td>
+        <tr><th class="col-sm-1">Errata</th><td><a href="{% url 'errata:erratum_list' %}?cve_id={{ cve.cve_id }}">{{ cve.erratum_set.count }}</a></td>
+        <tr>
+          <th class="col-sm-2">OSes Affected</th>
+          <td>
+            {% for osrelease in osreleases %}
+              <a href="{{ osrelease.get_absolute_url }}">{{ osrelease }}</a><br />
+            {% endfor %}
+          </td>
+        </tr>
+        <tr>
+          <th class="col-sm-2">URLs</th>
+          <td>
+            <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+              <tr><td><a href="https://nvd.nist.gov/vuln/detail/{{ cve.cve_id }}">NIST</a></td></tr>
+              <tr><td><a href="https://www.cve.org/CVERecord?id={{ cve.cve_id }}">MITRE</a></td></tr>
+              <tr><td><a href="https://osv.dev/vulnerability/{{ cve.cve_id }}">osv.dev</a></td></tr>
+              {% for reference in cve.erratum_set.references.all %}
+                <tr>
+                  <td>{{ reference.er_type }}</td>
+                  <td><a href="{{ reference.url }}">{{reference.url}}</a></td>
+                </tr>
+              {% endfor %}
+            </table>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <div class="tab-pane fade" id="cve_packages">
+    <div class="well well-sm">
+      {% for package in packages %}
+        <span class="label label-brick {% cycle 'bg-info' 'bg-success' %}">
+          <a href="{{ package.get_absolute_url }}">{{ package }}</a>
+        </span>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}

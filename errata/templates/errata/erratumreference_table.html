@@ -1,0 +1,19 @@
+{% load common %}
+<table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+  <thead>
+    <tr>
+      <th class="col-sm-1">Type</th>
+      <th class="col-sm-1">URL</th>
+      <th class="col-sm-1">Linked Errata</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for eref in object_list %}
+      <tr>
+        <td>{{ eref.er_type }}</a></td>
+        <td><a href="{{ eref.url }}">{{ eref.url }}</a></td>
+        <td><a href="{% url 'errata:erratum_list' %}?reference_id={{ eref.id }}">{{ eref.erratum_set.count }}</a></td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>

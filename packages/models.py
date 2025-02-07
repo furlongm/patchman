@@ -24,7 +24,7 @@ except ImportError:
     from rpm import labelCompare
 from debian.debian_support import Version, version_compare
 
-from arch.models import PackageArchitecture, MachineArchitecture
+from arch.models import PackageArchitecture
 from packages.managers import PackageManager
 
 
@@ -41,7 +41,7 @@ class PackageName(models.Model):
         return self.name
 
     def get_absolute_url(self):
-        return reverse('packages:package_detail', args=[self.name])
+        return reverse('packages:package_name_detail', args=[self.name])
 
 
 class Package(models.Model):
@@ -89,7 +89,7 @@ class Package(models.Model):
         return f'{self.name!s}-{epo!s}{self.version!s}{rel!s}-{self.arch!s}'
 
     def get_absolute_url(self):
-        return self.name.get_absolute_url()
+        return reverse('packages:package_detail', args=[self.id])
 
     def __key(self):
         return (self.name, self.epoch, self.version, self.release, self.arch,
@@ -210,35 +210,3 @@ class PackageUpdate(models.Model):
         else:
             update_type = 'Bugfix'
         return f'{self.oldpackage!s} -> {self.newpackage!s} ({update_type!s})'
-
-
-class ErratumReference(models.Model):
-
-    url = models.URLField(max_length=255)
-
-    def __str__(self):
-        return self.url
-
-
-class Erratum(models.Model):
-
-    name = models.CharField(max_length=255)
-    etype = models.CharField(max_length=255)
-    issue_date = models.DateTimeField()
-    synopsis = models.CharField(max_length=255)
-    packages = models.ManyToManyField(Package, blank=True)
-    arches = models.ManyToManyField(MachineArchitecture, blank=True)
-    from operatingsystems.models import OSGroup
-    releases = models.ManyToManyField(OSGroup, blank=True)
-    references = models.ManyToManyField(ErratumReference, blank=True)
-
-    class Meta:
-        verbose_name = 'Erratum'
-        verbose_name_plural = 'Errata'
-
-    def __str__(self):
-        text = f'{self.name!s} {self.issue_date!s} ({self.etype!s}) : '
-        text += f'{self.packages.count()!s} packages, '
-        text += f'{self.arches.count()!s} arches, '
-        text += f'{self.releases.count()!s} releases'
-        return text

@@ -26,7 +26,7 @@ from datetime import datetime
 from enum import Enum
 from hashlib import md5, sha1, sha256, sha512
 from progressbar import Bar, ETA, Percentage, ProgressBar
-from patchman.signals import error_message, info_message
+from patchman.signals import error_message, info_message, debug_message
 
 from django.utils.timezone import make_aware
 from django.utils.dateparse import parse_datetime
@@ -86,7 +86,7 @@ def update_pbar(index, **kwargs):
             pmax = pbar.maxval
         if index >= pmax:
             pbar.finish()
-            print_nocr(Fore.RESET)
+            print_nocr(Fore.RESET + Style.RESET_ALL)
             pbar = None
 
 
@@ -129,7 +129,8 @@ def get_url(url, headers={}, params={}):
     """
     res = None
     try:
-        res = requests.get(url, headers=headers, params=params, stream=True)
+        res = requests.get(url, headers=headers, params=params, stream=True, timeout=30)
+        debug_message.send(sender=None, text=f'{res.status_code}: {res.headers}')
     except requests.exceptions.Timeout:
         error_message.send(sender=None, text=f'Timeout - {url!s}')
     except requests.exceptions.TooManyRedirects:
@@ -263,8 +264,10 @@ def tz_aware_datetime(date):
     """
     if isinstance(date, int):
         parsed_date = datetime.fromtimestamp(date)
-    else:
+    elif isinstance(date, str):
         parsed_date = parse_datetime(date)
+    else:
+        parsed_date = date
     if not parsed_date.tzinfo:
         parsed_date = make_aware(parsed_date)
     return parsed_date
