@@ -23,7 +23,7 @@ from arch.models import MachineArchitecture
 from packages.models import Package
 
 from repos.utils import refresh_deb_repo, refresh_rpm_repo, \
-    refresh_arch_repo, update_mirror_packages
+    refresh_arch_repo, refresh_gentoo_repo, update_mirror_packages
 from patchman.signals import info_message, warning_message, error_message
 
 
@@ -32,11 +32,13 @@ class Repository(models.Model):
     RPM = 'R'
     DEB = 'D'
     ARCH = 'A'
+    GENTOO = 'G'
 
     REPO_TYPES = (
         (RPM, 'rpm'),
         (DEB, 'deb'),
         (ARCH, 'arch'),
+        (GENTOO, 'gentoo'),
     )
 
     name = models.CharField(max_length=255, unique=True)
@@ -87,6 +89,8 @@ class Repository(models.Model):
                 refresh_rpm_repo(self)
             elif self.repotype == Repository.ARCH:
                 refresh_arch_repo(self)
+            elif self.repotype == Repository.GENTOO:
+                refresh_gentoo_repo(self)
             else:
                 text = 'Error: unknown repo type for repo '
                 text += f'{self.id!s}: {self.repotype!s}'
