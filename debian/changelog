@@ -1,3 +1,15 @@
+patchman (3.0.15-1) stable; urgency=medium
+
+  [ Vladimir Lettiev ]
+  * add astra linux version detection
+
+  [ Marcus Furlong ]
+  * update client to handle column changes in zypper 1.14.81
+  * add machine architecture to os
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Sat, 08 Feb 2025 05:05:45 +0000
+
 patchman (3.0.14-1) stable; urgency=medium
 
   * simplify conditional
