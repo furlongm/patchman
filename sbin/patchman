@@ -30,7 +30,7 @@ from django import setup as django_setup
 django_setup()
 
 from datetime import date, datetime
-from tagging.models import TaggedItem
+from taggit.models import TaggedItem
 
 from hosts.models import Host
 from packages.models import Package, PackageName, PackageUpdate
