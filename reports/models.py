@@ -113,6 +113,7 @@ class Report(models.Model):
             machine_arches = MachineArchitecture.objects.all()
             with transaction.atomic():
                 arch, c = machine_arches.get_or_create(name=self.arch)
+            os.arch = arch
 
             if not self.domain:
                 self.domain = 'unknown'

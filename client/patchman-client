@@ -348,6 +348,8 @@ get_host_data() {
             os="${NAME}"
         elif [[ "${ID}" =~ "suse" ]] ; then
             os="${PRETTY_NAME}"
+        elif [ "${ID}" == "astra" ] ; then
+            os="${NAME} $(cat /etc/astra_version)"
         else
             os="${NAME} ${VERSION}"
         fi
@@ -507,7 +509,12 @@ get_repos() {
         if ${verbose} ; then
             echo 'Finding zypper repos...'
         fi
-        for i in $(zypper -q --no-refresh lr -E -u --details | grep -v ^$ | tail -n +3 | cut -d "|" -f 2,3,7,9 | sed -e "s/ *|/ ${host_arch} |/" -e "s/\?[a-zA-Z0-9_-]* *$//" -e "s/^ /'/g" -e "s/ *| */' '/g" -e "s/ *$/'/g") ; do
+        if [ $(zypper -q --no-refresh lr --details | head -n 1 | grep Keep) ] ; then
+            zypper_lr_cols="2,3,8,10"
+        else
+            zypper_lr_cols="2,3,7,9"
+        fi
+        for i in $(zypper -q --no-refresh lr -E -u --details | grep -v ^$ | tail -n +3 | cut -d "|" -f ${zypper_lr_cols} | sed -e "s/ *|/ ${host_arch} |/" -e "s/\?[a-zA-Z0-9_-]* *$//" -e "s/^ /'/g" -e "s/ *| */' '/g" -e "s/ *$/'/g") ; do
             echo \'rpm\' ${i} >> "${tmpfile_rep}"
             id=$(echo ${i} | cut -d \' -f 4)
             suse_repo=$(echo ${i} | grep -e "https://updates.suse.com/.*")
