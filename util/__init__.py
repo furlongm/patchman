@@ -182,7 +182,7 @@ def bunzip2(contents):
         if e == 'invalid data stream':
             error_message.send(sender=None, text='bunzip2: ' + e)
     except ValueError as e:
-        if e == 'couldn\'t find end of stream':
+        if e == "couldn't find end of stream":
             error_message.send(sender=None, text='bunzip2: ' + e)
 
 
