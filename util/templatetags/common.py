@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman  If not, see <http://www.gnu.org/licenses/>.
 
+import re
+
 from humanize import naturaltime
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
@@ -34,9 +36,7 @@ register = Library()
 
 @register.simple_tag
 def active(request, pattern):
-    import re
-    if re.search(f"^{request.META['SCRIPT_NAME']!s}/{pattern!s}",
-                 request.path):
+    if re.search(fr"^{request.META['SCRIPT_NAME']}/{pattern}", request.path):
         return 'active'
     return ''
 
@@ -46,9 +46,9 @@ def yes_no_img(boolean, alt_yes='Active', alt_no='Not Active'):
     yes_icon = static('img/icon-yes.gif')
     no_icon = static('img/icon-no.gif')
     if boolean:
-        html = f'<img src="{yes_icon!s}" alt="{alt_yes!s}" />'
+        html = f'<img src="{yes_icon}" alt="{alt_yes}" />'
     else:
-        html = f'<img src="{no_icon!s}" alt="{alt_no!s}" />'
+        html = f'<img src="{no_icon}" alt="{alt_no}" />'
     return format_html(html)
 
 
@@ -57,9 +57,9 @@ def no_yes_img(boolean, alt_yes='Not Required', alt_no='Required'):
     yes_icon = static('img/icon-yes.gif')
     no_icon = static('img/icon-no.gif')
     if not boolean:
-        html = f'<img src="{yes_icon!s}" alt="{alt_yes!s}" />'
+        html = f'<img src="{yes_icon}" alt="{alt_yes}" />'
     else:
-        html = f'<img src="{no_icon!s}" alt="{alt_no!s}" />'
+        html = f'<img src="{no_icon}" alt="{alt_no}" />'
     return format_html(html)
 
 
@@ -70,7 +70,7 @@ def gen_table(object_list, template_name=None):
     if not template_name:
         app_label = object_list.model._meta.app_label
         model_name = object_list.model._meta.verbose_name.replace(' ', '')
-        template_name = f'{app_label!s}/{model_name.lower()!s}_table.html'
+        template_name = f'{app_label}/{model_name.lower()}_table.html'
     template = get_template(template_name)
     html = template.render({'object_list': object_list})
     return html
@@ -83,7 +83,7 @@ def object_count(page):
             name = page.paginator.object_list.model._meta.verbose_name
         else:
             name = page.paginator.object_list.model._meta.verbose_name_plural
-    return f'{page.paginator.count!s} {name!s}'
+    return f'{page.paginator.count} {name}'
 
 
 @register.simple_tag

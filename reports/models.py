@@ -20,8 +20,8 @@ import re
 from django.db import models, IntegrityError, DatabaseError, transaction
 from django.urls import reverse
 
-from hosts.models import Host
 from arch.models import MachineArchitecture
+from hosts.models import Host
 from operatingsystems.models import OSVariant, OSRelease
 from domains.models import Domain
 from patchman.signals import error_message, info_message
@@ -138,11 +138,11 @@ class Report(models.Model):
                     self.host = self.report_ip
 
             with transaction.atomic():
-                host, c = Hosts.objects.get_or_create(
+                host, c = Host.objects.get_or_create(
                     hostname=self.host,
                     defaults={
                         'ipaddress': self.report_ip,
-                        'arch': arch,
+                        'arch': m_arch,
                         'osvariant': osvariant,
                         'domain': domain,
                         'lastreport': self.created,
@@ -150,7 +150,7 @@ class Report(models.Model):
 
             host.ipaddress = self.report_ip
             host.kernel = self.kernel
-            host.arch = arch
+            host.arch = m_arch
             host.osvariant = osvariant
             host.domain = domain
             host.lastreport = self.created
