@@ -109,7 +109,7 @@ def report_list(request):
                   'reports/report_list.html',
                   {'page': page,
                    'filter_bar': filter_bar,
-                   'terms': terms}, )
+                   'terms': terms})
 
 
 @login_required
@@ -119,7 +119,7 @@ def report_detail(request, report_id):
 
     return render(request,
                   'reports/report_detail.html',
-                  {'report': report}, )
+                  {'report': report})
 
 
 @login_required
@@ -130,7 +130,7 @@ def report_process(request, report_id):
 
     return render(request,
                   'reports/report_detail.html',
-                  {'report': report}, )
+                  {'report': report})
 
 
 @login_required
@@ -149,4 +149,4 @@ def report_delete(request, report_id):
 
     return render(request,
                   'reports/report_delete.html',
-                  {'report': report}, )
+                  {'report': report})
