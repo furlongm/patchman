@@ -29,6 +29,7 @@ from defusedxml.lxml import _etree as etree
 from debian.debian_support import Version
 from debian.deb822 import Packages
 from fnmatch import fnmatch
+from tenacity import RetryError
 
 from django.conf import settings
 from django.db import IntegrityError, DatabaseError, transaction
@@ -151,16 +152,17 @@ def get_modules_url(mirror_url, data):
 def find_mirror_url(stored_mirror_url, formats):
     """ Find the actual URL of the mirror by trying predefined paths
     """
-
     for fmt in formats:
         mirror_url = stored_mirror_url
         for f in formats:
             if mirror_url.endswith(f):
                 mirror_url = mirror_url[:-len(f)]
         mirror_url = mirror_url.rstrip('/') + '/' + fmt
-        debug_message.send(sender=None,
-                           text=f'Checking {mirror_url!s}')
-        res = get_url(mirror_url)
+        debug_message.send(sender=None, text=f'Checking for mirror at {mirror_url}')
+        try:
+            res = get_url(mirror_url)
+        except RetryError:
+            return
         if res is not None and res.ok:
             return res
 
@@ -230,7 +232,10 @@ def is_metalink(url):
 def get_metalink_urls(url):
     """  Parses a metalink and returns a list of mirrors
     """
-    res = get_url(url)
+    try:
+        res = get_url(url)
+    except RetryError:
+        return
     if response_is_valid(res):
         if 'content-type' in res.headers and \
            res.headers['content-type'] == 'application/metalink+xml':
@@ -251,15 +256,16 @@ def get_mirrorlist_urls(url):
         type text/plain and contains a list of urls. Returns a list of
         mirrors if it is a mirrorlist.
     """
-    res = get_url(url)
+    try:
+        res = get_url(url)
+    except RetryError:
+        return
     if response_is_valid(res):
-        if 'content-type' in res.headers and \
-           'text/plain' in res.headers['content-type']:
+        if res.headers.get('content-type') == 'text/plain':
             data = download_url(res, 'Downloading repo info:')
             if data is None:
                 return
-            mirror_urls = re.findall('^http[s]*://.*$|^ftp://.*$',
-                                     data.decode('utf-8'), re.MULTILINE)
+            mirror_urls = re.findall(r'^http[s]*://.*$|^ftp://.*$', data.decode('utf-8'), re.MULTILINE)
             if mirror_urls:
                 return mirror_urls
 
