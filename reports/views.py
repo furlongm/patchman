@@ -49,7 +49,7 @@ def upload(request):
             packages = []
             if 'packages' in data:
                 for p in data['packages'].splitlines():
-                    packages.append(p.replace('\'', '').split(' '))
+                    packages.append(p.replace("'", '').split(' '))
             repos = data.get('repos')
             modules = data.get('modules')
             sec_updates = data.get('sec_updates')
