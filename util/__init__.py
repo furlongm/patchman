@@ -143,7 +143,7 @@ def get_url(url, headers={}, params={}):
         response = requests.get(url, headers=headers, params=params, stream=True, timeout=30)
         debug_message.send(sender=None, text=f'{response.status_code}: {response.headers}')
         if response.status_code == 404:
-            return None
+            return response
         response.raise_for_status()
     except requests.exceptions.TooManyRedirects:
         error_message.send(sender=None, text=f'Too many redirects - {url}')
