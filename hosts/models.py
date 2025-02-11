@@ -229,10 +229,13 @@ class Host(models.Model):
                 priority = best_repo.priority
 
             # find the packages that are potential updates
-            pu_q = Q(name=package.name,
-                     arch=package.arch,
-                     packagetype=package.packagetype)
-            potential_updates = repo_packages.filter(pu_q)
+            pu_q = Q(
+                name=package.name,
+                arch=package.arch,
+                packagetype=package.packagetype,
+                category=package.category,
+            )
+            potential_updates = repo_packages.filter(pu_q).exclude(version__startswith='9999')
             for pu in potential_updates:
                 pu_is_module_package = False
                 pu_in_enabled_modules = False
