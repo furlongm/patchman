@@ -78,7 +78,7 @@ def report_list(request):
         reports = reports.filter(hostname=int(request.GET['host_id']))
 
     if 'processed' in request.GET:
-        processed = request.GET['processed'] == 'True'
+        processed = request.GET['processed'] == 'true'
         reports = reports.filter(processed=processed)
 
     if 'search' in request.GET:
@@ -102,7 +102,7 @@ def report_list(request):
         page = paginator.page(paginator.num_pages)
 
     filter_list = []
-    filter_list.append(Filter(request, 'Processed', 'processed', {False: 'No', True: 'Yes'}))
+    filter_list.append(Filter(request, 'Processed', 'processed', {'true': 'Yes', 'false': 'No'}))
     filter_bar = FilterBar(request, filter_list)
 
     return render(request,

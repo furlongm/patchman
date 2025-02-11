@@ -52,11 +52,11 @@ def repo_list(request):
         repos = repos.filter(osrelease=int(request.GET['osrelease']))
 
     if 'security' in request.GET:
-        security = request.GET['security'] == 'True'
+        security = request.GET['security'] == 'true'
         repos = repos.filter(security=security)
 
     if 'enabled' in request.GET:
-        enabled = request.GET['enabled'] == 'True'
+        enabled = request.GET['enabled'] == 'true'
         repos = repos.filter(enabled=enabled)
 
     if 'package_id' in request.GET:
@@ -87,8 +87,8 @@ def repo_list(request):
 
     filter_list = []
     filter_list.append(Filter(request, 'OS Release', 'osrelease',  OSRelease.objects.filter(repos__in=repos)))
-    filter_list.append(Filter(request, 'Enabled', 'enabled', {False: 'No', True: 'Yes'}))
-    filter_list.append(Filter(request, 'Security', 'security', {False: 'No', True: 'Yes'}))
+    filter_list.append(Filter(request, 'Enabled', 'enabled', {'true': 'Yes', 'false': 'No'}))
+    filter_list.append(Filter(request, 'Security', 'security', {'true': 'Yes', 'false': 'No'}))
     filter_list.append(Filter(request, 'Repo Type', 'repotype', Repository.REPO_TYPES))
     filter_list.append(Filter(request, 'Architecture', 'arch',
                               MachineArchitecture.objects.filter(repository__in=repos)))
