@@ -64,7 +64,7 @@ def host_list(request):
         hosts = hosts.filter(tags__name__in=[request.GET['tag']])
 
     if 'reboot_required' in request.GET:
-        reboot_required = request.GET['reboot_required'] == 'True'
+        reboot_required = request.GET['reboot_required'] == 'true'
         hosts = hosts.filter(reboot_required=reboot_required)
 
     if 'search' in request.GET:
@@ -96,7 +96,7 @@ def host_list(request):
     filter_list.append(Filter(request, 'OS Variant', 'osvariant', OSVariant.objects.filter(host__in=hosts)))
     filter_list.append(Filter(request, 'OS Release', 'osrelease', OSRelease.objects.filter(osvariant__host__in=hosts)))
     filter_list.append(Filter(request, 'Architecture', 'arch', MachineArchitecture.objects.filter(host__in=hosts)))
-    filter_list.append(Filter(request, 'Reboot Required', 'reboot_required', {False: 'No', True: 'Yes'}))
+    filter_list.append(Filter(request, 'Reboot Required', 'reboot_required', {'true': 'Yes', 'false': 'No'}))
     filter_bar = FilterBar(request, filter_list)
 
     return render(request,
