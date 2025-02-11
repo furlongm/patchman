@@ -20,7 +20,6 @@ from django.urls import reverse
 
 from arch.models import MachineArchitecture
 from repos.models import Repository
-from arch.models import MachineArchitecture
 
 
 class OSRelease(models.Model):

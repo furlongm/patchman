@@ -49,7 +49,7 @@ def repo_list(request):
         repos = repos.filter(arch=request.GET['arch'])
 
     if 'osrelease' in request.GET:
-        repos = repos.filter(osrelease=request.GET['osrelease'])
+        repos = repos.filter(osrelease=int(request.GET['osrelease']))
 
     if 'security' in request.GET:
         security = request.GET['security'] == 'True'

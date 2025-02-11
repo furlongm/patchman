@@ -134,7 +134,7 @@ def osrelease_list(request):
     osreleases = OSRelease.objects.select_related()
 
     if 'erratum_id' in request.GET:
-        osrelease = osreleases.filter(erratum=int(request.GET['erratum_id']))
+        osreleases = osreleases.filter(erratum=int(request.GET['erratum_id']))
 
     if 'search' in request.GET:
         terms = request.GET['search'].lower()
@@ -197,6 +197,7 @@ def osrelease_delete(request, osrelease_id):
     return render(request,
                   'operatingsystems/osrelease_delete.html',
                   {'osrelease': osrelease})
+
 
 @login_required
 def os_landing(request):
