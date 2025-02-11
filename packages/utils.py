@@ -109,12 +109,12 @@ def find_version(s, epoch, release):
     """ Given a package version string, return the version
     """
     try:
-        es = f'{epoch!s}:'
+        es = f'{epoch}:'
         e = s.index(es) + len(epoch) + 1
     except ValueError:
         e = 0
     try:
-        rs = f'-{release!s}'
+        rs = f'-{release}'
         r = s.index(rs)
     except ValueError:
         r = len(s)

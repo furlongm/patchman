@@ -27,22 +27,22 @@ class MyPlugin(Plugin):
 
     def PLUGINBEGIN(self, headers, body):
         logging.info('PLUGINBEGIN')
-        logging.debug(f'headers: {headers!s}')
+        logging.debug(f'headers: {headers}')
         self.ack()
 
     def PACKAGESETCHANGED(self, headers, body):
         logging.info('PACKAGESETCHANGED')
-        logging.debug(f'headers: {headers!s}')
+        logging.debug(f'headers: {headers}')
         print('Sending report to patchman server...')
         servicecmd = '/usr/sbin/patchman-client'
         args = '-n'
-        command = f'{servicecmd!s} {args!s}> /dev/null'
+        command = f'{servicecmd} {args}> /dev/null'
         os.system(command)
         self.ack()
 
     def PLUGINEND(self, headers, body):
         logging.info('PLUGINEND')
-        logging.debug(f'headers: {headers!s}')
+        logging.debug(f'headers: {headers}')
         self.ack()
 
 
