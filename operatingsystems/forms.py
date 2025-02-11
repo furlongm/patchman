@@ -50,7 +50,7 @@ class AddReposToOSReleaseForm(ModelForm):
         queryset=Repository.objects.select_related(),
         required=False,
         label=None,
-        widget=FilteredSelectMultiple('Repos', False, attrs={'size':'30'}))
+        widget=FilteredSelectMultiple('Repos', False, attrs={'size': '30'}))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

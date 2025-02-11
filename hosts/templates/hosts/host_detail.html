@@ -42,7 +42,7 @@
         <tr><th>Last Report</th><td> {{ host.lastreport }} </td></tr>
         <tr><th>Updates Available</th><td> <a data-toggle="tab" href="{{ host.get_absolute_url }}#host_updates">{{ host.updates.count }}</a> </td></tr>
         <tr><th>Reboot Required</th><td> {{ host.reboot_required }} </td></tr>
-        <tr><th>Packages Installed</th><td> <a data-toggle="tab" href="{% url 'packages:package_list' %}?host={{ host }}">{{ host.packages.count}}</a> </td></tr>
+        <tr><th>Packages Installed</th><td> <a href="{% url 'packages:package_list' %}?host={{ host }}">{{ host.packages.count}}</a> </td></tr>
         <tr><th>Repos In Use</th><td>{% if host.host_repos_only %}Host Repos{% else %}Host and OS Release Repos{% endif %}</td></tr>
         <tr>
           <th>Last 3 reports</th>
