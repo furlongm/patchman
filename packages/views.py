@@ -54,21 +54,21 @@ def package_list(request):
         packages = packages.filter(module=request.GET['module_id']).distinct()
 
     if 'affected_by_errata' in request.GET:
-        affected_by_errata = request.GET['affected_by_errata'] == 'True'
+        affected_by_errata = request.GET['affected_by_errata'] == 'true'
         if affected_by_errata:
             packages = packages.filter(erratum__isnull=False)
         else:
             packages = packages.filter(erratum__isnull=True)
 
     if 'installed_on_hosts' in request.GET:
-        installed_on_hosts = request.GET['installed_on_hosts'] == 'True'
+        installed_on_hosts = request.GET['installed_on_hosts'] == 'true'
         if installed_on_hosts:
             packages = packages.filter(host__isnull=False)
         else:
             packages = packages.filter(host__isnull=True)
 
     if 'available_in_repos' in request.GET:
-        available_in_repos = request.GET['available_in_repos'] == 'True'
+        available_in_repos = request.GET['available_in_repos'] == 'true'
         if available_in_repos:
             packages = packages.filter(mirror__isnull=False)
         else:
@@ -95,9 +95,9 @@ def package_list(request):
         page = paginator.page(paginator.num_pages)
 
     filter_list = []
-    filter_list.append(Filter(request, 'Affected by Errata', 'affected_by_errata', {False: 'No', True: 'Yes'}))
-    filter_list.append(Filter(request, 'Installed on Hosts', 'installed_on_hosts', {False: 'No', True: 'Yes'}))
-    filter_list.append(Filter(request, 'Available in Repos', 'available_in_repos', {False: 'No', True: 'Yes'}))
+    filter_list.append(Filter(request, 'Affected by Errata', 'affected_by_errata', {'true': 'Yes', 'false': 'No'}))
+    filter_list.append(Filter(request, 'Installed on Hosts', 'installed_on_hosts', {'true': 'Yes', 'false': 'No'}))
+    filter_list.append(Filter(request, 'Available in Repos', 'available_in_repos', {'true': 'Yes', 'false': 'No'}))
     filter_list.append(Filter(request, 'Package Type', 'packagetype', Package.PACKAGE_TYPES))
     filter_list.append(Filter(request, 'Architecture', 'arch', PackageArchitecture.objects.all()))
     filter_bar = FilterBar(request, filter_list)
