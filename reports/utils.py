@@ -224,9 +224,9 @@ def parse_repos(repos_string):
     """
     repos = []
     for r in [s for s in repos_string.splitlines() if s]:
-        repodata = re.findall('\'.*?\'', r)
+        repodata = re.findall(r"'.*?'", r)
         for i, rs in enumerate(repodata):
-            repodata[i] = rs.replace('\'', '')
+            repodata[i] = rs.replace("'", '')
         repos.append(repodata)
     return repos
 
@@ -301,7 +301,7 @@ def parse_modules(modules_string):
     """
     modules = []
     for module in modules_string.splitlines():
-        module_string = [m for m in module.replace('\'', '').split(' ') if m]
+        module_string = [m for m in module.replace("'", '').split(' ') if m]
         if module_string:
             modules.append(module_string)
     return modules
@@ -369,7 +369,7 @@ def parse_packages(packages_string):
     """
     packages = []
     for p in packages_string.splitlines():
-        packages.append(p.replace('\'', '').split(' '))
+        packages.append(p.replace("'", '').split(' '))
     return packages
 
 
