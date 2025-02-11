@@ -143,7 +143,7 @@ def host_edit(request, hostname):
                   'hosts/host_edit.html',
                   {'host': host,
                    'reports': reports,
-                   'edit_form': edit_form}, )
+                   'edit_form': edit_form})
 
 
 @login_required
@@ -163,7 +163,7 @@ def host_delete(request, hostname):
     return render(request,
                   'hosts/host_delete.html',
                   {'host': host,
-                   'reports': reports}, )
+                   'reports': reports})
 
 
 class HostViewSet(viewsets.ModelViewSet):

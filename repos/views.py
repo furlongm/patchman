@@ -98,7 +98,7 @@ def repo_list(request):
                   'repos/repo_list.html',
                   {'page': page,
                    'filter_bar': filter_bar,
-                   'terms': terms}, )
+                   'terms': terms})
 
 
 @login_required
@@ -110,9 +110,7 @@ def mirror_list(request):
                 text = 'Not all mirror architectures are the same,'
                 text += ' cannot link to or create repos'
                 messages.info(request, text)
-                return render(request,
-                              'repos/mirror_with_repo_list.html',
-                              {'page': page, 'checksum': checksum}, )
+                return render(request, 'repos/mirror_with_repo_list.html', {'page': page, 'checksum': checksum})
 
             if mirror.repo.repotype != repotype:
                 text = 'Not all mirror repotypes are the same,'
@@ -120,7 +118,7 @@ def mirror_list(request):
                 messages.info(request, text)
                 return render(request,
                               'repos/mirror_with_repo_list.html',
-                              {'page': page, 'checksum': checksum}, )
+                              {'page': page, 'checksum': checksum})
         return True
 
     def move_mirrors(repo):
@@ -215,10 +213,10 @@ def mirror_list(request):
                               {'page': page,
                                'link_form': link_form,
                                'create_form': create_form,
-                               'checksum': checksum}, )
+                               'checksum': checksum})
     return render(request,
                   'repos/mirror_list.html',
-                  {'page': page}, )
+                  {'page': page})
 
 
 @login_required
@@ -226,7 +224,7 @@ def mirror_detail(request, mirror_id):
     mirror = get_object_or_404(Mirror, id=mirror_id)
     return render(request,
                   'repos/mirror_detail.html',
-                  {'mirror': mirror}, )
+                  {'mirror': mirror})
 
 
 @login_required
@@ -244,7 +242,7 @@ def mirror_delete(request, mirror_id):
 
     return render(request,
                   'repos/mirror_delete.html',
-                  {'mirror': mirror}, )
+                  {'mirror': mirror})
 
 
 @login_required
@@ -270,7 +268,7 @@ def mirror_edit(request, mirror_id):
 
     return render(request,
                   'repos/mirror_edit.html',
-                  {'mirror': mirror, 'edit_form': edit_form}, )
+                  {'mirror': mirror, 'edit_form': edit_form})
 
 
 @login_required
@@ -280,7 +278,7 @@ def repo_detail(request, repo_id):
 
     return render(request,
                   'repos/repo_detail.html',
-                  {'repo': repo}, )
+                  {'repo': repo})
 
 
 @login_required
@@ -315,7 +313,7 @@ def repo_edit(request, repo_id):
 
     return render(request,
                   'repos/repo_edit.html',
-                  {'repo': repo, 'edit_form': edit_form}, )
+                  {'repo': repo, 'edit_form': edit_form})
 
 
 @login_required
@@ -336,7 +334,7 @@ def repo_delete(request, repo_id):
 
     return render(request,
                   'repos/repo_delete.html',
-                  {'repo': repo}, )
+                  {'repo': repo})
 
 
 @login_required

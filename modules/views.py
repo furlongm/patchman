@@ -53,7 +53,7 @@ def module_list(request):
     return render(request,
                   'modules/module_list.html',
                   {'page': page,
-                   'terms': terms}, )
+                   'terms': terms})
 
 
 @login_required
@@ -62,7 +62,7 @@ def module_detail(request, module_id):
     module = get_object_or_404(Module, id=module_id)
     return render(request,
                   'modules/module_detail.html',
-                  {'module': module}, )
+                  {'module': module})
 
 
 class ModuleViewSet(viewsets.ModelViewSet):
