@@ -23,9 +23,10 @@ from hosts.models import HostRepo
 from arch.models import MachineArchitecture, PackageArchitecture
 from repos.models import Repository, Mirror, MirrorPackage
 from modules.models import Module
-from packages.models import Package
+from packages.models import Package, PackageCategory
 from packages.utils import find_evr, get_or_create_package, \
     get_or_create_package_update, parse_package_string
+from repos.utils import get_or_create_repo
 from patchman.signals import progress_info_s, progress_update_s, \
     error_message, info_message
 
@@ -246,6 +247,10 @@ def process_repo(repo, arch):
         r_type = Repository.ARCH
         r_id = repo[2]
         r_priority = 0
+    elif repo[0] == 'gentoo':
+        r_type = Repository.GENTOO
+        r_id = repo.pop(2)
+        r_priority = repo[2]
 
     if repo[1]:
         r_name = repo[1]
@@ -266,19 +271,7 @@ def process_repo(repo, arch):
         else:
             repository = mirror.repo
     if not repository:
-        repositories = Repository.objects.all()
-        try:
-            with transaction.atomic():
-                repository, c = repositories.get_or_create(name=r_name,
-                                                           arch=r_arch,
-                                                           repotype=r_type)
-        except IntegrityError as e:
-            error_message.send(sender=None, text=e)
-            repository = repositories.get(name=r_name,
-                                          arch=r_arch,
-                                          repotype=r_type)
-        except DatabaseError as e:
-            error_message.send(sender=None, text=e)
+        repository = get_or_create_repo(r_name, r_arch, r_type)
 
     if r_id and repository.repo_id != r_id:
         repository.repo_id = r_id
@@ -389,6 +382,7 @@ def process_package(pkg, protocol):
         arch = 'unknown'
 
         name = pkg[0]
+        p_category = p_repo = None
         if pkg[1]:
             epoch = pkg[1]
         if pkg[2]:
@@ -404,8 +398,29 @@ def process_package(pkg, protocol):
             p_type = Package.RPM
         elif pkg[5] == 'arch':
             p_type = Package.ARCH
+        elif pkg[5] == 'gentoo':
+            p_type = Package.GENTOO
+            p_category = pkg[6]
+            p_repo = pkg[7]
         else:
             p_type = Package.UNKNOWN
 
         package = get_or_create_package(name, epoch, ver, rel, arch, p_type)
+        if p_type == Package.GENTOO:
+            category, created = PackageCategory.objects.get_or_create(name=p_category)
+            package.category = category
+
+            machine_arches = MachineArchitecture.objects.all()
+            with transaction.atomic():
+                repo_arch, created = machine_arches.get_or_create(name='any')
+
+            repo_name = 'Gentoo Linux'
+            repo = get_or_create_repo(repo_name, repo_arch, Repository.GENTOO)
+
+            with transaction.atomic():
+                url = f'gentoo virtual for {p_repo}'
+                mirror, c = Mirror.objects.get_or_create(repo=repo, url=url, mirrorlist=True)
+                MirrorPackage.objects.create(mirror=mirror, package=package)
+
+            package.save()
         return package
