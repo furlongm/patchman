@@ -86,17 +86,12 @@ def repo_list(request):
         page = paginator.page(paginator.num_pages)
 
     filter_list = []
-    filter_list.append(
-        Filter(
-            request,
-            'repotype',
-            Repository.objects.values_list('repotype', flat=True).distinct()))
-    filter_list.append(Filter(request,
-                              'arch',
-                              MachineArchitecture.objects.all()))
-    filter_list.append(Filter(request, 'enabled', {False: 'No', True: 'Yes'}))
-    filter_list.append(Filter(request, 'security', {False: 'No', True: 'Yes'}))
-    filter_list.append(Filter(request, 'osrelease', OSRelease.objects.all()))
+    filter_list.append(Filter(request, 'OS Release', 'osrelease',  OSRelease.objects.filter(repos__in=repos)))
+    filter_list.append(Filter(request, 'Enabled', 'enabled', {False: 'No', True: 'Yes'}))
+    filter_list.append(Filter(request, 'Security', 'security', {False: 'No', True: 'Yes'}))
+    filter_list.append(Filter(request, 'Repo Type', 'repotype', Repository.REPO_TYPES))
+    filter_list.append(Filter(request, 'Architecture', 'arch',
+                              MachineArchitecture.objects.filter(repository__in=repos)))
     filter_bar = FilterBar(request, filter_list)
 
     return render(request,
@@ -151,6 +146,9 @@ def mirror_list(request):
         checksum = request.POST['checksum']
     if checksum is not None:
         mirrors = mirrors.filter(file_checksum=checksum)
+
+    if 'repo_id' in request.GET:
+        mirrors = mirrors.filter(repo=request.GET['repo_id'])
 
     if 'search' in request.GET:
         terms = request.GET['search'].lower()

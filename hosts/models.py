@@ -197,14 +197,11 @@ class Host(models.Model):
         kernel_packages = self.packages.filter(kernels_q)
 
         if self.host_repos_only:
-            update_ids = self.find_host_repo_updates(host_packages,
-                                                     repo_packages)
+            update_ids = self.find_host_repo_updates(host_packages, repo_packages)
         else:
-            update_ids = self.find_osgrelease_repo_updates(host_packages,
-                                                           repo_packages)
+            update_ids = self.find_osrelease_repo_updates(host_packages, repo_packages)
 
-        kernel_update_ids = self.find_kernel_updates(kernel_packages,
-                                                     repo_packages)
+        kernel_update_ids = self.find_kernel_updates(kernel_packages, repo_packages)
         for ku_id in kernel_update_ids:
             update_ids.append(ku_id)
 
@@ -276,7 +273,8 @@ class Host(models.Model):
             highest_package = package
 
             # find the packages that are potential updates
-            pu_q = Q(name=package.name, arch=package.arch,
+            pu_q = Q(name=package.name,
+                     arch=package.arch,
                      packagetype=package.packagetype)
             potential_updates = repo_packages.filter(pu_q)
             for pu in potential_updates:

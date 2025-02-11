@@ -102,8 +102,7 @@ def report_list(request):
         page = paginator.page(paginator.num_pages)
 
     filter_list = []
-    filter_list.append(Filter(request, 'processed',
-                              {False: 'No', True: 'Yes'}))
+    filter_list.append(Filter(request, 'Processed', 'processed', {False: 'No', True: 'Yes'}))
     filter_bar = FilterBar(request, filter_list)
 
     return render(request,
@@ -142,7 +141,7 @@ def report_delete(request, report_id):
     if request.method == 'POST':
         if 'delete' in request.POST:
             report.delete()
-            text = f'Report {report!s} has been deleted'
+            text = f'Report {report} has been deleted'
             messages.info(request, text)
             return redirect(reverse('reports:report_list'))
         elif 'cancel' in request.POST:

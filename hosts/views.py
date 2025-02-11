@@ -91,13 +91,12 @@ def host_list(request):
     tags = {}
     for tag in Tag.objects.all():
         tags[tag.name] = tag.name
-    filter_list.append(Filter(request, 'tag', tags))
-    filter_list.append(Filter(request, 'domain', Domain.objects.all()))
-    filter_list.append(Filter(request, 'osvariant', OSVariant.objects.all()))
-    filter_list.append(Filter(request, 'osrelease', OSRelease.objects.all()))
-    filter_list.append(Filter(request, 'arch', MachineArchitecture.objects.all()))
-    filter_list.append(Filter(request, 'reboot_required',
-                              {False: 'No', True: 'Yes'}))
+    filter_list.append(Filter(request, 'Tag', 'tag', tags))
+    filter_list.append(Filter(request, 'Domain', 'domain', Domain.objects.all()))
+    filter_list.append(Filter(request, 'OS Variant', 'osvariant', OSVariant.objects.filter(host__in=hosts)))
+    filter_list.append(Filter(request, 'OS Release', 'osrelease', OSRelease.objects.filter(osvariant__host__in=hosts)))
+    filter_list.append(Filter(request, 'Architecture', 'arch', MachineArchitecture.objects.filter(host__in=hosts)))
+    filter_list.append(Filter(request, 'Reboot Required', 'reboot_required', {False: 'No', True: 'Yes'}))
     filter_bar = FilterBar(request, filter_list)
 
     return render(request,
