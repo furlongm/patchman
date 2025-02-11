@@ -29,11 +29,11 @@ def yes_no_button_repo_en(repo):
     yes_icon = static('img/icon-yes.gif')
     no_icon = static('img/icon-no.gif')
     html = '<button onclick="repo_toggle_enabled'
-    html += f'(\'{repo_url!s}\', this, event)">'
+    html += f'(\'{repo_url}\', this, event)">'
     if repo.enabled:
-        html += f'<img src="{yes_icon!s}" alt="Enabled" />'
+        html += f'<img src="{yes_icon}" alt="Enabled" />'
     else:
-        html += f'<img src="{no_icon!s}" alt="Disabled" />'
+        html += f'<img src="{no_icon}" alt="Disabled" />'
     html += '</button>'
     return format_html(html)
 
@@ -45,10 +45,10 @@ def yes_no_button_repo_sec(repo):
     yes_icon = static('img/icon-yes.gif')
     no_icon = static('img/icon-no.gif')
     html = '<button onclick="repo_toggle_security'
-    html += f'(\'{repo_url!s}\', this, event)">'
+    html += f'(\'{repo_url}\', this, event)">'
     if repo.security:
-        html += f'<img src="{yes_icon!s}" alt="Security" />'
+        html += f'<img src="{yes_icon}" alt="Security" />'
     else:
-        html += f'<img src="{no_icon!s}" alt="Non-Security" />'
+        html += f'<img src="{no_icon}" alt="Non-Security" />'
     html += '</button>'
     return format_html(html)

@@ -40,7 +40,7 @@ def process_repos(report, host):
         repos = parse_repos(report.repos)
 
         progress_info_s.send(sender=None,
-                             ptext=f'{str(host)[0:25]!s} repos',
+                             ptext=f'{str(host)[0:25]} repos',
                              plen=len(repos))
         for i, repo_str in enumerate(repos):
             repo, priority = process_repo(repo_str, report.arch)
@@ -75,7 +75,7 @@ def process_modules(report, host):
         modules = parse_modules(report.modules)
 
         progress_info_s.send(sender=None,
-                             ptext=f'{str(host)[0:25]!s} modules',
+                             ptext=f'{str(host)[0:25]} modules',
                              plen=len(modules))
         for i, module_str in enumerate(modules):
             module = process_module(module_str)
@@ -103,7 +103,7 @@ def process_packages(report, host):
 
         packages = parse_packages(report.packages)
         progress_info_s.send(sender=None,
-                             ptext=f'{str(host)[0:25]!s} packages',
+                             ptext=f'{str(host)[0:25]} packages',
                              plen=len(packages))
         for i, pkg_str in enumerate(packages):
             package = process_package(pkg_str, report.protocol)
@@ -118,7 +118,7 @@ def process_packages(report, host):
                     error_message.send(sender=None, text=e)
             else:
                 if pkg_str[0].lower() != 'gpg-pubkey':
-                    text = f'No package returned for {pkg_str!s}'
+                    text = f'No package returned for {pkg_str}'
                     info_message.send(sender=None, text=text)
             progress_update_s.send(sender=None, index=i + 1)
 
@@ -158,7 +158,7 @@ def add_updates(updates, host):
         host.updates.remove(host_update)
     ulen = len(updates)
     if ulen > 0:
-        ptext = f'{str(host)[0:25]!s} updates'
+        ptext = f'{str(host)[0:25]} updates'
         progress_info_s.send(sender=None, ptext=ptext, plen=ulen)
 
         for i, (u, sec) in enumerate(updates.items()):
@@ -175,7 +175,7 @@ def parse_updates(updates_string, security):
     updates = {}
     ulist = updates_string.lower().split()
     while ulist:
-        name = f'{ulist[0]!s} {ulist[1]!s} {ulist[2]!s}\n'
+        name = f'{ulist[0]} {ulist[1]} {ulist[2]}\n'
         del ulist[:3]
         updates[name] = security
     return updates

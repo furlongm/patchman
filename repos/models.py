@@ -66,9 +66,9 @@ class Repository(models.Model):
     def show(self):
         """ Show info about this repo, including mirrors
         """
-        text = f'{self.id!s} : {self.name!s}\n'
-        text += f'security: {self.security!s}    '
-        text += f'arch: {self.arch!s}\n'
+        text = f'{self.id} : {self.name}\n'
+        text += f'security: {self.security}    '
+        text += f'arch: {self.arch}\n'
         text += 'Mirrors:'
 
         info_message.send(sender=None, text=text)
@@ -97,7 +97,7 @@ class Repository(models.Model):
                 refresh_gentoo_repo(self)
             else:
                 text = 'Error: unknown repo type for repo '
-                text += f'{self.id!s}: {self.repotype!s}'
+                text += f'{self.id}: {self.repotype}'
                 error_message.send(sender=None, text=text)
         else:
             text = 'Repo requires certificate authentication, not updating'
@@ -156,9 +156,9 @@ class Mirror(models.Model):
     def show(self):
         """ Show info about this mirror
         """
-        text = f' {self.id!s} : {self.url!s}\n'
+        text = f' {self.id} : {self.url}\n'
         text += ' last updated: '
-        text += f'{self.timestamp!s}    checksum: {self.file_checksum!s}\n'
+        text += f'{self.timestamp}    checksum: {self.file_checksum}\n'
         info_message.send(sender=None, text=text)
 
     def fail(self):
@@ -167,7 +167,7 @@ class Mirror(models.Model):
             Set MAX_MIRROR_FAILURES to -1 to disable marking mirrors as failures
             Default is 28
         """
-        text = f'No usable mirror found at {self.url!s}'
+        text = f'No usable mirror found at {self.url}'
         error_message.send(sender=None, text=text)
         default_max_mirror_failures = 28
         if has_setting_of_type('MAX_MIRROR_FAILURES', int):

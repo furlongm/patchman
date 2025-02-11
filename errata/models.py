@@ -53,7 +53,7 @@ class Erratum(models.Model):
         verbose_name_plural = 'Errata'
 
     def __str__(self):
-        text = f'{self.name!s} ({self.e_type}), {self.cves.count()} related CVEs, '
+        text = f'{self.name} ({self.e_type}), {self.cves.count()} related CVEs, '
         text += f'affecting {self.packages.count()} packages and {self.osreleases.count()} OS Releases'
         return text
 
