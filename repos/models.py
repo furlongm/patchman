@@ -181,6 +181,8 @@ class Mirror(models.Model):
             self.refresh = False
             text = f'Mirror has failed {self.fail_count} times (max={max_mirror_failures}), disabling refresh'
         error_message.send(sender=None, text=text)
+        self.last_access_ok = False
+        self.save()
 
     def update_packages(self, packages):
         """ Update the packages associated with a mirror
