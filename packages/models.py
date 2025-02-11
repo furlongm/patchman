@@ -44,17 +44,32 @@ class PackageName(models.Model):
         return reverse('packages:package_name_detail', args=[self.name])
 
 
+class PackageCategory(models.Model):
+
+    name = models.CharField(unique=True, max_length=255)
+
+    class Meta:
+        verbose_name = 'Package Category'
+        verbose_name_plural = 'Package Categories'
+        ordering = ('name',)
+
+    def __str__(self):
+        return self.name
+
+
 class Package(models.Model):
 
     RPM = 'R'
     DEB = 'D'
     ARCH = 'A'
+    GENTOO = 'G'
     UNKNOWN = 'U'
 
     PACKAGE_TYPES = (
         (RPM, 'rpm'),
         (DEB, 'deb'),
         (ARCH, 'arch'),
+        (GENTOO, 'gentoo'),
         (UNKNOWN, 'unknown'),
     )
 
@@ -63,10 +78,8 @@ class Package(models.Model):
     version = models.CharField(max_length=255)
     release = models.CharField(max_length=255, blank=True, null=True)
     arch = models.ForeignKey(PackageArchitecture, on_delete=models.CASCADE)
-    packagetype = models.CharField(max_length=1,
-                                   choices=PACKAGE_TYPES,
-                                   blank=True,
-                                   null=True)
+    packagetype = models.CharField(max_length=1, choices=PACKAGE_TYPES, blank=True, null=True)
+    category = models.ForeignKey(PackageCategory, blank=True, null=True, on_delete=models.SET_NULL)
     description = models.TextField(blank=True, null=True)
     url = models.URLField(max_length=255, blank=True, null=True)
 
@@ -74,8 +87,7 @@ class Package(models.Model):
 
     class Meta:
         ordering = ('name', 'epoch', 'version', 'release', 'arch')
-        unique_together = (
-            'name', 'epoch', 'version', 'release', 'arch', 'packagetype',)
+        unique_together = ('name', 'epoch', 'version', 'release', 'arch', 'packagetype', 'category')
 
     def __str__(self):
         if self.epoch:
@@ -86,14 +98,16 @@ class Package(models.Model):
             rel = f'-{self.release!s}'
         else:
             rel = ''
-        return f'{self.name!s}-{epo!s}{self.version!s}{rel!s}-{self.arch!s}'
+        if self.packagetype == 'G':
+            return f'{self.category!s}/{self.name!s}-{epo!s}{self.version!s}{rel!s}-{self.arch!s}'
+        else:
+            return f'{self.name!s}-{epo!s}{self.version!s}{rel!s}-{self.arch!s}'
 
     def get_absolute_url(self):
         return reverse('packages:package_detail', args=[self.id])
 
     def __key(self):
-        return (self.name, self.epoch, self.version, self.release, self.arch,
-                self.packagetype)
+        return (self.name, self.epoch, self.version, self.release, self.arch, self.packagetype, self.category)
 
     def __eq__(self, other):
         return self.__key() == other.__key()
@@ -122,7 +136,7 @@ class Package(models.Model):
         return (epoch + version + release)
 
     def get_version_string(self):
-        if self.packagetype == 'R':
+        if self.packagetype == 'R' or self.packagetype == 'G':
             return self._version_string_rpm()
         elif self.packagetype == 'D' or self.packagetype == 'A':
             return self._version_string_deb_arch()
@@ -143,6 +157,9 @@ class Package(models.Model):
             vs = Version(self.get_version_string())
             vo = Version(other.get_version_string())
             return version_compare(vs, vo)
+        elif self.packagetype == 'G' and other.packagetype == 'G':
+            return labelCompare(self.get_version_string(),
+                                other.get_version_string())
 
     def repo_count(self):
         from repos.models import Repository
@@ -152,17 +169,18 @@ class Package(models.Model):
 
 class PackageString(models.Model):
 
-    class Meta:
-        managed = False
-
     name = models.CharField(max_length=255)
     version = models.CharField(max_length=255)
     epoch = models.CharField(max_length=255, blank=True, null=True)
     release = models.CharField(max_length=255, blank=True, null=True)
     arch = models.CharField(max_length=255)
     packagetype = models.CharField(max_length=1, blank=True, null=True)
+    category = models.CharField(max_length=255, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     url = models.URLField(max_length=255, blank=True, null=True)
+
+    class Meta:
+        managed = False
 
     def __str__(self):
         if self.epoch:
@@ -173,11 +191,13 @@ class PackageString(models.Model):
             rel = f'-{self.release!s}'
         else:
             rel = ''
-        return f'{self.name!s}-{epo!s}{self.version!s}{rel!s}-{self.arch!s}'
+        if self.packagetype == 'G':
+            return f'{self.category!s}/{self.name!s}-{epo!s}{self.version!s}{rel!s}-{self.arch!s}'
+        else:
+            return f'{self.name!s}-{epo!s}{self.version!s}{rel!s}-{self.arch!s}'
 
     def __key(self):
-        return (self.name, self.epoch, self.version, self.release, self.arch,
-                self.packagetype)
+        return (self.name, self.epoch, self.version, self.release, self.arch, self.packagetype, self.category)
 
     def __eq__(self, other):
         return self.__key() == other.__key()
