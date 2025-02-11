@@ -237,7 +237,7 @@ def get_checksum(data, checksum_type):
     elif checksum_type == Checksum.md5:
         checksum = get_md5(data)
     else:
-        text = f'Unknown checksum type: {checksum_type!s}'
+        text = f'Unknown checksum type: {checksum_type}'
         error_message.send(sender=None, text=text)
     return checksum
 

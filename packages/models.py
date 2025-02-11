@@ -91,17 +91,17 @@ class Package(models.Model):
 
     def __str__(self):
         if self.epoch:
-            epo = f'{self.epoch!s}:'
+            epo = f'{self.epoch}:'
         else:
             epo = ''
         if self.release:
-            rel = f'-{self.release!s}'
+            rel = f'-{self.release}'
         else:
             rel = ''
         if self.packagetype == 'G':
-            return f'{self.category!s}/{self.name!s}-{epo!s}{self.version!s}{rel!s}-{self.arch!s}'
+            return f'{self.category}/{self.name}-{epo}{self.version}{rel}-{self.arch}'
         else:
-            return f'{self.name!s}-{epo!s}{self.version!s}{rel!s}-{self.arch!s}'
+            return f'{self.name}-{epo}{self.version}{rel}-{self.arch}'
 
     def get_absolute_url(self):
         return reverse('packages:package_detail', args=[self.id])
@@ -184,17 +184,17 @@ class PackageString(models.Model):
 
     def __str__(self):
         if self.epoch:
-            epo = f'{self.epoch!s}:'
+            epo = f'{self.epoch}:'
         else:
             epo = ''
         if self.release:
-            rel = f'-{self.release!s}'
+            rel = f'-{self.release}'
         else:
             rel = ''
         if self.packagetype == 'G':
-            return f'{self.category!s}/{self.name!s}-{epo!s}{self.version!s}{rel!s}-{self.arch!s}'
+            return f'{self.category}/{self.name}-{epo}{self.version}{rel}-{self.arch}'
         else:
-            return f'{self.name!s}-{epo!s}{self.version!s}{rel!s}-{self.arch!s}'
+            return f'{self.name}-{epo}{self.version}{rel}-{self.arch}'
 
     def __key(self):
         return (self.name, self.epoch, self.version, self.release, self.arch, self.packagetype, self.category)
@@ -229,4 +229,4 @@ class PackageUpdate(models.Model):
             update_type = 'Security'
         else:
             update_type = 'Bugfix'
-        return f'{self.oldpackage!s} -> {self.newpackage!s} ({update_type!s})'
+        return f'{self.oldpackage} -> {self.newpackage} ({update_type})'

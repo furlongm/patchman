@@ -189,7 +189,7 @@ def mirror_list(request):
             repo.security = security
             repo.save()
             move_mirrors(repo)
-            text = f'Mirrors linked to new Repository {repo!s}'
+            text = f'Mirrors linked to new Repository {repo}'
             messages.info(request, text)
             return redirect(repo.get_absolute_url())
 
@@ -197,7 +197,7 @@ def mirror_list(request):
         if link_form.is_valid():
             repo = link_form.cleaned_data['name']
             move_mirrors(repo)
-            text = f'Mirrors linked to Repository {repo!s}'
+            text = f'Mirrors linked to Repository {repo}'
             messages.info(request, text)
             return redirect(repo.get_absolute_url())
     else:
@@ -236,7 +236,7 @@ def mirror_delete(request, mirror_id):
     if request.method == 'POST':
         if 'delete' in request.POST:
             mirror.delete()
-            text = f'Mirror {mirror!s} has been deleted'
+            text = f'Mirror {mirror} has been deleted'
             messages.info(request, text)
             return redirect(reverse('repos:mirror_list'))
         elif 'cancel' in request.POST:
@@ -258,7 +258,7 @@ def mirror_edit(request, mirror_id):
             if edit_form.is_valid():
                 mirror = edit_form.save()
                 mirror.save()
-                text = f'Saved changes to Mirror {mirror!s}'
+                text = f'Saved changes to Mirror {mirror}'
                 messages.info(request, text)
                 return redirect(mirror.get_absolute_url())
             else:
@@ -302,7 +302,7 @@ def repo_edit(request, repo_id):
                     repo.enable()
                 else:
                     repo.disable()
-                text = f'Saved changes to Repository {repo!s}'
+                text = f'Saved changes to Repository {repo}'
                 messages.info(request, text)
                 return redirect(repo.get_absolute_url())
             else:
@@ -328,7 +328,7 @@ def repo_delete(request, repo_id):
             for mirror in repo.mirror_set.all():
                 mirror.delete()
             repo.delete()
-            text = f'Repository {repo!s} has been deleted'
+            text = f'Repository {repo} has been deleted'
             messages.info(request, text)
             return redirect(reverse('repos:repo_list'))
         elif 'cancel' in request.POST:
@@ -353,7 +353,7 @@ def repo_toggle_enabled(request, repo_id):
     if request.is_ajax():
         return HttpResponse(status=204)
     else:
-        text = f'Repository {repo!s} has been {status!s}'
+        text = f'Repository {repo} has been {status}'
         messages.info(request, text)
         return redirect(repo.get_absolute_url())
 
@@ -372,8 +372,8 @@ def repo_toggle_security(request, repo_id):
     if request.is_ajax():
         return HttpResponse(status=204)
     else:
-        text = f'Repository {repo!s} has been marked'
-        text += f' as a {sectype!s} update repo'
+        text = f'Repository {repo} has been marked'
+        text += f' as a {sectype} update repo'
         messages.info(request, text)
         return redirect(repo.get_absolute_url())
 
