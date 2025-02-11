@@ -25,7 +25,10 @@ from colorama import Fore, Style
 from datetime import datetime
 from enum import Enum
 from hashlib import md5, sha1, sha256, sha512
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 from progressbar import Bar, ETA, Percentage, ProgressBar
+from requests.exceptions import HTTPError, Timeout, ConnectionError
+
 from patchman.signals import error_message, info_message, debug_message
 
 from django.utils.timezone import make_aware
@@ -41,6 +44,13 @@ else:
 pbar = None
 verbose = None
 Checksum = Enum('Checksum', 'md5 sha sha1 sha256 sha512')
+
+
+def print_nocr(text):
+    """ Print text without a carriage return
+    """
+    print(text, end='')
+    sys.stdout.softspace = False
 
 
 def get_verbosity():
@@ -90,21 +100,22 @@ def update_pbar(index, **kwargs):
             pbar = None
 
 
-def download_url(res, text='', ljust=35):
+def download_url(response, text='', ljust=35):
     """ Display a progress bar to download the request content if verbose is
         True. Otherwise, just return the request content
     """
     global verbose
+    if not response:
+        return
     if verbose:
-        content_length = res.headers.get('content-length')
+        content_length = response.headers.get('content-length')
         if content_length:
             clen = int(content_length)
             create_pbar(text, clen, ljust)
             chunk_size = 16384
             i = 0
             data = b''
-            for chunk in res.iter_content(chunk_size=chunk_size,
-                                          decode_unicode=False):
+            for chunk in response.iter_content(chunk_size=chunk_size, decode_unicode=False):
                 i += len(chunk)
                 if i > clen:
                     update_pbar(clen)
@@ -114,39 +125,36 @@ def download_url(res, text='', ljust=35):
             return data
         else:
             info_message.send(sender=None, text=text)
-    return res.content
+    return response.content
 
 
-def print_nocr(text):
-    """ Print text without a carriage return
-    """
-    print(text, end='')
-    sys.stdout.softspace = False
-
-
+@retry(
+    retry=retry_if_exception_type(HTTPError | Timeout | ConnectionError | ConnectionResetError),
+    stop=stop_after_attempt(5),
+    wait=wait_exponential(multiplier=1, min=2, max=15),
+    reraise=False,
+)
 def get_url(url, headers={}, params={}):
     """ Perform a http GET on a URL. Return None on error.
     """
-    res = None
+    response = None
     try:
-        res = requests.get(url, headers=headers, params=params, stream=True, timeout=30)
-        debug_message.send(sender=None, text=f'{res.status_code}: {res.headers}')
-    except requests.exceptions.Timeout:
-        error_message.send(sender=None, text=f'Timeout - {url!s}')
+        debug_message.send(sender=None, text=f'Trying {url} headers:{headers} params:{params}')
+        response = requests.get(url, headers=headers, params=params, stream=True, timeout=30)
+        debug_message.send(sender=None, text=f'{response.status_code}: {response.headers}')
+        if response.status_code == 404:
+            return None
+        response.raise_for_status()
     except requests.exceptions.TooManyRedirects:
-        error_message.send(sender=None,
-                           text=f'Too many redirects - {url!s}')
-    except requests.exceptions.RequestException as e:
-        error_message.send(sender=None,
-                           text=f'Error ({e!s}) - {url!s}')
-    return res
+        error_message.send(sender=None, text=f'Too many redirects - {url}')
+    return response
 
 
-def response_is_valid(res):
+def response_is_valid(response):
     """ Check if a http response is valid
     """
-    if res is not None:
-        return res.ok
+    if response:
+        return response.ok
     else:
         return False
 
