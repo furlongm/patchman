@@ -20,10 +20,9 @@ import re
 from django.core.exceptions import MultipleObjectsReturned
 from django.db import IntegrityError, DatabaseError, transaction
 
-from arch.models import MachineArchitecture, PackageArchitecture
+from arch.models import PackageArchitecture
 from packages.models import PackageName, Package, PackageUpdate, PackageCategory, PackageString
-from patchman.signals import error_message, progress_info_s, progress_update_s
-from util import bunzip2, get_url, download_url, get_sha1
+from patchman.signals import error_message
 
 
 def convert_package_to_packagestring(package):
