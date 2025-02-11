@@ -28,7 +28,7 @@
         <tr><th>Architecture</th><td> {{ repo.arch }} </td></tr>
         <tr><th>Security</th><td> {% yes_no_img repo.security 'Security' 'Not Security' %} </td></tr>
         <tr><th>Enabled</th><td> {% yes_no_img repo.enabled 'Enabled' 'Not Enabled' %} </td></tr>
-        <tr><th>Mirrors</th><td> {{ repo.mirror_set.count }} </td></tr>
+        <tr><th>Mirrors</th><td> <a href="{% url 'repos:mirror_list' %}?repo_id={{ repo.id }}">{{ repo.mirror_set.count }}</a> </td></tr>
         <tr><th>Requires Authentication</th><td> {{ repo.auth_required }} </td></tr>
       </table>
       {% if user.is_authenticated and perms.is_admin %}

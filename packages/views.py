@@ -33,7 +33,7 @@ def package_list(request):
     packages = Package.objects.select_related()
 
     if 'arch' in request.GET:
-        packages = packages.filter(arch=int(request.GET['arch'])).distinct()
+        packages = packages.filter(arch=request.GET['arch']).distinct()
 
     if 'packagetype' in request.GET:
         packages = packages.filter(packagetype=request.GET['packagetype']).distinct()
@@ -52,6 +52,27 @@ def package_list(request):
 
     if 'module_id' in request.GET:
         packages = packages.filter(module=request.GET['module_id']).distinct()
+
+    if 'affected_by_errata' in request.GET:
+        affected_by_errata = request.GET['affected_by_errata'] == 'True'
+        if affected_by_errata:
+            packages = packages.filter(erratum__isnull=False)
+        else:
+            packages = packages.filter(erratum__isnull=True)
+
+    if 'installed_on_hosts' in request.GET:
+        installed_on_hosts = request.GET['installed_on_hosts'] == 'True'
+        if installed_on_hosts:
+            packages = packages.filter(host__isnull=False)
+        else:
+            packages = packages.filter(host__isnull=True)
+
+    if 'available_in_repos' in request.GET:
+        available_in_repos = request.GET['available_in_repos'] == 'True'
+        if available_in_repos:
+            packages = packages.filter(mirror__isnull=False)
+        else:
+            packages = packages.filter(mirror__isnull=True)
 
     if 'search' in request.GET:
         terms = request.GET['search'].lower()
@@ -74,13 +95,11 @@ def package_list(request):
         page = paginator.page(paginator.num_pages)
 
     filter_list = []
-    filter_list.append(
-        Filter(request, 'arch', PackageArchitecture.objects.all()))
-#   Disabled due to being a huge slowdown
-#    filter_list.append(
-#        Filter(
-#            request, 'packagetype',
-#            Package.objects.values_list('packagetype', flat=True).distinct()))
+    filter_list.append(Filter(request, 'Affected by Errata', 'affected_by_errata', {False: 'No', True: 'Yes'}))
+    filter_list.append(Filter(request, 'Installed on Hosts', 'installed_on_hosts', {False: 'No', True: 'Yes'}))
+    filter_list.append(Filter(request, 'Available in Repos', 'available_in_repos', {False: 'No', True: 'Yes'}))
+    filter_list.append(Filter(request, 'Package Type', 'packagetype', Package.PACKAGE_TYPES))
+    filter_list.append(Filter(request, 'Architecture', 'arch', PackageArchitecture.objects.all()))
     filter_bar = FilterBar(request, filter_list)
 
     return render(request,
@@ -88,6 +107,7 @@ def package_list(request):
                   {'page': page,
                    'filter_bar': filter_bar,
                    'terms': terms})
+
 
 @login_required
 def package_name_list(request):
@@ -122,13 +142,8 @@ def package_name_list(request):
         page = paginator.page(paginator.num_pages)
 
     filter_list = []
-    filter_list.append(
-        Filter(request, 'arch', PackageArchitecture.objects.all()))
-#   Disabled due to being a huge slowdown
-#    filter_list.append(
-#        Filter(
-#            request, 'packagetype',
-#            Package.objects.values_list('packagetype', flat=True).distinct()))
+    filter_list.append(Filter(request, 'Package Type', 'packagetype', Package.PACKAGE_TYPES))
+    filter_list.append(Filter(request, 'Architecture', 'arch', PackageArchitecture.objects.all()))
     filter_bar = FilterBar(request, filter_list)
 
     return render(request,
