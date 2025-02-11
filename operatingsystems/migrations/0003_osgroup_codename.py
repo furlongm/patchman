@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('operatingsystems', '0002_initial'),
+        ('operatingsystems', '0003_os_arch'),
     ]
 
     operations = [

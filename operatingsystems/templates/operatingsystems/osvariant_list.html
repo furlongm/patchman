@@ -1,0 +1,19 @@
+{% extends "objectlist.html" %}
+
+{% load common bootstrap3 %}
+
+{% block page_title %}OS Variants{% endblock %}
+
+{% block content_title %} OS Variants {% endblock %}
+
+{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'operatingsystems:os_landing' %}">Operating Systems</a></li><li><a href="{% url 'operatingsystems:osvariant_list' %}">OS Variants</a></li> {% endblock %}
+
+{% block objectlist_actions %}
+
+{% if user.is_authenticated and perms.is_admin and empty_osvariants %}
+  <div class="well well-sm">
+    <a class="btn btn-primary btn-sm" role="button" href="empty_osvariants/delete/">{% bootstrap_icon "trash" %} Delete OS Variants with no Hosts</a>
+  </div>
+{% endif %}
+
+{% endblock %}
