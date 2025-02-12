@@ -41,9 +41,9 @@ def upload(request):
         with transaction.atomic():
             report = Report.objects.create()
         report.parse(data, meta)
-        if settings.USE_ASYNC_PROCESSING:
-            from reports.tasks import process_report
-            process_report.delay(report.id)
+
+        from reports.tasks import process_report
+        process_report.delay(report.id)
 
         if 'report' in data and data['report'] == 'true':
             packages = []

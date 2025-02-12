@@ -37,13 +37,11 @@ DAYS_WITHOUT_REPORT = 14
 # Whether to run patchman under the gunicorn web server
 RUN_GUNICORN = False
 
-# Enable memcached
+# Enable redis caching for 30 seconds
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.memcached.PyMemcacheCache',
-        'LOCATION': '127.0.0.1:11211',
-        'OPTIONS': {
-            'ignore_exc': True,
-        },
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379',
+        'TIMEOUT': 30,
     }
 }
