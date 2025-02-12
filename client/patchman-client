@@ -398,6 +398,9 @@ get_host_data() {
             fi
         done
     fi
+    if [ ! -z "${CPE_NAME}" ] ; then
+        os="${os} [${CPE_NAME}]"
+    fi
     if ${verbose} ; then
         echo "Kernel:   ${host_kernel}"
         echo "Arch:     ${host_arch}"
