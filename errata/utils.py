@@ -36,7 +36,7 @@ def update_errata():
     if has_setting_of_type('ERRATA_OS_UPDATES', list):
         errata_os_updates = settings.ERRATA_OS_UPDATES
     else:
-        errata_os_updates = ['rocky', 'alma', 'centos', 'arch', 'ubuntu', 'debian', 'rhel', 'suse']
+        errata_os_updates = ['rocky', 'alma', 'arch', 'ubuntu', 'debian', 'rhel', 'suse', 'amazon']
     if 'arch' in errata_os_updates:
         update_arch_errata()
     if 'alma' in errata_os_updates:
