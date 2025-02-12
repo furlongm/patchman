@@ -1,5 +1,4 @@
-# Copyright 2012 VPAC, http://www.vpac.org
-# Copyright 2013-2021 Marcus Furlong <furlongm@gmail.com>
+# Copyright 2025 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of Patchman.
 #
@@ -17,27 +16,30 @@
 
 from django.conf import settings
 
-from reports.models import Report
+from repos.models import Repository, Mirror
 
 from celery import shared_task
 from celery.schedules import crontab
 from patchman.celery import app
 
 app.conf.beat_schedule = {
-    'process-reports': {
-        'task': 'reports.tasks.process_reports',
-        'schedule': crontab(minute='*/5'),
+    'refresh-repos-every-day': {
+        'task': 'tasks.refresh_repos',
+        'schedule': crontab(hour=6, minute=00),
     },
 }
 
 @shared_task
-def process_report(report_id):
-    report = Report.objects.get(report_id)
-    report.process()
+def refresh_repo(force=False):
+    """ Refresh metadata for a single repo
+    """
+    repo.refresh(force)
 
 
 @shared_task
-def process_reports():
-    reports = Report.objects.all(processed=False)
-    for report in reports:
-        process_report.delay(report.id)
+def refresh_repos(force=False):
+    """ Refresh metadata for all enabled repos
+    """
+    repos = Repository.objects.filter(enabled=True)
+    for repo in repos:
+        refresh_repo.delay(repo, force)

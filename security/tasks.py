@@ -1,5 +1,4 @@
-# Copyright 2012 VPAC, http://www.vpac.org
-# Copyright 2013-2021 Marcus Furlong <furlongm@gmail.com>
+# Copyright 2025 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of Patchman.
 #
@@ -17,27 +16,34 @@
 
 from django.conf import settings
 
-from reports.models import Report
+from security.models import CVE, CWE
 
 from celery import shared_task
-from celery.schedules import crontab
 from patchman.celery import app
 
-app.conf.beat_schedule = {
-    'process-reports': {
-        'task': 'reports.tasks.process_reports',
-        'schedule': crontab(minute='*/5'),
-    },
-}
 
 @shared_task
-def process_report(report_id):
-    report = Report.objects.get(report_id)
-    report.process()
-
+def update_cve(cve):
+    """ Task to update a CVE
+    """
+    cve.update()
 
 @shared_task
-def process_reports():
-    reports = Report.objects.all(processed=False)
-    for report in reports:
-        process_report.delay(report.id)
+def update_cves():
+    """ Task to update all CVEs
+    """
+    for cve in CVE.objects.all():
+        update_cve.delay(cve)
+
+@shared_task
+def update_cwe(cwe):
+    """ Task to update a CWE
+    """
+    cwe.update()
+
+@shared_task
+def update_cwes():
+    """ Task to update all CWEa
+    """
+    for cwe in CWE.objects.all():
+        update_cwe.delay(cwe)

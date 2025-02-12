@@ -1,5 +1,4 @@
-# Copyright 2012 VPAC, http://www.vpac.org
-# Copyright 2013-2021 Marcus Furlong <furlongm@gmail.com>
+# Copyright 2025 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of Patchman.
 #
@@ -15,29 +14,35 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+from datetime import timedelta
+
 from django.conf import settings
 
-from reports.models import Report
-
 from celery import shared_task
-from celery.schedules import crontab
 from patchman.celery import app
 
+from errata.models import Erratum
+from security.tasks import update_cves, update_cwes
+
 app.conf.beat_schedule = {
-    'process-reports': {
-        'task': 'reports.tasks.process_reports',
-        'schedule': crontab(minute='*/5'),
+    'update-errata-cves-cwes-every-6-hours': {
+        'task': 'tasks.update_errata',
+        'schedule': timedelta(hours=6),
     },
 }
 
 @shared_task
-def process_report(report_id):
-    report = Report.objects.get(report_id)
-    report.process()
+def update_erratum(erratum):
+    """ Task to update an erratum
+    """
+    erratum.update()
 
 
 @shared_task
-def process_reports():
-    reports = Report.objects.all(processed=False)
-    for report in reports:
-        process_report.delay(report.id)
+def update_errata():
+    """ Task to update all errata
+    """
+    for e in Erratum.objects.all():
+        update_erratum.delay(e)
+    update_cves.delay()
+    update_cwes.delay()
