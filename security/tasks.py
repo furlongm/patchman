@@ -14,12 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.conf import settings
+from celery import shared_task
 
 from security.models import CVE, CWE
-
-from celery import shared_task
-from patchman.celery import app
 
 
 @shared_task
@@ -28,6 +25,7 @@ def update_cve(cve):
     """
     cve.update()
 
+
 @shared_task
 def update_cves():
     """ Task to update all CVEs
@@ -35,11 +33,13 @@ def update_cves():
     for cve in CVE.objects.all():
         update_cve.delay(cve)
 
+
 @shared_task
 def update_cwe(cwe):
     """ Task to update a CWE
     """
     cwe.update()
+
 
 @shared_task
 def update_cwes():
