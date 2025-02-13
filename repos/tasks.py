@@ -14,25 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.conf import settings
-
-from repos.models import Repository, Mirror
-
 from celery import shared_task
-from celery.schedules import crontab
-from patchman.celery import app
 
-app.conf.beat_schedule = {
-    'refresh-repos-every-day': {
-        'task': 'tasks.refresh_repos',
-        'schedule': crontab(hour=6, minute=00),
-    },
-}
+from repos.models import Repository
+
 
 @shared_task
-def refresh_repo(force=False):
+def refresh_repo(repo_id, force=False):
     """ Refresh metadata for a single repo
     """
+    repo = Repository.objects.get(id=repo_id)
     repo.refresh(force)
 
 
