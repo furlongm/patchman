@@ -45,7 +45,7 @@ from patchman.signals import progress_info_s, progress_update_s, \
     info_message, warning_message, error_message, debug_message
 
 
-def get_or_create_repo(r_name, r_arch, r_type):
+def get_or_create_repo(r_name, r_arch, r_type, r_id=None):
     """ Get or create a Repository object. Returns the object. Returns None if
         it cannot get or create the object.
     """
@@ -64,6 +64,9 @@ def get_or_create_repo(r_name, r_arch, r_type):
     except DatabaseError as e:
         error_message.send(sender=None, text=e)
     if repository:
+        if r_id:
+            repository.repo_id = r_id
+            repository.save()
         return repository
 
 

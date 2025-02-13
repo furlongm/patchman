@@ -14,22 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from datetime import timedelta
-
-from django.conf import settings
-
 from celery import shared_task
-from patchman.celery import app
 
 from errata.models import Erratum
 from security.tasks import update_cves, update_cwes
 
-app.conf.beat_schedule = {
-    'update-errata-cves-cwes-every-6-hours': {
-        'task': 'tasks.update_errata',
-        'schedule': timedelta(hours=6),
-    },
-}
 
 @shared_task
 def update_erratum(erratum):

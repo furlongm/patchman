@@ -15,24 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.conf import settings
+from celery import shared_task
+
+from django.db.utils import OperationalError
 
 from reports.models import Report
 
-from celery import shared_task
-from celery.schedules import crontab
-from patchman.celery import app
 
-app.conf.beat_schedule = {
-    'process-reports': {
-        'task': 'reports.tasks.process_reports',
-        'schedule': crontab(minute='*/5'),
-    },
-}
-
-@shared_task
-def process_report(report_id):
-    report = Report.objects.get(report_id)
+@shared_task(bind=True, autoretry_for=(OperationalError,), retry_backoff=True, retry_kwargs={'max_retries': 5})
+def process_report(self, report_id):
+    report = Report.objects.get(id=report_id)
     report.process()
 
 
