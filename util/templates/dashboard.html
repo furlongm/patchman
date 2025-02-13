@@ -191,7 +191,7 @@
       <div class="collapse" id="possible_mirrors">
         {% for checksum in possible_mirrors %}
         <span class="label label-brick {% cycle 'bg-info' 'bg-success' %}">
-          <a href="../repos/mirrors/?checksum={{ checksum }}">{{ checksum }}</a>
+          <a href="{% url 'repos:mirror_list' %}?checksum={{ checksum }}">{{ checksum }}</a>
         </span>
         {% endfor %}
       </div>

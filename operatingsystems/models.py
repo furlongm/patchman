@@ -24,9 +24,10 @@ from repos.models import Repository
 
 class OSRelease(models.Model):
 
-    name = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255, unique=True, blank=False, null=False)
     repos = models.ManyToManyField(Repository, blank=True)
     codename = models.CharField(max_length=255, blank=True)
+    cpe_name = models.CharField(max_length=255, null=True, blank=True, unique=True)
 
     from operatingsystems.managers import OSReleaseManager
     objects = OSReleaseManager()
@@ -34,7 +35,7 @@ class OSRelease(models.Model):
     class Meta:
         verbose_name = 'Operating System Release'
         verbose_name_plural = 'Operating System Releases'
-        unique_together = ('name', 'codename')
+        unique_together = ('name', 'codename', 'cpe_name')
         ordering = ('name',)
 
     def __str__(self):
@@ -47,7 +48,7 @@ class OSRelease(models.Model):
         return reverse('operatingsystems:osrelease_detail', args=[str(self.id)])
 
     def natural_key(self):
-        return (self.name, self.codename)
+        return (self.name, self.codename, self.cpe_name)
 
 
 class OSVariant(models.Model):
@@ -55,6 +56,7 @@ class OSVariant(models.Model):
     name = models.CharField(max_length=255, unique=True)
     arch = models.ForeignKey(MachineArchitecture, blank=True, null=True, on_delete=models.CASCADE)
     osrelease = models.ForeignKey(OSRelease, blank=True, null=True, on_delete=models.SET_NULL)
+    codename = models.CharField(max_length=255, blank=True)
 
     class Meta:
         verbose_name = 'Operating System Variant'
@@ -62,7 +64,8 @@ class OSVariant(models.Model):
         ordering = ('name',)
 
     def __str__(self):
-        return self.name
+        osvariant_name = f'{self.name} {self.arch}'
+        return osvariant_name
 
     def get_absolute_url(self):
         return reverse('operatingsystems:osvariant_detail', args=[str(self.id)])

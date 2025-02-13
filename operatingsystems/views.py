@@ -24,6 +24,7 @@ from django.urls import reverse
 
 from rest_framework import viewsets
 
+from hosts.models import Host
 from operatingsystems.models import OSVariant, OSRelease
 from operatingsystems.forms import AddOSVariantToOSReleaseForm, AddReposToOSReleaseForm, CreateOSReleaseForm
 from operatingsystems.serializers import OSVariantSerializer, OSReleaseSerializer
@@ -32,6 +33,9 @@ from operatingsystems.serializers import OSVariantSerializer, OSReleaseSerialize
 @login_required
 def osvariant_list(request):
     osvariants = OSVariant.objects.select_related()
+
+    if 'osrelease' in request.GET:
+        osvariants = osvariants.filter(osrelease=int(request.GET['osrelease']))
 
     if 'search' in request.GET:
         terms = request.GET['search'].lower()
@@ -53,13 +57,13 @@ def osvariant_list(request):
     except EmptyPage:
         page = paginator.page(paginator.num_pages)
 
-    empty_osvariants = list(OSVariant.objects.filter(host__isnull=True))
+    nohost_osvariants = OSVariant.objects.filter(host__isnull=True).count() >= 1
 
     return render(request,
                   'operatingsystems/osvariant_list.html',
                   {'page': page,
                    'terms': terms,
-                   'empty_osvariants': empty_osvariants})
+                   'nohost_osvariants': nohost_osvariants})
 
 
 @login_required
@@ -94,39 +98,38 @@ def osvariant_detail(request, osvariant_id):
 
 @login_required
 def osvariant_delete(request, osvariant_id):
-    if osvariant_id == 'empty_osvariants':
-        osvariant = False
-        osvariants = list(OSVariant.objects.filter(host__isnull=True))
-    else:
-        osvariant = get_object_or_404(OSVariant, id=osvariant_id)
-        osvariants = False
+    osvariant = get_object_or_404(OSVariant, id=osvariant_id)
 
     if request.method == 'POST':
         if 'delete' in request.POST:
-            if osvariant:
-                osvariant.delete()
-                messages.info(request, f'OS Variant {osvariant} has been deleted')
-                return redirect(reverse('operatingsystems:osvariant_list'))
-            else:
-                if not osvariants:
-                    text = 'There are no OS Variants with no Hosts'
-                    messages.info(request, text)
-                    return redirect(reverse('operatingsystems:osvariant_list'))
-                for osvariant in osvariants:
-                    osvariant.delete()
-                text = f'{len(osvariants)} OS Variants have been deleted'
+            osvariant.delete()
+            messages.info(request, f'OS Variant {osvariant} has been deleted')
+            return redirect(reverse('operatingsystems:osvariant_list'))
+        elif 'cancel' in request.POST:
+            return redirect(osvariant.get_absolute_url())
+
+    return render(request, 'operatingsystems/osvariant_delete.html', {'osvariant': osvariant})
+
+
+@login_required
+def delete_nohost_osvariants(request):
+    osvariants = list(OSVariant.objects.filter(host__isnull=True))
+
+    if request.method == 'POST':
+        if 'delete' in request.POST:
+            if not osvariants:
+                text = 'There are no OS Variants with no Hosts'
                 messages.info(request, text)
                 return redirect(reverse('operatingsystems:osvariant_list'))
+            for osvariant in osvariants:
+                osvariant.delete()
+            text = f'{len(osvariants)} OS Variants have been deleted'
+            messages.info(request, text)
+            return redirect(reverse('operatingsystems:osvariant_list'))
         elif 'cancel' in request.POST:
-            if osvariant_id == 'empty_oses':
-                return redirect(reverse('operatingsystems:osvariant_list'))
-            else:
-                return redirect(osvariant.get_absolute_url())
+            return redirect(reverse('operatingsystems:osvariant_list'))
 
-    return render(request,
-                  'operatingsystems/osvariant_delete.html',
-                  {'osvariant': osvariant,
-                   'osvariants': osvariants})
+    return render(request, 'operatingsystems/osvariant_delete_multiple.html', {'osvariants': osvariants})
 
 
 @login_required
@@ -174,11 +177,13 @@ def osrelease_detail(request, osrelease_id):
             return redirect(osrelease.get_absolute_url())
 
     repos_form = AddReposToOSReleaseForm(instance=osrelease)
+    host_count = Host.objects.filter(osvariant__osrelease=osrelease).count()
 
     return render(request,
                   'operatingsystems/osrelease_detail.html',
                   {'osrelease': osrelease,
-                   'repos_form': repos_form})
+                   'repos_form': repos_form,
+                   'host_count': host_count})
 
 
 @login_required
@@ -190,13 +195,16 @@ def osrelease_delete(request, osrelease_id):
             osrelease.delete()
             text = f'OS Release {osrelease} has been deleted'
             messages.info(request, text)
-            return redirect(reverse('operatingsystems:osvariant_list'))
+            return redirect(reverse('operatingsystems:osrelease_list'))
         elif 'cancel' in request.POST:
             return redirect(osrelease.get_absolute_url())
 
+    host_count = Host.objects.filter(osvariant__osrelease=osrelease).count()
+
     return render(request,
                   'operatingsystems/osrelease_delete.html',
-                  {'osrelease': osrelease})
+                  {'osrelease': osrelease,
+                   'host_count': host_count})
 
 
 @login_required
