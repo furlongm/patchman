@@ -15,10 +15,12 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 import json
+import concurrent.futures
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from django.db import transaction
+from django.db.utils import OperationalError
 
-from arch.models import MachineArchitecture
 from packages.models import Package
 from packages.utils import parse_package_string, get_or_create_package
 from util import get_url, download_url, info_message, error_message
@@ -31,8 +33,8 @@ def update_rocky_errata():
     rocky_errata_api_host = 'https://apollo.build.resf.org'
     rocky_errata_api_url = '/api/v3/'
     if check_rocky_errata_endpoint_health(rocky_errata_api_host):
-        advisories = download_rocky_advisories(rocky_errata_api_host, rocky_errata_api_url)
-        process_rocky_errata(advisories)
+        advisories = download_rocky_advisories_concurrently(rocky_errata_api_host, rocky_errata_api_url)
+        process_rocky_errata_concurrently(advisories)
 
 
 def check_rocky_errata_endpoint_health(rocky_errata_api_host):
@@ -88,6 +90,81 @@ def download_rocky_advisories(rocky_errata_api_host, rocky_errata_api_url):
     return advisories
 
 
+def download_rocky_advisories_concurrently(rocky_errata_api_host, rocky_errata_api_url):
+    """ Download Rocky Linux advisories concurrently and return the list
+    """
+    rocky_errata_advisories_url = rocky_errata_api_host + rocky_errata_api_url + 'advisories/'
+    headers = {'Accept': 'application/json'}
+    advisories = []
+    params = {'page': 1, 'size': 100}
+    res = get_url(rocky_errata_advisories_url, headers=headers, params=params)
+    data = download_url(res, 'Rocky Linux Advisories Page 1')
+    advisories_dict = json.loads(data)
+    links = advisories_dict.get('links')
+    last_link = links.get('last')
+    pages = int(last_link.split('=')[-1])
+    ptext = 'Downloading Rocky Linux Advisories:'
+    progress_info_s.send(sender=None, ptext=ptext, plen=pages)
+    i = 0
+    with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
+        futures = [executor.submit(get_rocky_advisory, rocky_errata_advisories_url, page)
+                   for page in range(1, pages + 1)]
+        for future in concurrent.futures.as_completed(futures):
+            advisories += future.result()
+            i += 1
+            progress_update_s.send(sender=None, index=i + 1)
+    return advisories
+
+
+def get_rocky_advisory(rocky_errata_advisories_url, page):
+    """ Download a single Rocky Linux advisory
+    """
+    headers = {'Accept': 'application/json'}
+    params = {'page': page, 'size': 100}
+    res = get_url(rocky_errata_advisories_url, headers=headers, params=params)
+    data = res.content
+    advisories_dict = json.loads(data)
+    return advisories_dict.get('advisories')
+
+
+def process_rocky_errata_concurrently(advisories):
+    """ Process Rocky Linux errata concurrently
+    """
+    elen = len(advisories)
+    ptext = f'Processing {elen} Errata:'
+    progress_info_s.send(sender=None, ptext=ptext, plen=elen)
+    i = 0
+    with concurrent.futures.ProcessPoolExecutor(max_workers=10) as executor:
+        futures = [executor.submit(process_rocky_erratum, advisory) for advisory in advisories]
+        for future in concurrent.futures.as_completed(futures):
+            i += 1
+            progress_update_s.send(sender=None, index=i + 1)
+
+
+@retry(
+    retry=retry_if_exception_type(OperationalError),
+    stop=stop_after_attempt(5),
+    wait=wait_exponential(multiplier=1, min=2, max=15),
+)
+def process_rocky_erratum(advisory):
+    """ Process a single Rocky Linux erratum
+    """
+    from errata.utils import get_or_create_erratum
+    erratum_name = advisory.get('name')
+    e_type = advisory.get('kind').lower().replace(' ', '')
+    issue_date = advisory.get('published_at')
+    synopsis = advisory.get('synopsis')
+    e, created = get_or_create_erratum(
+        name=erratum_name,
+        e_type=e_type,
+        issue_date=issue_date,
+        synopsis=synopsis,
+    )
+    add_rocky_erratum_references(e, advisory)
+    add_rocky_erratum_oses(e, advisory)
+    add_rocky_erratum_packages(e, advisory)
+
+
 def process_rocky_errata(advisories):
     """ Process Rocky Linux errata
     """
@@ -129,21 +206,13 @@ def add_rocky_erratum_oses(e, advisory):
     """ Update OS Variant, OS Release and MachineArch for Rocky Linux errata
     """
     affected_oses = advisory.get('affected_products')
-    from operatingsystems.models import OSVariant, OSRelease
+    from operatingsystems.models import OSRelease
     for affected_os in affected_oses:
-        arch = affected_os.get('arch')
         variant = affected_os.get('variant')
         major_version = affected_os.get('major_version')
         osrelease_name = f'{variant} {major_version}'
         with transaction.atomic():
             osrelease, created = OSRelease.objects.get_or_create(name=osrelease_name)
-        osvariant_name = affected_os.get('name').replace(' (Legacy)', '')
-        with transaction.atomic():
-            m_arch, created = MachineArchitecture.objects.get_or_create(name=arch)
-        with transaction.atomic():
-            osvariant, created = OSVariant.objects.get_or_create(name=osvariant_name, arch=m_arch)
-        osvariant.osrelease = osrelease
-        osvariant.save()
         e.osreleases.add(osrelease)
     e.save()
 
