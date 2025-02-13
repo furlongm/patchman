@@ -10,9 +10,9 @@
 
 {% block objectlist_actions %}
 
-{% if user.is_authenticated and perms.is_admin and empty_osvariants %}
+{% if user.is_authenticated and perms.is_admin and nohost_osvariants %}
   <div class="well well-sm">
-    <a class="btn btn-primary btn-sm" role="button" href="empty_osvariants/delete/">{% bootstrap_icon "trash" %} Delete OS Variants with no Hosts</a>
+    <a class="btn btn-primary btn-sm" role="button" href="{% url 'operatingsystems:delete_nohost_osvariants' %}">{% bootstrap_icon "trash" %} Delete OS Variants with no Hosts</a>
   </div>
 {% endif %}
 

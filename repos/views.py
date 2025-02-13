@@ -31,10 +31,8 @@ from hosts.models import HostRepo
 from repos.models import Repository, Mirror, MirrorPackage
 from operatingsystems.models import OSRelease
 from arch.models import MachineArchitecture
-from repos.forms import EditRepoForm, LinkRepoForm, CreateRepoForm, \
-    EditMirrorForm
-from repos.serializers import RepositorySerializer, \
-    MirrorSerializer, MirrorPackageSerializer
+from repos.forms import EditRepoForm, LinkRepoForm, CreateRepoForm, EditMirrorForm
+from repos.serializers import RepositorySerializer, MirrorSerializer, MirrorPackageSerializer
 
 
 @login_required
@@ -374,6 +372,18 @@ def repo_toggle_security(request, repo_id):
         text += f' as a {sectype} update repo'
         messages.info(request, text)
         return redirect(repo.get_absolute_url())
+
+
+@login_required
+def repo_refresh(request, repo_id):
+    """ Refresh a repo using a celery task
+    """
+    repo = get_object_or_404(Repository, id=repo_id)
+    from repos.tasks import refresh_repo
+    refresh_repo.delay(repo.id)
+    text = f'Repostory {repo} is being refreshed'
+    messages.info(request, text)
+    return redirect(repo.get_absolute_url())
 
 
 class RepositoryViewSet(viewsets.ModelViewSet):

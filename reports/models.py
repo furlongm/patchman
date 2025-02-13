@@ -62,7 +62,8 @@ class Report(models.Model):
         return reverse('reports:report_detail', args=[str(self.id)])
 
     def parse(self, data, meta):
-
+        """ Parse a report and save the object
+        """
         x_real_ip = meta.get('HTTP_X_REAL_IP')
         x_forwarded_for = meta.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
@@ -106,24 +107,102 @@ class Report(models.Model):
         """ Process a report and extract os, arch, domain, packages, repos etc
         """
         if self.os and self.kernel and self.arch and not self.processed:
+            self_os = self.os
+            os = self.os
+            cpe_name = None
+            codename = None
             osrelease_codename = None
-            match = re.match(r'(.*) \((.*)\)', self.os)
+            osvariant_codename = None
+            osrelease_name = os
+            osvariant_name = os
+
+            # find cpe_name if it exists
+            match = re.match(r'(.*) \[(.*)\]', os)
             if match:
-                os_name = match.group(1)
-                osrelease_codename = match.group(2)
-            else:
-                os_name = self.os
+                cpe_name = match.group(2)
+                os = match.group(1)
+
+            # find codename if it exists
+            match = re.match(r'(.*) \((.*)\)', os)
+            if match:
+                osrelease_name = match.group(1)
+                codename = match.group(2)
+                if not os.startswith('AlmaLinux'):
+                    osrelease_codename = codename
+
+            if os.startswith('Gentoo'):
+                osrelease_name = 'Gentoo Linux'
+                # presumptive, can be changed once a real cpe is assigned/used
+                cpe_name = 'cpe:2.3:o:gentoo:gentoo_linux:::'
+
+            if os.startswith('AlmaLinux'):
+                os = os.replace('AlmaLinux', 'Alma Linux')
+                osrelease_name = os.split('.')[0]
+                # alma changes the codename with each minor release, so it's useless to us now
+                osvariant_name = os.replace(f' ({codename})', '')
+                osvariant_codename = codename
+
+            if os.startswith('Debian'):
+                major, minor = os.split(' ')[1].split('.')
+                debian_version = f'{major}.{minor}'
+                osrelease_name = f'Debian {major}'
+                # presumptive, can be changed once a real cpe is assigned/used
+                cpe_name = f'cpe:2.3:o:debian:debian_linux:{debian_version}::'
+
+            if os.startswith('Ubuntu'):
+                lts = ''
+                if 'LTS' in os:
+                    lts = ' LTS'
+                major, minor, patch = os.split(' ')[1].split('.')
+                ubuntu_version = f'{major}_{minor}'
+                osrelease_name = f'Ubuntu {major}.{minor}{lts}'
+                cpe_name = f'cpe:2.3:o:canonical:ubuntu_linux:{ubuntu_version}::'
+
+            if os.startswith('Arch'):
+                # presumptive, can be changed once a real cpe is assigned/used
+                cpe_name = 'cpe:2.3:o:archlinux:arch_linux:::'
+
+            if os.startswith('Rocky'):
+                osrelease_name = os.split('.')[0]
 
             with transaction.atomic():
                 m_arch, created = MachineArchitecture.objects.get_or_create(name=self.arch)
 
             with transaction.atomic():
-                osvariant, created = OSVariant.objects.get_or_create(name=os_name, arch=m_arch)
+                try:
+                    osvariant, created = OSVariant.objects.get_or_create(name=osvariant_name, arch=m_arch)
+                except IntegrityError:
+                    osvariants = OSVariant.objects.filter(name=osvariant_name)
+                    if osvariants.count() == 1:
+                        osvariant = osvariants[0]
+                        if osvariant.arch is None:
+                            osvariant.arch = m_arch
 
-            if osrelease_codename:
+            if osvariant and osvariant_codename:
+                osvariant.codename = osvariant_codename
+
+            if cpe_name:
+                try:
+                    osrelease, created = OSRelease.objects.get_or_create(name=osrelease_name, cpe_name=cpe_name)
+                except IntegrityError:
+                    osreleases = OSRelease.objects.filter(name=osrelease_name)
+                    if osreleases.count() == 1:
+                        osrelease = osreleases[0]
+                        osrelease.cpe_name = cpe_name
+            elif osrelease_codename:
                 osreleases = OSRelease.objects.filter(codename=osrelease_codename)
                 if osreleases.count() == 1:
-                    osvariant.osrelease = osreleases[0]
+                    osrelease = osreleases[0]
+            elif osrelease_name:
+                osrelease, created = OSRelease.objects.get_or_create(name=osrelease_name)
+            osrelease.save()
+            osvariant.osrelease = osrelease
+            osvariant.save()
+
+            o = locals().items()
+            for name, value in o:
+                if name in ['self_os', 'os', 'osrelease_name', 'osvariant_name', 'osrelease', 'osvariant']:
+                    print(name, value)
 
             if not self.domain:
                 self.domain = 'unknown'
@@ -169,12 +248,10 @@ class Report(models.Model):
             host.check_rdns()
 
             if verbose:
-                text = 'Processing report '
-                text += f'{self.id} - {self.host}'
+                text = 'Processing report {self.id} - {self.host}'
                 info_message.send(sender=None, text=text)
 
-            from reports.utils import process_packages, \
-                process_repos, process_updates, process_modules
+            from reports.utils import process_packages, process_repos, process_updates, process_modules
             with transaction.atomic():
                 process_repos(report=self, host=host)
             with transaction.atomic():
@@ -190,16 +267,13 @@ class Report(models.Model):
 
             if find_updates:
                 if verbose:
-                    text = 'Finding updates for report '
-                    text += f'{self.id} - {self.host}'
+                    text = 'Finding updates for report {self.id} - {self.host}'
                     info_message.send(sender=None, text=text)
                 host.find_updates()
         else:
             if self.processed:
-                text = f'Report {self.id} '
-                text += 'has already been processed'
+                text = f'Report {self.id} has already been processed'
                 info_message.send(sender=None, text=text)
             else:
-                text = 'Error: OS, kernel or arch not sent '
-                text += f'with report {self.id}'
+                text = 'Error: OS, kernel or arch not sent with report {self.id}'
                 error_message.send(sender=None, text=text)
