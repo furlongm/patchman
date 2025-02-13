@@ -47,6 +47,15 @@ def update_errata():
         update_debian_errata()
     if 'ubuntu' in errata_os_updates:
         update_ubuntu_errata()
+    if 'rhel' in errata_os_updates:
+        # update_rhel_errata()
+        pass
+    if 'suse' in errata_os_updates:
+        # update_suse_errata()
+        pass
+    if 'amazon' in errata_os_updates:
+        # update_amazon_errata()
+        pass
     if 'centos' in errata_os_updates:
         update_centos_errata()
 
