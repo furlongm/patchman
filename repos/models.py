@@ -23,8 +23,8 @@ from arch.models import MachineArchitecture
 from packages.models import Package
 from util import has_setting_of_type
 
-from repos.utils import refresh_deb_repo, refresh_rpm_repo, \
-    refresh_arch_repo, refresh_gentoo_repo, update_mirror_packages
+from repos.utils import refresh_deb_repo, refresh_rpm_repo, refresh_arch_repo, refresh_gentoo_repo, \
+     update_mirror_packages
 from patchman.signals import info_message, warning_message, error_message
 
 
@@ -96,8 +96,7 @@ class Repository(models.Model):
             elif self.repotype == Repository.GENTOO:
                 refresh_gentoo_repo(self)
             else:
-                text = 'Error: unknown repo type for repo '
-                text += f'{self.id}: {self.repotype}'
+                text = 'Error: unknown repo type for repo {self.id}: {self.repotype}'
                 error_message.send(sender=None, text=text)
         else:
             text = 'Repo requires certificate authentication, not updating'
