@@ -3,17 +3,21 @@
   <thead>
     <tr>
       <th class="col-sm-4">Name</th>
-      <th class="col-sm-2">Hosts</th>
+      <th class="col-sm-1">Architecture</th>
+      <th class="col-sm-1">Codename</th>
+      <th class="col-sm-1">Hosts</th>
       <th class="col-sm-4">OS Release</th>
-      <th class="col-sm-2">Repos (OS Release)</th>
+      <th class="col-sm-1">Repos (OS Release)</th>
     </tr>
   </thead>
   <tbody>
     {% for osvariant in object_list %}
       <tr>
         <td><a href="{{ osvariant.get_absolute_url }}">{{ osvariant }}</a></td>
-        <td>{{ osvariant.host_set.count }}</td>
-        <td>{% if osvariant.osrelease != None %}<a href="{{ osvariant.osrelease.get_absolute_url }}">{{ osvariant.osrelease }}</a>{% endif %}</td>
+        <td>{{ osvariant.arch }}</td>
+        <td>{% if osvariant.codename %}{{ osvariant.codename }}{% else %}{% if osvariant.osrelease %}{{ osvariant.osrelease.codename }}{% endif %}{% endif %}</td>
+        <td><a href="{% url 'hosts:host_list' %}?osvariant={{ osvariant.id }}">{{ osvariant.host_set.count }}</a></td>
+        <td>{% if osvariant.osrelease %}<a href="{{ osvariant.osrelease.get_absolute_url }}">{{ osvariant.osrelease }}</a>{% endif %}</td>
         <td>{% if osvariant.osrelease.repos.count != None %}{{ osvariant.osrelease.repos.count }}{% else %}0{% endif %}</td>
       </tr>
     {% endfor %}
