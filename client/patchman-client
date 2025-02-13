@@ -499,7 +499,8 @@ get_repos() {
         if ${verbose} ; then
             echo 'Finding apt repos...'
         fi
-        IFS=${FULL_IFS} read -r osname shortversion <<<$(echo "${os}" | awk '{print $1,$2}' | cut -d . -f 1,2)
+        osname=$(echo ${os} | cut -d " " -f 1)
+        shortversion=${VERSION_ID}
         repo_string="'deb\' \'${osname} ${shortversion} ${host_arch} repo at"
         repos=$(apt-cache policy | grep -v Translation | grep -E "^ *[0-9]{1,5}" | grep -E " mirror\+file|http(s)?:" | sed -e "s/^ *//g" -e "s/ *$//g" | cut -d " " -f 1,2,3,4)
         non_mirror_repos=$(echo "${repos}" | grep -Ev "mirror\+file")
