@@ -14,12 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+import concurrent.futures
 import json
 
 from operatingsystems.models import OSRelease, OSVariant
 from packages.models import Package
 from packages.utils import find_evr, get_matching_packages
 from util import get_url, download_url
+from patchman.signals import error_message, progress_info_s, progress_update_s
 
 
 def update_arch_errata():
@@ -28,7 +30,7 @@ def update_arch_errata():
     """
     add_arch_linux_osrelease()
     advisories = download_arch_errata()
-    parse_arch_errata(advisories)
+    parse_arch_errata_concurrently(advisories)
 
 
 def download_arch_errata():
@@ -43,9 +45,31 @@ def download_arch_errata():
 def parse_arch_errata(advisories):
     """ Parse Arch Linux Errata Advisories
     """
-    from errata.utils import get_or_create_erratum
     osrelease = OSRelease.objects.get(name='Arch Linux')
     for advisory in advisories:
+        process_arch_erratum(advisory, osrelease)
+
+
+def parse_arch_errata_concurrently(advisories):
+    """ Parse Arch Linux Errata Advisories
+    """
+    osrelease = OSRelease.objects.get(name='Arch Linux')
+    elen = len(advisories)
+    ptext = 'Processing Arch Linux Advisories:'
+    progress_info_s.send(sender=None, ptext=ptext, plen=elen)
+    i = 0
+    with concurrent.futures.ProcessPoolExecutor(max_workers=3) as executor:
+        futures = [executor.submit(process_arch_erratum, advisory, osrelease) for advisory in advisories]
+        for future in concurrent.futures.as_completed(futures):
+            i += 1
+            progress_update_s.send(sender=None, index=i + 1)
+
+
+def process_arch_erratum(advisory, osrelease):
+    """ Process a single Arch Linux Erratum
+    """
+    from errata.utils import get_or_create_erratum
+    try:
         name = advisory.get('name')
         issue_date = advisory.get('date')
         package = advisory.get('package')
@@ -60,6 +84,8 @@ def parse_arch_errata(advisories):
         e.osreleases.add(osrelease)
         add_arch_erratum_references(e, advisory)
         add_arch_erratum_packages(e, advisory)
+    except Exception as exc:
+        error_message.send(sender=None, text=exc)
 
 
 def add_arch_linux_osrelease():
@@ -82,8 +108,8 @@ def add_arch_erratum_references(e, advisory):
     e.add_reference('ASA', url)
     raw_url = f'{url}/raw'
     res = get_url(raw_url)
-    raw_data = download_url(res, f'Downloading Arch Linux Erratum Reference: {raw_url}')
-    parse_arch_erratum_raw(e, raw_data.decode())
+    data = res.content
+    parse_arch_erratum_raw(e, data.decode())
 
 
 def parse_arch_erratum_raw(e, data):
