@@ -21,8 +21,9 @@ from debian.deb822 import Dsc
 from io import StringIO
 
 from django.conf import settings
+from django.db.utils import IntegrityError
 
-from operatingsystems.models import OSRelease, OSVariant
+from operatingsystems.models import OSRelease
 from packages.models import Package
 from packages.utils import get_or_create_package, find_evr
 from util import get_url, download_url, has_setting_of_type
@@ -206,10 +207,14 @@ def create_debian_os_releases(codename_to_version):
     for codename, version in codename_to_version.items():
         if codename in accepted_codenames:
             osrelease_name = f'Debian {version}'
-            osrelease, created = OSRelease.objects.get_or_create(name=osrelease_name, codename=codename)
-            for osvariant in OSVariant.objects.filter(name__startswith=osrelease_name):
-                osvariant.osrelease = osrelease
-                osvariant.save()
+            try:
+                osrelease, created = OSRelease.objects.get_or_create(name=osrelease_name, codename=codename)
+            except IntegrityError:
+                osreleases = OSRelease.objects.filter(name=osrelease_name)
+                if osreleases.count() == 1:
+                    osrelease = osreleases[0]
+                    osrelease.codename = codename
+                    osrelease.save()
 
 
 def process_debian_erratum_affected_packages(e, dsc):
