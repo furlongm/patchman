@@ -24,11 +24,9 @@ from arch.models import MachineArchitecture, PackageArchitecture
 from repos.models import Repository, Mirror, MirrorPackage
 from modules.models import Module
 from packages.models import Package, PackageCategory
-from packages.utils import find_evr, get_or_create_package, \
-    get_or_create_package_update, parse_package_string
+from packages.utils import find_evr, get_or_create_package, get_or_create_package_update, parse_package_string
 from repos.utils import get_or_create_repo
-from patchman.signals import progress_info_s, progress_update_s, \
-    error_message, info_message
+from patchman.signals import progress_info_s, progress_update_s, error_message, info_message
 
 
 def process_repos(report, host):
@@ -255,9 +253,8 @@ def process_repo(repo, arch):
     if repo[1]:
         r_name = repo[1]
 
-    machine_arches = MachineArchitecture.objects.all()
     with transaction.atomic():
-        r_arch, c = machine_arches.get_or_create(name=arch)
+        r_arch, c = MachineArchitecture.objects.get_or_create(name=arch)
 
     unknown = []
     for r_url in repo[3:]:
@@ -275,6 +272,11 @@ def process_repo(repo, arch):
 
     if r_id and repository.repo_id != r_id:
         repository.repo_id = r_id
+        with transaction.atomic():
+            repository.save()
+
+    if r_name and repository.name != r_name:
+        repository.name = r_name
         with transaction.atomic():
             repository.save()
 
@@ -415,10 +417,15 @@ def process_package(pkg, protocol):
                 repo_arch, created = machine_arches.get_or_create(name='any')
 
             repo_name = 'Gentoo Linux'
-            repo = get_or_create_repo(repo_name, repo_arch, Repository.GENTOO)
+            repo = get_or_create_repo(repo_name, repo_arch, Repository.GENTOO, p_repo)
 
             with transaction.atomic():
-                url = f'gentoo virtual for {p_repo}'
+                if p_repo == 'gentoo':
+                    url = 'https://api.gentoo.org/mirrors/distfiles.xml'
+                else:
+                    # this may not be correct. the urls are hardcoded anyway in repos/utils.py
+                    # need to figure out a better way to determine which repo/repo url to use
+                    url = 'https://api.gentoo.org/overlays/repositories.xml'
                 mirror, c = Mirror.objects.get_or_create(repo=repo, url=url, mirrorlist=True)
                 MirrorPackage.objects.create(mirror=mirror, package=package)
 

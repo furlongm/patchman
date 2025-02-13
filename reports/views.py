@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
+
 from django.http import HttpResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import get_object_or_404, render, redirect
@@ -23,14 +25,18 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.urls import reverse
 from django.db import transaction
 from django.db.models import Q
-from django.conf import settings
 from django.contrib import messages
+from django.db.utils import OperationalError
 
 from util.filterspecs import Filter, FilterBar
-
 from reports.models import Report
 
 
+@retry(
+    retry=retry_if_exception_type(OperationalError),
+    stop=stop_after_attempt(5),
+    wait=wait_exponential(multiplier=1, min=2, max=15),
+)
 @csrf_exempt
 def upload(request):
 
@@ -124,13 +130,16 @@ def report_detail(request, report_id):
 
 @login_required
 def report_process(request, report_id):
-
+    """ Process a report using a celery task
+    """
     report = get_object_or_404(Report, id=report_id)
-    report.process()
-
-    return render(request,
-                  'reports/report_detail.html',
-                  {'report': report})
+    report.processed = False
+    report.save()
+    from reports.tasks import process_report
+    process_report.delay(report.id)
+    text = f'Report {report} is being processed'
+    messages.info(request, text)
+    return redirect(report.get_absolute_url())
 
 
 @login_required
