@@ -30,6 +30,6 @@ def process_report(self, report_id):
 
 @shared_task
 def process_reports():
-    reports = Report.objects.all(processed=False)
+    reports = Report.objects.filter(processed=False)
     for report in reports:
         process_report.delay(report.id)

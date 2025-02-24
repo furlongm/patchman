@@ -199,11 +199,6 @@ class Report(models.Model):
             osvariant.osrelease = osrelease
             osvariant.save()
 
-            o = locals().items()
-            for name, value in o:
-                if name in ['self_os', 'os', 'osrelease_name', 'osvariant_name', 'osrelease', 'osvariant']:
-                    print(name, value)
-
             if not self.domain:
                 self.domain = 'unknown'
             domains = Domain.objects.all()
