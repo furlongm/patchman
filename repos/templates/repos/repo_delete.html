@@ -12,8 +12,8 @@
 
 <div class="well well-sm">
   <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
-    <tr><th>Name</th><td> {{ repo.name }} </td></tr>
-    <tr><th>ID</th><td> {% if repo.id != None %} {{ repo.id }} {% endif %}</td></tr>
+    <tr><th class="col-sm-2">Name</th><td> {{ repo.name }} </td></tr>
+    <tr><th>Repo ID</th><td> {% if repo.repo_id != None %} {{ repo.repo_id }} {% endif %}</td></tr>
     <tr><th>Type</th><td> {{ repo.get_repotype_display }} </td></tr>
     <tr><th>Architecture</th><td> {{ repo.arch }} </td></tr>
     <tr><th>Security</th><td> {% yes_no_img repo.security 'Security' 'Not Security' %} </td></tr>

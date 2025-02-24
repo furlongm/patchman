@@ -2,8 +2,8 @@
 <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
   <thead>
     <tr>
-      <th class="col-sm-4">Repo Name</th>
-      <th class="col-sm-4">ID</th>
+      <th class="col-sm-5">Repo Name</th>
+      <th class="col-sm-3">Repo ID</th>
       <th class="col-sm-1">Mirrors</th>
       <th class="col-sm-1">Enabled</th>
       <th class="col-sm-1">Security</th>
@@ -14,8 +14,8 @@
     {% for repo in object_list %}
       <tr>
         <td><a href="{{ repo.get_absolute_url }}">{{ repo }}</a></td>
-        <td>{% if repo.id != None %} {{ repo.id }} {% endif %}</td>
-        <td class="centered">{{ repo.mirror_set.count }}</td>
+        <td>{% if repo.repo_id %} {{ repo.repo_id }} {% endif %}</td>
+        <td class="centered"> <a href="{% url 'repos:mirror_list' %}?repo_id={{ repo.id }}">{{ repo.mirror_set.count }}</a></td>
         <td class="centered"><form>{% yes_no_button_repo_en repo %}</form></td>
         <td class="centered"><form>{% yes_no_button_repo_sec repo %}</form></td>
         <td class="centered">{% yes_no_img repo.auth_required %}</td>

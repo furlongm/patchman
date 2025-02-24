@@ -22,10 +22,18 @@ import magic
 import zlib
 import lzma
 from colorama import Fore, Style
+from datetime import datetime
 from enum import Enum
 from hashlib import md5, sha1, sha256, sha512
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 from progressbar import Bar, ETA, Percentage, ProgressBar
-from patchman.signals import error_message, info_message
+from requests.exceptions import HTTPError, Timeout, ConnectionError
+
+from patchman.signals import error_message, info_message, debug_message
+
+from django.utils.timezone import make_aware
+from django.utils.dateparse import parse_datetime
+from django.conf import settings
 
 
 if ProgressBar.__dict__.get('maxval'):
@@ -36,6 +44,13 @@ else:
 pbar = None
 verbose = None
 Checksum = Enum('Checksum', 'md5 sha sha1 sha256 sha512')
+
+
+def print_nocr(text):
+    """ Print text without a carriage return
+    """
+    print(text, end='')
+    sys.stdout.softspace = False
 
 
 def get_verbosity():
@@ -81,25 +96,26 @@ def update_pbar(index, **kwargs):
             pmax = pbar.maxval
         if index >= pmax:
             pbar.finish()
-            print_nocr(Fore.RESET)
+            print_nocr(Fore.RESET + Style.RESET_ALL)
             pbar = None
 
 
-def download_url(res, text='', ljust=35):
+def download_url(response, text='', ljust=35):
     """ Display a progress bar to download the request content if verbose is
         True. Otherwise, just return the request content
     """
     global verbose
+    if not response:
+        return
     if verbose:
-        content_length = res.headers.get('content-length')
+        content_length = response.headers.get('content-length')
         if content_length:
             clen = int(content_length)
             create_pbar(text, clen, ljust)
             chunk_size = 16384
             i = 0
             data = b''
-            for chunk in res.iter_content(chunk_size=chunk_size,
-                                          decode_unicode=False):
+            for chunk in response.iter_content(chunk_size=chunk_size, decode_unicode=False):
                 i += len(chunk)
                 if i > clen:
                     update_pbar(clen)
@@ -109,40 +125,49 @@ def download_url(res, text='', ljust=35):
             return data
         else:
             info_message.send(sender=None, text=text)
-    return res.content
+    return response.content
 
 
-def print_nocr(text):
-    """ Print text without a carriage return
-    """
-    print(text, end='')
-    sys.stdout.softspace = False
-
-
+@retry(
+    retry=retry_if_exception_type(HTTPError | Timeout | ConnectionError | ConnectionResetError),
+    stop=stop_after_attempt(5),
+    wait=wait_exponential(multiplier=1, min=2, max=15),
+    reraise=False,
+)
 def get_url(url, headers={}, params={}):
     """ Perform a http GET on a URL. Return None on error.
     """
-    res = None
+    response = None
     try:
-        res = requests.get(url, headers=headers, params=params, stream=True)
-    except requests.exceptions.Timeout:
-        error_message.send(sender=None, text=f'Timeout - {url!s}')
+        debug_message.send(sender=None, text=f'Trying {url} headers:{headers} params:{params}')
+        response = requests.get(url, headers=headers, params=params, stream=True, timeout=30)
+        debug_message.send(sender=None, text=f'{response.status_code}: {response.headers}')
+        if response.status_code == 404:
+            return response
+        response.raise_for_status()
     except requests.exceptions.TooManyRedirects:
-        error_message.send(sender=None,
-                           text=f'Too many redirects - {url!s}')
-    except requests.exceptions.RequestException as e:
-        error_message.send(sender=None,
-                           text=f'Error ({e!s}) - {url!s}')
-    return res
+        error_message.send(sender=None, text=f'Too many redirects - {url}')
+    return response
 
 
-def response_is_valid(res):
+def response_is_valid(response):
     """ Check if a http response is valid
     """
-    if res is not None:
-        return res.ok
+    if response:
+        return response.ok
     else:
         return False
+
+
+def has_setting_of_type(setting_name, expected_type):
+    """ Checks if the Django settings module has the specified attribute
+        and if it is of the expected type
+        Returns True if the setting exists and is of the expected type, False otherwise.
+    """
+    if not hasattr(settings, setting_name):
+        return False
+    setting_value = getattr(settings, setting_name)
+    return isinstance(setting_value, expected_type)
 
 
 def gunzip(contents):
@@ -165,7 +190,7 @@ def bunzip2(contents):
         if e == 'invalid data stream':
             error_message.send(sender=None, text='bunzip2: ' + e)
     except ValueError as e:
-        if e == 'couldn\'t find end of stream':
+        if e == "couldn't find end of stream":
             error_message.send(sender=None, text='bunzip2: ' + e)
 
 
@@ -212,7 +237,7 @@ def get_checksum(data, checksum_type):
     elif checksum_type == Checksum.md5:
         checksum = get_md5(data)
     else:
-        text = f'Unknown checksum type: {checksum_type!s}'
+        text = f'Unknown checksum type: {checksum_type}'
         error_message.send(sender=None, text=text)
     return checksum
 
@@ -239,3 +264,18 @@ def get_md5(data):
     """ Return the md5 checksum for data
     """
     return md5(data).hexdigest()
+
+
+def tz_aware_datetime(date):
+    """ Ensure a datetime is timezone-aware
+        Returns the tz-aware datetime object
+    """
+    if isinstance(date, int):
+        parsed_date = datetime.fromtimestamp(date)
+    elif isinstance(date, str):
+        parsed_date = parse_datetime(date)
+    else:
+        parsed_date = date
+    if not parsed_date.tzinfo:
+        parsed_date = make_aware(parsed_date)
+    return parsed_date

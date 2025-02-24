@@ -1,0 +1,7 @@
+{% extends "objectlist.html" %}
+
+{% block page_title %}CVEs{% endblock %}
+
+{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'security:security_landing' %}">Security</a></li><li class="active"><a href="{% url 'security:cve_list' %}">CVEs</a></li>{% endblock %}
+
+{% block content_title %} CVEs {% endblock %}

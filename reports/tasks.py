@@ -15,15 +15,21 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.conf import settings
+from celery import shared_task
+
+from django.db.utils import OperationalError
 
 from reports.models import Report
 
-if settings.USE_ASYNC_PROCESSING:
-    from celery import shared_task
-    from patchman.celery import app  # noqa
 
-    @shared_task
-    def process_report(report_id):
-        report = Report.objects.get(id=report_id)
-        report.process(verbose=True)
+@shared_task(bind=True, autoretry_for=(OperationalError,), retry_backoff=True, retry_kwargs={'max_retries': 5})
+def process_report(self, report_id):
+    report = Report.objects.get(id=report_id)
+    report.process()
+
+
+@shared_task
+def process_reports():
+    reports = Report.objects.filter(processed=False)
+    for report in reports:
+        process_report.delay(report.id)
