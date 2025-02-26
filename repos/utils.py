@@ -35,12 +35,11 @@ from django.conf import settings
 from django.db import IntegrityError, DatabaseError, transaction
 from django.db.models import Q
 
+from arch.models import PackageArchitecture
 from packages.models import Package, PackageString
 from packages.utils import parse_package_string, get_or_create_package, find_evr, \
     convert_package_to_packagestring, convert_packagestring_to_package
-from arch.models import PackageArchitecture
-from util import get_url, download_url, response_is_valid, extract, \
-    get_checksum, Checksum, has_setting_of_type
+from util import get_url, download_url, response_is_valid, extract, get_checksum, Checksum, has_setting_of_type
 from patchman.signals import progress_info_s, progress_update_s, \
     info_message, warning_message, error_message, debug_message
 
@@ -992,3 +991,16 @@ def get_max_mirrors():
     else:
         max_mirrors = 5
     return max_mirrors
+
+
+def clean_repos():
+    """ Remove repositories that contain no mirrors
+    """
+    from repos.models import Repository
+    repos = Repository.objects.filter(mirror__isnull=True)
+    rlen = repos.count()
+    if rlen == 0:
+        info_message.send(sender=None, text='No Repositories with zero Mirrors found.')
+    else:
+        info_message.send(sender=None, text=f'Removing {rlen} empty Repos')
+        repos.delete()

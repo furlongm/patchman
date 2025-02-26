@@ -15,7 +15,7 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from django.db import IntegrityError, DatabaseError, transaction
-from patchman.signals import error_message
+from patchman.signals import error_message, info_message
 
 from modules.models import Module
 from arch.models import PackageArchitecture
@@ -67,3 +67,18 @@ def get_matching_modules(name, stream, version, context, arch):
         arch=m_arch,
     )
     return modules
+
+
+def clean_modules():
+    """ Delete modules that have no host or no repo
+    """
+    modules = Module.objects.filter(
+        host__isnull=True,
+        repo__isnull=True,
+    )
+    mlen = modules.count()
+    if mlen == 0:
+        info_message.send(sender=None, text='No orphaned Modules found.')
+    else:
+        info_message.send(sender=None, text=f'{mlen} orphaned Modules found.')
+        modules.delete()
