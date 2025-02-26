@@ -8,8 +8,12 @@ ADMINS = (
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
+#        'ENGINE': 'django.db.backends.sqlite3',  # noqa disabled until django 5.1 is in use, see https://blog.pecar.me/django-sqlite-dblock
+        'ENGINE': 'patchman.sqlite3',
         'NAME': '/var/lib/patchman/db/patchman.db',
+        'OPTIONS': {
+            'timeout': 30
+        }
     }
 }
 
