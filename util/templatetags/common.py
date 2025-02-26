@@ -22,14 +22,13 @@ from humanize import naturaltime
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
-from django.conf import settings
 from django.template import Library
 from django.template.loader import get_template
 from django.utils.html import format_html
 from django.templatetags.static import static
 from django.core.paginator import Paginator
 
-from util import has_setting_of_type
+from util import get_setting_of_type
 
 register = Library()
 
@@ -103,8 +102,9 @@ def searchform(terms):
 
 @register.simple_tag
 def reports_timedelta():
-    if has_setting_of_type('DAYS_WITHOUT_REPORT', int):
-        days = settings.DAYS_WITHOUT_REPORT
-    else:
-        days = 14
+    days = get_setting_of_type(
+        setting_name='DAYS_WITHOUT_REPORT',
+        setting_type=int,
+        default=14,
+    )
     return naturaltime(datetime.now() - timedelta(days=days))

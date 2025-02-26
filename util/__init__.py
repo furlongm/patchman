@@ -170,6 +170,18 @@ def has_setting_of_type(setting_name, expected_type):
     return isinstance(setting_value, expected_type)
 
 
+def get_setting_of_type(setting_name, setting_type, default):
+    """ Checks if the Django settings module has the specified attribute
+        and if it is of the expected type
+        Returns the value if the setting exists and is of the expected type, default otherwise.
+    """
+    if has_setting_of_type(setting_name, setting_type):
+        setting_value = getattr(settings, setting_name)
+        return setting_value
+    else:
+        return default
+
+
 def gunzip(contents):
     """ gunzip contents in memory and return the data
     """
