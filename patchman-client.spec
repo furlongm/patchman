@@ -10,6 +10,8 @@ Source: %{expand:%%(pwd)}
 BuildArch: noarch
 Requires: curl which coreutils util-linux
 
+%define binary_payload w9.gzdio
+
 %description
 patchman-client provides a client that uploads reports to a patchman server
 
