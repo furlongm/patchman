@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+import concurrent.futures
 import json
 
 from django.db import transaction
@@ -24,7 +25,7 @@ from util import get_url, download_url, get_setting_of_type
 from patchman.signals import progress_info_s, progress_update_s
 
 
-def update_alma_errata():
+def update_alma_errata(concurrent_processing=True):
     """ Update Alma Linux advisories from errata.almalinux.org:
            https://errata.almalinux.org/8/errata.full.json
            https://errata.almalinux.org/9/errata.full.json
@@ -38,7 +39,7 @@ def update_alma_errata():
     )
     for release in alma_releases:
         advisories = download_alma_advisories(release)
-        process_alma_errata(release, advisories)
+        process_alma_errata(release, advisories, concurrent_processing)
 
 
 def download_alma_advisories(release):
@@ -52,29 +53,58 @@ def download_alma_advisories(release):
     return advisories
 
 
-def process_alma_errata(release, advisories):
+def process_alma_errata(release, advisories, concurrent_processing):
     """ Process Alma Linux Errata
     """
-    from errata.utils import get_or_create_erratum
+    if concurrent_processing:
+        process_alma_errata_concurrently(release, advisories)
+    else:
+        process_alma_errata_serially(release, advisories)
+
+
+def process_alma_errata_serially(release, advisories):
+    """ Process Alma Linux Errata serially
+    """
     elen = len(advisories)
-    ptext = f'Processing {elen} Errata:'
+    ptext = f'Processing {elen} Alma Errata:'
     progress_info_s.send(sender=None, ptext=ptext, plen=elen)
     for i, advisory in enumerate(advisories):
+        process_alma_erratum(release, advisory)
         progress_update_s.send(sender=None, index=i + 1)
-        erratum_name = advisory.get('id')
-        issue_date = advisory.get('issued_date')
-        synopsis = advisory.get('title')
-        e_type = advisory.get('type')
-        e, created = get_or_create_erratum(
-            name=erratum_name,
-            e_type=e_type,
-            issue_date=issue_date,
-            synopsis=synopsis,
-        )
-        add_alma_erratum_osreleases(e, release)
-        add_alma_erratum_references(e, advisory)
-        add_alma_erratum_packages(e, advisory)
-        add_alma_erratum_modules(e, advisory)
+
+
+def process_alma_errata_concurrently(release, advisories):
+    """ Process Alma Linux Errata concurrently
+    """
+    elen = len(advisories)
+    ptext = f'Processing {elen} Alma Errata:'
+    progress_info_s.send(sender=None, ptext=ptext, plen=elen)
+    i = 0
+    with concurrent.futures.ProcessPoolExecutor(max_workers=10) as executor:
+        futures = [executor.submit(process_alma_erratum, release, advisory) for advisory in advisories]
+        for future in concurrent.futures.as_completed(futures):
+            i += 1
+            progress_update_s.send(sender=None, index=i + 1)
+
+
+def process_alma_erratum(release, advisory):
+    """ Process a single Alma Linux Erratum
+    """
+    from errata.utils import get_or_create_erratum
+    erratum_name = advisory.get('id')
+    issue_date = advisory.get('issued_date')
+    synopsis = advisory.get('title')
+    e_type = advisory.get('type')
+    e, created = get_or_create_erratum(
+        name=erratum_name,
+        e_type=e_type,
+        issue_date=issue_date,
+        synopsis=synopsis,
+    )
+    add_alma_erratum_osreleases(e, release)
+    add_alma_erratum_references(e, advisory)
+    add_alma_erratum_packages(e, advisory)
+    add_alma_erratum_modules(e, advisory)
 
 
 def add_alma_erratum_osreleases(e, release):
