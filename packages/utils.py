@@ -22,7 +22,7 @@ from django.db import IntegrityError, DatabaseError, transaction
 
 from arch.models import PackageArchitecture
 from packages.models import PackageName, Package, PackageUpdate, PackageCategory, PackageString
-from patchman.signals import error_message
+from patchman.signals import error_message, info_message
 
 
 def convert_package_to_packagestring(package):
@@ -285,3 +285,53 @@ def get_matching_packages(name, epoch, version, release, p_type):
             packagetype=p_type,
         )
         return packages
+
+
+def clean_packageupdates():
+    """ Removes PackageUpdate objects that are no longer linked to any hosts
+    """
+    package_updates = list(PackageUpdate.objects.all())
+    for update in package_updates:
+        if update.host_set.count() == 0:
+            text = f'Removing unused PackageUpdate {update}'
+            info_message.send(sender=None, text=text)
+            update.delete()
+        for duplicate in package_updates:
+            if update.oldpackage == duplicate.oldpackage and update.newpackage == duplicate.newpackage and \
+                    update.security == duplicate.security and update.id != duplicate.id:
+                text = f'Removing duplicate PackageUpdate: {update}'
+                info_message.send(sender=None, text=text)
+                for host in duplicate.host_set.all():
+                    host.updates.remove(duplicate)
+                    host.updates.add(update)
+                    host.save()
+                duplicate.delete()
+
+
+def clean_packages():
+    """ Remove packages that are no longer in use
+    """
+    packages = Package.objects.filter(
+        mirror__isnull=True,
+        host__isnull=True,
+        erratum__isnull=True,
+        module__isnull=True,
+    )
+    plen = packages.count()
+    if plen == 0:
+        info_message.send(sender=None, text='No orphaned Packages found.')
+    else:
+        info_message.send(sender=None, text=f'Removing {plen} orphaned Packages')
+        packages.delete()
+
+
+def clean_packagenames():
+    """ Remove package names that are no longer in use
+    """
+    names = PackageName.objects.filter(package__isnull=True)
+    nlen = names.count()
+    if nlen == 0:
+        info_message.send(sender=None, text='No orphaned PackageNames found.')
+    else:
+        info_message.send(sender=None, text=f'Removing {nlen} orphaned PackageNames')
+        names.delete()
