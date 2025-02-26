@@ -33,4 +33,4 @@ def refresh_repos(force=False):
     """
     repos = Repository.objects.filter(enabled=True)
     for repo in repos:
-        refresh_repo.delay(repo, force)
+        refresh_repo.delay(repo.id, force)

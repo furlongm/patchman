@@ -107,7 +107,6 @@ class Report(models.Model):
         """ Process a report and extract os, arch, domain, packages, repos etc
         """
         if self.os and self.kernel and self.arch and not self.processed:
-            self_os = self.os
             os = self.os
             cpe_name = None
             codename = None

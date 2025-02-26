@@ -61,11 +61,11 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': crontab(minute='*/5'),
      },
     'refresh_repos_daily': {
-        'task': 'tasks.refresh_repos',
+        'task': 'repos.tasks.refresh_repos',
         'schedule': crontab(hour=6, minute=00),
     },
     'update_errata_cves_cwes_every_12_hours': {
-        'task': 'tasks.update_errata',
+        'task': 'errata.tasks.update_errata',
         'schedule': timedelta(hours=12),
     },
 }

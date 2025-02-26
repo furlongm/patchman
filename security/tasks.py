@@ -20,9 +20,10 @@ from security.models import CVE, CWE
 
 
 @shared_task
-def update_cve(cve):
+def update_cve(cve_id):
     """ Task to update a CVE
     """
+    cve = CVE.objects.get(id=cve_id)
     cve.update()
 
 
@@ -31,13 +32,14 @@ def update_cves():
     """ Task to update all CVEs
     """
     for cve in CVE.objects.all():
-        update_cve.delay(cve)
+        update_cve.delay(cve.id)
 
 
 @shared_task
-def update_cwe(cwe):
+def update_cwe(cwe_id):
     """ Task to update a CWE
     """
+    cwe = CWE.objects.get(id=cwe_id)
     cwe.update()
 
 
@@ -46,4 +48,4 @@ def update_cwes():
     """ Task to update all CWEa
     """
     for cwe in CWE.objects.all():
-        update_cwe.delay(cwe)
+        update_cwe.delay(cwe.id)
