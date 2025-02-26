@@ -21,9 +21,10 @@ from security.tasks import update_cves, update_cwes
 
 
 @shared_task
-def update_erratum(erratum):
+def update_erratum(erratum_id):
     """ Task to update an erratum
     """
+    erratum = Erratum.objects.get(id=erratum_id)
     erratum.update()
 
 
@@ -32,6 +33,6 @@ def update_errata():
     """ Task to update all errata
     """
     for e in Erratum.objects.all():
-        update_erratum.delay(e)
+        update_erratum.delay(e.id)
     update_cves.delay()
     update_cwes.delay()

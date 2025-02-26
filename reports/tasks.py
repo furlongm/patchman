@@ -24,12 +24,16 @@ from reports.models import Report
 
 @shared_task(bind=True, autoretry_for=(OperationalError,), retry_backoff=True, retry_kwargs={'max_retries': 5})
 def process_report(self, report_id):
+    """ Task to process a single report
+    """
     report = Report.objects.get(id=report_id)
     report.process()
 
 
 @shared_task
 def process_reports():
+    """ Task to process all unprocessed reports
+    """
     reports = Report.objects.filter(processed=False)
     for report in reports:
         process_report.delay(report.id)
