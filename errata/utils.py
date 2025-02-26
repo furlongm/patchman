@@ -16,48 +16,11 @@
 
 from urllib.parse import urlparse
 
-from django.conf import settings
 from django.db import transaction
 
-from util import tz_aware_datetime, has_setting_of_type
+from util import tz_aware_datetime
 from errata.models import Erratum
-from errata.sources.distros.arch import update_arch_errata
-from errata.sources.distros.alma import update_alma_errata
-from errata.sources.distros.debian import update_debian_errata
-from errata.sources.distros.centos import update_centos_errata
-from errata.sources.distros.rocky import update_rocky_errata
-from errata.sources.distros.ubuntu import update_ubuntu_errata
 from patchman.signals import progress_info_s, progress_update_s
-
-
-def update_errata():
-    """ Update all distros errata
-    """
-    if has_setting_of_type('ERRATA_OS_UPDATES', list):
-        errata_os_updates = settings.ERRATA_OS_UPDATES
-    else:
-        errata_os_updates = ['rocky', 'alma', 'arch', 'ubuntu', 'debian', 'rhel', 'suse', 'amazon']
-    if 'arch' in errata_os_updates:
-        update_arch_errata()
-    if 'alma' in errata_os_updates:
-        update_alma_errata()
-    if 'rocky' in errata_os_updates:
-        update_rocky_errata()
-    if 'debian' in errata_os_updates:
-        update_debian_errata()
-    if 'ubuntu' in errata_os_updates:
-        update_ubuntu_errata()
-    if 'rhel' in errata_os_updates:
-        # update_rhel_errata()
-        pass
-    if 'suse' in errata_os_updates:
-        # update_suse_errata()
-        pass
-    if 'amazon' in errata_os_updates:
-        # update_amazon_errata()
-        pass
-    if 'centos' in errata_os_updates:
-        update_centos_errata()
 
 
 def get_or_create_erratum(name, e_type, issue_date, synopsis):
