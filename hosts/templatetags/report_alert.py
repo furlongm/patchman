@@ -17,13 +17,12 @@
 
 from datetime import timedelta
 
-from django.conf import settings
 from django.template import Library
 from django.utils.html import format_html
 from django.templatetags.static import static
 from django.utils import timezone
 
-from util import has_setting_of_type
+from util import get_setting_of_type
 
 register = Library()
 
@@ -32,10 +31,11 @@ register = Library()
 def report_alert(lastreport):
     html = ''
     alert_icon = static('img/icon-alert.gif')
-    if has_setting_of_type('DAYS_WITHOUT_REPORT', int):
-        days = settings.DAYS_WITHOUT_REPORT
-    else:
-        days = 14
+    days = get_setting_of_type(
+        setting_name='DAYS_WITHOUT_REPORT',
+        setting_type=int,
+        default=14,
+    )
     if lastreport < (timezone.now() - timedelta(days=days)):
         html = f'<img src="{alert_icon}" alt="Outdated Report" />'
     return format_html(html)

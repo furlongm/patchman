@@ -17,13 +17,12 @@
 import re
 from lxml import etree
 
-from django.conf import settings
 from django.db import transaction
 
 from packages.models import Package
 from packages.utils import parse_package_string, get_or_create_package
 from patchman.signals import error_message, progress_info_s, progress_update_s
-from util import bunzip2, get_url, download_url, get_sha1, has_setting_of_type
+from util import bunzip2, get_url, download_url, get_sha1, get_setting_of_type
 
 
 def update_centos_errata():
@@ -152,10 +151,11 @@ def accepted_centos_release(releases):
     """ Check if we accept the releases that the erratum pertains to
         If any release is accepted we return True, else False
     """
-    if has_setting_of_type('MIN_CENTOS_RELEASE', int):
-        min_release = settings.MIN_CENTOS_RELEASE
-    else:
-        min_release = 7
+    min_release = get_setting_of_type(
+        setting_name='MIN_CENTOS_RELEASE',
+        setting_type=int,
+        default=7,
+    )
     acceptable_release = False
     for release in releases:
         if int(release) >= min_release:

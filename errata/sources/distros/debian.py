@@ -20,14 +20,13 @@ from datetime import datetime
 from debian.deb822 import Dsc
 from io import StringIO
 
-from django.conf import settings
 from django.db.utils import IntegrityError
 
 from operatingsystems.models import OSRelease
 from packages.models import Package
 from packages.utils import get_or_create_package, find_evr
-from util import get_url, download_url, has_setting_of_type
-from patchman.signals import progress_info_s, progress_update_s
+from util import get_url, download_url, get_setting_of_type
+from patchman.signals import error_message, progress_info_s, progress_update_s
 
 
 def update_debian_errata():
@@ -178,10 +177,11 @@ def get_accepted_debian_codenames():
         Can be overridden by specifying DEBIAN_CODENAMES in settings
     """
     default_codenames = ['bookworm', 'bullseye']
-    if has_setting_of_type('DEBIAN_CODENAMES', list):
-        accepted_codenames = settings.DEBIAN_CODENAMES
-    else:
-        accepted_codenames = default_codenames
+    accepted_codenames = get_setting_of_type(
+        setting_name='DEBIAN_CODENAMES',
+        setting_type=list,
+        default_value=default_codenames,
+    )
     return accepted_codenames
 
 
