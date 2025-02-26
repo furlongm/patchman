@@ -57,7 +57,7 @@ def osvariant_list(request):
     except EmptyPage:
         page = paginator.page(paginator.num_pages)
 
-    nohost_osvariants = OSVariant.objects.filter(host__isnull=True).count() >= 1
+    nohost_osvariants = OSVariant.objects.filter(host__isnull=True).exists()
 
     return render(request,
                   'operatingsystems/osvariant_list.html',
@@ -113,7 +113,7 @@ def osvariant_delete(request, osvariant_id):
 
 @login_required
 def delete_nohost_osvariants(request):
-    osvariants = list(OSVariant.objects.filter(host__isnull=True))
+    osvariants = OSVariant.objects.filter(host__isnull=True)
 
     if request.method == 'POST':
         if 'delete' in request.POST:
@@ -121,9 +121,8 @@ def delete_nohost_osvariants(request):
                 text = 'There are no OS Variants with no Hosts'
                 messages.info(request, text)
                 return redirect(reverse('operatingsystems:osvariant_list'))
-            for osvariant in osvariants:
-                osvariant.delete()
-            text = f'{len(osvariants)} OS Variants have been deleted'
+            text = f'{osvariants.count()} OS Variants have been deleted'
+            osvariants.delete()
             messages.info(request, text)
             return redirect(reverse('operatingsystems:osvariant_list'))
         elif 'cancel' in request.POST:
