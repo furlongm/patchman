@@ -84,7 +84,7 @@ def repo_list(request):
         page = paginator.page(paginator.num_pages)
 
     filter_list = []
-    filter_list.append(Filter(request, 'OS Release', 'osrelease',  OSRelease.objects.filter(repos__in=repos)))
+    filter_list.append(Filter(request, 'OS Release', 'osrelease', OSRelease.objects.filter(repos__in=repos)))
     filter_list.append(Filter(request, 'Enabled', 'enabled', {'true': 'Yes', 'false': 'No'}))
     filter_list.append(Filter(request, 'Security', 'security', {'true': 'Yes', 'false': 'No'}))
     filter_list.append(Filter(request, 'Repo Type', 'repotype', Repository.REPO_TYPES))
