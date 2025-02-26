@@ -242,8 +242,7 @@ class Report(models.Model):
             host.check_rdns()
 
             if verbose:
-                text = 'Processing report {self.id} - {self.host}'
-                info_message.send(sender=None, text=text)
+                info_message.send(sender=None, text=f'Processing report {self.id} - {self.host}')
 
             from reports.utils import process_packages, process_repos, process_updates, process_modules
             with transaction.atomic():
@@ -261,13 +260,10 @@ class Report(models.Model):
 
             if find_updates:
                 if verbose:
-                    text = 'Finding updates for report {self.id} - {self.host}'
-                    info_message.send(sender=None, text=text)
+                    info_message.send(sender=None, text=f'Finding updates for report {self.id} - {self.host}')
                 host.find_updates()
         else:
             if self.processed:
-                text = f'Report {self.id} has already been processed'
-                info_message.send(sender=None, text=text)
+                info_message.send(sender=None, text=f'Report {self.id} has already been processed')
             else:
-                text = 'Error: OS, kernel or arch not sent with report {self.id}'
-                error_message.send(sender=None, text=text)
+                error_message.send(sender=None, text=f'Error: OS, kernel or arch not sent with report {self.id}')
