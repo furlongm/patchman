@@ -28,7 +28,7 @@ class CWE(models.Model):
 
     cwe_id = models.CharField(max_length=255, unique=True)
     name = models.CharField(max_length=255, blank=True, null=True)
-    description = models.CharField(max_length=65535, blank=True, null=True)
+    description = models.TextField(blank=True, default='')
 
     def __str__(self):
         return f'{self.cwe_id} - {self.name}'
@@ -76,7 +76,7 @@ class CVE(models.Model):
 
     cve_id = models.CharField(max_length=255, unique=True)
     title = models.CharField(max_length=255, blank=True, null=True)
-    description = models.CharField(max_length=65535)
+    description = models.TextField(blank=True, default='')
     reserved_date = models.DateTimeField(blank=True, null=True)
     published_date = models.DateTimeField(blank=True, null=True)
     rejected_date = models.DateTimeField(blank=True, null=True)
