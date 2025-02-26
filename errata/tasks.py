@@ -34,10 +34,10 @@ def update_errata():
         setting_type=list,
         default=['rocky', 'alma', 'arch', 'ubuntu', 'debian', 'rhel', 'suse', 'amazon'],
     )
-#    if 'arch' in errata_os_updates:
-#        update_arch_errata()
-#    if 'alma' in errata_os_updates:
-#        update_alma_errata()
+    if 'arch' in errata_os_updates:
+        update_arch_errata()
+    if 'alma' in errata_os_updates:
+        update_alma_errata()
     if 'rocky' in errata_os_updates:
         update_rocky_errata()
     if 'debian' in errata_os_updates:

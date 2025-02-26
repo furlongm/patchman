@@ -24,13 +24,13 @@ from util import get_url, download_url
 from patchman.signals import error_message, progress_info_s, progress_update_s
 
 
-def update_arch_errata():
+def update_arch_errata(concurrent_processing=False):
     """ Update Arch Linux Errata from the following sources:
         https://security.archlinux.org/advisories.json
     """
     add_arch_linux_osrelease()
     advisories = download_arch_errata()
-    parse_arch_errata_concurrently(advisories)
+    parse_arch_errata(advisories, concurrent_processing)
 
 
 def download_arch_errata():
@@ -42,20 +42,33 @@ def download_arch_errata():
     return json.loads(advisories)
 
 
-def parse_arch_errata(advisories):
+def parse_arch_errata(advisories, concurrent_processing):
     """ Parse Arch Linux Errata Advisories
     """
-    osrelease = OSRelease.objects.get(name='Arch Linux')
-    for advisory in advisories:
-        process_arch_erratum(advisory, osrelease)
+    if concurrent_processing:
+        parse_arch_errata_concurrently(advisories)
+    else:
+        parse_arch_errata_serially(advisories)
 
 
-def parse_arch_errata_concurrently(advisories):
-    """ Parse Arch Linux Errata Advisories
+def parse_arch_errata_serially(advisories):
+    """ Parse Arch Linux Errata Advisories serially
     """
     osrelease = OSRelease.objects.get(name='Arch Linux')
     elen = len(advisories)
-    ptext = 'Processing Arch Linux Advisories:'
+    ptext = f'Processing {elen} Arch Advisories:'
+    progress_info_s.send(sender=None, ptext=ptext, plen=elen)
+    for i, advisory in enumerate(advisories):
+        process_arch_erratum(advisory, osrelease)
+        progress_update_s.send(sender=None, index=i + 1)
+
+
+def parse_arch_errata_concurrently(advisories):
+    """ Parse Arch Linux Errata Advisories concurrently
+    """
+    osrelease = OSRelease.objects.get(name='Arch Linux')
+    elen = len(advisories)
+    ptext = f'Processing {elen} Arch Advisories:'
     progress_info_s.send(sender=None, ptext=ptext, plen=elen)
     i = 0
     with concurrent.futures.ProcessPoolExecutor(max_workers=3) as executor:

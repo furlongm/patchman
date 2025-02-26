@@ -28,7 +28,7 @@ from util import get_url, download_url, get_sha256, bunzip2, get_setting_of_type
 from patchman.signals import error_message, progress_info_s, progress_update_s
 
 
-def update_ubuntu_errata():
+def update_ubuntu_errata(concurrent_processing=False):
     """ Update Ubuntu errata
     """
     codenames = retrieve_ubuntu_codenames()
@@ -38,8 +38,7 @@ def update_ubuntu_errata():
         expected_checksum = download_ubuntu_usn_db_checksum()
         actual_checksum = get_sha256(data)
         if actual_checksum == expected_checksum:
-            extracted = bunzip2(data).decode()
-            parse_usn_data(extracted)
+            parse_usn_data(data, concurrent_processing)
         else:
             e = 'Ubuntu USN DB checksum mismatch, skipping Ubuntu errata parsing\n'
             e += f'{actual_checksum} (actual) != {expected_checksum} (expected)'
@@ -62,18 +61,39 @@ def download_ubuntu_usn_db_checksum():
     return download_url(res, 'Downloading Ubuntu Errata Checksum:').decode().split()[0]
 
 
-def parse_usn_data(data):
+def parse_usn_data(data, concurrent_processing):
     """ Parse the Ubuntu USN data
     """
-    from errata.utils import get_or_create_erratum
-    advisories = json.loads(data)
     accepted_releases = get_accepted_ubuntu_codenames()
+    extracted = bunzip2(data).decode()
+    advisories = json.loads(extracted)
+    if concurrent_processing:
+        parse_usn_data_concurrently(advisories, accepted_releases)
+    else:
+        parse_usn_data_serially(advisories, accepted_releases)
+
+
+def parse_usn_data_serially(advisories, accepted_releases):
+    """ Parse the Ubuntu USN data serially
+    """
+    elen = len(advisories)
+    ptext = f'Processing {elen} Ubuntu Errata:'
+    progress_info_s.send(sender=None, ptext=ptext, plen=elen)
+    for i, (usn_id, advisory) in enumerate(advisories.items()):
+        process_usn(usn_id, advisory, accepted_releases)
+        progress_update_s.send(sender=None, index=i + 1)
+
+
+def parse_usn_data_concurrently(advisories, accepted_releases):
+    """ Parse the Ubuntu USN data concurrently
+    """
     elen = len(advisories)
     ptext = f'Processing {elen} Ubuntu Errata:'
     progress_info_s.send(sender=None, ptext=ptext, plen=elen)
     i = 0
-    with concurrent.futures.ProcessPoolExecutor(max_workers=20) as executor:
-        futures = [executor.submit(process_usn, usn_id, advisory, accepted_releases) for usn_id, advisory in advisories.items()]
+    with concurrent.futures.ProcessPoolExecutor(max_workers=10) as executor:
+        futures = [executor.submit(process_usn, usn_id, advisory, accepted_releases)
+                   for usn_id, advisory in advisories.items()]
         for future in concurrent.futures.as_completed(futures):
             i += 1
             progress_update_s.send(sender=None, index=i + 1)
@@ -96,11 +116,15 @@ def process_usn(usn_id, advisory, accepted_releases):
             issue_date=issue_date,
             synopsis=synopsis,
         )
-        add_ubuntu_erratum_osreleases(e, affected_releases, accepted_releases)
+        add_ubuntu_erratum_osreleases(
+            e,
+            affected_releases,
+            accepted_releases,
+        )
         add_ubuntu_erratum_references(e, usn_id, advisory)
         add_ubuntu_erratum_packages(e, advisory)
-    except Exception as ex:
-        print(ex)
+    except Exception as exc:
+        error_message.send(sender=None, text=exc)
 
 
 def add_ubuntu_erratum_osreleases(e, affected_releases, accepted_releases):

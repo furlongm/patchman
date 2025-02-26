@@ -27,14 +27,14 @@ from util import get_url, download_url, info_message, error_message
 from patchman.signals import progress_info_s, progress_update_s
 
 
-def update_rocky_errata():
+def update_rocky_errata(concurrent_processing=True):
     """ Update Rocky Linux errata
     """
     rocky_errata_api_host = 'https://apollo.build.resf.org'
     rocky_errata_api_url = '/api/v3/'
     if check_rocky_errata_endpoint_health(rocky_errata_api_host):
-        advisories = download_rocky_advisories_concurrently(rocky_errata_api_host, rocky_errata_api_url)
-        process_rocky_errata_concurrently(advisories)
+        advisories = download_rocky_advisories(rocky_errata_api_host, rocky_errata_api_url, concurrent_processing)
+        process_rocky_errata(advisories, concurrent_processing)
 
 
 def check_rocky_errata_endpoint_health(rocky_errata_api_host):
@@ -62,8 +62,17 @@ def check_rocky_errata_endpoint_health(rocky_errata_api_host):
         return False
 
 
-def download_rocky_advisories(rocky_errata_api_host, rocky_errata_api_url):
+def download_rocky_advisories(rocky_errata_api_host, rocky_errata_api_url, concurrent_processing):
     """ Download Rocky Linux advisories and return the list
+    """
+    if concurrent_processing:
+        return download_rocky_advisories_concurrently(rocky_errata_api_host, rocky_errata_api_url)
+    else:
+        return download_rocky_advisories_serially(rocky_errata_api_host, rocky_errata_api_url)
+
+
+def download_rocky_advisories_serially(rocky_errata_api_host, rocky_errata_api_url):
+    """ Download Rocky Linux advisories serially and return the list
     """
     rocky_errata_advisories_url = rocky_errata_api_host + rocky_errata_api_url + 'advisories/'
     headers = {'Accept': 'application/json'}
@@ -127,14 +136,34 @@ def get_rocky_advisory(rocky_errata_advisories_url, page):
     return advisories_dict.get('advisories')
 
 
+def process_rocky_errata(advisories, concurrent_processing):
+    """ Process Rocky Linux Errata
+    """
+    if concurrent_processing:
+        process_rocky_errata_concurrently(advisories)
+    else:
+        process_rocky_errata_serially(advisories)
+
+
+def process_rocky_errata_serially(advisories):
+    """ Process Rocky Linux errata serially
+    """
+    elen = len(advisories)
+    ptext = f'Processing {elen} Rocky Errata:'
+    progress_info_s.send(sender=None, ptext=ptext, plen=elen)
+    for i, advisory in enumerate(advisories):
+        process_rocky_erratum(advisory)
+        progress_update_s.send(sender=None, index=i + 1)
+
+
 def process_rocky_errata_concurrently(advisories):
     """ Process Rocky Linux errata concurrently
     """
     elen = len(advisories)
-    ptext = f'Processing {elen} Errata:'
+    ptext = f'Processing {elen} Rocky Errata:'
     progress_info_s.send(sender=None, ptext=ptext, plen=elen)
     i = 0
-    with concurrent.futures.ProcessPoolExecutor(max_workers=10) as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=100) as executor:
         futures = [executor.submit(process_rocky_erratum, advisory) for advisory in advisories]
         for future in concurrent.futures.as_completed(futures):
             i += 1
@@ -150,30 +179,7 @@ def process_rocky_erratum(advisory):
     """ Process a single Rocky Linux erratum
     """
     from errata.utils import get_or_create_erratum
-    erratum_name = advisory.get('name')
-    e_type = advisory.get('kind').lower().replace(' ', '')
-    issue_date = advisory.get('published_at')
-    synopsis = advisory.get('synopsis')
-    e, created = get_or_create_erratum(
-        name=erratum_name,
-        e_type=e_type,
-        issue_date=issue_date,
-        synopsis=synopsis,
-    )
-    add_rocky_erratum_references(e, advisory)
-    add_rocky_erratum_oses(e, advisory)
-    add_rocky_erratum_packages(e, advisory)
-
-
-def process_rocky_errata(advisories):
-    """ Process Rocky Linux errata
-    """
-    from errata.utils import get_or_create_erratum
-    elen = len(advisories)
-    ptext = f'Processing {elen} Errata:'
-    progress_info_s.send(sender=None, ptext=ptext, plen=elen)
-    for i, advisory in enumerate(advisories):
-        progress_update_s.send(sender=None, index=i + 1)
+    try:
         erratum_name = advisory.get('name')
         e_type = advisory.get('kind').lower().replace(' ', '')
         issue_date = advisory.get('published_at')
@@ -187,6 +193,8 @@ def process_rocky_errata(advisories):
         add_rocky_erratum_references(e, advisory)
         add_rocky_erratum_oses(e, advisory)
         add_rocky_erratum_packages(e, advisory)
+    except Exception as exc:
+        error_message.send(sender=None, text=exc)
 
 
 def add_rocky_erratum_references(e, advisory):
