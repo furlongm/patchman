@@ -16,23 +16,51 @@
 
 from celery import shared_task
 
-from errata.models import Erratum
 from security.tasks import update_cves, update_cwes
+from util import get_setting_of_type
+from errata.sources.distros.arch import update_arch_errata
+from errata.sources.distros.alma import update_alma_errata
+from errata.sources.distros.debian import update_debian_errata
+from errata.sources.distros.centos import update_centos_errata
+from errata.sources.distros.rocky import update_rocky_errata
+from errata.sources.distros.ubuntu import update_ubuntu_errata
 
 
-@shared_task
-def update_erratum(erratum_id):
-    """ Task to update an erratum
-    """
-    erratum = Erratum.objects.get(id=erratum_id)
-    erratum.update()
-
-
-@shared_task
 def update_errata():
+    """ Update all distros errata
+    """
+    errata_os_updates = get_setting_of_type(
+        setting_name='ERRATA_OS_UPDATES',
+        setting_type=list,
+        default=['rocky', 'alma', 'arch', 'ubuntu', 'debian', 'rhel', 'suse', 'amazon'],
+    )
+#    if 'arch' in errata_os_updates:
+#        update_arch_errata()
+#    if 'alma' in errata_os_updates:
+#        update_alma_errata()
+    if 'rocky' in errata_os_updates:
+        update_rocky_errata()
+    if 'debian' in errata_os_updates:
+        update_debian_errata()
+    if 'ubuntu' in errata_os_updates:
+        update_ubuntu_errata()
+    if 'rhel' in errata_os_updates:
+        # update_rhel_errata()
+        pass
+    if 'suse' in errata_os_updates:
+        # update_suse_errata()
+        pass
+    if 'amazon' in errata_os_updates:
+        # update_amazon_errata()
+        pass
+    if 'centos' in errata_os_updates:
+        update_centos_errata()
+
+
+@shared_task
+def update_errata_and_cves():
     """ Task to update all errata
     """
-    for e in Erratum.objects.all():
-        update_erratum.delay(e.id)
+    update_errata.delay()
     update_cves.delay()
     update_cwes.delay()

@@ -65,7 +65,7 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': crontab(hour=4, minute=00),
     },
     'update_errata_cves_cwes_every_12_hours': {
-        'task': 'errata.tasks.update_errata',
+        'task': 'errata.tasks.update_errata_and_cves',
         'schedule': timedelta(hours=12),
     },
     'run_database_maintenance_daily': {

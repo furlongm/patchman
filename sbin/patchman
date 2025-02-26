@@ -31,7 +31,8 @@ from django.conf import settings  # noqa
 django_setup()
 
 from arch.utils import clean_architectures
-from errata.utils import update_errata, mark_errata_security_updates
+from errata.utils import mark_errata_security_updates
+from errata.tasks import update_errata
 from hosts.models import Host
 from modules.models import Module
 from packages.utils import clean_packages, clean_packageupdates, clean_packagenames
