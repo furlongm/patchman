@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+import concurrent.futures
 import csv
 import os
 import json
@@ -70,13 +71,24 @@ def parse_usn_data(data):
     advisories = json.loads(data)
     accepted_releases = get_accepted_ubuntu_codenames()
     elen = len(advisories)
-    ptext = f'Processing {elen} Errata:'
+    ptext = f'Processing {elen} Ubuntu Errata:'
     progress_info_s.send(sender=None, ptext=ptext, plen=elen)
-    for i, (usn_id, advisory) in enumerate(advisories.items()):
-        progress_update_s.send(sender=None, index=i + 1)
+    i = 0
+    with concurrent.futures.ProcessPoolExecutor(max_workers=20) as executor:
+        futures = [executor.submit(process_usn, usn_id, advisory, accepted_releases) for usn_id, advisory in advisories.items()]
+        for future in concurrent.futures.as_completed(futures):
+            i += 1
+            progress_update_s.send(sender=None, index=i + 1)
+
+
+def process_usn(usn_id, advisory, accepted_releases):
+    """ Process a single USN advisory
+    """
+    from errata.utils import get_or_create_erratum
+    try:
         affected_releases = advisory.get('releases', {}).keys()
         if not release_is_affected(affected_releases, accepted_releases):
-            continue
+            return
         name = f'USN-{usn_id}'
         issue_date = int(advisory.get('timestamp'))
         synopsis = advisory.get('title')
@@ -89,6 +101,8 @@ def parse_usn_data(data):
         add_ubuntu_erratum_osreleases(e, affected_releases, accepted_releases)
         add_ubuntu_erratum_references(e, usn_id, advisory)
         add_ubuntu_erratum_packages(e, advisory)
+    except Exception as ex:
+        print(ex)
 
 
 def add_ubuntu_erratum_osreleases(e, affected_releases, accepted_releases):
