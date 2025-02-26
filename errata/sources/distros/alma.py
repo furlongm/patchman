@@ -17,11 +17,10 @@
 import json
 
 from django.db import transaction
-from django.conf import settings
 
 from packages.models import Package
 from packages.utils import get_or_create_package, parse_package_string
-from util import get_url, download_url, has_setting_of_type
+from util import get_url, download_url, get_setting_of_type
 from patchman.signals import progress_info_s, progress_update_s
 
 
@@ -32,10 +31,11 @@ def update_alma_errata():
         and process advisories
     """
     default_alma_releases = [8, 9]
-    if has_setting_of_type('ALMA_RELEASES', list):
-        alma_releases = settings.ALMA_RELEASES
-    else:
-        alma_releases = default_alma_releases
+    alma_releases = get_setting_of_type(
+        setting_name='ALMA_RELEASES',
+        setting_type=list,
+        default=default_alma_releases,
+    )
     for release in alma_releases:
         advisories = download_alma_advisories(release)
         process_alma_errata(release, advisories)

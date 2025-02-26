@@ -17,7 +17,6 @@
 
 from datetime import datetime, timedelta
 
-from django.conf import settings
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.models import Site
@@ -28,7 +27,7 @@ from operatingsystems.models import OSVariant, OSRelease
 from repos.models import Repository, Mirror
 from packages.models import Package
 from reports.models import Report
-from util import has_setting_of_type
+from util import get_setting_of_type
 
 
 @login_required
@@ -46,10 +45,11 @@ def dashboard(request):
     packages = Package.objects.all()
 
     # host issues
-    if has_setting_of_type('DAYS_WITHOUT_REPORT', int):
-        days = settings.DAYS_WITHOUT_REPORT
-    else:
-        days = 14
+    days = get_setting_of_type(
+        setting_name='DAYS_WITHOUT_REPORT',
+        setting_type=int,
+        default=14,
+    )
     last_report_delta = datetime.now() - timedelta(days=days)
     stale_hosts = hosts.filter(lastreport__lt=last_report_delta)
     norepo_hosts = hosts.filter(repos__isnull=True, osvariant__osrelease__repos__isnull=True)  # noqa

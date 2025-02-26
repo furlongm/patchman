@@ -15,13 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.conf import settings
 from django.db import models
 from django.urls import reverse
 
 from arch.models import MachineArchitecture
 from packages.models import Package
-from util import has_setting_of_type
+from util import get_setting_of_type
 
 from repos.utils import refresh_deb_repo, refresh_rpm_repo, refresh_arch_repo, refresh_gentoo_repo, \
      update_mirror_packages
@@ -169,10 +168,11 @@ class Mirror(models.Model):
         text = f'No usable mirror found at {self.url}'
         error_message.send(sender=None, text=text)
         default_max_mirror_failures = 28
-        if has_setting_of_type('MAX_MIRROR_FAILURES', int):
-            max_mirror_failures = settings.MAX_MIRROR_FAILURES
-        else:
-            max_mirror_failures = default_max_mirror_failures
+        max_mirror_failures = get_setting_of_type(
+            setting_name='MAX_MIRROR_FAILURES',
+            setting_type=int,
+            default=default_max_mirror_failures
+        )
         self.fail_count = self.fail_count + 1
         if max_mirror_failures == -1:
             text = f'Mirror has failed {self.fail_count} times, but MAX_MIRROR_FAILURES=-1, not disabling refresh'

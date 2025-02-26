@@ -21,13 +21,11 @@ import json
 from io import StringIO
 from urllib.parse import urlparse
 
-from django.conf import settings
-
 from operatingsystems.models import OSRelease, OSVariant
 from packages.models import Package, PackageName
 from packages.utils import get_or_create_package, parse_package_string, find_evr
-from patchman.signals import progress_info_s, progress_update_s, error_message
-from util import get_url, download_url, get_sha256, bunzip2, has_setting_of_type
+from util import get_url, download_url, get_sha256, bunzip2, get_setting_of_type
+from patchman.signals import error_message, progress_info_s, progress_update_s
 
 
 def update_ubuntu_errata():
@@ -181,11 +179,12 @@ def get_accepted_ubuntu_codenames():
     """ Get acceptable Ubuntu OS codenames
         Can be overridden by specifying UBUNTU_CODENAMES in settings
     """
-    default_codenames = ['bionic', 'focal', 'jammy', 'noble']
-    if has_setting_of_type('UBUNTU_CODENAMES', list):
-        accepted_codenames = settings.UBUNTU_CODENAMES
-    else:
-        accepted_codenames = default_codenames
+    default_codenames = ['focal', 'jammy', 'noble']
+    accepted_codenames = get_setting_of_type(
+        setting_name='UBUNTU_CODENAMES',
+        setting_type=list,
+        default_value=default_codenames,
+    )
     return accepted_codenames
 
 

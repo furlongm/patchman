@@ -31,7 +31,6 @@ from debian.deb822 import Packages
 from fnmatch import fnmatch
 from tenacity import RetryError
 
-from django.conf import settings
 from django.db import IntegrityError, DatabaseError, transaction
 from django.db.models import Q
 
@@ -39,7 +38,7 @@ from arch.models import PackageArchitecture
 from packages.models import Package, PackageString
 from packages.utils import parse_package_string, get_or_create_package, find_evr, \
     convert_package_to_packagestring, convert_packagestring_to_package
-from util import get_url, download_url, response_is_valid, extract, get_checksum, Checksum, has_setting_of_type
+from util import get_url, download_url, response_is_valid, extract, get_checksum, Checksum, get_setting_of_type
 from patchman.signals import progress_info_s, progress_update_s, \
     info_message, warning_message, error_message, debug_message
 
@@ -986,10 +985,11 @@ def find_best_repo(package, hostrepos):
 def get_max_mirrors():
     """ Find the max number of mirrors for refresh
     """
-    if has_setting_of_type('MAX_MIRRORS', int):
-        max_mirrors = settings.MAX_MIRRORS
-    else:
-        max_mirrors = 5
+    max_mirrors = get_setting_of_type(
+        setting_name='MAX_MIRRORS',
+        setting_type=int,
+        default=5,
+    )
     return max_mirrors
 
 
