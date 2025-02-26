@@ -96,7 +96,7 @@ class Repository(models.Model):
             elif self.repotype == Repository.GENTOO:
                 refresh_gentoo_repo(self)
             else:
-                text = 'Error: unknown repo type for repo {self.id}: {self.repotype}'
+                text = f'Error: unknown repo type for repo {self.id}: {self.repotype}'
                 error_message.send(sender=None, text=text)
         else:
             text = 'Repo requires certificate authentication, not updating'
