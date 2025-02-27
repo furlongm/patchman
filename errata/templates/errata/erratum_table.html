@@ -17,7 +17,7 @@
       <tr>
         <td><a href="{{ erratum.get_absolute_url }}">{{ erratum.name }}</a></td>
         <td>{{ erratum.e_type }}</td>
-        <td>{{ erratum.issue_date }}</td>
+        <td>{{ erratum.issue_date|date|default_if_none:'' }}</td>
         <td>{{ erratum.synopsis }}</td>
         <td><a href="{% url 'packages:package_list' %}?erratum_id={{ erratum.id }}">{{ erratum.packages.count }}</a></td>
         <td><a href="{% url 'operatingsystems:osrelease_list' %}?erratum_id={{ erratum.id }}">{{ erratum.osreleases.count }}</a></td>
