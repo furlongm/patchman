@@ -19,7 +19,7 @@
       <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
         <tr><th class="col-sm-1">Name</th><td> {{ erratum.name }} </td></tr>
         <tr><th class="col-sm-1">Type</th><td> {{ erratum.e_type }} </td></tr>
-        <tr><th class="col-sm-1">Published Date</th><td>{{ erratum.issue_date }}</td></tr>
+        <tr><th class="col-sm-1">Published Date</th><td>{{ erratum.issue_date|date|default_if_none:'' }}</td></tr>
         <tr><th class="col-sm-1">Synopsis</th><td> {{ erratum.synopsis }} </td></tr>
         <tr><th class="col-sm-1">Packages Affected</th><td><a href="{% url 'packages:package_list' %}?erratum_id={{ erratum.id }}"> {{ erratum.packages.count }} </a></td></tr>
         <tr>
