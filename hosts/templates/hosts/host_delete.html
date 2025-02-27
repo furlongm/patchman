@@ -13,7 +13,7 @@
 <div class="well well-sm">
   <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
     <tr><th>Hostname</th><td> {{ host.hostname }} </td></tr>
-    <tr><th>Domain</th><td> <a href="{% url 'hosts:host_list' %}?domain={{ host.domain.id }}">{{ host.domain }}</a> </td></tr>
+    <tr><th>Domain</th><td> <a href="{% url 'hosts:host_list' %}?domain_id={{ host.domain.id }}">{{ host.domain }}</a> </td></tr>
     <tr><th>Reporting IP Address</th><td> {{ host.ipaddress }} </td></tr>
     <tr><th>Reverse DNS</th><td> {{ host.reversedns }} </td></tr>
     <tr><th>OS Release</th><td> <a href="{{ host.osvariant.osrelease.get_absolute_url }}">{{ host.osvariant.osrelease }}</a> </td></tr>

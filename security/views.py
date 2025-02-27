@@ -72,13 +72,13 @@ def cve_list(request):
     cves = CVE.objects.select_related()
 
     if 'erratum_id' in request.GET:
-        cves = cves.filter(erratum=int(request.GET['erratum_id']))
+        cves = cves.filter(erratum=request.GET['erratum_id'])
 
     if 'reference_id' in request.GET:
-        cves = cves.filter(references=int(request.GET['reference_id']))
+        cves = cves.filter(references=request.GET['reference_id'])
 
     if 'package_id' in request.GET:
-        cves = cves.filter(packages=int(request.GET['package_id']))
+        cves = cves.filter(packages=request.GET['package_id'])
 
     if 'cwe_id' in request.GET:
         cves = cves.filter(cwes__cwe_id=request.GET['cwe_id'])

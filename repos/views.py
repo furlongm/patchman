@@ -43,11 +43,11 @@ def repo_list(request):
     if 'repotype' in request.GET:
         repos = repos.filter(repotype=request.GET['repotype'])
 
-    if 'arch' in request.GET:
-        repos = repos.filter(arch=request.GET['arch'])
+    if 'arch_id' in request.GET:
+        repos = repos.filter(arch=request.GET['arch_id'])
 
-    if 'osrelease' in request.GET:
-        repos = repos.filter(osrelease=int(request.GET['osrelease']))
+    if 'osrelease_id' in request.GET:
+        repos = repos.filter(osrelease=request.GET['osrelease_id'])
 
     if 'security' in request.GET:
         security = request.GET['security'] == 'true'
@@ -58,8 +58,7 @@ def repo_list(request):
         repos = repos.filter(enabled=enabled)
 
     if 'package_id' in request.GET:
-        repos = repos.filter(
-            mirror__packages=int(request.GET['package_id']))
+        repos = repos.filter(mirror__packages=request.GET['package_id'])
 
     if 'search' in request.GET:
         terms = request.GET['search'].lower()
@@ -84,11 +83,11 @@ def repo_list(request):
         page = paginator.page(paginator.num_pages)
 
     filter_list = []
-    filter_list.append(Filter(request, 'OS Release', 'osrelease', OSRelease.objects.filter(repos__in=repos)))
+    filter_list.append(Filter(request, 'OS Release', 'osrelease_id', OSRelease.objects.filter(repos__in=repos)))
     filter_list.append(Filter(request, 'Enabled', 'enabled', {'true': 'Yes', 'false': 'No'}))
     filter_list.append(Filter(request, 'Security', 'security', {'true': 'Yes', 'false': 'No'}))
     filter_list.append(Filter(request, 'Repo Type', 'repotype', Repository.REPO_TYPES))
-    filter_list.append(Filter(request, 'Architecture', 'arch',
+    filter_list.append(Filter(request, 'Architecture', 'arch_id',
                               MachineArchitecture.objects.filter(repository__in=repos)))
     filter_bar = FilterBar(request, filter_list)
 

@@ -28,19 +28,19 @@ from errata.serializers import ErratumSerializer, ErratumReferenceSerializer
 
 @login_required
 def erratum_list(request):
-    errata = Erratum.objects.select_related()
+    errata = Erratum.objects.select_related().order_by('name')
 
     if 'e_type' in request.GET:
         errata = errata.filter(e_type=request.GET['e_type']).distinct()
 
     if 'reference_id' in request.GET:
-        errata = errata.filter(references=int(request.GET['reference_id']))
+        errata = errata.filter(references=request.GET['reference_id'])
 
     if 'cve_id' in request.GET:
         errata = errata.filter(cves__cve_id=request.GET['cve_id'])
 
     if 'package_id' in request.GET:
-        errata = errata.filter(packages=int(request.GET['package_id']))
+        errata = errata.filter(packages=request.GET['package_id'])
 
     if 'search' in request.GET:
         terms = request.GET['search'].lower()
@@ -76,13 +76,13 @@ def erratum_list(request):
 
 @login_required
 def erratumreference_list(request):
-    erefs = ErratumReference.objects.select_related()
+    erefs = ErratumReference.objects.select_related().order_by('er_type')
 
     if 'er_type' in request.GET:
         erefs = erefs.filter(er_type=request.GET['er_type']).distinct()
 
     if 'erratum_id' in request.GET:
-        erefs = erefs.filter(erratum__id=int(request.GET['erratum_id']))
+        erefs = erefs.filter(erratum__id=request.GET['erratum_id'])
 
     if 'search' in request.GET:
         terms = request.GET['search'].lower()
