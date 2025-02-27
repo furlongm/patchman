@@ -36,7 +36,7 @@
           <th class="col-sm-1">CWEs</th>
           <td>
             {% for cwe in cve.cwes.all %}
-              <a href="{{ cwe.get_absolute_url }}">{{ cwe.cwe_id }} - {{ cwe.name }}</a><a href="https://cwe.mitre.org/data/definitions/{{ cwe.int_id }}.html"><span class="glyphicon glyphicon-link"></span></a><br />
+              <a href="{{ cwe.get_absolute_url }}">{{ cwe.cwe_id }} - {{ cwe.name }}</a><a href="https://cwe.mitre.org/data/definitions/{{ cwe.int_id }}.html">&nbsp;<span class="glyphicon glyphicon-link"></span></a><br />
             {% endfor %}
           </td>
         </tr>
@@ -54,9 +54,9 @@
           <th class="col-sm-2">URLs</th>
           <td>
             <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
-              <tr><td><a href="https://nvd.nist.gov/vuln/detail/{{ cve.cve_id }}">NIST<span class="glyphicon glyphicon-link"></span></a></td></tr>
-              <tr><td><a href="https://www.cve.org/CVERecord?id={{ cve.cve_id }}">MITRE<span class="glyphicon glyphicon-link"></span></a></td></tr>
-              <tr><td><a href="https://osv.dev/vulnerability/{{ cve.cve_id }}">osv.dev<span class="glyphicon glyphicon-link"></span></a></td></tr>
+              <tr><td><a href="https://nvd.nist.gov/vuln/detail/{{ cve.cve_id }}">NIST <span class="glyphicon glyphicon-link"></span></a></td></tr>
+              <tr><td><a href="https://www.cve.org/CVERecord?id={{ cve.cve_id }}">MITRE <span class="glyphicon glyphicon-link"></span></a></td></tr>
+              <tr><td><a href="https://osv.dev/vulnerability/{{ cve.cve_id }}">osv.dev <span class="glyphicon glyphicon-link"></span></a></td></tr>
               {% for reference in cve.erratum_set.references.all %}
                 <tr>
                   <td>{{ reference.er_type }}</td>
