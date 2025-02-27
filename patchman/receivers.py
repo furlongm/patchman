@@ -16,6 +16,7 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from colorama import init, Fore, Style
+from tqdm import tqdm
 
 from django.dispatch import receiver
 
@@ -53,7 +54,7 @@ def print_info_message(sender=None, **kwargs):
     """
     text = str(kwargs.get('text'))
     if get_verbosity():
-        print(Style.RESET_ALL + Fore.RESET + text)
+        tqdm.write(Style.RESET_ALL + Fore.RESET + text)
 
 
 @receiver(warning_message)
@@ -62,7 +63,7 @@ def print_warning_message(**kwargs):
     """
     text = str(kwargs.get('text'))
     if get_verbosity():
-        print(Style.BRIGHT + Fore.YELLOW + text)
+        tqdm.write(Style.BRIGHT + Fore.YELLOW + text)
 
 
 @receiver(error_message)
@@ -71,7 +72,7 @@ def print_error_message(**kwargs):
     """
     text = str(kwargs.get('text'))
     if text:
-        print(Style.BRIGHT + Fore.RED + text)
+        tqdm.write(Style.BRIGHT + Fore.RED + text)
 
 
 @receiver(debug_message)
@@ -80,4 +81,4 @@ def print_debug_message(**kwargs):
     """
     text = str(kwargs.get('text'))
     if get_verbosity() and settings.DEBUG and text:
-        print(Style.BRIGHT + Fore.BLUE + text)
+        tqdm.write(Style.BRIGHT + Fore.BLUE + text)
