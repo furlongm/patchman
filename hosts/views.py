@@ -39,26 +39,26 @@ from hosts.serializers import HostSerializer, HostRepoSerializer
 def host_list(request):
     hosts = Host.objects.select_related()
 
-    if 'domain' in request.GET:
-        hosts = hosts.filter(domain=int(request.GET['domain']))
+    if 'domain_id' in request.GET:
+        hosts = hosts.filter(domain=request.GET['domain_id'])
 
     if 'package_id' in request.GET:
-        hosts = hosts.filter(packages=int(request.GET['package_id']))
+        hosts = hosts.filter(packages=request.GET['package_id'])
 
     if 'package' in request.GET:
         hosts = hosts.filter(packages__name__name=request.GET['package'])
 
-    if 'repo' in request.GET:
-        hosts = hosts.filter(repos=int(request.GET['repo']))
+    if 'repo_id' in request.GET:
+        hosts = hosts.filter(repos=request.GET['repo_id'])
 
-    if 'arch' in request.GET:
-        hosts = hosts.filter(arch=int(request.GET['arch']))
+    if 'arch_id' in request.GET:
+        hosts = hosts.filter(arch=request.GET['arch_id'])
 
-    if 'osvariant' in request.GET:
-        hosts = hosts.filter(osvariant=int(request.GET['osvariant']))
+    if 'osvariant_id' in request.GET:
+        hosts = hosts.filter(osvariant=request.GET['osvariant_id'])
 
-    if 'osrelease' in request.GET:
-        hosts = hosts.filter(osvariant__osrelease=int(request.GET['osrelease']))
+    if 'osrelease_id' in request.GET:
+        hosts = hosts.filter(osvariant__osrelease=request.GET['osrelease_id'])
 
     if 'tag' in request.GET:
         hosts = hosts.filter(tags__name__in=[request.GET['tag']])
@@ -92,10 +92,10 @@ def host_list(request):
     for tag in Tag.objects.all():
         tags[tag.name] = tag.name
     filter_list.append(Filter(request, 'Tag', 'tag', tags))
-    filter_list.append(Filter(request, 'Domain', 'domain', Domain.objects.all()))
-    filter_list.append(Filter(request, 'OS Variant', 'osvariant', OSVariant.objects.filter(host__in=hosts)))
-    filter_list.append(Filter(request, 'OS Release', 'osrelease', OSRelease.objects.filter(osvariant__host__in=hosts)))
-    filter_list.append(Filter(request, 'Architecture', 'arch', MachineArchitecture.objects.filter(host__in=hosts)))
+    filter_list.append(Filter(request, 'Domain', 'domain_id', Domain.objects.all()))
+    filter_list.append(Filter(request, 'OS Release', 'osrelease_id', OSRelease.objects.filter(osvariant__host__in=hosts)))
+    filter_list.append(Filter(request, 'OS Variant', 'osvariant_id', OSVariant.objects.filter(host__in=hosts)))
+    filter_list.append(Filter(request, 'Architecture', 'arch_id', MachineArchitecture.objects.filter(host__in=hosts)))
     filter_list.append(Filter(request, 'Reboot Required', 'reboot_required', {'true': 'Yes', 'false': 'No'}))
     filter_bar = FilterBar(request, filter_list)
 

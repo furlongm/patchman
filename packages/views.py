@@ -32,8 +32,8 @@ from packages.serializers import PackageNameSerializer, PackageSerializer, Packa
 def package_list(request):
     packages = Package.objects.select_related()
 
-    if 'arch' in request.GET:
-        packages = packages.filter(arch=request.GET['arch']).distinct()
+    if 'arch_id' in request.GET:
+        packages = packages.filter(arch=request.GET['arch_id']).distinct()
 
     if 'packagetype' in request.GET:
         packages = packages.filter(packagetype=request.GET['packagetype']).distinct()
@@ -99,7 +99,7 @@ def package_list(request):
     filter_list.append(Filter(request, 'Installed on Hosts', 'installed_on_hosts', {'true': 'Yes', 'false': 'No'}))
     filter_list.append(Filter(request, 'Available in Repos', 'available_in_repos', {'true': 'Yes', 'false': 'No'}))
     filter_list.append(Filter(request, 'Package Type', 'packagetype', Package.PACKAGE_TYPES))
-    filter_list.append(Filter(request, 'Architecture', 'arch', PackageArchitecture.objects.all()))
+    filter_list.append(Filter(request, 'Architecture', 'arch_id', PackageArchitecture.objects.all()))
     filter_bar = FilterBar(request, filter_list)
 
     return render(request,
@@ -114,12 +114,10 @@ def package_name_list(request):
     packages = PackageName.objects.select_related()
 
     if 'arch' in request.GET:
-        packages = packages.filter(
-            package__arch=int(request.GET['arch'])).distinct()
+        packages = packages.filter(package__arch=request.GET['arch']).distinct()
 
     if 'packagetype' in request.GET:
-        packages = packages.filter(
-            package__packagetype=request.GET['packagetype']).distinct()
+        packages = packages.filter(package__packagetype=request.GET['packagetype']).distinct()
 
     if 'search' in request.GET:
         terms = request.GET['search'].lower()
