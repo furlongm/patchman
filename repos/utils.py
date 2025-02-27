@@ -38,7 +38,8 @@ from arch.models import PackageArchitecture
 from packages.models import Package, PackageString
 from packages.utils import parse_package_string, get_or_create_package, find_evr, \
     convert_package_to_packagestring, convert_packagestring_to_package
-from util import get_url, download_url, response_is_valid, extract, get_checksum, Checksum, get_setting_of_type
+from util import get_url, download_url, response_is_valid, extract, get_checksum, Checksum, get_setting_of_type, \
+    get_datetime_now
 from patchman.signals import progress_info_s, progress_update_s, \
     info_message, warning_message, error_message, debug_message
 
@@ -641,7 +642,7 @@ def refresh_arch_repo(repo):
     """
     max_mirrors = get_max_mirrors()
     fname = f'{repo.arch}/{repo.repo_id}.db'
-    ts = datetime.now().astimezone().replace(microsecond=0)
+    ts = get_datetime_now()
 
     enabled_mirrors = repo.mirror_set.filter(refresh=True, enabled=True)
     for i, mirror in enumerate(enabled_mirrors):
@@ -801,7 +802,7 @@ def refresh_gentoo_repo(repo):
     else:
         refresh_gentoo_overlay_repo(repo)
         repo_type = 'overlay'
-    ts = datetime.now().replace(microsecond=0)
+    ts = get_datetime_now()
     for mirror in repo.mirror_set.filter(mirrorlist=False, refresh=True):
         res = get_url(mirror.url + '.md5sum')
         data = download_url(res, 'Downloading repo info (1/2):')
@@ -887,7 +888,7 @@ def refresh_rpm_repo(repo):
     check_for_metalinks(repo)
 
     max_mirrors = get_max_mirrors()
-    ts = datetime.now().astimezone().replace(microsecond=0)
+    ts = get_datetime_now()
     enabled_mirrors = repo.mirror_set.filter(mirrorlist=False, refresh=True, enabled=True)
     for i, mirror in enumerate(enabled_mirrors):
         if i >= max_mirrors:
@@ -927,7 +928,7 @@ def refresh_deb_repo(repo):
 
     formats = ['Packages.xz', 'Packages.bz2', 'Packages.gz', 'Packages']
 
-    ts = datetime.now().astimezone().replace(microsecond=0)
+    ts = get_datetime_now()
     enabled_mirrors = repo.mirror_set.filter(refresh=True, enabled=True)
     for mirror in enabled_mirrors:
         res = find_mirror_url(mirror.url, formats)

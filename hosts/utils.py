@@ -19,13 +19,12 @@ from socket import gethostbyaddr, gaierror, herror
 
 from django.db import DatabaseError
 
-from patchman.signals import progress_info_s, progress_update_s, error_message
+from patchman.signals import error_message
 
 
 def update_rdns(host):
     """ Update the reverse DNS for a host
     """
-
     try:
         reversedns = str(gethostbyaddr(host.ipaddress)[0])
     except (gaierror, herror):
@@ -36,27 +35,3 @@ def update_rdns(host):
         host.save()
     except DatabaseError as e:
         error_message.send(sender=None, text=e)
-
-
-def remove_reports(host, timestamp):
-    """ Remove all but the last 3 reports for a host
-    """
-
-    from reports.models import Report
-
-    reports = Report.objects.filter(host=host).order_by('-created')[:3]
-    report_ids = []
-
-    for report in reports:
-        report_ids.append(report.id)
-        report.accessed = timestamp
-        report.save()
-
-    del_reports = Report.objects.filter(host=host).exclude(id__in=report_ids)
-
-    rlen = del_reports.count()
-    ptext = f'Cleaning {rlen} old reports'
-    progress_info_s.send(sender=None, ptext=ptext, plen=rlen)
-    for i, report in enumerate(del_reports):
-        report.delete()
-        progress_update_s.send(sender=None, index=i + 1)
