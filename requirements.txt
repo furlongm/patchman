@@ -2,7 +2,6 @@ Django==4.2.19
 django-taggit==4.0.0
 django-extensions==3.2.1
 django-bootstrap3==23.1
-progressbar==2.5
 python-debian==0.1.49
 lxml==5.2.2
 defusedxml==0.7.1
@@ -20,3 +19,4 @@ tenacity==8.2.3
 celery==5.4.0
 redis==5.2.1
 django-celery-beat==2.7.0
+tqdm==4.67.1
