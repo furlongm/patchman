@@ -76,4 +76,8 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'util.tasks.clean_database',
         'schedule': crontab(hour=6, minute=00),
     },
+    'remove_old_reports': {
+        'task': 'reports.tasks.remove_reports_with_no_hosts',
+        'schedule': timedelta(days=7),
+    },
 }

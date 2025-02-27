@@ -32,7 +32,6 @@ from socket import gethostbyaddr, herror
 class Report(models.Model):
 
     created = models.DateTimeField(auto_now_add=True)
-    accessed = models.DateTimeField(auto_now_add=True)
     host = models.CharField(max_length=255, null=True)
     domain = models.CharField(max_length=255, null=True)
     tags = models.CharField(max_length=255, null=True, default='')

@@ -26,16 +26,16 @@ except ImportError:
     from rpm import labelCompare
 from taggit.managers import TaggableManager
 
-from packages.models import Package, PackageUpdate
-from domains.models import Domain
-from repos.models import Repository
-from operatingsystems.models import OSVariant
 from arch.models import MachineArchitecture
+from domains.models import Domain
+from hosts.utils import update_rdns
 from modules.models import Module
-from patchman.signals import info_message, error_message
+from operatingsystems.models import OSVariant
+from packages.models import Package, PackageUpdate
 from packages.utils import get_or_create_package_update
+from patchman.signals import info_message, error_message
+from repos.models import Repository
 from repos.utils import find_best_repo
-from hosts.utils import update_rdns, remove_reports
 
 
 class Host(models.Model):
@@ -121,8 +121,16 @@ class Host(models.Model):
             info_message.send(sender=None,
                               text='Reverse DNS check disabled')
 
-    def clean_reports(self, timestamp):
-        remove_reports(self, timestamp)
+    def clean_reports(self):
+        """ Remove all but the last 3 reports for a host
+        """
+        from reports.models import Report
+        reports = Report.objects.filter(host=self).order_by('-created')[3:]
+        rlen = reports.count()
+        for report in Report.objects.filter(host=self).order_by('-created')[3:]:
+            report.delete()
+        if rlen > 0:
+            info_message.send(sender=None, text=f'{self.hostname}: removed {rlen} old reports')
 
     def get_host_repo_packages(self):
         if self.host_repos_only:
