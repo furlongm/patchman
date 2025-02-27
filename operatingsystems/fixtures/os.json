@@ -1,0 +1,66 @@
+[
+  {
+    "model": "operatingsystems.osvariant",
+    "fields": {
+      "name": "Rocky Linux 9.3",
+      "osrelease": [
+        "Rocky Linux 9",
+        "Blue Onyx"
+      ]
+    }
+  },
+  {
+    "model": "operatingsystems.osvariant",
+    "fields": {
+      "name": "Rocky Linux 8.9",
+      "osrelease": [
+        "Rocky Linux 8",
+        "Green Obsidian"
+      ]
+    }
+  },
+  {
+    "model": "operatingsystems.osvariant",
+    "fields": {
+      "name": "Debian 12.5",
+      "osrelease": [
+        "Debian 12",
+        "bookworm"
+      ]
+    }
+  },
+  {
+    "model": "operatingsystems.osvariant",
+    "fields": {
+      "name": "Arch Linux",
+      "osrelease": null
+    }
+  },
+  {
+    "model": "operatingsystems.osvariant",
+    "fields": {
+      "name": "openSUSE Leap 15.6",
+      "osrelease": null
+    }
+  },
+  {
+    "model": "operatingsystems.osvariant",
+    "fields": {
+      "name": "AlmaLinux 8.10",
+      "osrelease": [
+        "AlmaLinux 8",
+        "Cerulean Leopard"
+      ]
+    }
+  },
+  {
+    "model": "operatingsystems.osvariant",
+    "fields": {
+      "name": "AlmaLinux 9.5",
+      "osrelease": [
+        "AlmaLinux 9",
+        "Teal Serval"
+      ]
+    }
+  }
+]

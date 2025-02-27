@@ -297,10 +297,20 @@ get_installed_archlinux_packages() {
     fi
 }
 
+get_installed_gentoo_packages() {
+    if check_command_exists qkeyword ; then
+        gentoo_package_arch=$(qkeyword -A)
+    fi
+    if check_command_exists qlist ; then
+        qlist -Ic -F "'%{PN}' '%{SLOT}' '%{PV}' REL'%{PR}' '${gentoo_package_arch}' 'gentoo' '%{CAT}' '%{REPO}'" | sed -e "s/REL'r/'/g"  >> "${tmpfile_pkg}"
+    fi
+}
+
 get_packages() {
     get_installed_rpm_packages
     get_installed_deb_packages
     get_installed_archlinux_packages
+    get_installed_gentoo_packages
 }
 
 get_modules() {
@@ -346,6 +356,8 @@ get_host_data() {
             os="${PRETTY_NAME}"
         elif [ "${ID}" == "arch" ] ; then
             os="${NAME}"
+        elif [ "${ID}" == "gentoo" ] ; then
+            os="${PRETTY_NAME} ${VERSION_ID}"
         elif [[ "${ID}" =~ "suse" ]] ; then
             os="${PRETTY_NAME}"
         elif [ "${ID}" == "astra" ] ; then
@@ -385,6 +397,9 @@ get_host_data() {
                 esac
             fi
         done
+    fi
+    if [ ! -z "${CPE_NAME}" ] ; then
+        os="${os} [${CPE_NAME}]"
     fi
     if ${verbose} ; then
         echo "Kernel:   ${host_kernel}"
@@ -484,7 +499,8 @@ get_repos() {
         if ${verbose} ; then
             echo 'Finding apt repos...'
         fi
-        IFS=${FULL_IFS} read -r osname shortversion <<<$(echo "${os}" | awk '{print $1,$2}' | cut -d . -f 1,2)
+        osname=$(echo ${os} | cut -d " " -f 1)
+        shortversion=${VERSION_ID}
         repo_string="'deb\' \'${osname} ${shortversion} ${host_arch} repo at"
         repos=$(apt-cache policy | grep -v Translation | grep -E "^ *[0-9]{1,5}" | grep -E " mirror\+file|http(s)?:" | sed -e "s/^ *//g" -e "s/ *$//g" | cut -d " " -f 1,2,3,4)
         non_mirror_repos=$(echo "${repos}" | grep -Ev "mirror\+file")
@@ -554,6 +570,28 @@ get_repos() {
         done
         for r in "${!repos[@]}"; do
             echo "'arch' 'Arch Linux ${r} ${host_arch}' '${r}' ${repos[${r}]}" >> "${tmpfile_rep}"
+        done
+    fi
+
+    # Gentoo
+    if [ "${os}" == "Gentoo" ] ; then
+        if [ ${verbose} == 1 ] ; then
+            echo 'Finding portage repos...'
+        fi
+        declare -A repos
+        repos[gentoo]='-1000'
+        repos_conf=$(awk '/\[/{prefix=$0; next} $1{print prefix $0}' /etc/portage/repos.conf/*.conf | grep '^\[')
+        for stanza in ${repos_conf} ; do
+            repo=$(echo ${stanza} | cut -d ']' -f 1 | sed -e 's/\[//')
+            rhs=$(echo ${stanza} | cut -d ']' -f 2 | grep -v '^#')
+            if [[ ${rhs} =~ "priority" ]] ; then
+                priority=$(echo ${rhs} | sed -e 's/^ *priority *= *//')
+                repos[${repo}]+=${priority}
+                unset priority
+            fi
+        done
+        for r in "${!repos[@]}"; do
+            echo "'gentoo' 'Gentoo Linux ${r} ${host_arch}' '${r}' '${repos[${r}]}'" >> "${tmpfile_rep}"
         done
     fi
 

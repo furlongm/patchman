@@ -23,11 +23,10 @@ from hosts.models import HostRepo
 from arch.models import MachineArchitecture, PackageArchitecture
 from repos.models import Repository, Mirror, MirrorPackage
 from modules.models import Module
-from packages.models import Package
-from packages.utils import find_evr, get_or_create_package, \
-    get_or_create_package_update, parse_package_string
-from patchman.signals import progress_info_s, progress_update_s, \
-    error_message, info_message
+from packages.models import Package, PackageCategory
+from packages.utils import find_evr, get_or_create_package, get_or_create_package_update, parse_package_string
+from repos.utils import get_or_create_repo
+from patchman.signals import progress_info_s, progress_update_s, error_message, info_message
 
 
 def process_repos(report, host):
@@ -39,7 +38,7 @@ def process_repos(report, host):
         repos = parse_repos(report.repos)
 
         progress_info_s.send(sender=None,
-                             ptext=f'{str(host)[0:25]!s} repos',
+                             ptext=f'{str(host)[0:25]} repos',
                              plen=len(repos))
         for i, repo_str in enumerate(repos):
             repo, priority = process_repo(repo_str, report.arch)
@@ -74,7 +73,7 @@ def process_modules(report, host):
         modules = parse_modules(report.modules)
 
         progress_info_s.send(sender=None,
-                             ptext=f'{str(host)[0:25]!s} modules',
+                             ptext=f'{str(host)[0:25]} modules',
                              plen=len(modules))
         for i, module_str in enumerate(modules):
             module = process_module(module_str)
@@ -102,7 +101,7 @@ def process_packages(report, host):
 
         packages = parse_packages(report.packages)
         progress_info_s.send(sender=None,
-                             ptext=f'{str(host)[0:25]!s} packages',
+                             ptext=f'{str(host)[0:25]} packages',
                              plen=len(packages))
         for i, pkg_str in enumerate(packages):
             package = process_package(pkg_str, report.protocol)
@@ -117,7 +116,7 @@ def process_packages(report, host):
                     error_message.send(sender=None, text=e)
             else:
                 if pkg_str[0].lower() != 'gpg-pubkey':
-                    text = f'No package returned for {pkg_str!s}'
+                    text = f'No package returned for {pkg_str}'
                     info_message.send(sender=None, text=text)
             progress_update_s.send(sender=None, index=i + 1)
 
@@ -157,7 +156,7 @@ def add_updates(updates, host):
         host.updates.remove(host_update)
     ulen = len(updates)
     if ulen > 0:
-        ptext = f'{str(host)[0:25]!s} updates'
+        ptext = f'{str(host)[0:25]} updates'
         progress_info_s.send(sender=None, ptext=ptext, plen=ulen)
 
         for i, (u, sec) in enumerate(updates.items()):
@@ -174,7 +173,7 @@ def parse_updates(updates_string, security):
     updates = {}
     ulist = updates_string.lower().split()
     while ulist:
-        name = f'{ulist[0]!s} {ulist[1]!s} {ulist[2]!s}\n'
+        name = f'{ulist[0]} {ulist[1]} {ulist[2]}\n'
         del ulist[:3]
         updates[name] = security
     return updates
@@ -223,9 +222,9 @@ def parse_repos(repos_string):
     """
     repos = []
     for r in [s for s in repos_string.splitlines() if s]:
-        repodata = re.findall('\'.*?\'', r)
+        repodata = re.findall(r"'.*?'", r)
         for i, rs in enumerate(repodata):
-            repodata[i] = rs.replace('\'', '')
+            repodata[i] = rs.replace("'", '')
         repos.append(repodata)
     return repos
 
@@ -246,13 +245,16 @@ def process_repo(repo, arch):
         r_type = Repository.ARCH
         r_id = repo[2]
         r_priority = 0
+    elif repo[0] == 'gentoo':
+        r_type = Repository.GENTOO
+        r_id = repo.pop(2)
+        r_priority = repo[2]
 
     if repo[1]:
         r_name = repo[1]
 
-    machine_arches = MachineArchitecture.objects.all()
     with transaction.atomic():
-        r_arch, c = machine_arches.get_or_create(name=arch)
+        r_arch, c = MachineArchitecture.objects.get_or_create(name=arch)
 
     unknown = []
     for r_url in repo[3:]:
@@ -266,22 +268,15 @@ def process_repo(repo, arch):
         else:
             repository = mirror.repo
     if not repository:
-        repositories = Repository.objects.all()
-        try:
-            with transaction.atomic():
-                repository, c = repositories.get_or_create(name=r_name,
-                                                           arch=r_arch,
-                                                           repotype=r_type)
-        except IntegrityError as e:
-            error_message.send(sender=None, text=e)
-            repository = repositories.get(name=r_name,
-                                          arch=r_arch,
-                                          repotype=r_type)
-        except DatabaseError as e:
-            error_message.send(sender=None, text=e)
+        repository = get_or_create_repo(r_name, r_arch, r_type)
 
     if r_id and repository.repo_id != r_id:
         repository.repo_id = r_id
+        with transaction.atomic():
+            repository.save()
+
+    if r_name and repository.name != r_name:
+        repository.name = r_name
         with transaction.atomic():
             repository.save()
 
@@ -308,7 +303,7 @@ def parse_modules(modules_string):
     """
     modules = []
     for module in modules_string.splitlines():
-        module_string = [m for m in module.replace('\'', '').split(' ') if m]
+        module_string = [m for m in module.replace("'", '').split(' ') if m]
         if module_string:
             modules.append(module_string)
     return modules
@@ -376,7 +371,7 @@ def parse_packages(packages_string):
     """
     packages = []
     for p in packages_string.splitlines():
-        packages.append(p.replace('\'', '').split(' '))
+        packages.append(p.replace("'", '').split(' '))
     return packages
 
 
@@ -389,6 +384,7 @@ def process_package(pkg, protocol):
         arch = 'unknown'
 
         name = pkg[0]
+        p_category = p_repo = None
         if pkg[1]:
             epoch = pkg[1]
         if pkg[2]:
@@ -404,8 +400,34 @@ def process_package(pkg, protocol):
             p_type = Package.RPM
         elif pkg[5] == 'arch':
             p_type = Package.ARCH
+        elif pkg[5] == 'gentoo':
+            p_type = Package.GENTOO
+            p_category = pkg[6]
+            p_repo = pkg[7]
         else:
             p_type = Package.UNKNOWN
 
         package = get_or_create_package(name, epoch, ver, rel, arch, p_type)
+        if p_type == Package.GENTOO:
+            category, created = PackageCategory.objects.get_or_create(name=p_category)
+            package.category = category
+
+            machine_arches = MachineArchitecture.objects.all()
+            with transaction.atomic():
+                repo_arch, created = machine_arches.get_or_create(name='any')
+
+            repo_name = 'Gentoo Linux'
+            repo = get_or_create_repo(repo_name, repo_arch, Repository.GENTOO, p_repo)
+
+            with transaction.atomic():
+                if p_repo == 'gentoo':
+                    url = 'https://api.gentoo.org/mirrors/distfiles.xml'
+                else:
+                    # this may not be correct. the urls are hardcoded anyway in repos/utils.py
+                    # need to figure out a better way to determine which repo/repo url to use
+                    url = 'https://api.gentoo.org/overlays/repositories.xml'
+                mirror, c = Mirror.objects.get_or_create(repo=repo, url=url, mirrorlist=True)
+                MirrorPackage.objects.create(mirror=mirror, package=package)
+
+            package.save()
         return package

@@ -15,15 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.conf import settings
 from django.db import models
 from django.urls import reverse
 
 from arch.models import MachineArchitecture
 from packages.models import Package
+from util import get_setting_of_type
 
-from repos.utils import refresh_deb_repo, refresh_rpm_repo, \
-    refresh_arch_repo, update_mirror_packages
+from repos.utils import refresh_deb_repo, refresh_rpm_repo, refresh_arch_repo, refresh_gentoo_repo, \
+     update_mirror_packages
 from patchman.signals import info_message, warning_message, error_message
 
 
@@ -32,11 +32,13 @@ class Repository(models.Model):
     RPM = 'R'
     DEB = 'D'
     ARCH = 'A'
+    GENTOO = 'G'
 
     REPO_TYPES = (
         (RPM, 'rpm'),
         (DEB, 'deb'),
         (ARCH, 'arch'),
+        (GENTOO, 'gentoo'),
     )
 
     name = models.CharField(max_length=255, unique=True)
@@ -46,6 +48,9 @@ class Repository(models.Model):
     enabled = models.BooleanField(default=True)
     repo_id = models.CharField(max_length=255, null=True, blank=True)
     auth_required = models.BooleanField(default=False)
+
+    from repos.managers import RepositoryManager
+    objects = RepositoryManager()
 
     class Meta:
         verbose_name_plural = 'Repository'
@@ -60,9 +65,9 @@ class Repository(models.Model):
     def show(self):
         """ Show info about this repo, including mirrors
         """
-        text = f'{self.id!s} : {self.name!s}\n'
-        text += f'security: {self.security!s}    '
-        text += f'arch: {self.arch!s}\n'
+        text = f'{self.id} : {self.name}\n'
+        text += f'security: {self.security}    '
+        text += f'arch: {self.arch}\n'
         text += 'Mirrors:'
 
         info_message.send(sender=None, text=text)
@@ -87,9 +92,10 @@ class Repository(models.Model):
                 refresh_rpm_repo(self)
             elif self.repotype == Repository.ARCH:
                 refresh_arch_repo(self)
+            elif self.repotype == Repository.GENTOO:
+                refresh_gentoo_repo(self)
             else:
-                text = 'Error: unknown repo type for repo '
-                text += f'{self.id!s}: {self.repotype!s}'
+                text = f'Error: unknown repo type for repo {self.id}: {self.repotype}'
                 error_message.send(sender=None, text=text)
         else:
             text = 'Repo requires certificate authentication, not updating'
@@ -148,9 +154,9 @@ class Mirror(models.Model):
     def show(self):
         """ Show info about this mirror
         """
-        text = f' {self.id!s} : {self.url!s}\n'
+        text = f' {self.id} : {self.url}\n'
         text += ' last updated: '
-        text += f'{self.timestamp!s}    checksum: {self.file_checksum!s}\n'
+        text += f'{self.timestamp}    checksum: {self.file_checksum}\n'
         info_message.send(sender=None, text=text)
 
     def fail(self):
@@ -159,14 +165,14 @@ class Mirror(models.Model):
             Set MAX_MIRROR_FAILURES to -1 to disable marking mirrors as failures
             Default is 28
         """
-        text = f'No usable mirror found at {self.url!s}'
+        text = f'No usable mirror found at {self.url}'
         error_message.send(sender=None, text=text)
         default_max_mirror_failures = 28
-        if hasattr(settings, 'MAX_MIRROR_FAILURES') and \
-                isinstance(settings.MAX_MIRROR_FAILURES, int):
-            max_mirror_failures = settings.MAX_MIRROR_FAILURES
-        else:
-            max_mirror_failures = default_max_mirror_failures
+        max_mirror_failures = get_setting_of_type(
+            setting_name='MAX_MIRROR_FAILURES',
+            setting_type=int,
+            default=default_max_mirror_failures
+        )
         self.fail_count = self.fail_count + 1
         if max_mirror_failures == -1:
             text = f'Mirror has failed {self.fail_count} times, but MAX_MIRROR_FAILURES=-1, not disabling refresh'
@@ -174,6 +180,8 @@ class Mirror(models.Model):
             self.refresh = False
             text = f'Mirror has failed {self.fail_count} times (max={max_mirror_failures}), disabling refresh'
         error_message.send(sender=None, text=text)
+        self.last_access_ok = False
+        self.save()
 
     def update_packages(self, packages):
         """ Update the packages associated with a mirror
