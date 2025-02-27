@@ -80,4 +80,8 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'reports.tasks.remove_reports_with_no_hosts',
         'schedule': timedelta(days=7),
     },
+    'find_host_updates': {
+        'task': 'hosts.tasks.find_all_host_updates_homogenous',
+        'schedule': timedelta(hours=24),
+    },
 }
