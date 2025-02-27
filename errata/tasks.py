@@ -26,6 +26,7 @@ from errata.sources.distros.rocky import update_rocky_errata
 from errata.sources.distros.ubuntu import update_ubuntu_errata
 
 
+@shared_task
 def update_errata():
     """ Update all distros errata
     """

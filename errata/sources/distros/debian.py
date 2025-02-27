@@ -222,7 +222,7 @@ def get_accepted_debian_codenames():
     accepted_codenames = get_setting_of_type(
         setting_name='DEBIAN_CODENAMES',
         setting_type=list,
-        default_value=default_codenames,
+        default=default_codenames,
     )
     return accepted_codenames
 
