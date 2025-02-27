@@ -19,7 +19,9 @@ from celery import shared_task
 
 from django.db.utils import OperationalError
 
+from hosts.models import Host
 from reports.models import Report
+from util import info_message
 
 
 @shared_task(bind=True, autoretry_for=(OperationalError,), retry_backoff=True, retry_kwargs={'max_retries': 5})
@@ -37,3 +39,14 @@ def process_reports():
     reports = Report.objects.filter(processed=False)
     for report in reports:
         process_report.delay(report.id)
+
+
+@shared_task
+def clean_reports_with_no_hosts():
+    """ Task to clean processed reports where the host no longer exists
+    """
+    for report in Report.objects.filter(processed=True):
+        if not Host.objects.filter(hostname=report.host).exists():
+            text = f'Deleting report {report.id} for Host `{report.host}` as the host no longer exists'
+            info_message.send(sender=None, text=text)
+            report.delete()

@@ -35,10 +35,12 @@ from errata.utils import mark_errata_security_updates
 from errata.tasks import update_errata
 from hosts.models import Host
 from modules.models import Module
+from modules.utils import clean_modules
 from packages.utils import clean_packages, clean_packageupdates, clean_packagenames
 from repos.models import Repository
 from repos.utils import clean_repos
 from reports.models import Report
+from reports.tasks import clean_reports_with_no_hosts
 from security.utils import update_cves, update_cwes
 from util import print_nocr, create_pbar, update_pbar, set_verbosity, get_verbosity, tz_aware_datetime
 from patchman.signals import info_message
@@ -139,42 +141,17 @@ def list_hosts(hosts=None):
         host.show()
 
 
-def clean_reports(s_host=None):
+def clean_reports(hoststr=None):
     """ Delete old reports for all hosts, specify host for a single host.
         Reports with non existent hosts are only removed when no host is
         specified.
     """
-    hosts = get_hosts(s_host, 'Cleaning Reports')
-    timestamp = date.today()
-
+    hosts = get_hosts(hoststr, 'Cleaning Reports')
     for host in hosts:
-        info_message.send(sender=None, text=str(host))
-        host.clean_reports(timestamp)
+        host.clean_reports()
 
-    if s_host is None:
-        reports = Report.objects.filter(accessed__lt=timestamp)
-        rlen = reports.count()
-        if rlen != 0:
-            create_pbar(f'Removing {rlen} extraneous Reports:', rlen)
-            for i, report in enumerate(reports):
-                report.delete()
-                update_pbar(i + 1)
-
-
-def clean_modules():
-    """ Delete modules that have no host or no repo
-    """
-    modules = Module.objects.filter(host__isnull=True, repo__isnull=True)
-    mlen = modules.count()
-
-    if mlen == 0:
-        text = 'No orphaned Modules found.'
-        info_message.send(sender=None, text=text)
-    else:
-        create_pbar(f'Removing {mlen} empty Modules:', mlen)
-        for i, module in enumerate(modules):
-            module.delete()
-            update_pbar(i + 1)
+    if not hoststr:
+        clean_reports_with_no_hosts()
 
 
 def host_updates_alt(host=None):

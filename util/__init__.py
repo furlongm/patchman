@@ -291,3 +291,9 @@ def tz_aware_datetime(date):
     if not parsed_date.tzinfo:
         parsed_date = make_aware(parsed_date)
     return parsed_date
+
+
+def get_datetime_now():
+    """ Return the current timezone-aware datetime removing microseconds
+    """
+    return datetime.now().astimezone().replace(microsecond=0)
