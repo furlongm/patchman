@@ -11,7 +11,7 @@ chardet==4.0.0
 requests==2.32.3
 colorama==0.4.4
 djangorestframework==3.13.1
-django-filter==21.1
+django-filter==24.3
 humanize==3.13.1
 version-utils==0.3.0
 python-magic==0.4.25
