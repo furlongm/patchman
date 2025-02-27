@@ -15,9 +15,9 @@
     <tr><th>Name</th><td>{{ osrelease }}</td></tr>
     <tr><th>CPE Name</th><td>{% if osrelease.cpe_name %}{{ osrelease.cpe_name }}{% endif %}</td></tr>
     <tr><th>Codename</th><td>{% if osrelease.codename %}{{ osrelease.codename }}{% endif %}</td></tr>
-    <tr><th>OS Variants</th><td><a href="{% url 'operatingsystems:osvariant_list' %}?osrelease={{ osrelease.id }}">{{ osrelease.osvariant_set.count }}</a></td></tr>
-    <tr><th>Repositories</th><td><a href="{% url 'repos:repo_list' %}?osrelease={{ osrelease.id }}">{{ osrelease.repos.count }}</a></td></tr>
-    <tr><th>Hosts</th><td><a href="{% url 'hosts:host_list' %}?osrelease={{ osrelease.id }}">{{ host_count }}</a></td></tr>
+    <tr><th>OS Variants</th><td><a href="{% url 'operatingsystems:osvariant_list' %}?osrelease_id={{ osrelease.id }}">{{ osrelease.osvariant_set.count }}</a></td></tr>
+    <tr><th>Repositories</th><td><a href="{% url 'repos:repo_list' %}?osrelease_id={{ osrelease.id }}">{{ osrelease.repos.count }}</a></td></tr>
+    <tr><th>Hosts</th><td><a href="{% url 'hosts:host_list' %}?osrelease_id={{ osrelease.id }}">{{ host_count }}</a></td></tr>
   </table>
 
   <div class="panel panel-danger">

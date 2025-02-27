@@ -34,8 +34,8 @@ from operatingsystems.serializers import OSVariantSerializer, OSReleaseSerialize
 def osvariant_list(request):
     osvariants = OSVariant.objects.select_related()
 
-    if 'osrelease' in request.GET:
-        osvariants = osvariants.filter(osrelease=int(request.GET['osrelease']))
+    if 'osrelease_id' in request.GET:
+        osvariants = osvariants.filter(osrelease=request.GET['osrelease_id'])
 
     if 'search' in request.GET:
         terms = request.GET['search'].lower()
@@ -136,7 +136,7 @@ def osrelease_list(request):
     osreleases = OSRelease.objects.select_related()
 
     if 'erratum_id' in request.GET:
-        osreleases = osreleases.filter(erratum=int(request.GET['erratum_id']))
+        osreleases = osreleases.filter(erratum=request.GET['erratum_id'])
 
     if 'search' in request.GET:
         terms = request.GET['search'].lower()
