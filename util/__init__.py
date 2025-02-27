@@ -15,19 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-import sys
 import requests
 import bz2
 import magic
 import zlib
 import lzma
-from colorama import Fore, Style
 from datetime import datetime
 from enum import Enum
 from hashlib import md5, sha1, sha256, sha512
-from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
-from progressbar import Bar, ETA, Percentage, ProgressBar
 from requests.exceptions import HTTPError, Timeout, ConnectionError
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
+from tqdm import tqdm
 
 from patchman.signals import error_message, info_message, debug_message
 
@@ -36,21 +34,9 @@ from django.utils.dateparse import parse_datetime
 from django.conf import settings
 
 
-if ProgressBar.__dict__.get('maxval'):
-    pbar2 = False
-else:
-    pbar2 = True
-
 pbar = None
 verbose = None
 Checksum = Enum('Checksum', 'md5 sha sha1 sha256 sha512')
-
-
-def print_nocr(text):
-    """ Print text without a carriage return
-    """
-    print(text, end='')
-    sys.stdout.softspace = False
 
 
 def get_verbosity():
@@ -73,14 +59,7 @@ def create_pbar(ptext, plength, ljust=35, **kwargs):
     global pbar, verbose
     if verbose and plength > 0:
         jtext = str(ptext).ljust(ljust)
-        if pbar2:
-            pbar = ProgressBar(widgets=[Style.RESET_ALL + Fore.YELLOW + jtext,
-                                        Percentage(), Bar(), ETA()],
-                               max_value=plength).start()
-        else:
-            pbar = ProgressBar(widgets=[Style.RESET_ALL + Fore.YELLOW + jtext,
-                                        Percentage(), Bar(), ETA()],
-                               maxval=plength).start()
+        pbar = tqdm(total=plength, desc=jtext, position=0, leave=True)
         return pbar
 
 
@@ -89,14 +68,9 @@ def update_pbar(index, **kwargs):
     """
     global pbar, verbose
     if verbose and pbar:
-        pbar.update(index)
-        if pbar2:
-            pmax = pbar.max_value
-        else:
-            pmax = pbar.maxval
-        if index >= pmax:
-            pbar.finish()
-            print_nocr(Fore.RESET + Style.RESET_ALL)
+        pbar.update(n=index-pbar.n)
+        if index >= pbar.total:
+            pbar.close()
             pbar = None
 
 

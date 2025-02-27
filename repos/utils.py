@@ -23,7 +23,6 @@ import shutil
 import tarfile
 import tempfile
 import yaml
-from datetime import datetime
 from io import BytesIO
 from defusedxml.lxml import _etree as etree
 from debian.debian_support import Version

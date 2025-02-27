@@ -20,7 +20,6 @@
 import os
 import sys
 import argparse
-from datetime import date, datetime
 
 from django.core.exceptions import MultipleObjectsReturned
 from django.db.models import Count
@@ -34,7 +33,6 @@ from arch.utils import clean_architectures
 from errata.utils import mark_errata_security_updates
 from errata.tasks import update_errata
 from hosts.models import Host
-from modules.models import Module
 from modules.utils import clean_modules
 from packages.utils import clean_packages, clean_packageupdates, clean_packagenames
 from repos.models import Repository
@@ -42,7 +40,7 @@ from repos.utils import clean_repos
 from reports.models import Report
 from reports.tasks import clean_reports_with_no_hosts
 from security.utils import update_cves, update_cwes
-from util import print_nocr, create_pbar, update_pbar, set_verbosity, get_verbosity, tz_aware_datetime
+from util import set_verbosity, get_verbosity, get_datetime_now
 from patchman.signals import info_message
 
 
@@ -159,7 +157,7 @@ def host_updates_alt(host=None):
     """
     updated_hosts = []
     hosts = get_hosts(host, 'Finding updates')
-    ts = tz_aware_datetime(datetime.now().replace(microsecond=0))
+    ts = get_datetime_now()
     for host in hosts:
         info_message.send(sender=None, text=str(host))
         if host not in updated_hosts:
@@ -328,7 +326,6 @@ def dns_checks(host=None):
     for host in hosts:
         if get_verbosity():
             text = f'{str(host)[0:25].ljust(25)}: '
-            print_nocr(text)
         host.check_rdns()
 
 
