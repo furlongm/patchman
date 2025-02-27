@@ -93,7 +93,8 @@ def host_list(request):
         tags[tag.name] = tag.name
     filter_list.append(Filter(request, 'Tag', 'tag', tags))
     filter_list.append(Filter(request, 'Domain', 'domain_id', Domain.objects.all()))
-    filter_list.append(Filter(request, 'OS Release', 'osrelease_id', OSRelease.objects.filter(osvariant__host__in=hosts)))
+    filter_list.append(Filter(request, 'OS Release', 'osrelease_id',
+                              OSRelease.objects.filter(osvariant__host__in=hosts)))
     filter_list.append(Filter(request, 'OS Variant', 'osvariant_id', OSVariant.objects.filter(host__in=hosts)))
     filter_list.append(Filter(request, 'Architecture', 'arch_id', MachineArchitecture.objects.filter(host__in=hosts)))
     filter_list.append(Filter(request, 'Reboot Required', 'reboot_required', {'true': 'Yes', 'false': 'No'}))
