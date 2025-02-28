@@ -166,7 +166,7 @@ def find_mirror_url(stored_mirror_url, formats):
         try:
             res = get_url(mirror_url)
         except RetryError:
-            return
+            continue
         if res is not None and res.ok:
             return res
 
@@ -265,13 +265,17 @@ def get_mirrorlist_urls(url):
     except RetryError:
         return
     if response_is_valid(res):
-        if res.headers.get('content-type') == 'text/plain':
+        try:
             data = download_url(res, 'Downloading repo info:')
             if data is None:
                 return
             mirror_urls = re.findall(r'^http[s]*://.*$|^ftp://.*$', data.decode('utf-8'), re.MULTILINE)
             if mirror_urls:
                 return mirror_urls
+            else:
+                debug_message.send(sender=None, text=f'Not a mirrorlist: {url}')
+        except Exception as e:
+            error_message.send(sender=None, text=f'Error attempting to parse a mirror list: {e} {url}')
 
 
 def add_mirrors_from_urls(repo, mirror_urls):
@@ -281,6 +285,7 @@ def add_mirrors_from_urls(repo, mirror_urls):
     for mirror_url in mirror_urls:
         mirror_url = mirror_url.replace('$ARCH', repo.arch.name)
         mirror_url = mirror_url.replace('$basearch', repo.arch.name)
+        mirror_url = mirror_url.rstrip('/')
         q = Q(mirrorlist=False, refresh=True, enabled=True)
         existing = repo.mirror_set.filter(q).count()
         if existing >= max_mirrors:
@@ -304,8 +309,7 @@ def check_for_mirrorlists(repo):
             mirror.mirrorlist = True
             mirror.last_access_ok = True
             mirror.save()
-            text = f'Found mirrorlist - {mirror.url}'
-            info_message.send(sender=None, text=text)
+            info_message.send(sender=None, text=f'Found mirrorlist - {mirror.url}')
             add_mirrors_from_urls(repo, mirror_urls)
 
 
