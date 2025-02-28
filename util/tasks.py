@@ -23,12 +23,12 @@ from repos.utils import clean_repos
 
 
 @shared_task
-def clean_database():
+def clean_database(remove_duplicate_packages=False):
     """ Task to check the database and remove orphaned objects
         Runs all clean_* functions to check database consistency
     """
     clean_packageupdates()
-    clean_packages()
+    clean_packages(remove_duplicates=remove_duplicate_packages)
     clean_packagenames()
     clean_architectures()
     clean_repos()

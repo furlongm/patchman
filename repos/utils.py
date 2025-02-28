@@ -99,9 +99,12 @@ def update_mirror_packages(mirror, packages):
     progress_info_s.send(sender=None, ptext=ptext, plen=nlen)
     for i, strpackage in enumerate(new):
         progress_update_s.send(sender=None, index=i + 1)
-        package = convert_packagestring_to_package(strpackage)
-        with transaction.atomic():
-            mirror_package, c = MirrorPackage.objects.get_or_create(mirror=mirror, package=package)
+        try:
+            package = convert_packagestring_to_package(strpackage)
+            with transaction.atomic():
+                mirror_package, c = MirrorPackage.objects.get_or_create(mirror=mirror, package=package)
+        except Package.MultipleObjectsReturned:
+            error_message.send(sender=None, text=f'Duplicate package found in {mirror}: {strpackage}')
     mirror.save()
 
 

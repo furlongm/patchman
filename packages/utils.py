@@ -166,7 +166,6 @@ def get_or_create_package(name, epoch, version, release, arch, p_type):
     """ Get or create a Package object. Returns the object. Returns None if the
         package is the pseudo package gpg-pubkey, or if it cannot create it
     """
-    package = None
     name = name.lower()
     if name == 'gpg-pubkey':
         return
@@ -174,45 +173,21 @@ def get_or_create_package(name, epoch, version, release, arch, p_type):
     if epoch in [None, 0, '0']:
         epoch = ''
 
-    try:
-        with transaction.atomic():
-            package_names = PackageName.objects.all()
-            p_name, c = package_names.get_or_create(name=name)
-    except IntegrityError as e:
-        error_message.send(sender=None, text=e)
-        p_name = package_names.get(name=name)
-    except DatabaseError as e:
-        error_message.send(sender=None, text=e)
-
-    package_arches = PackageArchitecture.objects.all()
     with transaction.atomic():
-        p_arch, c = package_arches.get_or_create(name=arch)
+        package_name, c = PackageName.objects.get_or_create(name=name)
 
-    packages = Package.objects.all()
-    potential_packages = packages.filter(
-        name=p_name,
-        arch=p_arch,
-        version=version,
-        release=release,
-        packagetype=p_type,
-    ).order_by('-epoch')
-    if potential_packages.exists():
-        package = potential_packages[0]
-        if epoch and package.epoch != epoch:
-            package.epoch = epoch
-            with transaction.atomic():
-                package.save()
-    else:
-        try:
-            with transaction.atomic():
-                package = packages.create(name=p_name,
-                                          arch=p_arch,
-                                          epoch=epoch,
-                                          version=version,
-                                          release=release,
-                                          packagetype=p_type)
-        except DatabaseError as e:
-            error_message.send(sender=None, text=e)
+    with transaction.atomic():
+        package_arch, c = PackageArchitecture.objects.get_or_create(name=arch)
+
+    with transaction.atomic():
+        package, c = Package.objects.get_or_create(
+            name=package_name,
+            arch=package_arch,
+            epoch=epoch,
+            version=version,
+            release=release,
+            packagetype=p_type,
+        )
     return package
 
 
@@ -270,7 +245,7 @@ def get_or_create_package_update(oldpackage, newpackage, security):
 
 
 def get_matching_packages(name, epoch, version, release, p_type):
-    """ Get packges matching certain criteria
+    """ Get packages matching certain criteria
         Returns the matching packages or None
     """
     try:
@@ -308,8 +283,9 @@ def clean_packageupdates():
                 duplicate.delete()
 
 
-def clean_packages():
+def clean_packages(remove_duplicates=False):
     """ Remove packages that are no longer in use
+        Optionally check for duplicate packages and remove those too
     """
     packages = Package.objects.filter(
         mirror__isnull=True,
@@ -323,6 +299,22 @@ def clean_packages():
     else:
         info_message.send(sender=None, text=f'Removing {plen} orphaned Packages')
         packages.delete()
+    if remove_duplicates:
+        info_message.send(sender=None, text='Checking for duplicate Packages...')
+        for package in Package.objects.all():
+            potential_duplicates = Package.objects.filter(
+                name=package.name,
+                arch=package.arch,
+                epoch=package.epoch,
+                version=package.version,
+                release=package.release,
+                packagetype=package.packagetype,
+            )
+            if potential_duplicates.count() > 1:
+                for dupe in potential_duplicates:
+                    if dupe.id != package.id:
+                        info_message.send(sender=None, text=f'Removing duplicate Package {dupe}')
+                        dupe.delete()
 
 
 def clean_packagenames():
