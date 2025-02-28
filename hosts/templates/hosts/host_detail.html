@@ -58,6 +58,7 @@
       {% if user.is_authenticated and perms.is_admin %}
         <a class="btn btn-primary btn-sm" role="button" href="{% url 'hosts:host_delete' host.hostname %}">{% bootstrap_icon "trash" %} Delete this Host</a>
         <a class="btn btn-primary btn-sm" role="button" href="{% url 'hosts:host_edit' host.hostname %}">{% bootstrap_icon "edit" %} Edit this Host</a>
+        <a class="btn btn-primary btn-sm" role="button" href="{% url 'hosts:host_updates' host.hostname %}">{% bootstrap_icon "refresh" %} Find Updates for this Host</a>
       {% endif %}
     </div>
   </div>
