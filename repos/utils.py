@@ -226,7 +226,7 @@ def get_mirrorlist_urls(url):
             data = download_url(res, 'Downloading repo info:')
             if data is None:
                 return
-            mirror_urls = re.findall('^http://.*$|^ftp://.*$',
+            mirror_urls = re.findall('^http[s]*://.*$|^ftp://.*$',
                                      data.decode('utf-8'), re.MULTILINE)
             if mirror_urls:
                 return mirror_urls
