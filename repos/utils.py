@@ -384,45 +384,39 @@ def extract_yum_packages(data, url):
     """
     extracted = extract(data, url)
     ns = 'http://linux.duke.edu/metadata/common'
-    m_context = etree.iterparse(BytesIO(extracted),
-                                tag=f'{{{ns}}}metadata')
+    m_context = etree.iterparse(BytesIO(extracted), tag=f'{{{ns}}}metadata')
     plen = int(next(m_context)[1].get('packages'))
-    p_context = etree.iterparse(BytesIO(extracted),
-                                tag=f'{{{ns}}}package')
+    p_context = etree.iterparse(BytesIO(extracted), tag=f'{{{ns}}}package')
     packages = set()
 
-    if plen > 0:
-        ptext = 'Extracting packages: '
-        progress_info_s.send(sender=None, ptext=ptext, plen=plen)
+    ptext = 'Extracting packages: '
+    progress_info_s.send(sender=None, ptext=ptext, plen=plen)
 
-        for i, p_data in enumerate(p_context):
-            elem = p_data[1]
-            progress_update_s.send(sender=None, index=i + 1)
-            name = elem.xpath('//ns:name',
-                              namespaces={'ns': ns})[0].text.lower()
-            arch = elem.xpath('//ns:arch',
-                              namespaces={'ns': ns})[0].text
-            fullversion = elem.xpath('//ns:version',
-                                     namespaces={'ns': ns})[0]
-            epoch = fullversion.get('epoch')
-            version = fullversion.get('ver')
-            release = fullversion.get('rel')
-            elem.clear()
-            while elem.getprevious() is not None:
-                del elem.getparent()[0]
+    for i, p_data in enumerate(p_context):
+        elem = p_data[1]
+        progress_update_s.send(sender=None, index=i + 1)
+        name = elem.xpath('//ns:name', namespaces={'ns': ns})[0].text.lower()
+        arch = elem.xpath('//ns:arch', namespaces={'ns': ns})[0].text
+        fullversion = elem.xpath('//ns:version', namespaces={'ns': ns})[0]
+        epoch = fullversion.get('epoch')
+        version = fullversion.get('ver')
+        release = fullversion.get('rel')
+        elem.clear()
+        while elem.getprevious() is not None:
+            del elem.getparent()[0]
 
-            if name != '' and version != '' and arch != '':
-                if epoch == '0':
-                    epoch = ''
-                package = PackageString(name=name,
-                                        epoch=epoch,
-                                        version=version,
-                                        release=release,
-                                        arch=arch,
-                                        packagetype='R')
-                packages.add(package)
-    else:
-        info_message.send(sender=None, text='No packages found in repo')
+        if name != '' and version != '' and arch != '':
+            if epoch == '0':
+                epoch = ''
+            package = PackageString(
+                name=name,
+                epoch=epoch,
+                version=version,
+                release=release,
+                arch=arch,
+                packagetype='R',
+            )
+            packages.add(package)
     return packages
 
 
