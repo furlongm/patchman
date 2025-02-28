@@ -377,8 +377,8 @@ def repo_toggle_security(request, repo_id):
 def repo_refresh(request, repo_id):
     """ Refresh a repo using a celery task
     """
-    repo = get_object_or_404(Repository, id=repo_id)
     from repos.tasks import refresh_repo
+    repo = get_object_or_404(Repository, id=repo_id)
     refresh_repo.delay(repo.id)
     text = f'Repostory {repo} is being refreshed'
     messages.info(request, text)

@@ -132,10 +132,10 @@ def report_detail(request, report_id):
 def report_process(request, report_id):
     """ Process a report using a celery task
     """
+    from reports.tasks import process_report
     report = get_object_or_404(Report, id=report_id)
     report.processed = False
     report.save()
-    from reports.tasks import process_report
     process_report.delay(report.id)
     text = f'Report {report} is being processed'
     messages.info(request, text)
