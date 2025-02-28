@@ -1,4 +1,4 @@
-{% load common %}
+{% load common bootstrap3 %}
 <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
   <thead>
     <tr>
@@ -19,9 +19,9 @@
       <tr>
         <td><a href="{{ cve.get_absolute_url }}">{{ cve.cve_id }}</a></td>
         <td>
-          <a href="https://nvd.nist.gov/vuln/detail/{{ cve.cve_id }}">NIST <span class="glyphicon glyphicon-link"></span></a>&nbsp;&nbsp;
-          <a href="https://www.cve.org/CVERecord?id={{ cve.cve_id }}">MITRE <span class="glyphicon glyphicon-link"></span></a>&nbsp;&nbsp;
-          <a href="https://osv.dev/vulnerability/{{ cve.cve_id }}">osv.dev <span class="glyphicon glyphicon-link"></span></a>
+          <a href="https://nvd.nist.gov/vuln/detail/{{ cve.cve_id }}">NIST {% bootstrap_icon "link" %}</a>&nbsp;&nbsp;
+          <a href="https://www.cve.org/CVERecord?id={{ cve.cve_id }}">MITRE {% bootstrap_icon "link" %}</a>&nbsp;&nbsp;
+          <a href="https://osv.dev/vulnerability/{{ cve.cve_id }}">osv.dev {% bootstrap_icon "link" %}</a>
         </td>
         <td><span class="expandable-text" data-full-text="{{ cve.description }}}">{{ cve.description|truncatechars:60 }}</span></td>
         <td>{% for score in cve.cvss_scores.all %} {{ score.score }} {% endfor %}</td>
