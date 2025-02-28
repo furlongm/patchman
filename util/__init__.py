@@ -116,7 +116,7 @@ def get_url(url, headers={}, params={}):
         debug_message.send(sender=None, text=f'Trying {url} headers:{headers} params:{params}')
         response = requests.get(url, headers=headers, params=params, stream=True, timeout=30)
         debug_message.send(sender=None, text=f'{response.status_code}: {response.headers}')
-        if response.status_code == 404:
+        if response.status_code in [403, 404]:
             return response
         response.raise_for_status()
     except requests.exceptions.TooManyRedirects:
