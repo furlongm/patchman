@@ -4,7 +4,7 @@ from django.apps import apps
 from django.db import migrations
 import taggit.managers
 try:
-    import tagging
+    import tagging  # noqa
 except ImportError:
     pass
 

@@ -40,7 +40,7 @@ from repos.utils import clean_repos
 from reports.models import Report
 from reports.tasks import clean_reports_with_no_hosts
 from security.utils import update_cves, update_cwes
-from util import set_verbosity, get_verbosity, get_datetime_now
+from util import set_verbosity, get_datetime_now
 from patchman.signals import info_message
 
 
@@ -324,8 +324,6 @@ def dns_checks(host=None):
     """
     hosts = get_hosts(host, 'Checking rDNS')
     for host in hosts:
-        if get_verbosity():
-            text = f'{str(host)[0:25].ljust(25)}: '
         host.check_rdns()
 
 
