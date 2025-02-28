@@ -167,6 +167,18 @@ def host_delete(request, hostname):
                    'reports': reports})
 
 
+@login_required
+def host_find_updates(request, hostname):
+    """ Find updates using a celery task
+    """
+    from hosts.tasks import find_host_updates
+    host = get_object_or_404(Host, hostname=hostname)
+    find_host_updates.delay(host.id)
+    text = f'Finding updates for Host {host}'
+    messages.info(request, text)
+    return redirect(host.get_absolute_url())
+
+
 class HostViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows hosts to be viewed or edited.
