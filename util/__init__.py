@@ -20,11 +20,12 @@ import bz2
 import magic
 import zlib
 import lzma
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from hashlib import md5, sha1, sha256, sha512
 from requests.exceptions import HTTPError, Timeout, ConnectionError
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
+from time import time
 from tqdm import tqdm
 
 from patchman.signals import error_message, info_message, debug_message
@@ -254,16 +255,31 @@ def get_md5(data):
     return md5(data).hexdigest()
 
 
+def is_epoch_time(timestamp):
+    """ Checks if an integer is likely a valid epoch timestamp.
+        Returns True if the integer is likely a valid epoch timestamp, False otherwise.
+    """
+    try:
+        ts = int(timestamp)
+    except ValueError:
+        return False
+    current_time = int(time())
+    lower_bound = 0
+    upper_bound = current_time + 3600 * 24 * 365  # up to a year in the future
+    return lower_bound <= ts <= upper_bound
+
+
 def tz_aware_datetime(date):
     """ Ensure a datetime is timezone-aware
         Returns the tz-aware datetime object
     """
-    if isinstance(date, int):
-        parsed_date = datetime.fromtimestamp(date)
+    if isinstance(date, int) or is_epoch_time(date):
+        parsed_date = datetime.fromtimestamp(int(date))
     elif isinstance(date, str):
         parsed_date = parse_datetime(date)
     else:
         parsed_date = date
+    parsed_date = parsed_date.replace(tzinfo=timezone.utc)
     if not parsed_date.tzinfo:
         parsed_date = make_aware(parsed_date)
     return parsed_date
