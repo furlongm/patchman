@@ -40,8 +40,7 @@ from packages.utils import parse_package_string, get_or_create_package, find_evr
     convert_package_to_packagestring, convert_packagestring_to_package
 from util import get_url, download_url, response_is_valid, extract, get_checksum, Checksum, get_setting_of_type, \
     get_datetime_now
-from patchman.signals import info_message, warning_message, error_message, debug_message, \
-    pbar_start, pbar_update
+from patchman.signals import info_message, warning_message, error_message, debug_message, pbar_start, pbar_update
 
 
 def get_or_create_repo(r_name, r_arch, r_type, r_id=None):
