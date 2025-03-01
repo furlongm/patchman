@@ -256,9 +256,8 @@ def get_metalink_urls(url):
 
 
 def get_mirrorlist_urls(url):
-    """ Checks if a given url returns a mirrorlist by checking if it is of
-        type text/plain and contains a list of urls. Returns a list of
-        mirrors if it is a mirrorlist.
+    """ Checks if a given url returns a mirrorlist by checking if it contains
+        a list of urls. Returns a list of mirrors if it is a mirrorlist.
     """
     try:
         res = get_url(url)
@@ -803,7 +802,7 @@ def refresh_gentoo_repo(repo):
         refresh_gentoo_overlay_repo(repo)
         repo_type = 'overlay'
     ts = get_datetime_now()
-    for mirror in repo.mirror_set.filter(mirrorlist=False, refresh=True):
+    for mirror in repo.mirror_set.filter(mirrorlist=False, refresh=True, enabled=True):
         res = get_url(mirror.url + '.md5sum')
         data = download_url(res, 'Downloading repo info (1/2):')
         if data is None:
@@ -898,6 +897,7 @@ def refresh_rpm_repo(repo):
 
         res = find_mirror_url(mirror.url, formats)
         if not res:
+            mirror.fail()
             continue
         mirror_url = res.url
 

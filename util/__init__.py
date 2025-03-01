@@ -104,8 +104,8 @@ def download_url(response, text='', ljust=35):
 
 @retry(
     retry=retry_if_exception_type(HTTPError | Timeout | ConnectionError | ConnectionResetError),
-    stop=stop_after_attempt(5),
-    wait=wait_exponential(multiplier=1, min=2, max=15),
+    stop=stop_after_attempt(4),
+    wait=wait_exponential(multiplier=1, min=1, max=10),
     reraise=False,
 )
 def get_url(url, headers={}, params={}):
