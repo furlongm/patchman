@@ -26,7 +26,7 @@
         <td class="centered">{% yes_no_img mirror.mirrorlist 'Yes' 'No' %}</td>
         <td class="centered">{% yes_no_img mirror.last_access_ok 'Yes' 'No' %}</td>
         <td>{{ mirror.timestamp }}</td>
-        <td>{{ mirror.file_checksum|truncatechars:16 }}</td>
+        <td>{{ mirror.packages_checksum|truncatechars:16 }}</td>
       </tr>
     {% endfor %}
   </tbody>

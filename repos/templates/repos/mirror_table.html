@@ -30,7 +30,7 @@
         <td class="centered">{% yes_no_img mirror.mirrorlist 'Yes' 'No' %}</td>
         <td class="centered">{% yes_no_img mirror.last_access_ok 'Yes' 'No' %}</td>
         <td>{{ mirror.timestamp }}</td>
-        <td>{% if not mirror.mirrorlist %}{{ mirror.file_checksum|truncatechars:16 }}{% endif %}</td>
+        <td>{% if not mirror.mirrorlist %}{{ mirror.packages_checksum|truncatechars:16 }}{% endif %}</td>
         <td><a class="btn btn-primary btn-xs" role="button" href="{% url 'repos:mirror_delete' mirror.id %}">{% bootstrap_icon "trash" %} Delete this Mirror</a></td>
         <td><a class="btn btn-primary btn-xs" role="button" href="{% url 'repos:mirror_edit' mirror.id %}">{% bootstrap_icon "edit" %} Edit this Mirror</a></td>
       </tr>
