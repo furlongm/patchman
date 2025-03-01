@@ -24,7 +24,8 @@ import tarfile
 import tempfile
 import yaml
 from io import BytesIO
-from defusedxml.lxml import _etree as etree
+
+from defusedxml import ElementTree as ET
 from debian.debian_support import Version
 from debian.deb822 import Packages
 from fnmatch import fnmatch
@@ -101,53 +102,35 @@ def update_mirror_packages(mirror, packages):
             with transaction.atomic():
                 mirror_package, c = MirrorPackage.objects.get_or_create(mirror=mirror, package=package)
         except Package.MultipleObjectsReturned:
-            error_message.send(sender=None, text=f'Duplicate package found in {mirror}: {strpackage}')
+            error_message.send(sender=None, text=f'Duplicate Package found in {mirror}: {strpackage}')
     mirror.save()
 
 
-def get_primary_url(mirror_url, data):
-
+def get_repomd_url(mirror_url, data, url_type='primary'):
     if isinstance(data, str):
-        if data.startswith('Bad repo - not in list') or \
-                data.startswith('Invalid repo'):
+        if data.startswith('Bad repo - not in list') or data.startswith('Invalid repo'):
             return None, None, None
+
     ns = 'http://linux.duke.edu/metadata/repo'
+    extracted = extract(data, mirror_url)
+    location = None
     try:
-        context = etree.parse(BytesIO(data), etree.XMLParser())
-    except etree.XMLSyntaxError:
-        context = etree.parse(BytesIO(extract(data, 'gz')), etree.XMLParser())
-    location = context.xpath("//ns:data[@type='primary']/ns:location/@href",
-                             namespaces={'ns': ns})[0]
-    checksum = context.xpath("//ns:data[@type='primary']/ns:checksum",
-                             namespaces={'ns': ns})[0].text
-    csum_type = context.xpath("//ns:data[@type='primary']/ns:checksum/@type",
-                              namespaces={'ns': ns})[0]
-    url = str(mirror_url.rsplit('/', 2)[0]) + '/' + location
-    return url, checksum, csum_type
-
-
-def get_modules_url(mirror_url, data):
-
-    if isinstance(data, str):
-        if data.startswith('Bad repo - not in list') or \
-                data.startswith('Invalid repo'):
-            return None, None, None
-    ns = 'http://linux.duke.edu/metadata/repo'
-    try:
-        context = etree.parse(BytesIO(data), etree.XMLParser())
-    except etree.XMLSyntaxError:
-        context = etree.parse(BytesIO(extract(data, 'gz')), etree.XMLParser())
-    try:
-        location = context.xpath("//ns:data[@type='modules']/ns:location/@href",
-                                 namespaces={'ns': ns})[0]
-    except IndexError:
+        tree = ET.parse(BytesIO(extracted))
+        root = tree.getroot()
+        for child in root:
+            if child.attrib.get('type') == url_type:
+                for grandchild in child:
+                    if grandchild.tag == f'{{{ns}}}location':
+                        location = grandchild.attrib.get('href')
+                    if grandchild.tag == f'{{{ns}}}checksum':
+                        checksum = grandchild.text
+                        checksum_type = grandchild.attrib.get('type')
+    except ET.ParseError as e:
+        error_message.send(sender=None, text=(f'Error parsing repomd from {mirror_url}: {e}'))
+    if not location:
         return None, None, None
-    checksum = context.xpath("//ns:data[@type='modules']/ns:checksum",
-                             namespaces={'ns': ns})[0].text
-    csum_type = context.xpath("//ns:data[@type='modules']/ns:checksum/@type",
-                              namespaces={'ns': ns})[0]
     url = str(mirror_url.rsplit('/', 2)[0]) + '/' + location
-    return url, checksum, csum_type
+    return url, checksum, checksum_type
 
 
 def find_mirror_url(stored_mirror_url, formats):
@@ -171,30 +154,34 @@ def find_mirror_url(stored_mirror_url, formats):
 def get_gentoo_mirror_urls():
     """ Use the Gentoo API to find http(s) mirrors
     """
-    res = get_url('https://api.gentoo.org/mirrors/distfiles.xml')
+    gentoo_distfiles_url = 'https://api.gentoo.org/mirrors/distfiles.xml'
+    res = get_url(gentoo_distfiles_url)
     if not res:
         return
     mirrors = {}
-    tree = etree.parse(BytesIO(res.content))
-    root = tree.getroot()
-    for child in root:
-        if child.tag == 'mirrorgroup':
-            for k, v in child.attrib.items():
-                if k == 'region':
-                    region = v
-                elif k == 'country':
-                    country = v
-            for mirror in child:
-                for element in mirror:
-                    if element.tag == 'name':
-                        name = element.text
-                        mirrors[name] = {}
-                        mirrors[name]['region'] = region
-                        mirrors[name]['country'] = country
-                        mirrors[name]['urls'] = []
-                    elif element.tag == 'uri':
-                        if element.get('protocol') == 'http':
-                            mirrors[name]['urls'].append(element.text)
+    try:
+        tree = ET.parse(BytesIO(res.content))
+        root = tree.getroot()
+        for child in root:
+            if child.tag == 'mirrorgroup':
+                for k, v in child.attrib.items():
+                    if k == 'region':
+                        region = v
+                    elif k == 'country':
+                        country = v
+                for mirror in child:
+                    for element in mirror:
+                        if element.tag == 'name':
+                            name = element.text
+                            mirrors[name] = {}
+                            mirrors[name]['region'] = region
+                            mirrors[name]['country'] = country
+                            mirrors[name]['urls'] = []
+                        elif element.tag == 'uri':
+                            if element.get('protocol') == 'http':
+                                mirrors[name]['urls'].append(element.text)
+    except ET.ParseError as e:
+        error_message.send(sender=None, text=f'Error parsing {gentoo_distfiles_url}: {e}')
     mirror_urls = []
     # for now, ignore region data and choose MAX_MIRRORS mirrors at random
     for _, v in mirrors.items():
@@ -206,21 +193,25 @@ def get_gentoo_mirror_urls():
 def get_gentoo_overlay_mirrors(repo_name):
     """Get the gentoo overlay repos that match repo.id
     """
-    res = get_url('https://api.gentoo.org/overlays/repositories.xml')
+    gentoo_overlays_url = 'https://api.gentoo.org/overlays/repositories.xml'
+    res = get_url(gentoo_overlays_url)
     if not res:
         return
-    tree = etree.parse(BytesIO(res.content))
-    root = tree.getroot()
     mirrors = []
-    for child in root:
-        if child.tag == 'repo':
-            found = False
-            for element in child:
-                if element.tag == 'name' and element.text == repo_name:
-                    found = True
-                if found and element.tag == 'source':
-                    if element.text.startswith('http'):
-                        mirrors.append(element.text)
+    try:
+        tree = ET.parse(BytesIO(res.content))
+        root = tree.getroot()
+        for child in root:
+            if child.tag == 'repo':
+                found = False
+                for element in child:
+                    if element.tag == 'name' and element.text == repo_name:
+                        found = True
+                    if found and element.tag == 'source':
+                        if element.text.startswith('http'):
+                            mirrors.append(element.text)
+    except ET.ParseError as e:
+        error_message.send(sender=None, text=f'Error parsing {gentoo_overlays_url}: {e}')
     return mirrors
 
 
@@ -237,19 +228,30 @@ def get_metalink_urls(url):
         res = get_url(url)
     except RetryError:
         return
-    if response_is_valid(res):
-        if 'content-type' in res.headers and \
-           res.headers['content-type'] == 'application/metalink+xml':
-            data = download_url(res, 'Downloading repo info:')
-            ns = 'http://www.metalinker.org/'
-            try:
-                context = etree.parse(BytesIO(data), etree.XMLParser())
-            except etree.XMLSyntaxError:
-                context = etree.parse(BytesIO(extract(data, 'gz')),
-                                      etree.XMLParser())
-            xpath = "//ns:files/ns:file[@name='repomd.xml']/ns:resources/ns:url[@protocol='https']"  # noqa
-            metalink_urls = context.xpath(xpath, namespaces={'ns': ns})
-            return [x.text for x in metalink_urls]
+    if not response_is_valid(res):
+        return
+    if not res.headers.get('content-type') == 'application/metalink+xml':
+        return
+    metalink_urls = []
+    data = download_url(res, 'Downloading metalink data')
+    extracted = extract(data, url)
+    ns = 'http://www.metalinker.org/'
+    try:
+        tree = ET.parse(BytesIO(extracted))
+        root = tree.getroot()
+        for child in root:
+            if child.tag == f'{{{ns}}}files':
+                for grandchild in child:
+                    if grandchild.tag == f'{{{ns}}}file':
+                        for greatgrandchild in grandchild:
+                            if greatgrandchild.tag == f'{{{ns}}}resources':
+                                for greatgreatgrandchild in greatgrandchild:
+                                    if greatgreatgrandchild.tag == f'{{{ns}}}url':
+                                        if greatgreatgrandchild.attrib.get('protocol') in ['https', 'http']:
+                                            metalink_urls.append(greatgreatgrandchild.text)
+    except ET.ParseError as e:
+        error_message.send(sender=None, text=f'Error parsing metalink {url}: {e}')
+    return metalink_urls
 
 
 def get_mirrorlist_urls(url):
@@ -379,39 +381,52 @@ def extract_yum_packages(data, url):
     """
     extracted = extract(data, url)
     ns = 'http://linux.duke.edu/metadata/common'
-    m_context = etree.iterparse(BytesIO(extracted), tag=f'{{{ns}}}metadata')
-    plen = int(next(m_context)[1].get('packages'))
-    p_context = etree.iterparse(BytesIO(extracted), tag=f'{{{ns}}}package')
     packages = set()
-
-    ptext = 'Extracting packages: '
-    progress_info_s.send(sender=None, ptext=ptext, plen=plen)
-
-    for i, p_data in enumerate(p_context):
-        elem = p_data[1]
-        progress_update_s.send(sender=None, index=i + 1)
-        name = elem.xpath('//ns:name', namespaces={'ns': ns})[0].text.lower()
-        arch = elem.xpath('//ns:arch', namespaces={'ns': ns})[0].text
-        fullversion = elem.xpath('//ns:version', namespaces={'ns': ns})[0]
-        epoch = fullversion.get('epoch')
-        version = fullversion.get('ver')
-        release = fullversion.get('rel')
-        elem.clear()
-        while elem.getprevious() is not None:
-            del elem.getparent()[0]
-
-        if name != '' and version != '' and arch != '':
-            if epoch == '0':
-                epoch = ''
-            package = PackageString(
-                name=name,
-                epoch=epoch,
-                version=version,
-                release=release,
-                arch=arch,
-                packagetype='R',
-            )
-            packages.add(package)
+    try:
+        context = ET.iterparse(BytesIO(extracted), events=('start', 'end'))
+        for event, elem in context:
+            if event == 'start':
+                if elem.tag == f'{{{ns}}}metadata':
+                    plen = int(elem.attrib.get('packages'))
+                    break
+        progress_info_s.send(sender=None, ptext=f'Extracting {plen} Packages', plen=plen)
+        i = 0
+        for event, elem in context:
+            if event == 'start':
+                if elem.tag == f'{{{ns}}}package':
+                    if elem.attrib.get('type') == 'rpm':
+                        name = version = release = arch = ''
+            elif event == 'end':
+                if elem.tag == f'{{{ns}}}name':
+                    name = elem.text.lower()
+                elif elem.tag == f'{{{ns}}}arch':
+                    arch = elem.text
+                elif elem.tag == f'{{{ns}}}version':
+                    fullversion = elem
+                    epoch = fullversion.get('epoch')
+                    version = fullversion.get('ver')
+                    release = fullversion.get('rel')
+                elif elem.tag == f'{{{ns}}}package':
+                    if name and version and release and arch:
+                        if epoch == '0':
+                            epoch = ''
+                        package = PackageString(
+                            name=name,
+                            epoch=epoch,
+                            version=version,
+                            release=release,
+                            arch=arch,
+                            packagetype='R',
+                        )
+                        packages.add(package)
+                        progress_update_s.send(sender=None, index=i + 1)
+                        i += 1
+                    else:
+                        text = f'Error parsing Package: {name} {epoch} {version} {release} {arch}'
+                        error_message.send(sender=None, text=text)
+                elem.clear()
+    except ET.ParseError as e:
+        error_message.send(sender=None, text=f'Error parsing yum primary.xml from {url}: {e}')
     return packages
 
 
@@ -578,19 +593,135 @@ def mirror_checksum_is_valid(computed, provided, mirror, metadata_type):
         return True
 
 
-def refresh_yum_repo(mirror, data, mirror_url, ts):
-    """ Refresh package metadata for a yum-style rpm mirror
-        and add the packages to the mirror
+def extract_updateinfo(data, url):
+    """ Parses updateinfo.xml and extracts package/errata information
     """
-    primary_url, primary_checksum, primary_checksum_type = get_primary_url(mirror_url, data)
-    package_data = fetch_mirror_data(
+    print(url)
+    from errata.utils import get_or_create_erratum
+    extracted = extract(data, url)
+    updates = []
+    try:
+        tree = ET.parse(BytesIO(extracted))
+        root = tree.getroot()
+        elen = root.__len__()
+        progress_info_s.send(sender=None, ptext=f'Extracting {elen} rpm Errata', plen=elen)
+        for i, update in enumerate(root.findall('update')):
+            progress_update_s.send(sender=None, index=i + 1)
+            e_type = update.attrib.get('type')
+            name = update.find('id').text
+            synopsis = update.find('title').text
+            issue_date = update.find('issued').attrib.get('date')
+            e, created = get_or_create_erratum(name, e_type, issue_date, synopsis)
+
+            xreferences = update.find('references')
+            for reference in xreferences.findall('reference'):
+                if reference.attrib.get('type') == 'cve':
+                    cve_id = reference.attrib.get('id')
+                    e.add_cve(cve_id)
+                else:
+                    ref = reference.attrib.get('href')
+                    e.add_reference('Link', ref)
+
+            osrelease_name = None
+            release = update.find('release')
+            if release:
+                osrelease_name = release.text
+
+            pkglist = update.find('pkglist')
+            packages = set()
+            for collection in pkglist.findall('collection'):
+                if not osrelease_name:
+                    collection_name = collection.find('name')
+                    if collection_name is not None:
+                        osrelease_name = collection_name.text
+                from operatingsystems.models import OSRelease
+                if osrelease_name:
+                    osrelease, created = OSRelease.objects.get_or_create(name=osrelease_name)
+                    e.osreleases.add(osrelease)
+                    # TODO for opensuse, add if repo is associated with an os release
+
+                for pkg in collection.findall('package'):
+                    name = pkg.attrib.get('name')
+                    epoch = pkg.attrib.get('epoch')
+                    version = pkg.attrib.get('version')
+                    release = pkg.attrib.get('release')
+                    arch = pkg.attrib.get('arch')
+                    package = get_or_create_package(
+                        name=name.lower(),
+                        epoch=epoch,
+                        version=version,
+                        release=release,
+                        arch=arch,
+                        p_type='R',
+                    )
+                    packages.add(package)
+                e.add_packages(packages)
+                e.save()
+    except ET.ParseError as e:
+        error_message.send(sender=None, text=f'Error parsing updateinfo file: {e}')
+    return updates
+
+
+def refresh_rpm_updateinfo(mirror, data, mirror_url):
+    url, checksum, checksum_type = get_repomd_url(mirror_url, data, url_type='updateinfo')
+    data = fetch_mirror_data(
         mirror=mirror,
-        url=primary_url,
-        checksum=primary_checksum,
-        checksum_type=primary_checksum_type,
-        text='Downloading package info:',
+        url=url,
+        checksum=checksum,
+        checksum_type=checksum_type,
+        text='Downloading Errata data',
+        metadata_type='updateinfo')
+
+    if not mirror.last_access_ok:
+        return
+
+    if mirror.modules_checksum == checksum:
+        text = 'Mirror Errata checksum has not changed, skipping Erratum refresh'
+        warning_message.send(sender=None, text=text)
+        return
+    else:
+        mirror.modules_checksum = checksum
+        mirror.save()
+
+    extract_updateinfo(data, url)
+
+
+def refresh_rpm_modules(mirror, data, mirror_url):
+    url, checksum, checksum_type = get_repomd_url(mirror_url, data, url_type='modules')
+    if url:
+        data = fetch_mirror_data(
+            mirror=mirror,
+            url=url,
+            checksum=checksum,
+            checksum_type=checksum_type,
+            text='Downloading Module data',
+            metadata_type='module')
+
+    if not mirror.last_access_ok:
+        return
+
+    if mirror.modules_checksum == checksum:
+        text = 'Mirror Modules checksum has not changed, skipping Module refresh'
+        warning_message.send(sender=None, text=text)
+        return
+    else:
+        mirror.modules_checksum = checksum
+        mirror.save()
+
+    extract_module_metadata(data, url, mirror.repo)
+
+
+def refresh_rpm_primary(mirror, data, mirror_url, ts):
+    url, checksum, checksum_type = get_repomd_url(mirror_url, data, url_type='primary')
+    data = fetch_mirror_data(
+        mirror=mirror,
+        url=url,
+        checksum=checksum,
+        checksum_type=checksum_type,
+        text='Downloading Package data',
         metadata_type='package')
-    if not package_data:
+
+    if not mirror.last_access_ok:
         return
 
     if mirror.packages_checksum == checksum:
@@ -603,31 +734,29 @@ def refresh_yum_repo(mirror, data, mirror_url, ts):
 
     # only refresh X mirrors, where X = max_mirrors
     max_mirrors = get_max_mirrors()
-    mirrors_q = Q(mirrorlist=False, refresh=True, enabled=True, timestamp=ts, file_checksum=primary_checksum)
-    have_checksum = mirror.repo.mirror_set.filter(mirrors_q).count()
-    if have_checksum >= max_mirrors:
-        text = f'{max_mirrors} mirrors already have this checksum, skipping refresh'
+    mirrors_q = Q(mirrorlist=False, refresh=True, enabled=True, timestamp=ts, packages_checksum=checksum)
+    have_checksum_and_ts = mirror.repo.mirror_set.filter(mirrors_q).count()
+    if have_checksum_and_ts >= max_mirrors:
+        text = f'{max_mirrors} Mirrors already have this checksum and timestamp, skipping Package refresh'
         info_message.send(sender=None, text=text)
         return
 
-    packages = extract_yum_packages(package_data, primary_url)
+    packages = extract_yum_packages(data, url)
     if packages:
         update_mirror_packages(mirror, packages)
-        packages.clear()
 
-    modules_url, modules_checksum, modules_checksum_type = get_modules_url(mirror_url, data)
-    if modules_url:
-        module_data = fetch_mirror_data(
-            mirror=mirror,
-            url=modules_url,
-            checksum=modules_checksum,
-            checksum_type=modules_checksum_type,
-            text='Downloading module info:',
-            metadata_type='module')
-        if module_data:
-            extract_module_metadata(module_data, modules_url, mirror.repo)
 
-    mirror.save()
+def refresh_yum_repo(mirror, data, mirror_url, ts, errata_only):
+    """ Refresh package, module and updateinfo/errata data for a yum-style rpm Mirror
+    """
+    if not errata_only:
+        refresh_rpm_primary(mirror, data, mirror_url, ts)
+        refresh_rpm_modules(mirror, data, mirror_url)
+    refresh_rpm_updateinfo(mirror, data, mirror_url)
+
+
+def refresh_yum_repo_errata(repo):
+    refresh_rpm_repo_mirrors(repo, errata_only=True)
 
 
 def refresh_arch_repo(repo):
@@ -724,35 +853,49 @@ def get_gentoo_ebuild_keywords(content):
     return keywords
 
 
-def extract_gentoo_packages(mirror, data):
-    extracted_files = {}
+def extract_gentoo_ebuilds(data):
+    extracted_ebuilds = {}
     with tarfile.open(fileobj=io.BytesIO(data), mode='r') as tar:
         for member in tar.getmembers():
-            if member.isfile():
+            if member.isfile() and member.name.endswith('ebuild') and not member.name.endswith('skel.ebuild'):
                 file_content = tar.extractfile(member).read()
-                extracted_files[member.name] = file_content
+                extracted_ebuilds[member.name] = file_content
+    return extracted_ebuilds
+
+
+def extract_gentoo_packages(mirror, data):
+    extracted_ebuilds = extract_gentoo_ebuilds(data)
+    return extract_gentoo_packages_from_ebuilds(extracted_ebuilds)
+
+
+def extract_gentoo_packages_from_ebuilds(extracted_ebuilds):
+    if not extracted_ebuilds:
+        return
+
     packages = set()
-    for path, content in extracted_files.items():
-        if fnmatch(path, '*.ebuild'):
-            components = path.split(os.sep)
-            if len(components) < 4:
-                continue
-            category = components[1]
-            name = components[2]
-            evr = components[3].replace(f'{name}-', '').replace('.ebuild', '')
-            epoch, version, release = find_evr(evr)
-            arches = get_gentoo_ebuild_keywords(content)
-            for arch in arches:
-                package = PackageString(
-                    name=name.lower(),
-                    epoch=epoch,
-                    version=version,
-                    release=release,
-                    arch=arch,
-                    packagetype='G',
-                    category=category,
-                )
-                packages.add(package)
+    flen = len(extracted_ebuilds)
+    progress_info_s.send(sender=None, ptext=f'Processing {flen} ebuilds', plen=flen)
+    for i, (path, content) in enumerate(extracted_ebuilds.items()):
+        progress_update_s.send(sender=None, index=i + 1)
+        components = path.split(os.sep)
+        category = components[1]
+        name = components[2]
+        evr = components[3].replace(f'{name}-', '').replace('.ebuild', '')
+        epoch, version, release = find_evr(evr)
+        arches = get_gentoo_ebuild_keywords(content)
+        for arch in arches:
+            package = PackageString(
+                name=name.lower(),
+                epoch=epoch,
+                version=version,
+                release=release,
+                arch=arch,
+                packagetype='G',
+                category=category,
+            )
+            packages.add(package)
+    plen = len(packages)
+    info_message.send(sender=None, text=f'Extracted {plen} Packages', plen=plen)
     return packages
 
 
@@ -857,12 +1000,19 @@ def refresh_yast_repo(mirror, data):
 
 
 def refresh_rpm_repo(repo):
-    """ Refresh an rpm repo.
-        Checks if the repo url is a mirrorlist, and extracts mirrors if so.
-        If not, checks a number of common rpm repo formats to determine
-        which type of repo it is, and to determine the mirror urls.
+    """ Refresh an rpm repo (yum or yast)
+        Checks if the repo url is a mirrorlist or metalink,
+        and extracts mirrors if so, then refreshes the mirrors
     """
+    check_for_mirrorlists(repo)
+    check_for_metalinks(repo)
+    refresh_rpm_repo_mirrors(repo)
 
+
+def refresh_rpm_repo_mirrors(repo, errata_only=False):
+    """ checks a number of common yum repo formats to determine
+        which type of repo it is, then refreshes the mirrors
+    """
     formats = [
         'repodata/repomd.xml.xz',
         'repodata/repomd.xml.bz2',
@@ -874,10 +1024,6 @@ def refresh_rpm_repo(repo):
         'suse/repodata/repomd.xml',
         'content',
     ]
-
-    check_for_mirrorlists(repo)
-    check_for_metalinks(repo)
-
     max_mirrors = get_max_mirrors()
     ts = get_datetime_now()
     enabled_mirrors = repo.mirror_set.filter(mirrorlist=False, refresh=True, enabled=True)
@@ -907,7 +1053,7 @@ def refresh_rpm_repo(repo):
         else:
             text = f'Found yum rpm Repo - {mirror_url}'
             info_message.send(sender=None, text=text)
-            refresh_yum_repo(mirror, repo_data, mirror_url, ts)
+            refresh_yum_repo(mirror, repo_data, mirror_url, ts, errata_only)
         mirror.timestamp = ts
         mirror.save()
 
