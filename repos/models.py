@@ -23,7 +23,7 @@ from packages.models import Package
 from util import get_setting_of_type
 
 from repos.utils import refresh_deb_repo, refresh_rpm_repo, refresh_arch_repo, refresh_gentoo_repo, \
-     update_mirror_packages
+    refresh_yum_repo_errata
 from patchman.signals import info_message, warning_message, error_message
 
 
@@ -100,6 +100,10 @@ class Repository(models.Model):
         else:
             text = 'Repo requires certificate authentication, not updating'
             warning_message.send(sender=None, text=text)
+
+    def refresh_errata(self):
+        if self.repotype == Repository.RPM:
+            refresh_yum_repo_errata(self)
 
     def disable(self):
         """ Disable a repo. This involves disabling each mirror, which stops it
