@@ -176,10 +176,11 @@ class Mirror(models.Model):
         self.fail_count = self.fail_count + 1
         if max_mirror_failures == -1:
             text = f'Mirror has failed {self.fail_count} times, but MAX_MIRROR_FAILURES=-1, not disabling refresh'
+            error_message.send(sender=None, text=text)
         elif self.fail_count > max_mirror_failures:
             self.refresh = False
             text = f'Mirror has failed {self.fail_count} times (max={max_mirror_failures}), disabling refresh'
-        error_message.send(sender=None, text=text)
+            error_message.send(sender=None, text=text)
         self.last_access_ok = False
         self.save()
 
