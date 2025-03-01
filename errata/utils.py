@@ -20,19 +20,39 @@ from django.db import transaction
 
 from util import tz_aware_datetime
 from errata.models import Erratum
-from patchman.signals import progress_info_s, progress_update_s
+from patchman.signals import progress_info_s, progress_update_s, warning_message
 
 
 def get_or_create_erratum(name, e_type, issue_date, synopsis):
     """ Get or create an Erratum object. Returns the object and created
     """
-    with transaction.atomic():
-        e, created = Erratum.objects.get_or_create(
-            name=name,
-            e_type=e_type,
-            issue_date=tz_aware_datetime(issue_date),
-            synopsis=synopsis,
-        )
+    try:
+        e = Erratum.objects.get(name=name)
+        tz_aware_issue_date = tz_aware_datetime(issue_date)
+        updated = False
+        if e.e_type != e_type:
+            warning_message.send(sender=None, text=f'Updating {name} type `{e.e_type}` -> `{e_type}`')
+            e.e_type = e_type
+            updated = True
+        if e.issue_date != tz_aware_issue_date:
+            warning_message.send(sender=None, text=f'Updating {name} issue date `{e.issue_date}` -> `{tz_aware_issue_date}`')
+            e.issue_date = tz_aware_issue_date
+            updated = True
+        if e.synopsis != synopsis:
+            warning_message.send(sender=None, text=f'Updating {name} synopsis `{e.synopsis}` -> `{synopsis}`')
+            e.synopsis = synopsis
+            updated = True
+        if updated:
+            e.save()
+        created = False
+    except Erratum.DoesNotExist:
+        with transaction.atomic():
+            e, created = Erratum.objects.get_or_create(
+                name=name,
+                e_type=e_type,
+                issue_date=tz_aware_datetime(issue_date),
+                synopsis=synopsis,
+            )
     return e, created
 
 
