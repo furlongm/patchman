@@ -26,7 +26,7 @@ from modules.models import Module
 from packages.models import Package, PackageCategory
 from packages.utils import find_evr, get_or_create_package, get_or_create_package_update, parse_package_string
 from repos.utils import get_or_create_repo
-from patchman.signals import progress_info_s, progress_update_s, error_message, info_message
+from patchman.signals import pbar_start, pbar_update, error_message, info_message
 
 
 def process_repos(report, host):
@@ -37,7 +37,7 @@ def process_repos(report, host):
         host_repos = HostRepo.objects.filter(host=host)
         repos = parse_repos(report.repos)
 
-        progress_info_s.send(sender=None, ptext=f'{host} Repos', plen=len(repos))
+        pbar_start.send(sender=None, ptext=f'{host} Repos', plen=len(repos))
         for i, repo_str in enumerate(repos):
             repo, priority = process_repo(repo_str, report.arch)
             if repo:
@@ -56,7 +56,7 @@ def process_repos(report, host):
                             hostrepo.save()
                 except IntegrityError as e:
                     error_message.send(sender=None, text=e)
-            progress_update_s.send(sender=None, index=i + 1)
+            pbar_update.send(sender=None, index=i + 1)
 
         for hostrepo in host_repos:
             if hostrepo.repo_id not in repo_ids:
@@ -70,7 +70,7 @@ def process_modules(report, host):
         module_ids = []
         modules = parse_modules(report.modules)
 
-        progress_info_s.send(sender=None, ptext=f'{host} Modules', plen=len(modules))
+        pbar_start.send(sender=None, ptext=f'{host} Modules', plen=len(modules))
         for i, module_str in enumerate(modules):
             module = process_module(module_str)
             if module:
@@ -82,7 +82,7 @@ def process_modules(report, host):
                     error_message.send(sender=None, text=e)
                 except DatabaseError as e:
                     error_message.send(sender=None, text=e)
-            progress_update_s.send(sender=None, index=i + 1)
+            pbar_update.send(sender=None, index=i + 1)
 
         for module in host.modules.all():
             if module.id not in module_ids:
@@ -96,7 +96,7 @@ def process_packages(report, host):
         package_ids = []
 
         packages = parse_packages(report.packages)
-        progress_info_s.send(sender=None, ptext=f'{host} Packages', plen=len(packages))
+        pbar_start.send(sender=None, ptext=f'{host} Packages', plen=len(packages))
         for i, pkg_str in enumerate(packages):
             package = process_package(pkg_str, report.protocol)
             if package:
@@ -112,7 +112,7 @@ def process_packages(report, host):
                 if pkg_str[0].lower() != 'gpg-pubkey':
                     text = f'No package returned for {pkg_str}'
                     info_message.send(sender=None, text=text)
-            progress_update_s.send(sender=None, index=i + 1)
+            pbar_update.send(sender=None, index=i + 1)
 
         for package in host.packages.all():
             if package.id not in package_ids:
@@ -150,13 +150,13 @@ def add_updates(updates, host):
         host.updates.remove(host_update)
     ulen = len(updates)
     if ulen > 0:
-        progress_info_s.send(sender=None, ptext=f'{host} Updates', plen=ulen)
+        pbar_start.send(sender=None, ptext=f'{host} Updates', plen=ulen)
 
         for i, (u, sec) in enumerate(updates.items()):
             update = process_update(host, u, sec)
             if update:
                 host.updates.add(update)
-            progress_update_s.send(sender=None, index=i + 1)
+            pbar_update.send(sender=None, index=i + 1)
 
 
 def parse_updates(updates_string, security):

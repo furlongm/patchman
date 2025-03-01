@@ -21,7 +21,7 @@ from operatingsystems.models import OSRelease, OSVariant
 from packages.models import Package
 from packages.utils import find_evr, get_matching_packages
 from util import get_url, download_url
-from patchman.signals import error_message, progress_info_s, progress_update_s
+from patchman.signals import error_message, pbar_start, pbar_update
 
 
 def update_arch_errata(concurrent_processing=False):
@@ -56,10 +56,10 @@ def parse_arch_errata_serially(advisories):
     """
     osrelease = OSRelease.objects.get(name='Arch Linux')
     elen = len(advisories)
-    progress_info_s.send(sender=None, ptext=f'Processing {elen} Arch Advisories', plen=elen)
+    pbar_start.send(sender=None, ptext=f'Processing {elen} Arch Advisories', plen=elen)
     for i, advisory in enumerate(advisories):
         process_arch_erratum(advisory, osrelease)
-        progress_update_s.send(sender=None, index=i + 1)
+        pbar_update.send(sender=None, index=i + 1)
 
 
 def parse_arch_errata_concurrently(advisories):
@@ -67,13 +67,13 @@ def parse_arch_errata_concurrently(advisories):
     """
     osrelease = OSRelease.objects.get(name='Arch Linux')
     elen = len(advisories)
-    progress_info_s.send(sender=None, ptext=f'Processing {elen} Arch Advisories', plen=elen)
+    pbar_start.send(sender=None, ptext=f'Processing {elen} Arch Advisories', plen=elen)
     i = 0
     with concurrent.futures.ProcessPoolExecutor(max_workers=3) as executor:
         futures = [executor.submit(process_arch_erratum, advisory, osrelease) for advisory in advisories]
         for future in concurrent.futures.as_completed(futures):
             i += 1
-            progress_update_s.send(sender=None, index=i + 1)
+            pbar_update.send(sender=None, index=i + 1)
 
 
 def process_arch_erratum(advisory, osrelease):
