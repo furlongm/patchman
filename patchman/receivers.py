@@ -21,7 +21,7 @@ from tqdm import tqdm
 from django.dispatch import receiver
 
 from util import create_pbar, update_pbar, get_verbosity
-from patchman.signals import progress_info_s, progress_update_s, \
+from patchman.signals import pbar_start, pbar_update, \
     info_message, warning_message, error_message, debug_message
 
 from django.conf import settings
@@ -29,8 +29,8 @@ from django.conf import settings
 init(autoreset=True)
 
 
-@receiver(progress_info_s)
-def progress_info_r(**kwargs):
+@receiver(pbar_start)
+def pbar_start_receiver(**kwargs):
     """ Receiver to create a progressbar
     """
     ptext = kwargs.get('ptext')
@@ -39,8 +39,8 @@ def progress_info_r(**kwargs):
         create_pbar(ptext, plen)
 
 
-@receiver(progress_update_s)
-def progress_update_r(**kwargs):
+@receiver(pbar_update)
+def pbar_update_receiver(**kwargs):
     """ Receiver to update a progressbar
     """
     index = kwargs.get('index')

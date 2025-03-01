@@ -24,7 +24,7 @@ from django.db.utils import OperationalError
 from packages.models import Package
 from packages.utils import parse_package_string, get_or_create_package
 from util import get_url, download_url, info_message, error_message
-from patchman.signals import progress_info_s, progress_update_s
+from patchman.signals import pbar_start, pbar_update
 
 
 def update_rocky_errata(concurrent_processing=True):
@@ -113,7 +113,7 @@ def download_rocky_advisories_concurrently(rocky_errata_api_host, rocky_errata_a
     last_link = links.get('last')
     pages = int(last_link.split('=')[-1])
     ptext = 'Downloading Rocky Linux Advisories:'
-    progress_info_s.send(sender=None, ptext=ptext, plen=pages)
+    pbar_start.send(sender=None, ptext=ptext, plen=pages)
     i = 0
     with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
         futures = [executor.submit(get_rocky_advisory, rocky_errata_advisories_url, page)
@@ -121,7 +121,7 @@ def download_rocky_advisories_concurrently(rocky_errata_api_host, rocky_errata_a
         for future in concurrent.futures.as_completed(futures):
             advisories += future.result()
             i += 1
-            progress_update_s.send(sender=None, index=i + 1)
+            pbar_update.send(sender=None, index=i + 1)
     return advisories
 
 
@@ -149,23 +149,23 @@ def process_rocky_errata_serially(advisories):
     """ Process Rocky Linux errata serially
     """
     elen = len(advisories)
-    progress_info_s.send(sender=None, ptext=f'Processing {elen} Rocky Errata', plen=elen)
+    pbar_start.send(sender=None, ptext=f'Processing {elen} Rocky Errata', plen=elen)
     for i, advisory in enumerate(advisories):
         process_rocky_erratum(advisory)
-        progress_update_s.send(sender=None, index=i + 1)
+        pbar_update.send(sender=None, index=i + 1)
 
 
 def process_rocky_errata_concurrently(advisories):
     """ Process Rocky Linux errata concurrently
     """
     elen = len(advisories)
-    progress_info_s.send(sender=None, ptext=f'Processing {elen} Rocky Errata', plen=elen)
+    pbar_start.send(sender=None, ptext=f'Processing {elen} Rocky Errata', plen=elen)
     i = 0
     with concurrent.futures.ProcessPoolExecutor(max_workers=100) as executor:
         futures = [executor.submit(process_rocky_erratum, advisory) for advisory in advisories]
         for future in concurrent.futures.as_completed(futures):
             i += 1
-            progress_update_s.send(sender=None, index=i + 1)
+            pbar_update.send(sender=None, index=i + 1)
 
 
 @retry(

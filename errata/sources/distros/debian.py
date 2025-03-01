@@ -28,7 +28,7 @@ from operatingsystems.models import OSRelease
 from packages.models import Package
 from packages.utils import get_or_create_package, find_evr
 from util import get_url, download_url, get_setting_of_type
-from patchman.signals import error_message, progress_info_s, progress_update_s
+from patchman.signals import error_message, pbar_start, pbar_update
 
 
 def update_debian_errata(concurrent_processing=True):
@@ -131,23 +131,23 @@ def create_debian_errata_serially(errata, accepted_codenames):
     """ Create Debian Errata Serially
     """
     elen = len(errata)
-    progress_info_s.send(sender=None, ptext=f'Processing {elen} Debian Errata', plen=elen)
+    pbar_start.send(sender=None, ptext=f'Processing {elen} Debian Errata', plen=elen)
     for i, erratum in enumerate(errata):
         process_debian_erratum(erratum, accepted_codenames)
-        progress_update_s.send(sender=None, index=i + 1)
+        pbar_update.send(sender=None, index=i + 1)
 
 
 def create_debian_errata_concurrently(errata, accepted_codenames):
     """ Create Debian Errata concurrently
     """
     elen = len(errata)
-    progress_info_s.send(sender=None, ptext=f'Processing {elen} Debian Errata', plen=elen)
+    pbar_start.send(sender=None, ptext=f'Processing {elen} Debian Errata', plen=elen)
     i = 0
     with concurrent.futures.ProcessPoolExecutor(max_workers=200) as executor:
         futures = [executor.submit(process_debian_erratum, erratum, accepted_codenames) for erratum in errata]
         for future in concurrent.futures.as_completed(futures):
             i += 1
-            progress_update_s.send(sender=None, index=i + 1)
+            pbar_update.send(sender=None, index=i + 1)
 
 
 def process_debian_erratum(erratum, accepted_codenames):

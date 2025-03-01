@@ -41,7 +41,7 @@ from packages.utils import parse_package_string, get_or_create_package, find_evr
 from util import get_url, download_url, response_is_valid, extract, get_checksum, Checksum, get_setting_of_type, \
     get_datetime_now
 from patchman.signals import info_message, warning_message, error_message, debug_message, \
-    progress_info_s, progress_update_s
+    pbar_start, pbar_update
 
 
 def get_or_create_repo(r_name, r_arch, r_type, r_id=None):
@@ -78,25 +78,25 @@ def update_mirror_packages(mirror, packages):
     old = set()
     mirror_packages = mirror.packages.all()
     plen = mirror_packages.count()
-    progress_info_s.send(sender=None, ptext=f'Fetching {plen} existing Packages', plen=plen)
+    pbar_start.send(sender=None, ptext=f'Fetching {plen} existing Packages', plen=plen)
     for i, package in enumerate(mirror_packages):
-        progress_update_s.send(sender=None, index=i + 1)
+        pbar_update.send(sender=None, index=i + 1)
         strpackage = convert_package_to_packagestring(package)
         old.add(strpackage)
 
     removals = old.difference(packages)
     rlen = len(removals)
-    progress_info_s.send(sender=None, ptext=f'Removing {rlen} obsolete Packages', plen=rlen)
+    pbar_start.send(sender=None, ptext=f'Removing {rlen} obsolete Packages', plen=rlen)
     for i, strpackage in enumerate(removals):
-        progress_update_s.send(sender=None, index=i + 1)
+        pbar_update.send(sender=None, index=i + 1)
         package = convert_packagestring_to_package(strpackage)
         MirrorPackage.objects.filter(mirror=mirror, package=package).delete()
 
     new = packages.difference(old)
     nlen = len(new)
-    progress_info_s.send(sender=None, ptext=f'Adding {nlen} new Packages', plen=nlen)
+    pbar_start.send(sender=None, ptext=f'Adding {nlen} new Packages', plen=nlen)
     for i, strpackage in enumerate(new):
-        progress_update_s.send(sender=None, index=i + 1)
+        pbar_update.send(sender=None, index=i + 1)
         try:
             package = convert_packagestring_to_package(strpackage)
             with transaction.atomic():
@@ -341,9 +341,9 @@ def extract_module_metadata(data, url, repo):
         error_message.send(sender=None, text=f'Error parsing modules.yaml: {e}')
 
     mlen = len(re.findall(r'---', yaml.dump(extracted.decode())))
-    progress_info_s.send(sender=None, ptext=f'Extracting {mlen} Modules ', plen=mlen)
+    pbar_start.send(sender=None, ptext=f'Extracting {mlen} Modules ', plen=mlen)
     for i, doc in enumerate(modules_yaml):
-        progress_update_s.send(sender=None, index=i + 1)
+        pbar_update.send(sender=None, index=i + 1)
         document = doc['document']
         modulemd = doc['data']
         if document == 'modulemd':
@@ -389,7 +389,7 @@ def extract_yum_packages(data, url):
                 if elem.tag == f'{{{ns}}}metadata':
                     plen = int(elem.attrib.get('packages'))
                     break
-        progress_info_s.send(sender=None, ptext=f'Extracting {plen} Packages', plen=plen)
+        pbar_start.send(sender=None, ptext=f'Extracting {plen} Packages', plen=plen)
         i = 0
         for event, elem in context:
             if event == 'start':
@@ -419,7 +419,7 @@ def extract_yum_packages(data, url):
                             packagetype='R',
                         )
                         packages.add(package)
-                        progress_update_s.send(sender=None, index=i + 1)
+                        pbar_update.send(sender=None, index=i + 1)
                         i += 1
                     else:
                         text = f'Error parsing Package: {name} {epoch} {version} {release} {arch}'
@@ -443,7 +443,7 @@ def extract_deb_packages(data, url):
     packages = set()
 
     if plen > 0:
-        progress_info_s.send(sender=None, ptext=f'Extracting {plen} Packages', plen=plen)
+        pbar_start.send(sender=None, ptext=f'Extracting {plen} Packages', plen=plen)
         for i, stanza in enumerate(Packages.iter_paragraphs(extracted)):
             # https://github.com/furlongm/patchman/issues/55
             if 'version' not in stanza:
@@ -458,7 +458,7 @@ def extract_deb_packages(data, url):
             release = fullversion._BaseVersion__debian_revision
             if release is None:
                 release = ''
-            progress_update_s.send(sender=None, index=i + 1)
+            pbar_update.send(sender=None, index=i + 1)
             package = PackageString(name=name,
                                     epoch=epoch,
                                     version=version,
@@ -480,10 +480,10 @@ def extract_yast_packages(data):
     packages = set()
 
     if plen > 0:
-        progress_info_s.send(sender=None, ptext=f'Extracting {plen} Packages', plen=plen)
+        pbar_start.send(sender=None, ptext=f'Extracting {plen} Packages', plen=plen)
 
         for i, pkg in enumerate(pkgs):
-            progress_update_s.send(sender=None, index=i + 1)
+            pbar_update.send(sender=None, index=i + 1)
             name, version, release, arch = pkg.split()
             package = PackageString(name=name.lower(),
                                     epoch='',
@@ -506,9 +506,9 @@ def extract_arch_packages(data):
     packages = set()
     plen = len(tf.getnames())
     if plen > 0:
-        progress_info_s.send(sender=None, ptext=f'Extracting {plen} Packages', plen=plen)
+        pbar_start.send(sender=None, ptext=f'Extracting {plen} Packages', plen=plen)
         for i, tarinfo in enumerate(tf):
-            progress_update_s.send(sender=None, index=i + 1)
+            pbar_update.send(sender=None, index=i + 1)
             if tarinfo.isfile():
                 name_sec = ver_sec = arch_sec = False
                 t = tf.extractfile(tarinfo).read()
@@ -604,9 +604,9 @@ def extract_updateinfo(data, url):
         tree = ET.parse(BytesIO(extracted))
         root = tree.getroot()
         elen = root.__len__()
-        progress_info_s.send(sender=None, ptext=f'Extracting {elen} rpm Errata', plen=elen)
+        pbar_start.send(sender=None, ptext=f'Extracting {elen} rpm Errata', plen=elen)
         for i, update in enumerate(root.findall('update')):
-            progress_update_s.send(sender=None, index=i + 1)
+            pbar_update.send(sender=None, index=i + 1)
             e_type = update.attrib.get('type')
             name = update.find('id').text
             synopsis = update.find('title').text
@@ -874,9 +874,9 @@ def extract_gentoo_packages_from_ebuilds(extracted_ebuilds):
 
     packages = set()
     flen = len(extracted_ebuilds)
-    progress_info_s.send(sender=None, ptext=f'Processing {flen} ebuilds', plen=flen)
+    pbar_start.send(sender=None, ptext=f'Processing {flen} ebuilds', plen=flen)
     for i, (path, content) in enumerate(extracted_ebuilds.items()):
-        progress_update_s.send(sender=None, index=i + 1)
+        pbar_update.send(sender=None, index=i + 1)
         components = path.split(os.sep)
         category = components[1]
         name = components[2]

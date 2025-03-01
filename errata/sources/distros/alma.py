@@ -22,7 +22,7 @@ from django.db import transaction
 from packages.models import Package
 from packages.utils import get_or_create_package, parse_package_string
 from util import get_url, download_url, get_setting_of_type
-from patchman.signals import progress_info_s, progress_update_s
+from patchman.signals import pbar_start, pbar_update
 
 
 def update_alma_errata(concurrent_processing=True):
@@ -66,23 +66,23 @@ def process_alma_errata_serially(release, advisories):
     """ Process Alma Linux Errata serially
     """
     elen = len(advisories)
-    progress_info_s.send(sender=None, ptext=f'Processing {elen} Alma Errata', plen=elen)
+    pbar_start.send(sender=None, ptext=f'Processing {elen} Alma Errata', plen=elen)
     for i, advisory in enumerate(advisories):
         process_alma_erratum(release, advisory)
-        progress_update_s.send(sender=None, index=i + 1)
+        pbar_update.send(sender=None, index=i + 1)
 
 
 def process_alma_errata_concurrently(release, advisories):
     """ Process Alma Linux Errata concurrently
     """
     elen = len(advisories)
-    progress_info_s.send(sender=None, ptext=f'Processing {elen} Alma Errata', plen=elen)
+    pbar_start.send(sender=None, ptext=f'Processing {elen} Alma Errata', plen=elen)
     i = 0
     with concurrent.futures.ProcessPoolExecutor(max_workers=10) as executor:
         futures = [executor.submit(process_alma_erratum, release, advisory) for advisory in advisories]
         for future in concurrent.futures.as_completed(futures):
             i += 1
-            progress_update_s.send(sender=None, index=i + 1)
+            pbar_update.send(sender=None, index=i + 1)
 
 
 def process_alma_erratum(release, advisory):

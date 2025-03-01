@@ -21,7 +21,7 @@ from django.db import transaction
 
 from packages.models import Package
 from packages.utils import parse_package_string, get_or_create_package
-from patchman.signals import error_message, progress_info_s, progress_update_s
+from patchman.signals import error_message, pbar_start, pbar_update
 from util import bunzip2, get_url, download_url, get_sha1, get_setting_of_type
 
 
@@ -69,9 +69,9 @@ def parse_centos_errata(data):
     result = etree.XML(data)
     errata_xml = result.findall('*')
     elen = len(errata_xml)
-    progress_info_s.send(sender=None, ptext=f'Processing {elen} CentOS Errata', plen=elen)
+    pbar_start.send(sender=None, ptext=f'Processing {elen} CentOS Errata', plen=elen)
     for i, child in enumerate(errata_xml):
-        progress_update_s.send(sender=None, index=i + 1)
+        pbar_update.send(sender=None, index=i + 1)
         releases = get_centos_erratum_releases(child.findall('os_release'))
         if not accepted_centos_release(releases):
             continue

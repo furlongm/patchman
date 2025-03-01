@@ -20,7 +20,7 @@ from django.db import transaction
 
 from util import tz_aware_datetime
 from errata.models import Erratum
-from patchman.signals import progress_info_s, progress_update_s, warning_message
+from patchman.signals import pbar_start, pbar_update, warning_message
 
 
 def get_or_create_erratum(name, e_type, issue_date, synopsis):
@@ -119,7 +119,7 @@ def mark_errata_security_updates():
         should be marked as a security update.
     """
     elen = Erratum.objects.count()
-    progress_info_s.send(sender=None, ptext=f'Scanning {elen} Errata', plen=elen)
+    pbar_start.send(sender=None, ptext=f'Scanning {elen} Errata', plen=elen)
     for i, e in enumerate(Erratum.objects.all()):
-        progress_update_s.send(sender=None, index=i + 1)
+        pbar_update.send(sender=None, index=i + 1)
         e.scan_for_security_updates()
