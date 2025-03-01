@@ -132,7 +132,7 @@ def mirror_list(request):
             if oldrepo.mirror_set.count() == 0:
                 oldrepo.delete()
 
-    mirrors = Mirror.objects.select_related().order_by('file_checksum')
+    mirrors = Mirror.objects.select_related().order_by('packages_checksum')
 
     checksum = None
     if 'checksum' in request.GET:
@@ -140,7 +140,7 @@ def mirror_list(request):
     if 'checksum' in request.POST:
         checksum = request.POST['checksum']
     if checksum is not None:
-        mirrors = mirrors.filter(file_checksum=checksum)
+        mirrors = mirrors.filter(packages_checksum=checksum)
 
     if 'repo_id' in request.GET:
         mirrors = mirrors.filter(repo=request.GET['repo_id'])

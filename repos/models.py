@@ -82,7 +82,7 @@ class Repository(models.Model):
 
         if force:
             for mirror in self.mirror_set.all():
-                mirror.file_checksum = None
+                mirror.packages_checksum = None
                 mirror.save()
 
         if not self.auth_required:
@@ -131,7 +131,9 @@ class Mirror(models.Model):
     repo = models.ForeignKey(Repository, on_delete=models.CASCADE)
     url = models.CharField(max_length=255, unique=True)
     last_access_ok = models.BooleanField(default=False)
-    file_checksum = models.CharField(max_length=255, blank=True, null=True)
+    packages_checksum = models.CharField(max_length=255, blank=True, null=True)
+    modules_checksum = models.CharField(max_length=255, blank=True, null=True)
+    errata_checksum = models.CharField(max_length=255, blank=True, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
     packages = models.ManyToManyField(Package, blank=True, through='MirrorPackage')
     mirrorlist = models.BooleanField(default=False)
@@ -154,7 +156,7 @@ class Mirror(models.Model):
         """
         text = f' {self.id} : {self.url}\n'
         text += ' last updated: '
-        text += f'{self.timestamp}    checksum: {self.file_checksum}\n'
+        text += f'{self.timestamp}    checksum: {self.packages_checksum}\n'
         info_message.send(sender=None, text=text)
 
     def fail(self):

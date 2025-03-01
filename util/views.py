@@ -88,10 +88,10 @@ def dashboard(request):
     checksums = {}
     possible_mirrors = {}
 
-    for csvalue in Mirror.objects.all().values('file_checksum').distinct():
-        checksum = csvalue['file_checksum']
+    for csvalue in Mirror.objects.all().values('packages_checksum').distinct():
+        checksum = csvalue['packages_checksum']
         if checksum is not None and checksum != 'yast':
-            for mirror in Mirror.objects.filter(file_checksum=checksum):
+            for mirror in Mirror.objects.filter(packages_checksum=checksum):
                 if mirror.packages.count() > 0:
                     if checksum not in checksums:
                         checksums[checksum] = []

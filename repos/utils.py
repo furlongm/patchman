@@ -593,12 +593,13 @@ def refresh_yum_repo(mirror, data, mirror_url, ts):
     if not package_data:
         return
 
-    if mirror.file_checksum == primary_checksum:
-        text = 'Mirror checksum has not changed, not refreshing package metadata'
+    if mirror.packages_checksum == checksum:
+        text = 'Mirror Packages checksum has not changed, skipping Package refresh'
         warning_message.send(sender=None, text=text)
         return
     else:
-        mirror.file_checksum = primary_checksum
+        mirror.packages_checksum = checksum
+        mirror.save()
 
     # only refresh X mirrors, where X = max_mirrors
     max_mirrors = get_max_mirrors()
@@ -658,12 +659,12 @@ def refresh_arch_repo(repo):
             continue
 
         computed_checksum = get_checksum(package_data, Checksum.sha1)
-        if mirror.file_checksum == computed_checksum:
-            text = 'Mirror checksum has not changed, not refreshing package metadata'
+        if mirror.packages_checksum == computed_checksum:
+            text = 'Mirror checksum has not changed, not refreshing Package metadata'
             warning_message.send(sender=None, text=text)
             continue
         else:
-            mirror.file_checksum = computed_checksum
+            mirror.packages_checksum = computed_checksum
 
         packages = extract_arch_packages(package_data)
         update_mirror_packages(mirror, packages)
@@ -803,8 +804,8 @@ def refresh_gentoo_repo(repo):
         if checksum is None:
             mirror.fail()
             continue
-        if mirror.file_checksum == checksum:
-            text = 'Mirror checksum has not changed, not refreshing package metadata'
+        if mirror.packages_checksum == checksum:
+            text = 'Mirror checksum has not changed, not refreshing Package metadata'
             warning_message.send(sender=None, text=text)
             continue
         res = get_url(mirror.url)
@@ -821,7 +822,7 @@ def refresh_gentoo_repo(repo):
             if not mirror_checksum_is_valid(computed_checksum, checksum, mirror, 'package'):
                 continue
             else:
-                mirror.file_checksum = checksum
+                mirror.packages_checksum = checksum
             if repo_type == 'main':
                 packages = extract_gentoo_packages(mirror, extracted)
             elif repo_type == 'overlay':
@@ -848,7 +849,7 @@ def refresh_yast_repo(mirror, data):
     if not package_data:
         return
 
-    mirror.file_checksum = 'yast'
+    mirror.packages_checksum = 'yast'
     packages = extract_yast_packages(package_data)
     if packages:
         update_mirror_packages(mirror, packages)
@@ -937,12 +938,12 @@ def refresh_deb_repo(repo):
             continue
 
         computed_checksum = get_checksum(package_data, Checksum.sha1)
-        if mirror.file_checksum == computed_checksum:
-            text = 'Mirror checksum has not changed, not refreshing package metadata'
+        if mirror.packages_checksum == computed_checksum:
+            text = 'Mirror checksum has not changed, not refreshing Package metadata'
             warning_message.send(sender=None, text=text)
             continue
         else:
-            mirror.file_checksum = computed_checksum
+            mirror.packages_checksum = computed_checksum
 
         packages = extract_deb_packages(package_data, mirror_url)
         if not packages:
