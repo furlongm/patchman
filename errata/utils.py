@@ -28,15 +28,15 @@ def get_or_create_erratum(name, e_type, issue_date, synopsis):
     """
     try:
         e = Erratum.objects.get(name=name)
-        tz_aware_issue_date = tz_aware_datetime(issue_date)
+        issue_date_tz = tz_aware_datetime(issue_date)
         updated = False
         if e.e_type != e_type:
             warning_message.send(sender=None, text=f'Updating {name} type `{e.e_type}` -> `{e_type}`')
             e.e_type = e_type
             updated = True
-        if e.issue_date != tz_aware_issue_date:
-            warning_message.send(sender=None, text=f'Updating {name} issue date `{e.issue_date}` -> `{tz_aware_issue_date}`')
-            e.issue_date = tz_aware_issue_date
+        if e.issue_date != issue_date_tz:
+            warning_message.send(sender=None, text=f'Updating {name} issue date `{e.issue_date}` -> `{issue_date_tz}`')
+            e.issue_date = issue_date_tz
             updated = True
         if e.synopsis != synopsis:
             warning_message.send(sender=None, text=f'Updating {name} synopsis `{e.synopsis}` -> `{synopsis}`')
