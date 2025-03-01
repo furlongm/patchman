@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: master
+          ref: main
       - name: git fetch --all
         run: |
           git fetch --all
@@ -40,7 +40,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: master
+          ref: main
       - name: git fetch --all
         run: |
           git fetch --all
@@ -62,7 +62,7 @@ jobs:
           echo "${{ github.ref }}" | cut -dv -f2 > VERSION.txt
           git add VERSION.txt
           git diff --quiet && git diff --staged --quiet || git commit -m "${COMMIT_MSG}"
-          git push origin master
+          git push origin main
       - name: Update debian changelog
         env:
           EMAIL: furlongm@gmail.com
@@ -72,7 +72,7 @@ jobs:
             skip-checks: true
         run: |
           gbp dch --new-version=$(cat VERSION.txt)-1 --release --distribution=stable --spawn-editor=never --commit --commit-msg="${COMMIT_MSG}"
-          git push origin master
+          git push origin main
   build-and-upload-deb-assets:
     needs: update-version-and-changelog
     runs-on: ubuntu-latest
@@ -91,7 +91,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: master
+          ref: main
       - name: git fetch --all
         run: |
           git config --global --add safe.directory /__w/patchman/patchman
@@ -156,7 +156,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: master
+          ref: main
       - name: git fetch --all
         run: |
           git config --global --add safe.directory /__w/patchman/patchman
