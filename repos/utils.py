@@ -159,7 +159,7 @@ def find_mirror_url(stored_mirror_url, formats):
             if mirror_url.endswith(f):
                 mirror_url = mirror_url[:-len(f)]
         mirror_url = mirror_url.rstrip('/') + '/' + fmt
-        debug_message.send(sender=None, text=f'Checking for mirror at {mirror_url}')
+        debug_message.send(sender=None, text=f'Checking for Mirror at {mirror_url}')
         try:
             res = get_url(mirror_url)
         except RetryError:
@@ -262,16 +262,17 @@ def get_mirrorlist_urls(url):
         return
     if response_is_valid(res):
         try:
-            data = download_url(res, 'Downloading repo info:')
+            data = download_url(res, 'Downloading Repo data')
             if data is None:
                 return
             mirror_urls = re.findall(r'^http[s]*://.*$|^ftp://.*$', data.decode('utf-8'), re.MULTILINE)
             if mirror_urls:
+
                 return mirror_urls
             else:
                 debug_message.send(sender=None, text=f'Not a mirrorlist: {url}')
         except Exception as e:
-            error_message.send(sender=None, text=f'Error attempting to parse a mirror list: {e} {url}')
+            error_message.send(sender=None, text=f'Error attempting to parse a mirrorlist: {e} {url}')
 
 
 def add_mirrors_from_urls(repo, mirror_urls):
@@ -285,13 +286,13 @@ def add_mirrors_from_urls(repo, mirror_urls):
         q = Q(mirrorlist=False, refresh=True, enabled=True)
         existing = repo.mirror_set.filter(q).count()
         if existing >= max_mirrors:
-            text = f'{existing} mirrors already exist (max={max_mirrors}), not adding any more'
+            text = f'{existing} Mirrors already exist (max={max_mirrors}), not adding any more'
             warning_message.send(sender=None, text=text)
             break
         from repos.models import Mirror
         m, c = Mirror.objects.get_or_create(repo=repo, url=mirror_url)
         if c:
-            text = f'Added mirror - {mirror_url}'
+            text = f'Added Mirror - {mirror_url}'
             info_message.send(sender=None, text=text)
 
 
@@ -366,17 +367,11 @@ def extract_module_metadata(data, url, repo):
             package_ids = []
             for package in packages:
                 package_ids.append(package.id)
-                try:
-                    with transaction.atomic():
-                        module.packages.add(package)
-                except IntegrityError as e:
-                    error_message.send(sender=None, text=e)
-                except DatabaseError as e:
-                    error_message.send(sender=None, text=e)
-            modules.add(module)
+                module.packages.add(package)
             for package in module.packages.all():
                 if package.id not in package_ids:
                     module.packages.remove(package)
+            modules.add(module)
 
 
 def extract_yum_packages(data, url):
@@ -644,7 +639,7 @@ def refresh_arch_repo(repo):
     enabled_mirrors = repo.mirror_set.filter(refresh=True, enabled=True)
     for i, mirror in enumerate(enabled_mirrors):
         if i >= max_mirrors:
-            text = f'{max_mirrors} mirrors already refreshed (max={max_mirrors}), skipping further refreshes'
+            text = f'{max_mirrors} Mirrors already refreshed (max={max_mirrors}), skipping further refreshes'
             warning_message.send(sender=None, text=text)
             break
 
@@ -652,13 +647,13 @@ def refresh_arch_repo(repo):
         if not res:
             continue
         mirror_url = res.url
-        text = f'Found arch repo - {mirror_url}'
+        text = f'Found Arch Repo - {mirror_url}'
         info_message.send(sender=None, text=text)
 
         package_data = fetch_mirror_data(
             mirror=mirror,
             url=mirror_url,
-            text='Downloading repo info:')
+            text='Downloading Repo data')
         if not package_data:
             continue
 
@@ -761,12 +756,10 @@ def extract_gentoo_packages(mirror, data):
 
 
 def extract_gentoo_overlay_packages(mirror):
-    from packages.utils import find_evr
     t = tempfile.mkdtemp()
     git.Repo.clone_from(mirror.url, t, branch='master', depth=1)
     packages = set()
-    with transaction.atomic():
-        arch, c = PackageArchitecture.objects.get_or_create(name='any')
+    arch, c = PackageArchitecture.objects.get_or_create(name='any')
     for root, dirs, files in os.walk(t):
         for name in files:
             if fnmatch(name, '*.ebuild'):
@@ -802,7 +795,7 @@ def refresh_gentoo_repo(repo):
     ts = get_datetime_now()
     for mirror in repo.mirror_set.filter(mirrorlist=False, refresh=True, enabled=True):
         res = get_url(mirror.url + '.md5sum')
-        data = download_url(res, 'Downloading repo info (1/2):')
+        data = download_url(res, 'Downloading Repo checksum')
         if data is None:
             mirror.fail()
             continue
@@ -817,12 +810,12 @@ def refresh_gentoo_repo(repo):
         res = get_url(mirror.url)
         mirror.last_access_ok = response_is_valid(res)
         if mirror.last_access_ok:
-            data = download_url(res, 'Downloading repo info (2/2):')
+            data = download_url(res, 'Downloading Repo data')
             if data is None:
                 mirror.fail()
                 continue
             extracted = extract(data, mirror.url)
-            text = f'Found gentoo repo - {mirror.url}'
+            text = f'Found Gentoo Repo - {mirror.url}'
             info_message.send(sender=None, text=text)
             computed_checksum = get_checksum(data, Checksum.md5)
             if not mirror_checksum_is_valid(computed_checksum, checksum, mirror, 'package'):
@@ -851,7 +844,7 @@ def refresh_yast_repo(mirror, data):
     package_data = fetch_mirror_data(
         mirror=mirror,
         url=package_url,
-        text='Downloading yast repo info:')
+        text='Downloading yast Repo data')
     if not package_data:
         return
 
@@ -889,7 +882,7 @@ def refresh_rpm_repo(repo):
     enabled_mirrors = repo.mirror_set.filter(mirrorlist=False, refresh=True, enabled=True)
     for i, mirror in enumerate(enabled_mirrors):
         if i >= max_mirrors:
-            text = f'{max_mirrors} mirrors already refreshed (max={max_mirrors}), skipping further refreshes'
+            text = f'{max_mirrors} Mirrors already refreshed (max={max_mirrors}), skipping further refreshes'
             warning_message.send(sender=None, text=text)
             break
 
@@ -902,16 +895,16 @@ def refresh_rpm_repo(repo):
         repo_data = fetch_mirror_data(
             mirror=mirror,
             url=mirror_url,
-            text='Downloading repo info:')
+            text='Downloading Repo data')
         if not repo_data:
             continue
 
         if mirror_url.endswith('content'):
-            text = f'Found yast rpm repo - {mirror_url}'
+            text = f'Found yast rpm Repo - {mirror_url}'
             info_message.send(sender=None, text=text)
             refresh_yast_repo(mirror, repo_data)
         else:
-            text = f'Found yum rpm repo - {mirror_url}'
+            text = f'Found yum rpm Repo - {mirror_url}'
             info_message.send(sender=None, text=text)
             refresh_yum_repo(mirror, repo_data, mirror_url, ts)
         mirror.timestamp = ts
@@ -933,13 +926,13 @@ def refresh_deb_repo(repo):
         if not res:
             continue
         mirror_url = res.url
-        text = f'Found deb repo - {mirror_url}'
+        text = f'Found deb Repo - {mirror_url}'
         info_message.send(sender=None, text=text)
 
         package_data = fetch_mirror_data(
             mirror=mirror,
             url=mirror_url,
-            text='Downloading repo info:')
+            text='Downloading Repo data')
         if not package_data:
             continue
 
@@ -987,7 +980,7 @@ def get_max_mirrors():
     max_mirrors = get_setting_of_type(
         setting_name='MAX_MIRRORS',
         setting_type=int,
-        default=5,
+        default=3,
     )
     return max_mirrors
 
