@@ -20,7 +20,7 @@ import bz2
 import magic
 import zlib
 import lzma
-from datetime import timezone
+from datetime import datetime, timezone
 from enum import Enum
 from hashlib import md5, sha1, sha256, sha512
 from requests.exceptions import HTTPError, Timeout, ConnectionError
