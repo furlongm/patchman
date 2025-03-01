@@ -149,8 +149,7 @@ def process_rocky_errata_serially(advisories):
     """ Process Rocky Linux errata serially
     """
     elen = len(advisories)
-    ptext = f'Processing {elen} Rocky Errata:'
-    progress_info_s.send(sender=None, ptext=ptext, plen=elen)
+    progress_info_s.send(sender=None, ptext=f'Processing {elen} Rocky Errata', plen=elen)
     for i, advisory in enumerate(advisories):
         process_rocky_erratum(advisory)
         progress_update_s.send(sender=None, index=i + 1)
@@ -160,8 +159,7 @@ def process_rocky_errata_concurrently(advisories):
     """ Process Rocky Linux errata concurrently
     """
     elen = len(advisories)
-    ptext = f'Processing {elen} Rocky Errata:'
-    progress_info_s.send(sender=None, ptext=ptext, plen=elen)
+    progress_info_s.send(sender=None, ptext=f'Processing {elen} Rocky Errata', plen=elen)
     i = 0
     with concurrent.futures.ProcessPoolExecutor(max_workers=100) as executor:
         futures = [executor.submit(process_rocky_erratum, advisory) for advisory in advisories]

@@ -119,8 +119,7 @@ def mark_errata_security_updates():
         should be marked as a security update.
     """
     elen = Erratum.objects.count()
-    ptext = f'Scanning {elen} Errata:'
-    progress_info_s.send(sender=None, ptext=ptext, plen=elen)
+    progress_info_s.send(sender=None, ptext=f'Scanning {elen} Errata', plen=elen)
     for i, e in enumerate(Erratum.objects.all()):
         progress_update_s.send(sender=None, index=i + 1)
         e.scan_for_security_updates()

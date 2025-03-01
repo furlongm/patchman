@@ -37,9 +37,7 @@ def process_repos(report, host):
         host_repos = HostRepo.objects.filter(host=host)
         repos = parse_repos(report.repos)
 
-        progress_info_s.send(sender=None,
-                             ptext=f'{str(host)[0:25]} repos',
-                             plen=len(repos))
+        progress_info_s.send(sender=None, ptext=f'{host} Repos', plen=len(repos))
         for i, repo_str in enumerate(repos):
             repo, priority = process_repo(repo_str, report.arch)
             if repo:
@@ -72,9 +70,7 @@ def process_modules(report, host):
         module_ids = []
         modules = parse_modules(report.modules)
 
-        progress_info_s.send(sender=None,
-                             ptext=f'{str(host)[0:25]} modules',
-                             plen=len(modules))
+        progress_info_s.send(sender=None, ptext=f'{host} Modules', plen=len(modules))
         for i, module_str in enumerate(modules):
             module = process_module(module_str)
             if module:
@@ -100,9 +96,7 @@ def process_packages(report, host):
         package_ids = []
 
         packages = parse_packages(report.packages)
-        progress_info_s.send(sender=None,
-                             ptext=f'{str(host)[0:25]} packages',
-                             plen=len(packages))
+        progress_info_s.send(sender=None, ptext=f'{host} Packages', plen=len(packages))
         for i, pkg_str in enumerate(packages):
             package = process_package(pkg_str, report.protocol)
             if package:
@@ -156,8 +150,7 @@ def add_updates(updates, host):
         host.updates.remove(host_update)
     ulen = len(updates)
     if ulen > 0:
-        ptext = f'{str(host)[0:25]} updates'
-        progress_info_s.send(sender=None, ptext=ptext, plen=ulen)
+        progress_info_s.send(sender=None, ptext=f'{host} Updates', plen=ulen)
 
         for i, (u, sec) in enumerate(updates.items()):
             update = process_update(host, u, sec)
