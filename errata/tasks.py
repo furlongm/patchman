@@ -16,14 +16,20 @@
 
 from celery import shared_task
 
-from security.tasks import update_cves, update_cwes
-from util import get_setting_of_type
 from errata.sources.distros.arch import update_arch_errata
 from errata.sources.distros.alma import update_alma_errata
 from errata.sources.distros.debian import update_debian_errata
 from errata.sources.distros.centos import update_centos_errata
 from errata.sources.distros.rocky import update_rocky_errata
 from errata.sources.distros.ubuntu import update_ubuntu_errata
+from repos.models import Repository
+from security.tasks import update_cves, update_cwes
+from util import get_setting_of_type
+
+
+def update_rpm_repo_errata():
+    for repo in Repository.objects.filter(repotype=Repository.RPM):
+        repo.refresh_errata()
 
 
 @shared_task
@@ -56,6 +62,7 @@ def update_errata():
         pass
     if 'centos' in errata_os_updates:
         update_centos_errata()
+    update_rpm_repo_errata()
 
 
 @shared_task
