@@ -309,6 +309,7 @@ def clean_packages(remove_duplicates=False):
                 version=package.version,
                 release=package.release,
                 packagetype=package.packagetype,
+                category=package.category,
             )
             if potential_duplicates.count() > 1:
                 for dupe in potential_duplicates:
