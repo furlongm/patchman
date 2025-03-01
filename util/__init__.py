@@ -204,7 +204,7 @@ def extract(data, fmt):
         m = magic.open(magic.MAGIC_MIME)
         m.load()
         mime = m.buffer(data).split(';')[0]
-    if (mime == 'application/x-xz' or fmt.endswith('xz')):
+    if mime == 'application/x-xz' or fmt.endswith('xz'):
         return unxz(data)
     elif mime == 'application/x-bzip2' or fmt.endswith('bz2'):
         return bunzip2(data)
