@@ -133,9 +133,7 @@ class Mirror(models.Model):
     last_access_ok = models.BooleanField(default=False)
     file_checksum = models.CharField(max_length=255, blank=True, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
-    packages = models.ManyToManyField(Package,
-                                      blank=True,
-                                      through='MirrorPackage')
+    packages = models.ManyToManyField(Package, blank=True, through='MirrorPackage')
     mirrorlist = models.BooleanField(default=False)
     enabled = models.BooleanField(default=True)
     refresh = models.BooleanField(default=True)
@@ -183,11 +181,6 @@ class Mirror(models.Model):
             error_message.send(sender=None, text=text)
         self.last_access_ok = False
         self.save()
-
-    def update_packages(self, packages):
-        """ Update the packages associated with a mirror
-        """
-        update_mirror_packages(self, packages)
 
 
 class MirrorPackage(models.Model):
