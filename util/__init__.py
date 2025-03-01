@@ -103,7 +103,7 @@ def download_url(response, text='', ljust=35):
 
 
 @retry(
-    retry=retry_if_exception_type(HTTPError | Timeout | ConnectionError | ConnectionResetError),
+    retry=retry_if_exception_type(HTTPError | Timeout | ConnectionResetError),
     stop=stop_after_attempt(4),
     wait=wait_exponential(multiplier=1, min=1, max=10),
     reraise=False,
@@ -121,6 +121,8 @@ def get_url(url, headers={}, params={}):
         response.raise_for_status()
     except requests.exceptions.TooManyRedirects:
         error_message.send(sender=None, text=f'Too many redirects - {url}')
+    except ConnectionError:
+        error_message.send(sender=None, text=f'Connection error - {url}')
     return response
 
 
