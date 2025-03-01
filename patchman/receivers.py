@@ -21,8 +21,7 @@ from tqdm import tqdm
 from django.dispatch import receiver
 
 from util import create_pbar, update_pbar, get_verbosity
-from patchman.signals import pbar_start, pbar_update, \
-    info_message, warning_message, error_message, debug_message
+from patchman.signals import pbar_start, pbar_update, info_message, warning_message, error_message, debug_message
 
 from django.conf import settings
 
