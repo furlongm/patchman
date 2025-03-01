@@ -55,7 +55,7 @@ class Host(models.Model):
     updates = models.ManyToManyField(PackageUpdate, blank=True)
     reboot_required = models.BooleanField(default=False)
     host_repos_only = models.BooleanField(default=True)
-    tags = TaggableManager()
+    tags = TaggableManager(blank=True)
     updated_at = models.DateTimeField(default=timezone.now)
 
     from hosts.managers import HostManager
