@@ -77,8 +77,7 @@ def parse_usn_data_serially(advisories, accepted_releases):
     """ Parse the Ubuntu USN data serially
     """
     elen = len(advisories)
-    ptext = f'Processing {elen} Ubuntu Errata:'
-    progress_info_s.send(sender=None, ptext=ptext, plen=elen)
+    progress_info_s.send(sender=None, ptext=f'Processing {elen} Ubuntu Errata', plen=elen)
     for i, (usn_id, advisory) in enumerate(advisories.items()):
         process_usn(usn_id, advisory, accepted_releases)
         progress_update_s.send(sender=None, index=i + 1)
@@ -88,8 +87,7 @@ def parse_usn_data_concurrently(advisories, accepted_releases):
     """ Parse the Ubuntu USN data concurrently
     """
     elen = len(advisories)
-    ptext = f'Processing {elen} Ubuntu Errata:'
-    progress_info_s.send(sender=None, ptext=ptext, plen=elen)
+    progress_info_s.send(sender=None, ptext=f'Processing {elen} Ubuntu Errata', plen=elen)
     i = 0
     with concurrent.futures.ProcessPoolExecutor(max_workers=10) as executor:
         futures = [executor.submit(process_usn, usn_id, advisory, accepted_releases)

@@ -56,8 +56,7 @@ def parse_arch_errata_serially(advisories):
     """
     osrelease = OSRelease.objects.get(name='Arch Linux')
     elen = len(advisories)
-    ptext = f'Processing {elen} Arch Advisories:'
-    progress_info_s.send(sender=None, ptext=ptext, plen=elen)
+    progress_info_s.send(sender=None, ptext=f'Processing {elen} Arch Advisories', plen=elen)
     for i, advisory in enumerate(advisories):
         process_arch_erratum(advisory, osrelease)
         progress_update_s.send(sender=None, index=i + 1)
@@ -68,8 +67,7 @@ def parse_arch_errata_concurrently(advisories):
     """
     osrelease = OSRelease.objects.get(name='Arch Linux')
     elen = len(advisories)
-    ptext = f'Processing {elen} Arch Advisories:'
-    progress_info_s.send(sender=None, ptext=ptext, plen=elen)
+    progress_info_s.send(sender=None, ptext=f'Processing {elen} Arch Advisories', plen=elen)
     i = 0
     with concurrent.futures.ProcessPoolExecutor(max_workers=3) as executor:
         futures = [executor.submit(process_arch_erratum, advisory, osrelease) for advisory in advisories]

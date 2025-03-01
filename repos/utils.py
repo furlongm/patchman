@@ -39,8 +39,8 @@ from packages.utils import parse_package_string, get_or_create_package, find_evr
     convert_package_to_packagestring, convert_packagestring_to_package
 from util import get_url, download_url, response_is_valid, extract, get_checksum, Checksum, get_setting_of_type, \
     get_datetime_now
-from patchman.signals import progress_info_s, progress_update_s, \
-    info_message, warning_message, error_message, debug_message
+from patchman.signals import info_message, warning_message, error_message, debug_message, \
+    progress_info_s, progress_update_s
 
 
 def get_or_create_repo(r_name, r_arch, r_type, r_id=None):
@@ -76,9 +76,8 @@ def update_mirror_packages(mirror, packages):
 
     old = set()
     mirror_packages = mirror.packages.all()
-    mlen = mirror_packages.count()
-    ptext = 'Fetching existing packages:'
-    progress_info_s.send(sender=None, ptext=ptext, plen=mlen)
+    plen = mirror_packages.count()
+    progress_info_s.send(sender=None, ptext=f'Fetching {plen} existing Packages', plen=plen)
     for i, package in enumerate(mirror_packages):
         progress_update_s.send(sender=None, index=i + 1)
         strpackage = convert_package_to_packagestring(package)
@@ -86,8 +85,7 @@ def update_mirror_packages(mirror, packages):
 
     removals = old.difference(packages)
     rlen = len(removals)
-    ptext = f'Removing {rlen} obsolete packages:'
-    progress_info_s.send(sender=None, ptext=ptext, plen=rlen)
+    progress_info_s.send(sender=None, ptext=f'Removing {rlen} obsolete Packages', plen=rlen)
     for i, strpackage in enumerate(removals):
         progress_update_s.send(sender=None, index=i + 1)
         package = convert_packagestring_to_package(strpackage)
@@ -95,8 +93,7 @@ def update_mirror_packages(mirror, packages):
 
     new = packages.difference(old)
     nlen = len(new)
-    ptext = f'Adding {nlen} new packages:'
-    progress_info_s.send(sender=None, ptext=ptext, plen=nlen)
+    progress_info_s.send(sender=None, ptext=f'Adding {nlen} new Packages', plen=nlen)
     for i, strpackage in enumerate(new):
         progress_update_s.send(sender=None, index=i + 1)
         try:
@@ -338,8 +335,12 @@ def extract_module_metadata(data, url, repo):
     try:
         modules_yaml = yaml.safe_load_all(extracted)
     except yaml.YAMLError as e:
-        error_message.send(sender=None, text=e)
-    for doc in modules_yaml:
+        error_message.send(sender=None, text=f'Error parsing modules.yaml: {e}')
+
+    mlen = len(re.findall(r'---', yaml.dump(extracted.decode())))
+    progress_info_s.send(sender=None, ptext=f'Extracting {mlen} Modules ', plen=mlen)
+    for i, doc in enumerate(modules_yaml):
+        progress_update_s.send(sender=None, index=i + 1)
         document = doc['document']
         modulemd = doc['data']
         if document == 'modulemd':
@@ -432,8 +433,7 @@ def extract_deb_packages(data, url):
     packages = set()
 
     if plen > 0:
-        ptext = 'Extracting packages: '
-        progress_info_s.send(sender=None, ptext=ptext, plen=plen)
+        progress_info_s.send(sender=None, ptext=f'Extracting {plen} Packages', plen=plen)
         for i, stanza in enumerate(Packages.iter_paragraphs(extracted)):
             # https://github.com/furlongm/patchman/issues/55
             if 'version' not in stanza:
@@ -470,8 +470,7 @@ def extract_yast_packages(data):
     packages = set()
 
     if plen > 0:
-        ptext = 'Extracting packages: '
-        progress_info_s.send(sender=None, ptext=ptext, plen=plen)
+        progress_info_s.send(sender=None, ptext=f'Extracting {plen} Packages', plen=plen)
 
         for i, pkg in enumerate(pkgs):
             progress_update_s.send(sender=None, index=i + 1)
@@ -497,8 +496,7 @@ def extract_arch_packages(data):
     packages = set()
     plen = len(tf.getnames())
     if plen > 0:
-        ptext = 'Extracting packages: '
-        progress_info_s.send(sender=None, ptext=ptext, plen=plen)
+        progress_info_s.send(sender=None, ptext=f'Extracting {plen} Packages', plen=plen)
         for i, tarinfo in enumerate(tf):
             progress_update_s.send(sender=None, index=i + 1)
             if tarinfo.isfile():

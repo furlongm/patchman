@@ -69,8 +69,7 @@ def parse_centos_errata(data):
     result = etree.XML(data)
     errata_xml = result.findall('*')
     elen = len(errata_xml)
-    ptext = f'Processing {elen} Errata:'
-    progress_info_s.send(sender=None, ptext=ptext, plen=elen)
+    progress_info_s.send(sender=None, ptext=f'Processing {elen} CentOS Errata', plen=elen)
     for i, child in enumerate(errata_xml):
         progress_update_s.send(sender=None, index=i + 1)
         releases = get_centos_erratum_releases(child.findall('os_release'))

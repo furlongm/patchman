@@ -131,8 +131,7 @@ def create_debian_errata_serially(errata, accepted_codenames):
     """ Create Debian Errata Serially
     """
     elen = len(errata)
-    text = f'Processing {elen} Debian Errata:'
-    progress_info_s.send(sender=None, ptext=text, plen=elen)
+    progress_info_s.send(sender=None, ptext=f'Processing {elen} Debian Errata', plen=elen)
     for i, erratum in enumerate(errata):
         process_debian_erratum(erratum, accepted_codenames)
         progress_update_s.send(sender=None, index=i + 1)
@@ -142,8 +141,7 @@ def create_debian_errata_concurrently(errata, accepted_codenames):
     """ Create Debian Errata concurrently
     """
     elen = len(errata)
-    text = f'Processing {elen} Debian Errata:'
-    progress_info_s.send(sender=None, ptext=text, plen=elen)
+    progress_info_s.send(sender=None, ptext=f'Processing {elen} Debian Errata', plen=elen)
     i = 0
     with concurrent.futures.ProcessPoolExecutor(max_workers=200) as executor:
         futures = [executor.submit(process_debian_erratum, erratum, accepted_codenames) for erratum in errata]

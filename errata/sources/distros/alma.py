@@ -66,8 +66,7 @@ def process_alma_errata_serially(release, advisories):
     """ Process Alma Linux Errata serially
     """
     elen = len(advisories)
-    ptext = f'Processing {elen} Alma Errata:'
-    progress_info_s.send(sender=None, ptext=ptext, plen=elen)
+    progress_info_s.send(sender=None, ptext=f'Processing {elen} Alma Errata', plen=elen)
     for i, advisory in enumerate(advisories):
         process_alma_erratum(release, advisory)
         progress_update_s.send(sender=None, index=i + 1)
@@ -77,8 +76,7 @@ def process_alma_errata_concurrently(release, advisories):
     """ Process Alma Linux Errata concurrently
     """
     elen = len(advisories)
-    ptext = f'Processing {elen} Alma Errata:'
-    progress_info_s.send(sender=None, ptext=ptext, plen=elen)
+    progress_info_s.send(sender=None, ptext=f'Processing {elen} Alma Errata', plen=elen)
     i = 0
     with concurrent.futures.ProcessPoolExecutor(max_workers=10) as executor:
         futures = [executor.submit(process_alma_erratum, release, advisory) for advisory in advisories]
