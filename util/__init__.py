@@ -59,7 +59,7 @@ def create_pbar(ptext, plength, ljust=35, **kwargs):
     global pbar, verbose
     if verbose and plength > 0:
         jtext = str(ptext).ljust(ljust)
-        pbar = tqdm(total=plength, desc=jtext, position=0, leave=True)
+        pbar = tqdm(total=plength, desc=jtext, position=0, leave=True, ascii=' >=')
         return pbar
 
 
