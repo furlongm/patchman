@@ -13,3 +13,9 @@
 * dnf5 support
 * proxy support
 * GLSA support
+* only use date for errata issue date?
+* parallelize package extraction
+* use django-tables2
+* autonaming for deb repos
+* associate repos with gentoo hosts
+* populate authenticated repos with package lists from hosts?
