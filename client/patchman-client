@@ -478,7 +478,7 @@ get_repos() {
             if [ "${priority}" == "" ] ; then
                 priority=99
             fi
-            redhat_repo=$(echo ${i} | grep -e "https://.*/XMLRPC.*\|https://cdn.redhat.com/.*")
+            redhat_repo=$(echo ${i} | grep -e "https://.*/XMLRPC.*\|https://cdn[-[a-z]*]*.redhat.com/.*")
             if [ ${?} == 0 ] || ${local_updates} ; then
                 if ${verbose} ; then
                     echo "Finding updates locally for ${id}"
@@ -667,10 +667,11 @@ post_data() {
 }
 
 if ! check_command_exists which || \
+   ! check_command_exists awk || \
    ! check_command_exists mktemp || \
    ! check_command_exists curl || \
    ! check_command_exists flock ; then
-    echo "which, mktemp, flock or curl was not found, exiting."
+    echo "which, awk, mktemp, flock or curl was not found, exiting."
     exit 1
 fi
 
