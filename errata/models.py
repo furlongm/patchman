@@ -94,9 +94,8 @@ class Erratum(models.Model):
         from errata.utils import fixup_erratum_reference
         reference = fixup_erratum_reference({'er_type': e_type, 'url': url})
         if reference:
-            with transaction.atomic():
-                er, created = ErratumReference.objects.get_or_create(
-                    er_type=reference.get('er_type'),
-                    url=reference.get('url'),
-                )
+            er, created = ErratumReference.objects.get_or_create(
+                er_type=reference.get('er_type'),
+                url=reference.get('url'),
+            )
             self.references.add(er)

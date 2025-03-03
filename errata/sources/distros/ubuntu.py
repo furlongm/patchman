@@ -50,7 +50,7 @@ def download_ubuntu_usn_db():
     """
     ubuntu_usn_db_json_url = 'https://usn.ubuntu.com/usn-db/database.json.bz2'
     res = get_url(ubuntu_usn_db_json_url)
-    return download_url(res, 'Downloading Ubuntu Errata:')
+    return download_url(res, 'Downloading Ubuntu Errata')
 
 
 def download_ubuntu_usn_db_checksum():
@@ -58,7 +58,7 @@ def download_ubuntu_usn_db_checksum():
     """
     ubuntu_usn_db_checksum_url = 'https://usn.ubuntu.com/usn-db/database.json.bz2.sha256'
     res = get_url(ubuntu_usn_db_checksum_url)
-    return download_url(res, 'Downloading Ubuntu Errata Checksum:').decode().split()[0]
+    return download_url(res, 'Downloading Ubuntu Errata Checksum').decode().split()[0]
 
 
 def parse_usn_data(data, concurrent_processing):
@@ -89,7 +89,7 @@ def parse_usn_data_concurrently(advisories, accepted_releases):
     elen = len(advisories)
     pbar_start.send(sender=None, ptext=f'Processing {elen} Ubuntu Errata', plen=elen)
     i = 0
-    with concurrent.futures.ProcessPoolExecutor(max_workers=10) as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=20) as executor:
         futures = [executor.submit(process_usn, usn_id, advisory, accepted_releases)
                    for usn_id, advisory in advisories.items()]
         for future in concurrent.futures.as_completed(futures):
@@ -215,7 +215,7 @@ def retrieve_ubuntu_codenames():
     """
     distro_info_url = 'https://debian.pages.debian.net/distro-info-data/ubuntu.csv'
     res = get_url(distro_info_url)
-    ubuntu_csv = download_url(res, 'Downloading Ubuntu distro info:')
+    ubuntu_csv = download_url(res, 'Downloading Ubuntu distro data')
     reader = csv.DictReader(StringIO(ubuntu_csv.decode()))
     codename_to_version = {}
     for row in reader:

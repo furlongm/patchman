@@ -230,7 +230,7 @@ def retrieve_debian_codenames():
     """
     distro_info_url = 'https://debian.pages.debian.net/distro-info-data/debian.csv'
     res = get_url(distro_info_url)
-    debian_csv = download_url(res, 'Downloading Debian distro info:')
+    debian_csv = download_url(res, 'Downloading Debian distro data')
     reader = csv.DictReader(StringIO(debian_csv.decode()))
     codename_to_version = {}
     for row in reader:
