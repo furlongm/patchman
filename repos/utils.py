@@ -140,7 +140,7 @@ def find_mirror_url(stored_mirror_url, formats):
         for f in formats:
             if mirror_url.endswith(f):
                 mirror_url = mirror_url[:-len(f)]
-        mirror_url = mirror_url.rstrip('/') + '/' + fmt
+        mirror_url = f"{mirror_url.rstrip('/')}/{fmt}"
         debug_message.send(sender=None, text=f'Checking for Mirror at {mirror_url}')
         try:
             res = get_url(mirror_url)
@@ -287,11 +287,13 @@ def add_mirrors_from_urls(repo, mirror_urls):
         q = Q(mirrorlist=False, refresh=True, enabled=True)
         existing = repo.mirror_set.filter(q).count()
         if existing >= max_mirrors:
-            text = f'{existing} Mirrors already exist (max={max_mirrors}), not adding any more'
+            text = f'{existing} Mirrors already exist (max={max_mirrors}), not adding more'
             warning_message.send(sender=None, text=text)
             break
         from repos.models import Mirror
-        m, c = Mirror.objects.get_or_create(repo=repo, url=mirror_url)
+        # FIXME: maybe we should store the mirrorlist url with full path to repomd.xml?
+        # that is what metalink urls return now
+        m, c = Mirror.objects.get_or_create(repo=repo, url=mirror_url.rstrip('/').rstrip('repodata/repomd.xml'))
         if c:
             text = f'Added Mirror - {mirror_url}'
             info_message.send(sender=None, text=text)
@@ -1140,5 +1142,24 @@ def clean_repos():
     if rlen == 0:
         info_message.send(sender=None, text='No Repositories with zero Mirrors found.')
     else:
-        info_message.send(sender=None, text=f'Removing {rlen} empty Repos')
+        info_message.send(sender=None, text=f'Removing {rlen} empty Repositories.')
         repos.delete()
+
+
+def remove_mirror_trailing_slashes():
+    """ Remove trailing slashes from mirrors, delete duplicates
+    """
+    from repos.models import Mirror
+    mirrors = Mirror.objects.filter(url__endswith='/')
+    mlen = mirrors.count()
+    if mlen == 0:
+        info_message.send(sender=None, text='No Mirrors with trailing slashes found.')
+    else:
+        info_message.send(sender=None, text=f'Removing trailing slashes from {mlen} Mirrors.')
+        for mirror in mirrors:
+            mirror.url = mirror.url.rstrip('/')
+            try:
+                mirror.save()
+            except IntegrityError:
+                warning_message.send(sender=None, text=f'Deleting duplicate Mirror {mirror.id}: {mirror.url}')
+                mirror.delete()
