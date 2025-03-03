@@ -29,13 +29,18 @@ def get_or_create_erratum(name, e_type, issue_date, synopsis):
     try:
         e = Erratum.objects.get(name=name)
         issue_date_tz = tz_aware_datetime(issue_date)
+        # if it's +/- 1 day we don't update it, just use whichever was the first one
+        # different sources are generated at different times
+        # e.g. yum updateinfo vs website errata info
+        days_delta = abs(e.issue_date.date() - issue_date_tz.date()).days
         updated = False
         if e.e_type != e_type:
             warning_message.send(sender=None, text=f'Updating {name} type `{e.e_type}` -> `{e_type}`')
             e.e_type = e_type
             updated = True
-        if e.issue_date != issue_date_tz:
-            warning_message.send(sender=None, text=f'Updating {name} issue date `{e.issue_date}` -> `{issue_date_tz}`')
+        if days_delta > 1:
+            text = f'Updating {name} issue date `{e.issue_date.date()}` -> `{issue_date_tz.date()}`'
+            warning_message.send(sender=None, text=text)
             e.issue_date = issue_date_tz
             updated = True
         if e.synopsis != synopsis:
