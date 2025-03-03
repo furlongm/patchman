@@ -43,7 +43,7 @@ Description: Django-based patch status monitoring tool for linux systems.
 Package: patchman-client
 Architecture: all
 Homepage: https://github.com/furlongm/patchman
-Depends: ${misc:Depends}, curl, debianutils, util-linux, coreutils
+Depends: ${misc:Depends}, curl, debianutils, util-linux, coreutils, mawk
 Description: Client for the patchman monitoring system.
  .
  The client will send a list of packages and repositories to the upstream
