@@ -565,7 +565,6 @@ def fetch_mirror_data(mirror, url, text, checksum=None, checksum_type=None, meta
 
     data = download_url(res, text)
     if not data:
-        mirror.fail()
         return
 
     if checksum and checksum_type and metadata_type:
