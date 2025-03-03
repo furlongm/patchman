@@ -38,7 +38,7 @@ def download_arch_errata():
         https://security.archlinux.org/advisories.json
     """
     res = get_url('https://security.archlinux.org/advisories.json')
-    advisories = download_url(res, 'Downloading Arch Linux Advisories:')
+    advisories = download_url(res, 'Downloading Arch Advisories')
     return json.loads(advisories)
 
 
@@ -150,7 +150,7 @@ def add_arch_erratum_packages(e, advisory):
     group_id = advisory.get('group')
     group_url = f'https://security.archlinux.org/group/{group_id}.json'
     res = get_url(group_url)
-    data = download_url(res)
+    data = res.content
     group = json.loads(data)
     packages = group.get('packages')
     affected = group.get('affected')

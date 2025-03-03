@@ -48,7 +48,7 @@ def download_alma_advisories(release):
     alma_errata_url = f'https://errata.almalinux.org/{release}/errata.full.json'
     headers = {'Accept': 'application/json', 'Cache-Control': 'no-cache, no-tranform'}
     res = get_url(alma_errata_url, headers=headers)
-    data = download_url(res, 'Downloading Alma Linux Errata:')
+    data = download_url(res, f'Downloading Alma {release} Errata')
     advisories = json.loads(data).get('data')
     return advisories
 
@@ -66,7 +66,7 @@ def process_alma_errata_serially(release, advisories):
     """ Process Alma Linux Errata serially
     """
     elen = len(advisories)
-    pbar_start.send(sender=None, ptext=f'Processing {elen} Alma Errata', plen=elen)
+    pbar_start.send(sender=None, ptext=f'Processing {elen} Alma {release} Errata', plen=elen)
     for i, advisory in enumerate(advisories):
         process_alma_erratum(release, advisory)
         pbar_update.send(sender=None, index=i + 1)
@@ -76,7 +76,7 @@ def process_alma_errata_concurrently(release, advisories):
     """ Process Alma Linux Errata concurrently
     """
     elen = len(advisories)
-    pbar_start.send(sender=None, ptext=f'Processing {elen} Alma Errata', plen=elen)
+    pbar_start.send(sender=None, ptext=f'Processing {elen} Alma {release} Errata', plen=elen)
     i = 0
     with concurrent.futures.ProcessPoolExecutor(max_workers=10) as executor:
         futures = [executor.submit(process_alma_erratum, release, advisory) for advisory in advisories]

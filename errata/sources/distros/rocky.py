@@ -48,15 +48,15 @@ def check_rocky_errata_endpoint_health(rocky_errata_api_host):
     try:
         health = json.loads(data)
         if health.get('status') == 'ok':
-            s = f'Rocky Linux Errata API healthcheck OK: {rocky_errata_healthcheck_url}'
+            s = f'Rocky Errata API healthcheck OK: {rocky_errata_healthcheck_url}'
             info_message.send(sender=None, text=s)
             return True
         else:
-            s = f'Rocky Linux Errata API healthcheck FAILED: {rocky_errata_healthcheck_url}'
+            s = f'Rocky Errata API healthcheck FAILED: {rocky_errata_healthcheck_url}'
             error_message.send(sender=None, text=s)
             return False
     except Exception as e:
-        s = f'Rocky Linux Errata API healthcheck exception occured: {rocky_errata_healthcheck_url}\n'
+        s = f'Rocky Errata API healthcheck exception occured: {rocky_errata_healthcheck_url}\n'
         s += str(e)
         error_message.send(sender=None, text=s)
         return False
@@ -82,7 +82,7 @@ def download_rocky_advisories_serially(rocky_errata_api_host, rocky_errata_api_u
     params = {'page': 1, 'size': 100}
     while True:
         res = get_url(rocky_errata_advisories_url, headers=headers, params=params)
-        data = download_url(res, f'Rocky Linux Advisories {page}{"/"+pages if pages else ""}')
+        data = download_url(res, f'Rocky Advisories {page}{"/"+pages if pages else ""}')
         advisories_dict = json.loads(data)
         advisories += advisories_dict.get('advisories')
         links = advisories_dict.get('links')
@@ -107,12 +107,12 @@ def download_rocky_advisories_concurrently(rocky_errata_api_host, rocky_errata_a
     advisories = []
     params = {'page': 1, 'size': 100}
     res = get_url(rocky_errata_advisories_url, headers=headers, params=params)
-    data = download_url(res, 'Rocky Linux Advisories Page 1')
+    data = download_url(res, 'Rocky Advisories Page 1')
     advisories_dict = json.loads(data)
     links = advisories_dict.get('links')
     last_link = links.get('last')
     pages = int(last_link.split('=')[-1])
-    ptext = 'Downloading Rocky Linux Advisories:'
+    ptext = 'Downloading Rocky Advisories'
     pbar_start.send(sender=None, ptext=ptext, plen=pages)
     i = 0
     with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
