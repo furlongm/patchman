@@ -85,7 +85,8 @@ def fixup_erratum_reference(eref):
         bug = url.path.split('/')[-1]
         path = f'/bugs/{bug}'
         url = url._replace(netloc=netloc, path=path)
-    if url.hostname == 'bugzilla.redhat.com' and url.path == '/show_bug.cgi':
+    if url.hostname in ['bugzilla.redhat.com', 'bugzilla.opensuse.org', 'bugs.suse.com'] and \
+            url.path == '/show_bug.cgi':
         bug = url.query.split('=')[1]
         path = f'/{bug}'
         url = url._replace(path=path, query='')
