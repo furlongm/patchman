@@ -255,10 +255,10 @@ def process_repo(repo, arch):
     unknown = []
     for r_url in repo[3:]:
         try:
-            mirror = Mirror.objects.get(url=r_url)
+            mirror = Mirror.objects.get(url=r_url.strip('/'))
         except Mirror.DoesNotExist:
             if repository:
-                Mirror.objects.create(repo=repository, url=r_url)
+                Mirror.objects.create(repo=repository, url=r_url.rstrip('/'))
             else:
                 unknown.append(r_url)
         else:
@@ -277,10 +277,11 @@ def process_repo(repo, arch):
             repository.save()
 
     for url in unknown:
-        Mirror.objects.create(repo=repository, url=url)
+        Mirror.objects.create(repo=repository, url=url.rstrip('/'))
 
     for mirror in Mirror.objects.filter(repo=repository).values('url'):
         if mirror['url'].find('cdn.redhat.com') != -1 or \
+                mirror['url'].find('cdn-ubi.redhat.com') != -1 or \
                 mirror['url'].find('nu.novell.com') != -1 or \
                 mirror['url'].find('updates.suse.com') != -1:
             repository.auth_required = True

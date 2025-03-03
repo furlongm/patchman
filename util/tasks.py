@@ -19,7 +19,7 @@ from celery import shared_task
 from arch.utils import clean_architectures
 from modules.utils import clean_modules
 from packages.utils import clean_packages, clean_packageupdates, clean_packagenames
-from repos.utils import clean_repos
+from repos.utils import clean_repos, remove_mirror_trailing_slashes
 
 
 @shared_task
@@ -32,5 +32,6 @@ def clean_database(remove_duplicate_packages=False):
     clean_packagenames()
     clean_architectures()
     clean_repos()
+    remove_mirror_trailing_slashes()
     clean_modules()
     clean_packageupdates()
