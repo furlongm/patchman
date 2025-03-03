@@ -79,10 +79,11 @@ class Repository(models.Model):
         """ Refresh all of a repos mirror metadata,
             force can be set to force a reset of all the mirrors metadata
         """
-
         if force:
             for mirror in self.mirror_set.all():
                 mirror.packages_checksum = None
+                mirror.modules_checksum = None
+                mirror.errata_checksum = None
                 mirror.save()
 
         if not self.auth_required:
@@ -98,19 +99,24 @@ class Repository(models.Model):
                 text = f'Error: unknown repo type for repo {self.id}: {self.repotype}'
                 error_message.send(sender=None, text=text)
         else:
-            text = 'Repo requires certificate authentication, not updating'
+            text = 'Repo requires authentication, not updating'
             warning_message.send(sender=None, text=text)
 
-    def refresh_errata(self):
+    def refresh_errata(self, force=False):
+        """ Refresh errata metadata for all of a repos mirrors
+        """
+        if force:
+            for mirror in self.mirror_set.all():
+                mirror.errata_checksum = None
+                mirror.save()
         if self.repotype == Repository.RPM:
-            refresh_yum_repo_errata(self)
+            refresh_repo_errata(self)
 
     def disable(self):
         """ Disable a repo. This involves disabling each mirror, which stops it
             being considered for package updates, and disabling refresh for
             each mirror so that it doesn't try to update its package metadata.
         """
-
         self.enabled = False
         for mirror in self.mirror_set.all():
             mirror.enabled = False
@@ -122,7 +128,6 @@ class Repository(models.Model):
             to be considered for package updates, and enabling refresh for each
             mirror so that it updates its package metadata.
         """
-
         self.enabled = True
         for mirror in self.mirror_set.all():
             mirror.enabled = True
@@ -169,6 +174,10 @@ class Mirror(models.Model):
             Set MAX_MIRROR_FAILURES to -1 to disable marking mirrors as failures
             Default is 28
         """
+        if self.repo.auth_required:
+            text = 'Mirror requires authentication, not updating'
+            warning_message.send(sender=None, text=text)
+            return
         text = f'No usable mirror found at {self.url}'
         error_message.send(sender=None, text=text)
         default_max_mirror_failures = 28
