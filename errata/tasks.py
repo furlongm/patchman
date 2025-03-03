@@ -42,8 +42,10 @@ def update_errata():
     errata_os_updates = get_setting_of_type(
         setting_name='ERRATA_OS_UPDATES',
         setting_type=list,
-        default=['rocky', 'alma', 'arch', 'ubuntu', 'debian', 'rhel', 'suse', 'amazon'],
+        default=['yum', 'rocky', 'alma', 'arch', 'ubuntu', 'debian'],
     )
+    if 'yum' in errata_os_updates:
+        update_yum_repo_errata()
     if 'arch' in errata_os_updates:
         update_arch_errata()
     if 'alma' in errata_os_updates:
@@ -54,18 +56,8 @@ def update_errata():
         update_debian_errata()
     if 'ubuntu' in errata_os_updates:
         update_ubuntu_errata()
-    if 'rhel' in errata_os_updates:
-        # update_rhel_errata()
-        pass
-    if 'suse' in errata_os_updates:
-        # update_suse_errata()
-        pass
-    if 'amazon' in errata_os_updates:
-        # update_amazon_errata()
-        pass
     if 'centos' in errata_os_updates:
         update_centos_errata()
-    update_rpm_repo_errata()
 
 
 @shared_task
