@@ -27,7 +27,10 @@ from security.tasks import update_cves, update_cwes
 from util import get_setting_of_type
 
 
-def update_rpm_repo_errata():
+@shared_task
+def update_yum_repo_errata():
+    """ Update all yum repos errata
+    """
     for repo in Repository.objects.filter(repotype=Repository.RPM):
         repo.refresh_errata()
 
