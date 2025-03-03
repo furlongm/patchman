@@ -21,9 +21,10 @@ from django.db.models import Q
 
 from rest_framework import viewsets
 
-from util.filterspecs import Filter, FilterBar
+from operatingsystems.models import OSRelease
 from errata.models import Erratum, ErratumReference
 from errata.serializers import ErratumSerializer, ErratumReferenceSerializer
+from util.filterspecs import Filter, FilterBar
 
 
 @login_required
@@ -41,6 +42,9 @@ def erratum_list(request):
 
     if 'package_id' in request.GET:
         errata = errata.filter(packages=request.GET['package_id'])
+
+    if 'osrelease_id' in request.GET:
+        errata = errata.filter(osreleases=request.GET['osrelease_id'])
 
     if 'search' in request.GET:
         terms = request.GET['search'].lower()
@@ -65,6 +69,8 @@ def erratum_list(request):
     filter_list = []
     filter_list.append(Filter(request, 'Erratum Type', 'e_type',
                               Erratum.objects.values_list('e_type', flat=True).distinct()))
+    filter_list.append(Filter(request, 'OS Release', 'osrelease_id',
+                              OSRelease.objects.filter(erratum__in=errata)))
     filter_bar = FilterBar(request, filter_list)
 
     return render(request,
