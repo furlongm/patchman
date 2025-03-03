@@ -108,3 +108,11 @@ def reports_timedelta():
         default=14,
     )
     return naturaltime(datetime.now() - timedelta(days=days))
+
+
+@register.simple_tag
+def host_count(osrelease):
+    host_count = 0
+    for osvariant in osrelease.osvariant_set.all():
+        host_count += osvariant.host_set.count()
+    return host_count
