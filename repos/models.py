@@ -22,8 +22,10 @@ from arch.models import MachineArchitecture
 from packages.models import Package
 from util import get_setting_of_type
 
-from repos.utils import refresh_deb_repo, refresh_rpm_repo, refresh_arch_repo, refresh_gentoo_repo, \
-    refresh_yum_repo_errata
+from repos.repo_types.deb import refresh_deb_repo
+from repos.repo_types.rpm import refresh_rpm_repo, refresh_repo_errata
+from repos.repo_types.arch import refresh_arch_repo
+from repos.repo_types.gentoo import refresh_gentoo_repo
 from patchman.signals import info_message, warning_message, error_message
 
 
@@ -38,7 +40,7 @@ class Repository(models.Model):
         (RPM, 'rpm'),
         (DEB, 'deb'),
         (ARCH, 'arch'),
-        (GENTOO, 'gentoo'),
+        (GENTOO, 'gentoo')
     )
 
     name = models.CharField(max_length=255, unique=True)
