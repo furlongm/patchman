@@ -16,17 +16,20 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 import re
+from socket import gethostbyaddr, herror
 
 from django.db import IntegrityError, DatabaseError, transaction
 
-from hosts.models import HostRepo
 from arch.models import MachineArchitecture, PackageArchitecture
-from repos.models import Repository, Mirror, MirrorPackage
+from domains.models import Domain
+from hosts.models import Host, HostRepo
 from modules.models import Module
+from operatingsystems.models import OSVariant, OSRelease
 from packages.models import Package, PackageCategory
 from packages.utils import find_evr, get_or_create_package, get_or_create_package_update, parse_package_string
-from repos.utils import get_or_create_repo
 from patchman.signals import pbar_start, pbar_update, error_message, info_message
+from repos.models import Repository, Mirror, MirrorPackage
+from repos.utils import get_or_create_repo
 
 
 def process_repos(report, host):
@@ -309,17 +312,15 @@ def process_module(module_str):
     m_stream = module_str[1]
     m_version = module_str[2]
     m_context = module_str[3]
-    arch = module_str[4]
+    m_arch = module_str[4]
     repo_id = module_str[5]
 
-    package_arches = PackageArchitecture.objects.all()
-    with transaction.atomic():
-        m_arch, c = package_arches.get_or_create(name=arch)
+    arch, c = PackageArchitecture.objects.get_or_create(name=m_arch)
 
     try:
-        m_repo = Repository.objects.get(repo_id=repo_id)
+        repo = Repository.objects.get(repo_id=repo_id)
     except Repository.DoesNotExist:
-        m_repo = None
+        repo = None
 
     packages = set()
     for pkg_str in module_str[6:]:
@@ -330,32 +331,25 @@ def process_module(module_str):
 
     modules = Module.objects.all()
     try:
-        with transaction.atomic():
-            module, c = modules.get_or_create(name=m_name,
-                                              stream=m_stream,
-                                              version=m_version,
-                                              context=m_context,
-                                              arch=m_arch,
-                                              repo=m_repo)
+        module, c = modules.get_or_create(name=m_name,
+                                          stream=m_stream,
+                                          version=m_version,
+                                          context=m_context,
+                                          arch=arch,
+                                          repo=repo)
     except IntegrityError as e:
         error_message.send(sender=None, text=e)
         module = modules.get(name=m_name,
                              stream=m_stream,
                              version=m_version,
                              context=m_context,
-                             arch=m_arch,
-                             repo=m_repo)
+                             arch=arch,
+                             repo=repo)
     except DatabaseError as e:
         error_message.send(sender=None, text=e)
 
     for package in packages:
-        try:
-            with transaction.atomic():
-                module.packages.add(package)
-        except IntegrityError as e:
-            error_message.send(sender=None, text=e)
-        except DatabaseError as e:
-            error_message.send(sender=None, text=e)
+        module.packages.add(package)
     return module
 
 
@@ -405,22 +399,192 @@ def process_package(pkg, protocol):
             category, created = PackageCategory.objects.get_or_create(name=p_category)
             package.category = category
 
-            machine_arches = MachineArchitecture.objects.all()
-            with transaction.atomic():
-                repo_arch, created = machine_arches.get_or_create(name='any')
-
+            repo_arch, created = MachineArchitecture.objects.get_or_create(name='any')
             repo_name = 'Gentoo Linux'
             repo = get_or_create_repo(repo_name, repo_arch, Repository.GENTOO, p_repo)
 
-            with transaction.atomic():
-                if p_repo == 'gentoo':
-                    url = 'https://api.gentoo.org/mirrors/distfiles.xml'
-                else:
-                    # this may not be correct. the urls are hardcoded anyway in repos/utils.py
-                    # need to figure out a better way to determine which repo/repo url to use
-                    url = 'https://api.gentoo.org/overlays/repositories.xml'
-                mirror, c = Mirror.objects.get_or_create(repo=repo, url=url, mirrorlist=True)
-                MirrorPackage.objects.create(mirror=mirror, package=package)
-
+            if p_repo == 'gentoo':
+                url = 'https://api.gentoo.org/mirrors/distfiles.xml'
+            else:
+                # this may not be correct. the urls are hardcoded anyway in repos/utils.py
+                # need to figure out a better way to determine which repo/repo url to use
+                url = 'https://api.gentoo.org/overlays/repositories.xml'
+            mirror, c = Mirror.objects.get_or_create(repo=repo, url=url, mirrorlist=True)
+            MirrorPackage.objects.create(mirror=mirror, package=package)
             package.save()
         return package
+
+
+def get_arch(arch):
+    """ Get or create MachineArchitecture from arch
+        Returns the MachineArchitecture
+    """
+    return MachineArchitecture.objects.get_or_create(name=arch)[0]
+
+
+def get_os(os, arch):
+    """ Get or create OSRelease and OSVariant from os details
+        Returns the OSVariant
+    """
+    cpe_name = codename = osrelease_codename = osvariant_codename = None
+    osrelease_name = osvariant_name = os
+
+    # find cpe_name if it exists
+    match = re.match(r'(.*) \[(.*)\]', os)
+    if match:
+        os = match.group(1)
+        cpe_name = match.group(2)
+
+    # find codename if it exists
+    match = re.match(r'(.*) \((.*)\)', os)
+    if match:
+        os = match.group(1)
+        codename = match.group(2)
+        if os.startswith('AlmaLinux'):
+            # alma changes the codename with each minor release, so it's useless to us now
+            osvariant_codename = codename
+        else:
+            osrelease_codename = codename
+
+    osrelease_name = os
+    osvariant_name = os
+
+    if os.startswith('Gentoo'):
+        osrelease_name = 'Gentoo Linux'
+        # presumptive, can be changed once a real cpe is assigned/used
+        cpe_name = 'cpe:2.3:o:gentoo:gentoo_linux:::'
+    elif os.startswith('Arch'):
+        # presumptive, can be changed once a real cpe is assigned/used
+        cpe_name = 'cpe:2.3:o:archlinux:arch_linux:::'
+    elif os.startswith('Debian'):
+        major, minor = os.split(' ')[1].split('.')
+        debian_version = f'{major}.{minor}'
+        osrelease_name = f'Debian {major}'
+        # presumptive, can be changed once a real cpe is assigned/used
+        cpe_name = f'cpe:2.3:o:debian:debian_linux:{debian_version}::'
+    elif os.startswith('Ubuntu'):
+        lts = ''
+        if 'LTS' in os:
+            lts = ' LTS'
+        major, minor, patch = os.split(' ')[1].split('.')
+        ubuntu_version = f'{major}_{minor}'
+        osrelease_name = f'Ubuntu {major}.{minor}{lts}'
+        cpe_name = f'cpe:2.3:o:canonical:ubuntu_linux:{ubuntu_version}::'
+    elif os.startswith('AlmaLinux'):
+        osvariant_name = os.replace('AlmaLinux', 'Alma Linux')
+        osrelease_name = osvariant_name.split('.')[0]
+    elif os.startswith('Rocky'):
+        osvariant_name = os
+        osrelease_name = osvariant_name.split('.')[0]
+    elif os.startswith('Red Hat'):
+        osvariant_name = os.replace(' release', '')
+        osrelease_name = osvariant_name.split('.')[0]
+    elif os.startswith('Fedora'):
+        osvariant_name = os.replace(' release', '')
+        osrelease_name = osvariant_name.split('.')[0]
+    elif os.startswith('CentOS'):
+        osvariant_name = os.replace(' release', '')
+        osrelease_name = osvariant_name.split('.')[0]
+    elif os.startswith('Oracle'):
+        osvariant_name = os.replace(' Server', '')
+        osrelease_name = osvariant_name.split('.')[0]
+
+    osrelease = get_osrelease(osrelease_name, osrelease_codename, cpe_name)
+    osvariant = get_osvariant(osrelease, osvariant_name, osvariant_codename, arch)
+    return osvariant
+
+
+def get_osrelease(osrelease_name, osrelease_codename, cpe_name):
+    """ Get or create OSRelease from os details
+    """
+    osrelease = None
+    if cpe_name:
+        try:
+            osrelease, created = OSRelease.objects.get_or_create(name=osrelease_name, cpe_name=cpe_name)
+        except IntegrityError:
+            osreleases = OSRelease.objects.filter(cpe_name=cpe_name)
+            if osreleases.count() == 1:
+                osrelease = osreleases[0]
+                osrelease.name = osrelease_name
+    if not osrelease and osrelease_codename:
+        osreleases = OSRelease.objects.filter(codename=osrelease_codename)
+        if osreleases.count() == 1:
+            osrelease = osreleases[0]
+    if not osrelease and osrelease_name:
+        osrelease, created = OSRelease.objects.get_or_create(name=osrelease_name)
+    if osrelease and cpe_name:
+        osrelease.cpe_name = cpe_name
+    if osrelease and osrelease_codename:
+        osrelease.codename = osrelease_codename
+    osrelease.save()
+    return osrelease
+
+
+def get_osvariant(osrelease, osvariant_name, osvariant_codename, arch):
+    """ Get or create OSVariant from OSRelease and os details
+    """
+    if not osrelease:
+        return
+
+    try:
+        osvariant, created = OSVariant.objects.get_or_create(name=osvariant_name, arch=arch)
+    except IntegrityError:
+        osvariants = OSVariant.objects.filter(name=osvariant_name)
+        if osvariants.count() == 1:
+            osvariant = osvariants[0]
+            if osvariant.arch is None:
+                osvariant.arch = arch
+    if osvariant and osvariant_codename:
+        osvariant.codename = osvariant_codename
+    osvariant.osrelease = osrelease
+    osvariant.save()
+    return osvariant
+
+
+def get_domain(report_domain):
+    if not report_domain:
+        report_domain = 'unknown'
+    domain, c = Domain.objects.get_or_create(name=report_domain)
+    return domain
+
+
+def get_host(report, arch, osvariant, domain):
+    host = None
+    if not report.host:
+        try:
+            report.host = str(gethostbyaddr(report.report_ip)[0])
+        except herror:
+            report.host = report.report_ip
+        report.save()
+
+    with transaction.atomic():
+        try:
+            host, c = Host.objects.get_or_create(
+                hostname=report.host,
+                defaults={
+                    'ipaddress': report.report_ip,
+                    'arch': arch,
+                    'osvariant': osvariant,
+                    'domain': domain,
+                    'lastreport': report.created,
+                })
+
+            host.ipaddress = report.report_ip
+            host.kernel = report.kernel
+            host.arch = arch
+            host.osvariant = osvariant
+            host.domain = domain
+            host.lastreport = report.created
+            host.tags = report.tags
+            if report.reboot == 'True':
+                host.reboot_required = True
+            else:
+                host.reboot_required = False
+            host.save()
+        except IntegrityError as e:
+            error_message.send(sender=None, text=e)
+        except DatabaseError as e:
+            error_message.send(sender=None, text=e)
+    if host:
+        host.check_rdns()
+        return host
