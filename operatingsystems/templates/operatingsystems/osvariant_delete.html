@@ -15,7 +15,7 @@
     <tr><th>Name</th><td> {{ osvariant.name }} </td></tr>
     <tr><th>Architecture</th><td> {{ osvariant.arch }} </td></tr>
     <tr><th>Codename</th><td> {{ osvariant.codename }} </td></tr>
-    <tr><th>Hosts</th><td><a href="{% url 'hosts:host_list' %}?osvariant_id={{ osvariant.id }}">{{ osvariant.host_set.count }}</a></td>
+    <tr><th>Hosts</th><td><a href="{% url 'hosts:host_list' %}?osvariant_id={{ osvariant.id }}">{{ osvariant.host_set.count }}</a></td></tr>
     <tr><th>OS Release</th><td>{% if osvariant.osrelease != None %}<a href="{{ osvariant.osrelease.get_absolute_url }}"> {{ osvariant.osrelease }} </a>{% else %}No OS Release{% endif %}</td></tr>
   </table>
 
