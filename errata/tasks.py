@@ -22,6 +22,7 @@ from errata.sources.distros.debian import update_debian_errata
 from errata.sources.distros.centos import update_centos_errata
 from errata.sources.distros.rocky import update_rocky_errata
 from errata.sources.distros.ubuntu import update_ubuntu_errata
+from patchman.signals import error_message
 from repos.models import Repository
 from security.tasks import update_cves, update_cwes
 from util import get_setting_of_type
@@ -36,14 +37,22 @@ def update_yum_repo_errata():
 
 
 @shared_task
-def update_errata():
+def update_errata(erratum_type=None):
     """ Update all distros errata
     """
-    errata_os_updates = get_setting_of_type(
-        setting_name='ERRATA_OS_UPDATES',
-        setting_type=list,
-        default=['yum', 'rocky', 'alma', 'arch', 'ubuntu', 'debian'],
-    )
+    errata_os_updates = []
+    erratum_type_defaults = ['yum', 'rocky', 'alma', 'arch', 'ubuntu', 'debian']
+    if erratum_type:
+        if erratum_type not in erratum_type_defaults:
+            error_message.send(sender=None, text=f'Erratum type must be one of {erratum_type_defaults}')
+        else:
+            errata_os_updates = erratum_type
+    else:
+        errata_os_updates = get_setting_of_type(
+            setting_name='ERRATA_OS_UPDATES',
+            setting_type=list,
+            default=erratum_type_defaults,
+        )
     if 'yum' in errata_os_updates:
         update_yum_repo_errata()
     if 'arch' in errata_os_updates:
