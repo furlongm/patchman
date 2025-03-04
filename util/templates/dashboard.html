@@ -8,12 +8,12 @@
 
 {% block content %}
 
-{% with count=lonely_osvariants.count %}
-  {% if lonely_osvariants.count > 0 %}
+{% with count=noosrelease_osvariants.count %}
+  {% if noosrelease_osvariants.count > 0 %}
     <div class="well well-sm">
-      <button class="btn btn-sm" data-toggle="collapse" data-target="#lonely_osvariants"><span class="badge">{{ count }}</span> OS Variants are not linked to any OS Release</button>
-      <div class="collapse" id="lonely_osvariants">
-        {% gen_table lonely_osvariants %}
+      <button class="btn btn-sm" data-toggle="collapse" data-target="#noosrelease_osvariants"><span class="badge">{{ count }}</span> OS Variants are not linked to any OS Release</button>
+      <div class="collapse" id="noosrelease_osvariants">
+        {% gen_table noosrelease_osvariants %}
       </div>
     </div>
   {% endif %}
