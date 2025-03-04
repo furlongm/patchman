@@ -177,7 +177,7 @@ class Mirror(models.Model):
             Default is 28
         """
         if self.repo.auth_required:
-            text = 'Mirror requires authentication, not updating'
+            text = f'Mirror requires authentication, not updating - {self.url}'
             warning_message.send(sender=None, text=text)
             return
         text = f'No usable mirror found at {self.url}'
