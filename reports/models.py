@@ -44,7 +44,7 @@ class Report(models.Model):
     class Meta:
         verbose_name_plural = 'Report'
         verbose_name_plural = 'Reports'
-        ordering = ('-created',)
+        ordering = ['-created']
 
     def __str__(self):
         return f"{self.host} {self.created.strftime('%c')}"

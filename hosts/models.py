@@ -64,7 +64,7 @@ class Host(models.Model):
     class Meta:
         verbose_name = 'Host'
         verbose_name_plural = 'Hosts'
-        ordering = ('hostname',)
+        ordering = ['hostname']
 
     def __str__(self):
         return self.hostname
@@ -339,7 +339,7 @@ class HostRepo(models.Model):
     priority = models.IntegerField(default=0)
 
     class Meta:
-        unique_together = ('host', 'repo')
+        unique_together = ['host', 'repo']
 
     def __str__(self):
         return f'{self.host}-{self.repo}'

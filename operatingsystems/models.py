@@ -35,8 +35,8 @@ class OSRelease(models.Model):
     class Meta:
         verbose_name = 'Operating System Release'
         verbose_name_plural = 'Operating System Releases'
-        unique_together = ('name', 'codename', 'cpe_name')
-        ordering = ('name',)
+        unique_together = ['name', 'codename', 'cpe_name']
+        ordering = ['name']
 
     def __str__(self):
         if self.codename:
@@ -61,7 +61,7 @@ class OSVariant(models.Model):
     class Meta:
         verbose_name = 'Operating System Variant'
         verbose_name_plural = 'Operating System Variants'
-        ordering = ('name',)
+        ordering = ['name']
 
     def __str__(self):
         osvariant_name = f'{self.name} {self.arch}'
