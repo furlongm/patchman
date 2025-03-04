@@ -35,7 +35,7 @@ class PackageName(models.Model):
     class Meta:
         verbose_name = 'Package'
         verbose_name_plural = 'Packages'
-        ordering = ('name',)
+        ordering = ['name']
 
     def __str__(self):
         return self.name
@@ -51,7 +51,7 @@ class PackageCategory(models.Model):
     class Meta:
         verbose_name = 'Package Category'
         verbose_name_plural = 'Package Categories'
-        ordering = ('name',)
+        ordering = ['name']
 
     def __str__(self):
         return self.name
@@ -86,8 +86,8 @@ class Package(models.Model):
     objects = PackageManager()
 
     class Meta:
-        ordering = ('name', 'epoch', 'version', 'release', 'arch')
-        unique_together = ('name', 'epoch', 'version', 'release', 'arch', 'packagetype', 'category')
+        ordering = ['name', 'epoch', 'version', 'release', 'arch']
+        unique_together = ['name', 'epoch', 'version', 'release', 'arch', 'packagetype', 'category']
 
     def __str__(self):
         if self.epoch:
@@ -213,16 +213,12 @@ class PackageString(models.Model):
 
 class PackageUpdate(models.Model):
 
-    oldpackage = models.ForeignKey(Package,
-                                   on_delete=models.CASCADE,
-                                   related_name='oldpackage')
-    newpackage = models.ForeignKey(Package,
-                                   on_delete=models.CASCADE,
-                                   related_name='newpackage')
+    oldpackage = models.ForeignKey(Package, on_delete=models.CASCADE, related_name='oldpackage')
+    newpackage = models.ForeignKey(Package, on_delete=models.CASCADE, related_name='newpackage')
     security = models.BooleanField(default=False)
 
     class Meta:
-        unique_together = (('oldpackage', 'newpackage', 'security'))
+        unique_together = ['oldpackage', 'newpackage', 'security']
 
     def __str__(self):
         if self.security:
