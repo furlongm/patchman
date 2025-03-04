@@ -434,6 +434,9 @@ def collect_args():
         '-e', '--update-errata', action='store_true',
         help='Update Errata')
     parser.add_argument(
+        '-E', '--erratum-type',
+        help='Only update the specified Erratum type (e.g. `yum`, `ubuntu`, `arch`)')
+    parser.add_argument(
         '-v', '--update-cves', action='store_true',
         help='Update CVEs from https://cve.org')
     return parser
@@ -454,7 +457,7 @@ def process_args(args):
         args.clean_updates = True
         args.dbcheck = True
         args.dns_checks = True
-        args.errata = False
+        args.errata = True
     if args.list_repos:
         list_repos(args.repo)
         return False
@@ -511,7 +514,7 @@ def process_args(args):
         dns_checks(args.host)
         showhelp = False
     if args.update_errata:
-        update_errata()
+        update_errata(args.erratum_type)
         mark_errata_security_updates()
         showhelp = False
     if args.update_cves:
