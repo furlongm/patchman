@@ -59,7 +59,7 @@ def dashboard(request):
     diff_rdns_hosts = hosts.exclude(reversedns=F('hostname')).filter(check_dns=True)  # noqa
 
     # os variant issues
-    lonely_osvariants = osvariants.filter(osrelease__isnull=True)
+    noosrelease_osvariants = osvariants.filter(osrelease__isnull=True)
     nohost_osvariants = osvariants.filter(host__isnull=True)
 
     # os release issues
@@ -110,7 +110,7 @@ def dashboard(request):
         request,
         'dashboard.html',
         {'site': site,
-         'lonely_osvariants': lonely_osvariants,
+         'noosrelease_osvariants': noosrelease_osvariants,
          'norepo_hosts': norepo_hosts,
          'nohost_osvariants': nohost_osvariants,
          'diff_rdns_hosts': diff_rdns_hosts,
