@@ -17,8 +17,6 @@
 import re
 from lxml import etree
 
-from django.db import transaction
-
 from packages.models import Package
 from packages.utils import parse_package_string, get_or_create_package
 from patchman.signals import error_message, pbar_start, pbar_update
@@ -123,8 +121,7 @@ def parse_centos_errata_children(e, children):
         elif c.tag == 'os_release':
             if accepted_centos_release([c.text]):
                 osrelease_name = f'CentOS {c.text}'
-                with transaction.atomic():
-                    osrelease, created = OSRelease.objects.get_or_create(name=osrelease_name)
+                osrelease, created = OSRelease.objects.get_or_create(name=osrelease_name)
                 e.osreleases.add(osrelease)
         elif c.tag == 'packages':
             name, epoch, ver, rel, dist, arch = parse_package_string(c.text)

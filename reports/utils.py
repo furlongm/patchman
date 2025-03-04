@@ -46,19 +46,12 @@ def process_repos(report, host):
             if repo:
                 repo_ids.append(repo.id)
                 try:
-                    with transaction.atomic():
-                        hostrepo, c = host_repos.get_or_create(host=host,
-                                                               repo=repo)
-                except IntegrityError as e:
-                    error_message.send(sender=None, text=e)
+                    hostrepo, c = host_repos.get_or_create(host=host, repo=repo)
+                except IntegrityError:
                     hostrepo = host_repos.get(host=host, repo=repo)
-                try:
-                    if hostrepo.priority != priority:
-                        hostrepo.priority = priority
-                        with transaction.atomic():
-                            hostrepo.save()
-                except IntegrityError as e:
-                    error_message.send(sender=None, text=e)
+                if hostrepo.priority != priority:
+                    hostrepo.priority = priority
+                    hostrepo.save()
             pbar_update.send(sender=None, index=i + 1)
 
         for hostrepo in host_repos:
@@ -78,13 +71,7 @@ def process_modules(report, host):
             module = process_module(module_str)
             if module:
                 module_ids.append(module.id)
-                try:
-                    with transaction.atomic():
-                        host.modules.add(module)
-                except IntegrityError as e:
-                    error_message.send(sender=None, text=e)
-                except DatabaseError as e:
-                    error_message.send(sender=None, text=e)
+                host.modules.add(module)
             pbar_update.send(sender=None, index=i + 1)
 
         for module in host.modules.all():
@@ -104,17 +91,10 @@ def process_packages(report, host):
             package = process_package(pkg_str, report.protocol)
             if package:
                 package_ids.append(package.id)
-                try:
-                    with transaction.atomic():
-                        host.packages.add(package)
-                except IntegrityError as e:
-                    error_message.send(sender=None, text=e)
-                except DatabaseError as e:
-                    error_message.send(sender=None, text=e)
+                host.packages.add(package)
             else:
                 if pkg_str[0].lower() != 'gpg-pubkey':
-                    text = f'No package returned for {pkg_str}'
-                    info_message.send(sender=None, text=text)
+                    info_message.send(sender=None, text=f'No package returned for {pkg_str}')
             pbar_update.send(sender=None, index=i + 1)
 
         for package in host.packages.all():
@@ -154,7 +134,6 @@ def add_updates(updates, host):
     ulen = len(updates)
     if ulen > 0:
         pbar_start.send(sender=None, ptext=f'{host} Updates', plen=ulen)
-
         for i, (u, sec) in enumerate(updates.items()):
             update = process_update(host, u, sec)
             if update:
@@ -177,7 +156,7 @@ def parse_updates(updates_string, security):
 
 def process_update(host, update_string, security):
     """ Processes a single sanitized update string and converts to an update
-    object. Only works if the original package exists. Returns None otherwise
+        object. Only works if the original package exists. Returns None otherwise
     """
     update_str = update_string.split()
     repo_id = update_str[2]
@@ -187,29 +166,26 @@ def process_update(host, update_string, security):
     p_arch = parts[2]
 
     p_epoch, p_version, p_release = find_evr(update_str[1])
-    package = get_or_create_package(name=p_name,
-                                    epoch=p_epoch,
-                                    version=p_version,
-                                    release=p_release,
-                                    arch=p_arch,
-                                    p_type='R')
+    package = get_or_create_package(
+        name=p_name,
+        epoch=p_epoch,
+        version=p_version,
+        release=p_release,
+        arch=p_arch,
+        p_type=Package.RPM
+    )
     try:
         repo = Repository.objects.get(repo_id=repo_id)
     except Repository.DoesNotExist:
         repo = None
     if repo:
         for mirror in repo.mirror_set.all():
-            with transaction.atomic():
-                MirrorPackage.objects.create(mirror=mirror, package=package)
+            MirrorPackage.objects.create(mirror=mirror, package=package)
 
-    installed_packages = host.packages.filter(name=package.name,
-                                              arch=package.arch,
-                                              packagetype='R')
+    installed_packages = host.packages.filter(name=package.name, arch=package.arch, packagetype=Package.RPM)
     if installed_packages:
         installed_package = installed_packages[0]
-        update = get_or_create_package_update(oldpackage=installed_package,
-                                              newpackage=package,
-                                              security=security)
+        update = get_or_create_package_update(oldpackage=installed_package, newpackage=package, security=security)
         return update
 
 
@@ -249,8 +225,7 @@ def process_repo(repo, arch):
     if repo[1]:
         r_name = repo[1]
 
-    with transaction.atomic():
-        r_arch, c = MachineArchitecture.objects.get_or_create(name=arch)
+    r_arch, c = MachineArchitecture.objects.get_or_create(name=arch)
 
     unknown = []
     for r_url in repo[3:]:
@@ -268,29 +243,21 @@ def process_repo(repo, arch):
 
     if r_id and repository.repo_id != r_id:
         repository.repo_id = r_id
-        with transaction.atomic():
-            repository.save()
 
     if r_name and repository.name != r_name:
         repository.name = r_name
-        with transaction.atomic():
-            repository.save()
 
     for url in unknown:
         Mirror.objects.create(repo=repository, url=url.rstrip('/'))
 
     for mirror in Mirror.objects.filter(repo=repository).values('url'):
-        if mirror['url'].find('cdn.redhat.com') != -1 or \
-                mirror['url'].find('cdn-ubi.redhat.com') != -1 or \
-                mirror['url'].find('nu.novell.com') != -1 or \
-                mirror['url'].find('updates.suse.com') != -1:
+        mirror_url = mirror.get('url')
+        auth_urls = ['cdn.redhat.com', 'cdn-ubi.redhat.com', 'nu.novell.com', 'updates.suse.com']
+        if any(auth_url in mirror_url for auth_url in auth_urls):
             repository.auth_required = True
-            with transaction.atomic():
-                repository.save()
-        if mirror['url'].find('security') != -1:
+        if 'security' in mirror_url:
             repository.security = True
-            with transaction.atomic():
-                repository.save()
+    repository.save()
 
     return repository, r_priority
 
@@ -557,10 +524,9 @@ def get_host(report, arch, osvariant, domain):
         except herror:
             report.host = report.report_ip
         report.save()
-
-    with transaction.atomic():
-        try:
-            host, c = Host.objects.get_or_create(
+    try:
+        with transaction.atomic():
+            host, created = Host.objects.get_or_create(
                 hostname=report.host,
                 defaults={
                     'ipaddress': report.report_ip,
@@ -568,8 +534,8 @@ def get_host(report, arch, osvariant, domain):
                     'osvariant': osvariant,
                     'domain': domain,
                     'lastreport': report.created,
-                })
-
+                }
+            )
             host.ipaddress = report.report_ip
             host.kernel = report.kernel
             host.arch = arch
@@ -582,10 +548,10 @@ def get_host(report, arch, osvariant, domain):
             else:
                 host.reboot_required = False
             host.save()
-        except IntegrityError as e:
-            error_message.send(sender=None, text=e)
-        except DatabaseError as e:
-            error_message.send(sender=None, text=e)
+    except IntegrityError as e:
+        error_message.send(sender=None, text=e)
+    except DatabaseError as e:
+        error_message.send(sender=None, text=e)
     if host:
         host.check_rdns()
         return host

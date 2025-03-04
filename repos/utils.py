@@ -21,7 +21,7 @@ from io import BytesIO
 from defusedxml import ElementTree as ET
 from tenacity import RetryError
 
-from django.db import IntegrityError, DatabaseError, transaction
+from django.db import IntegrityError
 from django.db.models import Q
 
 from packages.models import Package
@@ -37,17 +37,10 @@ def get_or_create_repo(r_name, r_arch, r_type, r_id=None):
     from repos.models import Repository
     repositories = Repository.objects.all()
     try:
-        with transaction.atomic():
-            repository, c = repositories.get_or_create(name=r_name,
-                                                       arch=r_arch,
-                                                       repotype=r_type)
+        repository, c = repositories.get_or_create(name=r_name, arch=r_arch, repotype=r_type)
     except IntegrityError as e:
         error_message.send(sender=None, text=e)
-        repository = repositories.get(name=r_name,
-                                      arch=r_arch,
-                                      repotype=r_type)
-    except DatabaseError as e:
-        error_message.send(sender=None, text=e)
+        repository = repositories.get(name=r_name, arch=r_arch, repotype=r_type)
     if repository:
         if r_id:
             repository.repo_id = r_id
@@ -85,8 +78,7 @@ def update_mirror_packages(mirror, packages):
         pbar_update.send(sender=None, index=i + 1)
         try:
             package = convert_packagestring_to_package(strpackage)
-            with transaction.atomic():
-                mirror_package, c = MirrorPackage.objects.get_or_create(mirror=mirror, package=package)
+            mirror_package, c = MirrorPackage.objects.get_or_create(mirror=mirror, package=package)
         except Package.MultipleObjectsReturned:
             error_message.send(sender=None, text=f'Duplicate Package found in {mirror}: {strpackage}')
     mirror.save()

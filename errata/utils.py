@@ -16,8 +16,6 @@
 
 from urllib.parse import urlparse
 
-from django.db import transaction
-
 from util import tz_aware_datetime
 from errata.models import Erratum
 from patchman.signals import pbar_start, pbar_update, warning_message
@@ -51,13 +49,12 @@ def get_or_create_erratum(name, e_type, issue_date, synopsis):
             e.save()
         created = False
     except Erratum.DoesNotExist:
-        with transaction.atomic():
-            e, created = Erratum.objects.get_or_create(
-                name=name,
-                e_type=e_type,
-                issue_date=tz_aware_datetime(issue_date),
-                synopsis=synopsis,
-            )
+        e, created = Erratum.objects.get_or_create(
+            name=name,
+            e_type=e_type,
+            issue_date=tz_aware_datetime(issue_date),
+            synopsis=synopsis,
+        )
     return e, created
 
 

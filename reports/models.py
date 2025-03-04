@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.db import models, transaction
+from django.db import models
 from django.urls import reverse
 
 from patchman.signals import error_message, info_message
@@ -90,9 +90,7 @@ class Report(models.Model):
             fqdn = self.host.split('.', 1)
             if len(fqdn) == 2:
                 self.domain = fqdn.pop()
-
-        with transaction.atomic():
-            self.save()
+        self.save()
 
     def process(self, find_updates=True, verbose=False):
         """ Process a report and extract os, arch, domain, packages, repos etc
@@ -115,14 +113,10 @@ class Report(models.Model):
             info_message.send(sender=None, text=f'Processing report {self.id} - {self.host}')
 
         from reports.utils import process_packages, process_repos, process_updates, process_modules
-        with transaction.atomic():
-            process_repos(report=self, host=host)
-        with transaction.atomic():
-            process_modules(report=self, host=host)
-        with transaction.atomic():
-            process_packages(report=self, host=host)
-        with transaction.atomic():
-            process_updates(report=self, host=host)
+        process_repos(report=self, host=host)
+        process_modules(report=self, host=host)
+        process_packages(report=self, host=host)
+        process_updates(report=self, host=host)
 
         self.processed = True
         self.save()

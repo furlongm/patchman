@@ -17,8 +17,6 @@
 import concurrent.futures
 import json
 
-from django.db import transaction
-
 from packages.models import Package
 from packages.utils import get_or_create_package, parse_package_string
 from util import get_url, download_url, get_setting_of_type
@@ -109,8 +107,7 @@ def add_alma_erratum_osreleases(e, release):
     """ Update OS Release for Alma Linux errata
     """
     from operatingsystems.models import OSRelease
-    with transaction.atomic():
-        osrelease, created = OSRelease.objects.get_or_create(name=f'Alma Linux {release}')
+    osrelease, created = OSRelease.objects.get_or_create(name=f'Alma Linux {release}')
     e.osreleases.add(osrelease)
     e.save()
 
