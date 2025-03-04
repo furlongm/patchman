@@ -16,7 +16,7 @@
 
 from django.db import models
 from django.urls import reverse
-from django.db import transaction, IntegrityError
+from django.db import IntegrityError
 
 from packages.models import Package, PackageUpdate
 from errata.managers import ErratumManager
@@ -71,8 +71,7 @@ class Erratum(models.Model):
                     if not affected_update.security:
                         affected_update.security = True
                         try:
-                            with transaction.atomic():
-                                affected_update.save()
+                            affected_update.save()
                         except IntegrityError as e:
                             error_message.send(sender=None, text=e)
                             # a version of this update already exists that is

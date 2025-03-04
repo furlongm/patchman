@@ -18,7 +18,7 @@
 import re
 
 from django.core.exceptions import MultipleObjectsReturned
-from django.db import IntegrityError, DatabaseError, transaction
+from django.db import IntegrityError
 
 from arch.models import PackageArchitecture
 from packages.models import PackageName, Package, PackageUpdate, PackageCategory, PackageString
@@ -50,17 +50,14 @@ def convert_package_to_packagestring(package):
 def convert_packagestring_to_package(strpackage):
     """ Convert a PackageString object to a Package object
     """
-    with transaction.atomic():
-        name, created = PackageName.objects.get_or_create(name=strpackage.name.lower())
+    name, created = PackageName.objects.get_or_create(name=strpackage.name.lower())
     epoch = strpackage.epoch
     version = strpackage.version
     release = strpackage.release
-    with transaction.atomic():
-        arch, created = PackageArchitecture.objects.get_or_create(name=strpackage.arch)
+    arch, created = PackageArchitecture.objects.get_or_create(name=strpackage.arch)
     packagetype = strpackage.packagetype
     if strpackage.category:
-        with transaction.atomic():
-            category, created = PackageCategory.objects.get_or_create(name=strpackage.category)
+        category, created = PackageCategory.objects.get_or_create(name=strpackage.category)
     else:
         category = None
 
@@ -173,21 +170,16 @@ def get_or_create_package(name, epoch, version, release, arch, p_type):
     if epoch in [None, 0, '0']:
         epoch = ''
 
-    with transaction.atomic():
-        package_name, c = PackageName.objects.get_or_create(name=name)
-
-    with transaction.atomic():
-        package_arch, c = PackageArchitecture.objects.get_or_create(name=arch)
-
-    with transaction.atomic():
-        package, c = Package.objects.get_or_create(
-            name=package_name,
-            arch=package_arch,
-            epoch=epoch,
-            version=version,
-            release=release,
-            packagetype=p_type,
-        )
+    package_name, c = PackageName.objects.get_or_create(name=name)
+    package_arch, c = PackageArchitecture.objects.get_or_create(name=arch)
+    package, c = Package.objects.get_or_create(
+        name=package_name,
+        arch=package_arch,
+        epoch=epoch,
+        version=version,
+        release=release,
+        packagetype=p_type,
+    )
     return package
 
 
@@ -226,21 +218,18 @@ def get_or_create_package_update(oldpackage, newpackage, security):
         if update:
             if security and not update.security:
                 update.security = True
-                with transaction.atomic():
-                    update.save()
+                update.save()
         else:
-            with transaction.atomic():
-                update, c = updates.get_or_create(
-                    oldpackage=oldpackage,
-                    newpackage=newpackage,
-                    security=security)
+            update, c = updates.get_or_create(
+                oldpackage=oldpackage,
+                newpackage=newpackage,
+                security=security,
+            )
     except IntegrityError as e:
         error_message.send(sender=None, text=e)
         update = updates.get(oldpackage=oldpackage,
                              newpackage=newpackage,
                              security=security)
-    except DatabaseError as e:
-        error_message.send(sender=None, text=e)
     return update
 
 

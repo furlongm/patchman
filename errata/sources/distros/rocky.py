@@ -18,7 +18,6 @@ import json
 import concurrent.futures
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
-from django.db import transaction
 from django.db.utils import OperationalError
 
 from packages.models import Package
@@ -217,8 +216,7 @@ def add_rocky_erratum_oses(e, advisory):
         variant = affected_os.get('variant')
         major_version = affected_os.get('major_version')
         osrelease_name = f'{variant} {major_version}'
-        with transaction.atomic():
-            osrelease, created = OSRelease.objects.get_or_create(name=osrelease_name)
+        osrelease, created = OSRelease.objects.get_or_create(name=osrelease_name)
         e.osreleases.add(osrelease)
     e.save()
 

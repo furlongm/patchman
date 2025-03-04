@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.db import models, IntegrityError, DatabaseError, transaction
+from django.db import models
 from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
@@ -33,7 +33,7 @@ from modules.models import Module
 from operatingsystems.models import OSVariant
 from packages.models import Package, PackageUpdate
 from packages.utils import get_or_create_package_update
-from patchman.signals import info_message, error_message
+from patchman.signals import info_message
 from repos.models import Repository
 from repos.utils import find_best_repo
 
@@ -118,8 +118,7 @@ class Host(models.Model):
                 text += f'{self.hostname} != {self.reversedns}'
                 info_message.send(sender=None, text=text)
         else:
-            info_message.send(sender=None,
-                              text='Reverse DNS check disabled')
+            info_message.send(sender=None, text='Reverse DNS check disabled')
 
     def clean_reports(self):
         """ Remove all but the last 3 reports for a host
@@ -153,28 +152,17 @@ class Host(models.Model):
         if self.host_repos_only:
             host_repos = Q(repo__host=self)
         else:
-            host_repos = \
-                Q(repo__osrelease__osvariant__host=self, repo__arch=self.arch) | \
-                Q(repo__host=self)
+            host_repos = Q(repo__osrelease__osvariant__host=self, repo__arch=self.arch) | Q(repo__host=self)
         mirrors = highest_package.mirror_set.filter(host_repos)
         security = False
-        # if any of the containing repos are security, mark the update as
-        # security
+        # if any of the containing repos are security, mark the update as a security update
         for mirror in mirrors:
             if mirror.repo.security:
                 security = True
-        update = get_or_create_package_update(oldpackage=package,
-                                              newpackage=highest_package,
-                                              security=security)
-        try:
-            with transaction.atomic():
-                self.updates.add(update)
-            info_message.send(sender=None, text=f'{update}')
-            return update.id
-        except IntegrityError as e:
-            error_message.send(sender=None, text=e)
-        except DatabaseError as e:
-            error_message.send(sender=None, text=e)
+        update = get_or_create_package_update(oldpackage=package, newpackage=highest_package, security=security)
+        self.updates.add(update)
+        info_message.send(sender=None, text=f'{update}')
+        return update.id
 
     def find_updates(self):
 
@@ -270,13 +258,11 @@ class Host(models.Model):
                 uid = self.process_update(package, highest_package)
                 if uid is not None:
                     update_ids.append(uid)
-
         return update_ids
 
     def find_osrelease_repo_updates(self, host_packages, repo_packages):
 
         update_ids = []
-
         for package in host_packages:
             highest_package = package
 
@@ -304,7 +290,6 @@ class Host(models.Model):
                 uid = self.process_update(package, highest_package)
                 if uid is not None:
                     update_ids.append(uid)
-
         return update_ids
 
     def check_if_reboot_required(self, host_highest):
@@ -320,7 +305,6 @@ class Host(models.Model):
     def find_kernel_updates(self, kernel_packages, repo_packages):
 
         update_ids = []
-
         for package in kernel_packages:
             host_highest = package
             repo_highest = package
@@ -344,13 +328,7 @@ class Host(models.Model):
                     update_ids.append(uid)
 
             self.check_if_reboot_required(host_highest)
-
-        try:
-            with transaction.atomic():
-                self.save()
-        except DatabaseError as e:
-            error_message.send(sender=None, text=e)
-
+        self.save()
         return update_ids
 
 
