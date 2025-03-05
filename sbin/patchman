@@ -351,11 +351,11 @@ def process_reports(host=None, force=False):
         report.process(find_updates=False)
 
 
-def dbcheck():
+def dbcheck(remove_duplicates=False):
     """ Runs all clean_* functions to check database consistency
     """
     clean_packageupdates()
-    clean_packages()
+    clean_packages(remove_duplicates)
     clean_packagenames()
     clean_architectures()
     clean_repos()
@@ -421,6 +421,9 @@ def collect_args():
     parser.add_argument(
         '-d', '--dbcheck', action='store_true',
         help='Perform some sanity checks and clean unused db entries')
+    parser.add_argument(
+        '-rd', '--remove-duplicates', action='store_true',
+        help='Remove duplicates during dbcheck - this may take some time')
     parser.add_argument(
         '-n', '--dns-checks', action='store_true',
         help='Perform reverse DNS checks if enabled for that Host')
@@ -494,7 +497,7 @@ def process_args(args):
         process_reports(args.host, args.force)
         showhelp = False
     if args.dbcheck:
-        dbcheck()
+        dbcheck(args.remove_duplicates)
         showhelp = False
     if args.refresh_repos:
         refresh_repos(args.repo, args.force)
@@ -509,7 +512,7 @@ def process_args(args):
         showhelp = False
         recheck = True
     if args.dbcheck and recheck:
-        dbcheck()
+        dbcheck(args.remove_duplicates)
     if args.dns_checks:
         dns_checks(args.host)
         showhelp = False
