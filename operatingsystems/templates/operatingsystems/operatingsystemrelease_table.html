@@ -15,7 +15,7 @@
     {% for osrelease in object_list %}
       <tr>
         <td><a href="{{ osrelease.get_absolute_url }}">{{ osrelease.name }}</a></td>
-        <td>{% if osrelease.codename %}{{ osrelease.cpe_name }}{% endif %}</td>
+        <td>{% if osrelease.cpe_name %}{{ osrelease.cpe_name }}{% endif %}</td>
         <td>{% if osrelease.codename %}{{ osrelease.codename }}{% endif %}</td>
         <td><a href="{% url 'repos:repo_list' %}?osrelease_id={{ osrelease.id }}">{{ osrelease.repos.count }}</a></td>
         <td><a href="{% url 'operatingsystems:osvariant_list' %}?osrelease_id={{ osrelease.id }}">{{ osrelease.osvariant_set.count }}</a></td>
