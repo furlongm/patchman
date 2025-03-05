@@ -210,8 +210,8 @@ def add_rocky_erratum_references(e, advisory):
 def add_rocky_erratum_oses(e, advisory):
     """ Update OS Variant, OS Release and MachineArch for Rocky Linux errata
     """
-    affected_oses = advisory.get('affected_products')
     from operatingsystems.models import OSRelease
+    affected_oses = advisory.get('affected_products')
     for affected_os in affected_oses:
         variant = affected_os.get('variant')
         major_version = affected_os.get('major_version')
