@@ -47,8 +47,8 @@ def find_all_host_updates_homogenous():
     ts = get_datetime_now()
     for host in Host.objects.all():
         if host not in updated_hosts:
-            host.updated_at = ts
             host.find_updates()
+            host.updated_at = ts
             host.save()
 
             # only include hosts with the exact same number of packages

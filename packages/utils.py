@@ -268,7 +268,6 @@ def clean_packageupdates():
                 for host in duplicate.host_set.all():
                     host.updates.remove(duplicate)
                     host.updates.add(update)
-                    host.save()
                 duplicate.delete()
 
 

@@ -81,7 +81,6 @@ def update_mirror_packages(mirror, packages):
             mirror_package, c = MirrorPackage.objects.get_or_create(mirror=mirror, package=package)
         except Package.MultipleObjectsReturned:
             error_message.send(sender=None, text=f'Duplicate Package found in {mirror}: {strpackage}')
-    mirror.save()
 
 
 def find_mirror_url(stored_mirror_url, formats):
@@ -229,10 +228,11 @@ def fetch_mirror_data(mirror, url, text, checksum=None, checksum_type=None, meta
         mirror.fail()
         return
 
-    mirror.last_access_ok = response_is_valid(res)
-    if not mirror.last_access_ok:
+    if not response_is_valid(res):
         mirror.fail()
         return
+    mirror.last_access_ok = True
+    mirror.save()
 
     data = download_url(res, text)
     if not data:
@@ -243,8 +243,6 @@ def fetch_mirror_data(mirror, url, text, checksum=None, checksum_type=None, meta
         if not mirror_checksum_is_valid(computed_checksum, checksum, mirror, metadata_type):
             mirror.fail()
             return
-
-    mirror.save()
     return data
 
 

@@ -17,10 +17,6 @@
 
 from socket import gethostbyaddr, gaierror, herror
 
-from django.db import DatabaseError
-
-from patchman.signals import error_message
-
 
 def update_rdns(host):
     """ Update the reverse DNS for a host
@@ -31,7 +27,4 @@ def update_rdns(host):
         reversedns = 'None'
 
     host.reversedns = reversedns.lower()
-    try:
-        host.save()
-    except DatabaseError as e:
-        error_message.send(sender=None, text=e)
+    host.save()

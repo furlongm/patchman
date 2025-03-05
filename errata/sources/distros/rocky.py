@@ -218,7 +218,6 @@ def add_rocky_erratum_oses(e, advisory):
         osrelease_name = f'{variant} {major_version}'
         osrelease, created = OSRelease.objects.get_or_create(name=osrelease_name)
         e.osreleases.add(osrelease)
-    e.save()
 
 
 def add_rocky_erratum_packages(e, advisory):
@@ -243,7 +242,7 @@ def add_rocky_erratum_packages(e, advisory):
                     module_stream,
                     module_version,
                     module_context,
-                    arch)
+                    arch,
+                )
                 for match in matching_modules:
                     match.packages.add(pkg)
-    e.save()

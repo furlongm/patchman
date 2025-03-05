@@ -132,7 +132,6 @@ def add_ubuntu_erratum_osreleases(e, affected_releases, accepted_releases):
         if release in accepted_releases:
             osrelease = OSRelease.objects.get(codename=release)
             e.osreleases.add(osrelease)
-    e.save()
 
 
 def release_is_affected(affected_releases, accepted_releases):
@@ -194,7 +193,6 @@ def add_ubuntu_erratum_packages(e, advisory):
                     )
                     for package in matching_packages:
                         e.packages.add(package)
-    e.save()
 
 
 def get_accepted_ubuntu_codenames():
