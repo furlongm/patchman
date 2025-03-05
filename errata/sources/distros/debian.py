@@ -22,13 +22,12 @@ from debian.deb822 import Dsc
 from io import StringIO
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
-from django.db.utils import IntegrityError
-
 from operatingsystems.models import OSRelease
+from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
 from packages.utils import get_or_create_package, find_evr
-from util import get_url, download_url, get_setting_of_type
 from patchman.signals import error_message, pbar_start, pbar_update
+from util import get_url, download_url, get_setting_of_type
 
 
 def update_debian_errata(concurrent_processing=True):
@@ -247,14 +246,7 @@ def create_debian_os_releases(codename_to_version):
     for codename, version in codename_to_version.items():
         if codename in accepted_codenames:
             osrelease_name = f'Debian {version}'
-            try:
-                osrelease, created = OSRelease.objects.get_or_create(name=osrelease_name, codename=codename)
-            except IntegrityError:
-                osreleases = OSRelease.objects.filter(name=osrelease_name)
-                if osreleases.count() == 1:
-                    osrelease = osreleases[0]
-                    osrelease.codename = codename
-                    osrelease.save()
+            get_or_create_osrelease(name=osrelease_name, codename=codename)
 
 
 def process_debian_erratum_affected_packages(e, package_data):

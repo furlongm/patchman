@@ -23,7 +23,7 @@ from arch.models import MachineArchitecture, PackageArchitecture
 from domains.models import Domain
 from hosts.models import HostRepo
 from modules.utils import get_or_create_module
-from operatingsystems.models import OSVariant, OSRelease
+from operatingsystems.utils import get_or_create_osrelease, get_or_create_osvariant
 from packages.models import Package, PackageCategory
 from packages.utils import find_evr, get_or_create_package, get_or_create_package_update, parse_package_string
 from patchman.signals import pbar_start, pbar_update, info_message
@@ -448,55 +448,13 @@ def get_os(os, arch):
         osvariant_name = os.replace(' Server', '')
         osrelease_name = osvariant_name.split('.')[0]
 
-    osrelease = get_osrelease(osrelease_name, osrelease_codename, cpe_name)
-    osvariant = get_osvariant(osrelease, osvariant_name, osvariant_codename, arch)
-    return osvariant
-
-
-def get_osrelease(osrelease_name, osrelease_codename, cpe_name):
-    """ Get or create OSRelease from os details
-    """
-    osrelease = None
-    if cpe_name:
-        try:
-            osrelease, created = OSRelease.objects.get_or_create(name=osrelease_name, cpe_name=cpe_name)
-        except IntegrityError:
-            osreleases = OSRelease.objects.filter(cpe_name=cpe_name)
-            if osreleases.count() == 1:
-                osrelease = osreleases[0]
-                osrelease.name = osrelease_name
-    if not osrelease and osrelease_codename:
-        osreleases = OSRelease.objects.filter(codename=osrelease_codename)
-        if osreleases.count() == 1:
-            osrelease = osreleases[0]
-    if not osrelease and osrelease_name:
-        osrelease, created = OSRelease.objects.get_or_create(name=osrelease_name)
-    if osrelease and cpe_name:
-        osrelease.cpe_name = cpe_name
-    if osrelease and osrelease_codename:
-        osrelease.codename = osrelease_codename
-    osrelease.save()
-    return osrelease
-
-
-def get_osvariant(osrelease, osvariant_name, osvariant_codename, arch):
-    """ Get or create OSVariant from OSRelease and os details
-    """
-    if not osrelease:
-        return
-
-    try:
-        osvariant, created = OSVariant.objects.get_or_create(name=osvariant_name, arch=arch)
-    except IntegrityError:
-        osvariants = OSVariant.objects.filter(name=osvariant_name)
-        if osvariants.count() == 1:
-            osvariant = osvariants[0]
-            if osvariant.arch is None:
-                osvariant.arch = arch
-    if osvariant and osvariant_codename:
-        osvariant.codename = osvariant_codename
-    osvariant.osrelease = osrelease
-    osvariant.save()
+    osrelease = get_or_create_osrelease(name=osrelease_name, codename=osrelease_codename, cpe_name=cpe_name)
+    osvariant = get_or_create_osvariant(
+        name=osvariant_name,
+        osrelease=osrelease,
+        codename=osvariant_codename,
+        arch=arch,
+    )
     return osvariant
 
 

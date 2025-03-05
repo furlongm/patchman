@@ -22,6 +22,7 @@ from io import StringIO
 from urllib.parse import urlparse
 
 from operatingsystems.models import OSRelease, OSVariant
+from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package, PackageName
 from packages.utils import get_or_create_package, parse_package_string, find_evr
 from util import get_url, download_url, get_sha256, bunzip2, get_setting_of_type
@@ -230,7 +231,7 @@ def create_ubuntu_os_releases(codename_to_version):
     for codename, version in codename_to_version.items():
         if codename in accepted_codenames:
             osrelease_name = f'Ubuntu {version}'
-            osrelease, created = OSRelease.objects.get_or_create(name=osrelease_name, codename=codename)
+            osrelease = get_or_create_osrelease(name=osrelease_name, codename=codename)
             for osvariant in OSVariant.objects.filter(name__startswith=osrelease_name.replace(' LTS', '')):
                 osvariant.osrelease = osrelease
                 osvariant.save()

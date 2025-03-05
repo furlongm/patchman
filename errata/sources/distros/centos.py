@@ -17,6 +17,7 @@
 import re
 from lxml import etree
 
+from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
 from packages.utils import parse_package_string, get_or_create_package
 from patchman.signals import error_message, pbar_start, pbar_update
@@ -114,14 +115,13 @@ def add_centos_erratum_references(e, references):
 def parse_centos_errata_children(e, children):
     """ Parse errata children to obtain architecture, release and packages
     """
-    from operatingsystems.models import OSRelease
     for c in children:
         if c.tag == 'os_arch':
             pass
         elif c.tag == 'os_release':
             if accepted_centos_release([c.text]):
                 osrelease_name = f'CentOS {c.text}'
-                osrelease, created = OSRelease.objects.get_or_create(name=osrelease_name)
+                osrelease = get_or_create_osrelease(name=osrelease_name)
                 e.osreleases.add(osrelease)
         elif c.tag == 'packages':
             name, epoch, ver, rel, dist, arch = parse_package_string(c.text)

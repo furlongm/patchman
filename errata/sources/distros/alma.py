@@ -17,6 +17,7 @@
 import concurrent.futures
 import json
 
+from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
 from packages.utils import get_or_create_package, parse_package_string
 from util import get_url, download_url, get_setting_of_type
@@ -106,8 +107,7 @@ def process_alma_erratum(release, advisory):
 def add_alma_erratum_osreleases(e, release):
     """ Update OS Release for Alma Linux errata
     """
-    from operatingsystems.models import OSRelease
-    osrelease, created = OSRelease.objects.get_or_create(name=f'Alma Linux {release}')
+    osrelease = get_or_create_osrelease(name=f'Alma Linux {release}')
     e.osreleases.add(osrelease)
 
 
