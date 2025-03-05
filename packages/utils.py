@@ -18,7 +18,7 @@
 import re
 
 from django.core.exceptions import MultipleObjectsReturned
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 
 from arch.models import PackageArchitecture
 from packages.models import PackageName, Package, PackageUpdate, PackageCategory, PackageString
@@ -61,15 +61,16 @@ def convert_packagestring_to_package(strpackage):
     else:
         category = None
 
-    package, created = Package.objects.get_or_create(
-          name=name,
-          epoch=epoch,
-          version=version,
-          release=release,
-          arch=arch,
-          packagetype=packagetype,
-          category=category,
-    )
+    with transaction.atomic():
+        package, created = Package.objects.get_or_create(
+              name=name,
+              epoch=epoch,
+              version=version,
+              release=release,
+              arch=arch,
+              packagetype=packagetype,
+              category=category,
+        )
     return package
 
 
@@ -172,14 +173,15 @@ def get_or_create_package(name, epoch, version, release, arch, p_type):
 
     package_name, c = PackageName.objects.get_or_create(name=name)
     package_arch, c = PackageArchitecture.objects.get_or_create(name=arch)
-    package, c = Package.objects.get_or_create(
-        name=package_name,
-        arch=package_arch,
-        epoch=epoch,
-        version=version,
-        release=release,
-        packagetype=p_type,
-    )
+    with transaction.atomic():
+        package, c = Package.objects.get_or_create(
+            name=package_name,
+            arch=package_arch,
+            epoch=epoch,
+            version=version,
+            release=release,
+            packagetype=p_type,
+        )
     return package
 
 
