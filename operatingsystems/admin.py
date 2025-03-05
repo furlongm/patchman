@@ -16,12 +16,12 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from django.contrib import admin
-from operatingsystems.models import OS, OSGroup
+from operatingsystems.models import OSVariant, OSRelease
 
 
-class OSGroupAdmin(admin.ModelAdmin):
+class OSReleaseAdmin(admin.ModelAdmin):
     filter_horizontal = ('repos',)
 
 
-admin.site.register(OS)
-admin.site.register(OSGroup, OSGroupAdmin)
+admin.site.register(OSVariant)
+admin.site.register(OSRelease, OSReleaseAdmin)
