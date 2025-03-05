@@ -22,7 +22,7 @@
         <td><a href="{% url 'packages:package_list' %}?erratum_id={{ erratum.id }}">{{ erratum.packages.count }}</a></td>
         <td><a href="{% url 'operatingsystems:osrelease_list' %}?erratum_id={{ erratum.id }}">{{ erratum.osreleases.count }}</a></td>
         <td><a href="{% url 'security:cve_list' %}?erratum_id={{ erratum.id }}">{{ erratum.cves.count }}</td>
-        <td><a href="{% url 'errata:erratumreference_list' %}?erratum_id={{ erratum.id }}">{{ erratum.references.count }}</a></td>
+        <td><a href="{% url 'security:reference_list' %}?erratum_id={{ erratum.id }}">{{ erratum.references.count }}</a></td>
       </tr>
     {% endfor %}
   </tbody>

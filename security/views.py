@@ -23,8 +23,9 @@ from rest_framework import viewsets
 
 from packages.models import Package
 from operatingsystems.models import OSRelease
-from security.models import CVE, CWE
-from security.serializers import CVESerializer, CWESerializer
+from security.models import CVE, CWE, Reference
+from security.serializers import CVESerializer, CWESerializer, ReferenceSerializer
+from util.filterspecs import Filter, FilterBar
 
 
 @login_required
@@ -114,11 +115,56 @@ def cve_detail(request, cve_id):
     cve = get_object_or_404(CVE, cve_id=cve_id)
     packages = Package.objects.filter(erratum__in=cve.erratum_set.all()).distinct()
     osreleases = OSRelease.objects.filter(erratum__in=cve.erratum_set.all()).distinct()
+    references = Reference.objects.filter(Q(erratum__in=cve.erratum_set.all()) | Q(cve=cve)).distinct()
     return render(request,
                   'security/cve_detail.html',
                   {'cve': cve,
                    'packages': packages,
-                   'osreleases': osreleases})
+                   'osreleases': osreleases,
+                   'references': references,
+                   })
+
+
+@login_required
+def reference_list(request):
+    refs = Reference.objects.select_related().order_by('ref_type')
+
+    if 'ref_type' in request.GET:
+        refs = refs.filter(ref_type=request.GET['ref_type']).distinct()
+
+    if 'erratum_id' in request.GET:
+        refs = refs.filter(erratum__id=request.GET['erratum_id'])
+
+    if 'search' in request.GET:
+        terms = request.GET['search'].lower()
+        query = Q()
+        for term in terms.split(' '):
+            q = Q(url__icontains=term)
+            query = query & q
+        refs = refs.filter(query)
+    else:
+        terms = ''
+
+    page_no = request.GET.get('page')
+    paginator = Paginator(refs, 50)
+
+    try:
+        page = paginator.page(page_no)
+    except PageNotAnInteger:
+        page = paginator.page(1)
+    except EmptyPage:
+        page = paginator.page(paginator.num_pages)
+
+    filter_list = []
+    filter_list.append(Filter(request, 'Reference Type', 'ref_type',
+                              Reference.objects.values_list('ref_type', flat=True).distinct()))
+    filter_bar = FilterBar(request, filter_list)
+
+    return render(request,
+                  'security/reference_list.html',
+                  {'page': page,
+                   'filter_bar': filter_bar,
+                   'terms': terms})
 
 
 @login_required
@@ -138,3 +184,10 @@ class CVEViewSet(viewsets.ModelViewSet):
     """
     queryset = CVE.objects.all()
     serializer_class = CVESerializer
+
+
+class ReferenceViewSet(viewsets.ModelViewSet):
+    """ API endpoint that allows security references to be viewed or edited.
+    """
+    queryset = Reference.objects.all()
+    serializer_class = ReferenceSerializer

@@ -26,4 +26,5 @@ urlpatterns = [
     path('cves/<str:cve_id>', views.cve_detail, name='cve_detail'),
     path('cwes', views.cwe_list, name='cwe_list'),
     path('cwes/<str:cwe_id>', views.cwe_detail, name='cwe_detail'),
+    path('references/', views.reference_list, name='reference_list'),
 ]

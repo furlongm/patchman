@@ -117,14 +117,14 @@ def add_alma_erratum_references(e, advisory):
     references = advisory.get('references')
     for reference in references:
         ref_id = reference.get('id')
-        er_type = reference.get('type')
+        ref_type = reference.get('type')
         er_url = reference.get('href')
-        if er_type == 'cve':
+        if ref_type == 'cve':
             e.add_cve(ref_id)
             continue
-        if er_type == 'self':
-            er_type = ref_id.split('-')[0].upper()
-        e.add_reference(er_type, er_url)
+        if ref_type == 'self':
+            ref_type = ref_id.split('-')[0].upper()
+        e.add_reference(ref_type, er_url)
 
 
 def add_alma_erratum_packages(e, advisory):

@@ -23,5 +23,4 @@ app_name = 'errata'
 urlpatterns = [
     path('', views.erratum_list, name='erratum_list'),
     path('errata/<str:erratum_name>/', views.erratum_detail, name='erratum_detail'),
-    path('references/', views.erratumreference_list, name='erratumreference_list'),
 ]

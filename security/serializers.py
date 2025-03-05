@@ -16,7 +16,7 @@
 
 from rest_framework import serializers
 
-from security.models import CVE, CWE
+from security.models import CVE, CWE, Reference
 
 
 class CWESerializer(serializers.HyperlinkedModelSerializer):
@@ -30,3 +30,9 @@ class CVESerializer(serializers.HyperlinkedModelSerializer):
         model = CVE
         fields = ('cve_id', 'title', 'description', 'cvss_score', 'cwe',
                   'registered_date', 'published_date', 'updated_date')
+
+
+class ReferenceSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Reference
+        fields = ('id', 'ref_type', 'url')
