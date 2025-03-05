@@ -18,12 +18,12 @@
 import re
 from socket import gethostbyaddr, herror
 
-from django.db import IntegrityError, DatabaseError, transaction
+from django.db import IntegrityError, transaction
 
 from arch.models import MachineArchitecture, PackageArchitecture
 from domains.models import Domain
 from hosts.models import Host, HostRepo
-from modules.models import Module
+from modules.utils import get_or_create_module
 from operatingsystems.models import OSVariant, OSRelease
 from packages.models import Package, PackageCategory
 from packages.utils import find_evr, get_or_create_package, get_or_create_package_update, parse_package_string
@@ -297,25 +297,7 @@ def process_module(module_str):
         package = get_or_create_package(p_name, p_epoch, p_ver, p_rel, p_arch, p_type)
         packages.add(package)
 
-    modules = Module.objects.all()
-    try:
-        module, c = modules.get_or_create(name=m_name,
-                                          stream=m_stream,
-                                          version=m_version,
-                                          context=m_context,
-                                          arch=arch,
-                                          repo=repo)
-    except IntegrityError as e:
-        error_message.send(sender=None, text=e)
-        module = modules.get(name=m_name,
-                             stream=m_stream,
-                             version=m_version,
-                             context=m_context,
-                             arch=arch,
-                             repo=repo)
-    except DatabaseError as e:
-        error_message.send(sender=None, text=e)
-
+    module = get_or_create_module(m_name, m_stream, m_version, m_context, arch, repo)
     for package in packages:
         module.packages.add(package)
     return module
