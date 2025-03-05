@@ -30,6 +30,9 @@ class ErratumReference(models.Model):
     er_type = models.CharField(max_length=255)
     url = models.URLField(max_length=2000)
 
+    class Meta:
+        unique_together = ['er_type', 'url']
+
     def __str__(self):
         return self.url
 
