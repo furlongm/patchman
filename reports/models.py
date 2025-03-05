@@ -18,6 +18,7 @@
 from django.db import models
 from django.urls import reverse
 
+from hosts.utils import get_or_create_host
 from patchman.signals import error_message, info_message
 
 
@@ -103,11 +104,11 @@ class Report(models.Model):
             info_message.send(sender=None, text=f'Report {self.id} has already been processed')
             return
 
-        from reports.utils import get_arch, get_os, get_domain, get_host
+        from reports.utils import get_arch, get_os, get_domain
         arch = get_arch(self.arch)
         osvariant = get_os(self.os, arch)
         domain = get_domain(self.domain)
-        host = get_host(self, arch, osvariant, domain)
+        host = get_or_create_host(self, arch, osvariant, domain)
 
         if verbose:
             info_message.send(sender=None, text=f'Processing report {self.id} - {self.host}')
