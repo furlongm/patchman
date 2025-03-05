@@ -156,4 +156,3 @@ def add_updateinfo_packages(e, update):
             )
             packages.add(package)
         e.add_packages(packages)
-        e.save()

@@ -301,6 +301,7 @@ class Host(models.Model):
             self.reboot_required = True
         else:
             self.reboot_required = False
+        self.save()
 
     def find_kernel_updates(self, kernel_packages, repo_packages):
 
@@ -328,7 +329,6 @@ class Host(models.Model):
                     update_ids.append(uid)
 
             self.check_if_reboot_required(host_highest)
-        self.save()
         return update_ids
 
 

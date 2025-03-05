@@ -109,7 +109,6 @@ def add_alma_erratum_osreleases(e, release):
     from operatingsystems.models import OSRelease
     osrelease, created = OSRelease.objects.get_or_create(name=f'Alma Linux {release}')
     e.osreleases.add(osrelease)
-    e.save()
 
 
 def add_alma_erratum_references(e, advisory):
@@ -139,7 +138,6 @@ def add_alma_erratum_packages(e, advisory):
             p_type = Package.RPM
             pkg = get_or_create_package(name, epoch, ver, rel, arch, p_type)
             e.packages.add(pkg)
-    e.save()
 
 
 def add_alma_erratum_modules(e, advisory):
@@ -156,5 +154,5 @@ def add_alma_erratum_modules(e, advisory):
         matching_modules = get_matching_modules(name, stream, version, context, arch)
         for match in matching_modules:
             for package in match.packages.all():
+                match.packages.add(package)
                 e.packages.add(package)
-    e.save()

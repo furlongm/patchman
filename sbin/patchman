@@ -161,9 +161,9 @@ def host_updates_alt(host=None):
     for host in hosts:
         info_message.send(sender=None, text=str(host))
         if host not in updated_hosts:
-            host.updated_at = ts
             host.find_updates()
             info_message.send(sender=None, text='')
+            host.updated_at = ts
             host.save()
 
             # only include hosts with the same number of packages
