@@ -550,8 +550,6 @@ def get_host(report, arch, osvariant, domain):
             host.save()
     except IntegrityError as e:
         error_message.send(sender=None, text=e)
-    except DatabaseError as e:
-        error_message.send(sender=None, text=e)
     if host:
         host.check_rdns()
         return host

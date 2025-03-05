@@ -187,7 +187,6 @@ def get_or_create_package_update(oldpackage, newpackage, security):
     """ Get or create a PackageUpdate object. Returns the object. Returns None
         if it cannot be created
     """
-    updates = PackageUpdate.objects.all()
     # see if any version of this update exists
     # if it's already marked as a security update, leave it that way
     # if not, mark it as a security update if security==True
@@ -196,23 +195,16 @@ def get_or_create_package_update(oldpackage, newpackage, security):
     # very likely to happen. if it does, we err on the side of caution
     # and mark it as the security update
     try:
-        update = updates.get(
-            oldpackage=oldpackage,
-            newpackage=newpackage
-        )
+        update = PackageUpdate.objects.get(oldpackage=oldpackage, newpackage=newpackage)
     except PackageUpdate.DoesNotExist:
         update = None
     except MultipleObjectsReturned:
         e = 'Error: MultipleObjectsReturned when attempting to add package \n'
         e += f'update with oldpackage={oldpackage} | newpackage={newpackage}:'
         error_message.send(sender=None, text=e)
-        updates = updates.filter(
-            oldpackage=oldpackage,
-            newpackage=newpackage
-        )
+        updates = PackageUpdate.objects.filter(oldpackage=oldpackage, newpackage=newpackage)
         for update in updates:
-            e = str(update)
-            error_message.send(sender=None, text=e)
+            error_message.send(sender=None, text=str(update))
         return
     try:
         if update:
@@ -220,16 +212,13 @@ def get_or_create_package_update(oldpackage, newpackage, security):
                 update.security = True
                 update.save()
         else:
-            update, c = updates.get_or_create(
+            update, c = PackageUpdate.objects.get_or_create(
                 oldpackage=oldpackage,
                 newpackage=newpackage,
                 security=security,
             )
-    except IntegrityError as e:
-        error_message.send(sender=None, text=e)
-        update = updates.get(oldpackage=oldpackage,
-                             newpackage=newpackage,
-                             security=security)
+    except IntegrityError:
+        update = PackageUpdate.objects.get(oldpackage=oldpackage, newpackage=newpackage, security=security)
     return update
 
 
