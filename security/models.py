@@ -16,6 +16,7 @@
 
 import json
 import re
+from time import sleep
 
 from django.db import models
 from django.urls import reverse
@@ -54,8 +55,8 @@ class CWE(models.Model):
 
     def download_cwe_data(self):
         int_id = self.int_id
-        cwe_url = f'https://cwe-api.mitre.org/api/v1/cwe/{int_id}'
-        res = get_url(cwe_url)
+        mitre_cwe_url = f'https://cwe-api.mitre.org/api/v1/cwe/{int_id}'
+        res = get_url(mitre_cwe_url)
         data = download_url(res, f'Downloading {self.cwe_id} data')
         cwe_json = json.loads(data)
         if cwe_json == 'at least one CWE not found':
@@ -108,17 +109,61 @@ class CVE(models.Model):
     def get_absolute_url(self):
         return reverse('security:cve_detail', args=[self.cve_id])
 
-    def download_cve_data(self):
-        cve_url = f'https://cveawg.mitre.org/api/cve/{self.cve_id}'
-        res = get_url(cve_url)
-        if res.status_code == 404:
-            error_message.send(sender=None, text=f'404 - Skipping {self.cve_id}')
-            return
-        data = download_url(res, f'Downloading {self.cve_id} data')
-        cve_json = json.loads(data)
-        self.parse_cve_data(cve_json)
+    def download_cve_data(self, download_nist_data=False, sleep_secs=6):
+        self.download_mitre_cve_data()
+        if download_nist_data:
+            self.download_nist_cve_data()
+            sleep(sleep_secs)  # rate limited, see https://nvd.nist.gov/developers/start-here
 
-    def parse_cve_data(self, cve_json):
+    def download_mitre_cve_data(self):
+        mitre_cve_url = f'https://cveawg.mitre.org/api/cve/{self.cve_id}'
+        res = get_url(mitre_cve_url)
+        if res.status_code == 404:
+            error_message.send(sender=None, text=f'404 - Skipping {self.cve_id} - {mitre_cve_url}')
+            return
+        data = download_url(res, f'Downloading {self.cve_id} MITRE data')
+        cve_json = json.loads(data)
+        self.parse_mitre_cve_data(cve_json)
+
+    def download_nist_cve_data(self):
+        nist_cve_url = f'https://services.nvd.nist.gov/rest/json/cves/2.0?cveId={self.cve_id}'
+        res = get_url(nist_cve_url)
+        data = download_url(res, f'Downloading {self.cve_id} NIST data')
+        if res.status_code == 404:
+            error_message.send(sender=None, text=f'404 - Skipping {self.cve_id} - {nist_cve_url}')
+        cve_json = json.loads(data)
+        self.parse_nist_cve_data(cve_json)
+
+    def parse_nist_cve_data(self, cve_json):
+        from security.utils import get_or_create_reference
+        vulnerabilites = cve_json.get('vulnerabilities')
+        for vulnerability in vulnerabilites:
+            cve = vulnerability.get('cve')
+            cve_id = cve.get('id')
+            if cve_id != self.cve_id:
+                error_message.send(sender=None, text=f'CVE ID mismatch - {self.cve_id} - {cve_id}')
+                return
+            metrics = cve.get('metrics')
+            for metric, score_data in metrics.items():
+                if metric.startswith('cvss'):
+                    for scores in score_data:
+                        for key, value in scores.items():
+                            if key.startswith('cvssData'):
+                                cvss_score, created = CVSS.objects.get_or_create(
+                                    score=value.get('baseScore'),
+                                    severity=value.get('baseSeverity'),
+                                    version=value.get('version'),
+                                    vector_string=value.get('vectorString'),
+                                )
+                                self.cvss_scores.add(cvss_score)
+            references = cve.get('references')
+            for reference in references:
+                ref_type = 'Link'
+                url = reference.get('url')
+                ref = get_or_create_reference(ref_type=ref_type, url=url)
+                self.references.add(ref)
+
+    def parse_mitre_cve_data(self, cve_json):
         cve_metadata = cve_json.get('cveMetadata')
         reserved_date = cve_metadata.get('dateReserved')
         if reserved_date:
