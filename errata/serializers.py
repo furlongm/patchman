@@ -16,16 +16,10 @@
 
 from rest_framework import serializers
 
-from errata.models import Erratum, ErratumReference
+from errata.models import Erratum
 
 
 class ErratumSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Erratum
         fields = ('id', 'name', 'e_type', 'issue_date', 'synopsis', 'cves', 'releases', 'references')
-
-
-class ErratumReferenceSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = ErratumReference
-        fields = ('id', 'er_type', 'url')

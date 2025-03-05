@@ -24,6 +24,18 @@ from security.managers import CVEManager
 from util import get_url, download_url, tz_aware_datetime, error_message
 
 
+class Reference(models.Model):
+
+    ref_type = models.CharField(max_length=255)
+    url = models.URLField(max_length=2000)
+
+    class Meta:
+        unique_together = ['ref_type', 'url']
+
+    def __str__(self):
+        return self.url
+
+
 class CWE(models.Model):
 
     cwe_id = models.CharField(max_length=255, unique=True)
@@ -83,6 +95,7 @@ class CVE(models.Model):
     updated_date = models.DateTimeField(blank=True, null=True)
     cwes = models.ManyToManyField(CWE, blank=True)
     cvss_scores = models.ManyToManyField(CVSS, blank=True)
+    references = models.ManyToManyField(Reference, blank=True)
 
     objects = CVEManager()
 

@@ -46,7 +46,7 @@
             <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
               {% for reference in erratum.references.all %}
                 <tr>
-                  <td>{{ reference.er_type }}</td>
+                  <td>{{ reference.ref_type }}</td>
                   <td><a href="{{ reference.url }}">{{reference.url}}</a></td>
                 </tr>
               {% endfor %}

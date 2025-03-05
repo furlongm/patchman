@@ -63,13 +63,11 @@
               <tr><td>NIST</td><td><a href="https://nvd.nist.gov/vuln/detail/{{ cve.cve_id }}">https://nvd.nist.gov/vuln/detail/{{ cve.cve_id }} {% bootstrap_icon "link" %}</a></td></tr>
               <tr><td>MITRE</td><td><a href="https://www.cve.org/CVERecord?id={{ cve.cve_id }}">https://www.cve.org/CVERecord?id={{ cve.cve_id }} {% bootstrap_icon "link" %}</a></td></tr>
               <tr><td>osv.dev</td><td><a href="https://osv.dev/vulnerability/{{ cve.cve_id }}">https://osv.dev/vulnerability/{{ cve.cve_id }} {% bootstrap_icon "link" %}</a></td></tr>
-              {% for erratum in cve.erratum_set.all %}
-                {% for reference in erratum.references.all %}
-                  <tr>
-                    <td>{{ reference.er_type }}</td>
-                    <td><a href="{{ reference.url }}">{{reference.url}} {% bootstrap_icon "link" %}</a></td>
-                  </tr>
-                {% endfor %}
+              {% for reference in references %}
+                <tr>
+                  <td>{{ reference.ref_type }}</td>
+                  <td><a href="{{ reference.url }}">{{reference.url}} {% bootstrap_icon "link" %}</a></td>
+                </tr>
               {% endfor %}
             </table>
           </td>

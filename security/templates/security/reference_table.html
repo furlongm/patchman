@@ -10,7 +10,7 @@
   <tbody>
     {% for eref in object_list %}
       <tr>
-        <td>{{ eref.er_type }}</a></td>
+        <td>{{ eref.ref_type }}</a></td>
         <td><a href="{{ eref.url }}">{{ eref.url }}</a></td>
         <td><a href="{% url 'errata:erratum_list' %}?reference_id={{ eref.id }}">{{ eref.erratum_set.count }}</a></td>
       </tr>

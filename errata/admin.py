@@ -15,7 +15,7 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from django.contrib import admin
-from errata.models import Erratum, ErratumReference
+from errata.models import Erratum
 
 
 class ErratumAdmin(admin.ModelAdmin):
@@ -23,4 +23,3 @@ class ErratumAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Erratum, ErratumAdmin)
-admin.site.register(ErratumReference)

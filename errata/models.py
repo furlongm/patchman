@@ -20,21 +20,9 @@ from django.db import IntegrityError
 
 from packages.models import Package, PackageUpdate
 from errata.managers import ErratumManager
-from security.models import CVE
-from security.utils import get_or_create_cve
+from security.models import CVE, Reference
+from security.utils import get_or_create_cve, get_or_create_reference
 from patchman.signals import error_message
-
-
-class ErratumReference(models.Model):
-
-    er_type = models.CharField(max_length=255)
-    url = models.URLField(max_length=2000)
-
-    class Meta:
-        unique_together = ['er_type', 'url']
-
-    def __str__(self):
-        return self.url
 
 
 class Erratum(models.Model):
@@ -47,7 +35,7 @@ class Erratum(models.Model):
     from operatingsystems.models import OSRelease
     osreleases = models.ManyToManyField(OSRelease, blank=True)
     cves = models.ManyToManyField(CVE, blank=True)
-    references = models.ManyToManyField(ErratumReference, blank=True)
+    references = models.ManyToManyField(Reference, blank=True)
 
     objects = ErratumManager()
 
@@ -90,14 +78,8 @@ class Erratum(models.Model):
         """
         self.cves.add(get_or_create_cve(cve_id))
 
-    def add_reference(self, e_type, url):
+    def add_reference(self, ref_type, url):
         """ Add a reference to an Erratum object
         """
-        from errata.utils import fixup_erratum_reference
-        reference = fixup_erratum_reference({'er_type': e_type, 'url': url})
-        if reference:
-            er, created = ErratumReference.objects.get_or_create(
-                er_type=reference.get('er_type'),
-                url=reference.get('url'),
-            )
-            self.references.add(er)
+        reference = get_or_create_reference(ref_type=ref_type, url=url)
+        self.references.add(reference)

@@ -22,8 +22,8 @@ from django.db.models import Q
 from rest_framework import viewsets
 
 from operatingsystems.models import OSRelease
-from errata.models import Erratum, ErratumReference
-from errata.serializers import ErratumSerializer, ErratumReferenceSerializer
+from errata.models import Erratum
+from errata.serializers import ErratumSerializer
 from util.filterspecs import Filter, FilterBar
 
 
@@ -81,48 +81,6 @@ def erratum_list(request):
 
 
 @login_required
-def erratumreference_list(request):
-    erefs = ErratumReference.objects.select_related().order_by('er_type')
-
-    if 'er_type' in request.GET:
-        erefs = erefs.filter(er_type=request.GET['er_type']).distinct()
-
-    if 'erratum_id' in request.GET:
-        erefs = erefs.filter(erratum__id=request.GET['erratum_id'])
-
-    if 'search' in request.GET:
-        terms = request.GET['search'].lower()
-        query = Q()
-        for term in terms.split(' '):
-            q = Q(url__icontains=term)
-            query = query & q
-        erefs = erefs.filter(query)
-    else:
-        terms = ''
-
-    page_no = request.GET.get('page')
-    paginator = Paginator(erefs, 50)
-
-    try:
-        page = paginator.page(page_no)
-    except PageNotAnInteger:
-        page = paginator.page(1)
-    except EmptyPage:
-        page = paginator.page(paginator.num_pages)
-
-    filter_list = []
-    filter_list.append(Filter(request, 'Reference Type', 'er_type',
-                              ErratumReference.objects.values_list('er_type', flat=True).distinct()))
-    filter_bar = FilterBar(request, filter_list)
-
-    return render(request,
-                  'errata/erratumreference_list.html',
-                  {'page': page,
-                   'filter_bar': filter_bar,
-                   'terms': terms})
-
-
-@login_required
 def erratum_detail(request, erratum_name):
     erratum = get_object_or_404(Erratum, name=erratum_name)
     return render(request,
@@ -135,10 +93,3 @@ class ErratumViewSet(viewsets.ModelViewSet):
     """
     queryset = Erratum.objects.all()
     serializer_class = ErratumSerializer
-
-
-class ErratumReferenceViewSet(viewsets.ModelViewSet):
-    """ API endpoint that allows erratum references to be viewed or edited.
-    """
-    queryset = ErratumReference.objects.all()
-    serializer_class = ErratumReferenceSerializer
