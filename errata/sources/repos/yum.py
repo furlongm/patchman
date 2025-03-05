@@ -18,6 +18,7 @@ import concurrent.futures
 from io import BytesIO
 import defusedxml.ElementTree as ET
 
+from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
 from packages.utils import get_or_create_package
 from patchman.signals import pbar_start, pbar_update, error_message
@@ -115,7 +116,6 @@ def add_updateinfo_osreleases(e, collection, osrelease_names):
     """ Adds OSRelease objects to an Erratum
         rocky and alma need some renaming
     """
-    from operatingsystems.models import OSRelease
     if not osrelease_names:
         collection_name = collection.find('name')
         if collection_name is not None:
@@ -128,7 +128,7 @@ def add_updateinfo_osreleases(e, collection, osrelease_names):
         elif osrelease_name.startswith('rocky-linux'):
             version = osrelease_name.split('-')[2]
             osrelease_name = 'Rocky Linux ' + version
-        osrelease, created = OSRelease.objects.get_or_create(name=osrelease_name)
+        osrelease = get_or_create_osrelease(name=osrelease_name)
         e.osreleases.add(osrelease)
 
 

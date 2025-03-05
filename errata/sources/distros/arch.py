@@ -17,11 +17,11 @@
 import concurrent.futures
 import json
 
-from operatingsystems.models import OSRelease, OSVariant
+from operatingsystems.utils import get_or_create_osrelease, get_or_create_osvariant
+from patchman.signals import error_message, pbar_start, pbar_update
 from packages.models import Package
 from packages.utils import find_evr, get_matching_packages
 from util import get_url, download_url
-from patchman.signals import error_message, pbar_start, pbar_update
 
 
 def update_arch_errata(concurrent_processing=False):
@@ -54,7 +54,7 @@ def parse_arch_errata(advisories, concurrent_processing):
 def parse_arch_errata_serially(advisories):
     """ Parse Arch Linux Errata Advisories serially
     """
-    osrelease = OSRelease.objects.get(name='Arch Linux')
+    osrelease = get_or_create_osrelease(name='Arch Linux')
     elen = len(advisories)
     pbar_start.send(sender=None, ptext=f'Processing {elen} Arch Advisories', plen=elen)
     for i, advisory in enumerate(advisories):
@@ -65,7 +65,7 @@ def parse_arch_errata_serially(advisories):
 def parse_arch_errata_concurrently(advisories):
     """ Parse Arch Linux Errata Advisories concurrently
     """
-    osrelease = OSRelease.objects.get(name='Arch Linux')
+    osrelease = get_or_create_osrelease(name='Arch Linux')
     elen = len(advisories)
     pbar_start.send(sender=None, ptext=f'Processing {elen} Arch Advisories', plen=elen)
     i = 0
@@ -102,11 +102,8 @@ def process_arch_erratum(advisory, osrelease):
 def add_arch_linux_osrelease():
     """ Add Arch Linux OSRelease and link existing OSVariants
     """
-    osrelease, created = OSRelease.objects.get_or_create(name='Arch Linux')
-    osvariants = OSVariant.objects.filter(name__startswith='Arch Linux')
-    for osvariant in osvariants:
-        osvariant.osrelease = osrelease
-        osvariant.save()
+    osrelease = get_or_create_osrelease(name='Arch Linux')
+    get_or_create_osvariant(name='Arch Linux', osrelease=osrelease)
 
 
 def add_arch_erratum_references(e, advisory):

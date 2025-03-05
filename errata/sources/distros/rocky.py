@@ -20,10 +20,11 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 
 from django.db.utils import OperationalError
 
+from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
 from packages.utils import parse_package_string, get_or_create_package
-from util import get_url, download_url, info_message, error_message
 from patchman.signals import pbar_start, pbar_update
+from util import get_url, download_url, info_message, error_message
 
 
 def update_rocky_errata(concurrent_processing=True):
@@ -210,13 +211,12 @@ def add_rocky_erratum_references(e, advisory):
 def add_rocky_erratum_oses(e, advisory):
     """ Update OS Variant, OS Release and MachineArch for Rocky Linux errata
     """
-    from operatingsystems.models import OSRelease
     affected_oses = advisory.get('affected_products')
     for affected_os in affected_oses:
         variant = affected_os.get('variant')
         major_version = affected_os.get('major_version')
         osrelease_name = f'{variant} {major_version}'
-        osrelease, created = OSRelease.objects.get_or_create(name=osrelease_name)
+        osrelease = get_or_create_osrelease(name=osrelease_name)
         e.osreleases.add(osrelease)
 
 
