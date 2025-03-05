@@ -90,7 +90,7 @@ def parse_usn_data_concurrently(advisories, accepted_releases):
     elen = len(advisories)
     pbar_start.send(sender=None, ptext=f'Processing {elen} Ubuntu Errata', plen=elen)
     i = 0
-    with concurrent.futures.ProcessPoolExecutor(max_workers=20) as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=25) as executor:
         futures = [executor.submit(process_usn, usn_id, advisory, accepted_releases)
                    for usn_id, advisory in advisories.items()]
         for future in concurrent.futures.as_completed(futures):

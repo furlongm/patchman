@@ -77,7 +77,7 @@ def process_alma_errata_concurrently(release, advisories):
     elen = len(advisories)
     pbar_start.send(sender=None, ptext=f'Processing {elen} Alma {release} Errata', plen=elen)
     i = 0
-    with concurrent.futures.ProcessPoolExecutor(max_workers=10) as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=25) as executor:
         futures = [executor.submit(process_alma_erratum, release, advisory) for advisory in advisories]
         for future in concurrent.futures.as_completed(futures):
             i += 1

@@ -161,7 +161,7 @@ def process_rocky_errata_concurrently(advisories):
     elen = len(advisories)
     pbar_start.send(sender=None, ptext=f'Processing {elen} Rocky Errata', plen=elen)
     i = 0
-    with concurrent.futures.ProcessPoolExecutor(max_workers=100) as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=25) as executor:
         futures = [executor.submit(process_rocky_erratum, advisory) for advisory in advisories]
         for future in concurrent.futures.as_completed(futures):
             i += 1

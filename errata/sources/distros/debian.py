@@ -142,7 +142,7 @@ def create_debian_errata_concurrently(errata, accepted_codenames):
     elen = len(errata)
     pbar_start.send(sender=None, ptext=f'Processing {elen} Debian Errata', plen=elen)
     i = 0
-    with concurrent.futures.ProcessPoolExecutor(max_workers=200) as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=25) as executor:
         futures = [executor.submit(process_debian_erratum, erratum, accepted_codenames) for erratum in errata]
         for future in concurrent.futures.as_completed(futures):
             i += 1
