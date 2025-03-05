@@ -47,23 +47,29 @@
         <tr>
           <th class="col-sm-2">OSes Affected</th>
           <td>
-            {% for osrelease in osreleases %}
-              <a href="{{ osrelease.get_absolute_url }}">{{ osrelease }}</a><br />
-            {% endfor %}
+            <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+              {% for osrelease in osreleases %}
+                <tr>
+                  <td><a href="{{ osrelease.get_absolute_url }}">{{ osrelease }}</a><td>
+                </tr>
+              {% endfor %}
+            </table>
           </td>
         </tr>
         <tr>
-          <th class="col-sm-2">URLs</th>
+          <th class="col-sm-2">Links</th>
           <td>
             <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
-              <tr><td><a href="https://nvd.nist.gov/vuln/detail/{{ cve.cve_id }}">NIST {% bootstrap_icon "link" %}</a></td></tr>
-              <tr><td><a href="https://www.cve.org/CVERecord?id={{ cve.cve_id }}">MITRE {% bootstrap_icon "link" %}</a></td></tr>
-              <tr><td><a href="https://osv.dev/vulnerability/{{ cve.cve_id }}">osv.dev {% bootstrap_icon "link" %}</a></td></tr>
-              {% for reference in cve.erratum_set.references.all %}
-                <tr>
-                  <td>{{ reference.er_type }}</td>
-                  <td><a href="{{ reference.url }}">{{reference.url}}</a></td>
-                </tr>
+              <tr><td>NIST</td><td><a href="https://nvd.nist.gov/vuln/detail/{{ cve.cve_id }}">https://nvd.nist.gov/vuln/detail/{{ cve.cve_id }} {% bootstrap_icon "link" %}</a></td></tr>
+              <tr><td>MITRE</td><td><a href="https://www.cve.org/CVERecord?id={{ cve.cve_id }}">https://www.cve.org/CVERecord?id={{ cve.cve_id }} {% bootstrap_icon "link" %}</a></td></tr>
+              <tr><td>osv.dev</td><td><a href="https://osv.dev/vulnerability/{{ cve.cve_id }}">https://osv.dev/vulnerability/{{ cve.cve_id }} {% bootstrap_icon "link" %}</a></td></tr>
+              {% for erratum in cve.erratum_set.all %}
+                {% for reference in erratum.references.all %}
+                  <tr>
+                    <td>{{ reference.er_type }}</td>
+                    <td><a href="{{ reference.url }}">{{reference.url}} {% bootstrap_icon "link" %}</a></td>
+                  </tr>
+                {% endfor %}
               {% endfor %}
             </table>
           </td>
