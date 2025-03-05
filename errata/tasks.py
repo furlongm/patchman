@@ -44,7 +44,7 @@ def update_errata(erratum_type=None):
     erratum_type_defaults = ['yum', 'rocky', 'alma', 'arch', 'ubuntu', 'debian']
     if erratum_type:
         if erratum_type not in erratum_type_defaults:
-            error_message.send(sender=None, text=f'Erratum type must be one of {erratum_type_defaults}')
+            error_message.send(sender=None, text=f'Erratum type must be one of {erratum_type_defaults} - {erratum_type}')
         else:
             errata_os_updates = erratum_type
     else:
