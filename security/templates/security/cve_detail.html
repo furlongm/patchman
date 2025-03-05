@@ -30,7 +30,7 @@
           <th class="col-sm-1">CVSS Scores</th>
           <td>
             {% for score in cve.cvss_scores.all %}
-              <a href="https://www.first.org/cvss/calculator/{{ score.version }}#{{ score.vector_string }}">{{ score.score }} - {{ score.severity }} (CVSS {{ score.version }}) </a><br />
+              <a href="https://www.first.org/cvss/calculator/{{ score.version }}#{{ score.vector_string }}">{{ score.score }} - {{ score.severity }} (CVSS {{ score.version }}) {% bootstrap_icon "link" %}</a><br />
             {% endfor %}
           </td>
         </tr>
