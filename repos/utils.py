@@ -35,12 +35,10 @@ def get_or_create_repo(r_name, r_arch, r_type, r_id=None):
         Returns None if it cannot get or create the object.
     """
     from repos.models import Repository
-    repositories = Repository.objects.all()
     try:
-        repository, c = repositories.get_or_create(name=r_name, arch=r_arch, repotype=r_type)
-    except IntegrityError as e:
-        error_message.send(sender=None, text=e)
-        repository = repositories.get(name=r_name, arch=r_arch, repotype=r_type)
+        repository, c = Repository.objects.get_or_create(name=r_name, arch=r_arch, repotype=r_type)
+    except IntegrityError:
+        repository = Repository.objects.get(name=r_name, arch=r_arch, repotype=r_type)
     if repository:
         if r_id:
             repository.repo_id = r_id
