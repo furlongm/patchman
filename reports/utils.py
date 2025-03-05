@@ -16,18 +16,17 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 import re
-from socket import gethostbyaddr, herror
 
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError
 
 from arch.models import MachineArchitecture, PackageArchitecture
 from domains.models import Domain
-from hosts.models import Host, HostRepo
+from hosts.models import HostRepo
 from modules.utils import get_or_create_module
 from operatingsystems.models import OSVariant, OSRelease
 from packages.models import Package, PackageCategory
 from packages.utils import find_evr, get_or_create_package, get_or_create_package_update, parse_package_string
-from patchman.signals import pbar_start, pbar_update, error_message, info_message
+from patchman.signals import pbar_start, pbar_update, info_message
 from repos.models import Repository, Mirror, MirrorPackage
 from repos.utils import get_or_create_repo
 
@@ -506,42 +505,3 @@ def get_domain(report_domain):
         report_domain = 'unknown'
     domain, c = Domain.objects.get_or_create(name=report_domain)
     return domain
-
-
-def get_host(report, arch, osvariant, domain):
-    host = None
-    if not report.host:
-        try:
-            report.host = str(gethostbyaddr(report.report_ip)[0])
-        except herror:
-            report.host = report.report_ip
-        report.save()
-    try:
-        with transaction.atomic():
-            host, created = Host.objects.get_or_create(
-                hostname=report.host,
-                defaults={
-                    'ipaddress': report.report_ip,
-                    'arch': arch,
-                    'osvariant': osvariant,
-                    'domain': domain,
-                    'lastreport': report.created,
-                }
-            )
-            host.ipaddress = report.report_ip
-            host.kernel = report.kernel
-            host.arch = arch
-            host.osvariant = osvariant
-            host.domain = domain
-            host.lastreport = report.created
-            host.tags = report.tags
-            if report.reboot == 'True':
-                host.reboot_required = True
-            else:
-                host.reboot_required = False
-            host.save()
-    except IntegrityError as e:
-        error_message.send(sender=None, text=e)
-    if host:
-        host.check_rdns()
-        return host
