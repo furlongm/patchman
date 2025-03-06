@@ -17,46 +17,59 @@
 
 from socket import gethostbyaddr, gaierror, herror
 
-from django.db import DatabaseError
+from django.db import transaction, IntegrityError
 
-from patchman.signals import progress_info_s, progress_update_s, error_message
+from patchman.signals import error_message
 
 
 def update_rdns(host):
     """ Update the reverse DNS for a host
     """
-
     try:
         reversedns = str(gethostbyaddr(host.ipaddress)[0])
     except (gaierror, herror):
         reversedns = 'None'
 
     host.reversedns = reversedns.lower()
-    try:
-        host.save()
-    except DatabaseError as e:
-        error_message.send(sender=None, text=e)
+    host.save()
 
 
-def remove_reports(host, timestamp):
-    """ Remove all but the last 3 reports for a host
+def get_or_create_host(report, arch, osvariant, domain):
+    """ Get or create a host from from a report
     """
-
-    from reports.models import Report
-
-    reports = Report.objects.filter(host=host).order_by('-created')[:3]
-    report_ids = []
-
-    for report in reports:
-        report_ids.append(report.id)
-        report.accessed = timestamp
+    from hosts.models import Host
+    if not report.host:
+        try:
+            report.host = str(gethostbyaddr(report.report_ip)[0])
+        except herror:
+            report.host = report.report_ip
         report.save()
-
-    del_reports = Report.objects.filter(host=host).exclude(id__in=report_ids)
-
-    rlen = del_reports.count()
-    ptext = f'Cleaning {rlen!s} old reports'
-    progress_info_s.send(sender=None, ptext=ptext, plen=rlen)
-    for i, report in enumerate(del_reports):
-        report.delete()
-        progress_update_s.send(sender=None, index=i + 1)
+    try:
+        with transaction.atomic():
+            host, created = Host.objects.get_or_create(
+                hostname=report.host,
+                defaults={
+                    'ipaddress': report.report_ip,
+                    'arch': arch,
+                    'osvariant': osvariant,
+                    'domain': domain,
+                    'lastreport': report.created,
+                }
+            )
+            host.ipaddress = report.report_ip
+            host.kernel = report.kernel
+            host.arch = arch
+            host.osvariant = osvariant
+            host.domain = domain
+            host.lastreport = report.created
+            host.tags = report.tags
+            if report.reboot == 'True':
+                host.reboot_required = True
+            else:
+                host.reboot_required = False
+            host.save()
+    except IntegrityError as e:
+        error_message.send(sender=None, text=e)
+    if host:
+        host.check_rdns()
+        return host

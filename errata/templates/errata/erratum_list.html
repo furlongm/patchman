@@ -1,0 +1,7 @@
+{% extends "objectlist.html" %}
+
+{% block page_title %}Errata{% endblock %}
+
+{% block breadcrumbs %} {{ block.super }} <li class="active"><a href="{% url 'errata:erratum_list' %}">Errata</a></li>{% endblock %}
+
+{% block content_title %} Errata {% endblock %}

@@ -1,3 +1,10 @@
+patchman (3.0.19-1) stable; urgency=medium
+
+  * switch default branch from master to main
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Sat, 01 Mar 2025 20:45:02 +0000
+
 patchman (3.0.18-1) stable; urgency=medium
 
   * recognize https mirrors in mirrorlists
