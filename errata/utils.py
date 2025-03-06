@@ -14,8 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from urllib.parse import urlparse
-
 from util import tz_aware_datetime
 from errata.models import Erratum
 from patchman.signals import pbar_start, pbar_update, warning_message
