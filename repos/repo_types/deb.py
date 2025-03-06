@@ -68,7 +68,7 @@ def extract_deb_packages(data, url):
 def refresh_deb_repo(repo):
     """ Refresh a debian repo.
         Checks for the Packages* files to determine what the mirror urls
-        are and then downloads and extracts packages from those files.
+        are and then fetches and extracts packages from those files.
     """
 
     formats = ['Packages.xz', 'Packages.bz2', 'Packages.gz', 'Packages']
@@ -86,7 +86,7 @@ def refresh_deb_repo(repo):
         package_data = fetch_mirror_data(
             mirror=mirror,
             url=mirror_url,
-            text='Downloading Repo data')
+            text='Fetching Repo data')
         if not package_data:
             continue
 

@@ -32,7 +32,7 @@ def refresh_yast_repo(mirror, data):
     package_data = fetch_mirror_data(
         mirror=mirror,
         url=package_url,
-        text='Downloading yast Repo data')
+        text='Fetching yast Repo data')
     if not package_data:
         return
 

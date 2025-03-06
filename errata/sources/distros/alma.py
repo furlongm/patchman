@@ -20,7 +20,7 @@ import json
 from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
 from packages.utils import get_or_create_package, parse_package_string
-from util import get_url, download_url, get_setting_of_type
+from util import get_url, fetch_content, get_setting_of_type
 from patchman.signals import pbar_start, pbar_update
 
 
@@ -37,17 +37,17 @@ def update_alma_errata(concurrent_processing=True):
         default=default_alma_releases,
     )
     for release in alma_releases:
-        advisories = download_alma_advisories(release)
+        advisories = fetch_alma_advisories(release)
         process_alma_errata(release, advisories, concurrent_processing)
 
 
-def download_alma_advisories(release):
-    """ Download Alma Linux advisories
+def fetch_alma_advisories(release):
+    """ Fetch Alma Linux advisories
     """
     alma_errata_url = f'https://errata.almalinux.org/{release}/errata.full.json'
     headers = {'Accept': 'application/json', 'Cache-Control': 'no-cache, no-tranform'}
     res = get_url(alma_errata_url, headers=headers)
-    data = download_url(res, f'Downloading Alma {release} Errata')
+    data = fetch_content(res, f'Fetching Alma {release} Errata')
     advisories = json.loads(data).get('data')
     return advisories
 

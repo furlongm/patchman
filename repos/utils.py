@@ -26,7 +26,7 @@ from django.db.models import Q
 
 from packages.models import Package
 from packages.utils import convert_package_to_packagestring, convert_packagestring_to_package
-from util import get_url, download_url, response_is_valid, extract, get_checksum, Checksum, get_setting_of_type
+from util import get_url, fetch_content, response_is_valid, extract, get_checksum, Checksum, get_setting_of_type
 from patchman.signals import info_message, warning_message, error_message, debug_message, pbar_start, pbar_update
 
 
@@ -117,7 +117,7 @@ def get_metalink_urls(url):
     if not res.headers.get('content-type') == 'application/metalink+xml':
         return
     metalink_urls = []
-    data = download_url(res, 'Downloading metalink data')
+    data = fetch_content(res, 'Fetching metalink data')
     extracted = extract(data, url)
     ns = 'http://www.metalinker.org/'
     try:
@@ -148,7 +148,7 @@ def get_mirrorlist_urls(url):
         return
     if response_is_valid(res):
         try:
-            data = download_url(res, 'Downloading Repo data')
+            data = fetch_content(res, 'Fetching Repo data')
             if data is None:
                 return
             mirror_urls = re.findall(r'^http[s]*://.*$|^ftp://.*$', data.decode('utf-8'), re.MULTILINE)
@@ -232,7 +232,7 @@ def fetch_mirror_data(mirror, url, text, checksum=None, checksum_type=None, meta
     mirror.last_access_ok = True
     mirror.save()
 
-    data = download_url(res, text)
+    data = fetch_content(res, text)
     if not data:
         return
 

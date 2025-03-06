@@ -21,15 +21,15 @@ from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
 from packages.utils import parse_package_string, get_or_create_package
 from patchman.signals import error_message, pbar_start, pbar_update
-from util import bunzip2, get_url, download_url, get_sha1, get_setting_of_type
+from util import bunzip2, get_url, fetch_content, get_sha1, get_setting_of_type
 
 
 def update_centos_errata():
     """ Update CentOS errata from https://cefs.steve-meier.de/
     """
-    data = download_centos_errata_checksum()
+    data = fetch_centos_errata_checksum()
     expected_checksum = parse_centos_errata_checksum(data)
-    data = download_centos_errata()
+    data = fetch_centos_errata()
     actual_checksum = get_sha1(data)
     if actual_checksum != expected_checksum:
         e = 'CEFS checksum mismatch, skipping CentOS errata parsing\n'
@@ -40,18 +40,18 @@ def update_centos_errata():
             parse_centos_errata(bunzip2(data))
 
 
-def download_centos_errata_checksum():
-    """ Download CentOS errata checksum from https://cefs.steve-meier.de/
+def fetch_centos_errata_checksum():
+    """ Fetch CentOS errata checksum from https://cefs.steve-meier.de/
     """
     res = get_url('https://cefs.steve-meier.de/errata.latest.sha1')
-    return download_url(res, 'Downloading CentOS Errata Checksum:')
+    return fetch_content(res, 'Fetching CentOS Errata Checksum')
 
 
-def download_centos_errata():
-    """ Download CentOS errata from https://cefs.steve-meier.de/
+def fetch_centos_errata():
+    """ Fetch CentOS errata from https://cefs.steve-meier.de/
     """
     res = get_url('https://cefs.steve-meier.de/errata.latest.xml.bz2')
-    return download_url(res, 'Downloading CentOS Errata:')
+    return fetch_content(res, 'Fetching CentOS Errata')
 
 
 def parse_centos_errata_checksum(data):

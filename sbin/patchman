@@ -445,8 +445,8 @@ def collect_args():
     parser.add_argument(
         '--cve', help="Only update the specified CVE (e.g. CVE-2024-1234)")
     parser.add_argument(
-        '--download-nist-data', '-nd', action='store_true',
-        help='Download NIST CVE data in addition to MITRE data (rate-limited to 1 API call every 6 seconds)'
+        '--fetch-nist-data', '-nd', action='store_true',
+        help='Fetch NIST CVE data in addition to MITRE data (rate-limited to 1 API call every 6 seconds)'
     )
     return parser
 
@@ -527,7 +527,7 @@ def process_args(args):
         mark_errata_security_updates()
         showhelp = False
     if args.update_cves:
-        update_cves(args.cve, args.download_nist_data)
+        update_cves(args.cve, args.fetch_nist_data)
         update_cwes(args.cve)
         showhelp = False
     return showhelp

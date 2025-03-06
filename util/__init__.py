@@ -75,8 +75,8 @@ def update_pbar(index, **kwargs):
             pbar = None
 
 
-def download_url(response, text='', ljust=35):
-    """ Display a progress bar to download the request content if verbose is
+def fetch_content(response, text='', ljust=35):
+    """ Display a progress bar to fetch the request content if verbose is
         True. Otherwise, just return the request content
     """
     global verbose

@@ -169,7 +169,7 @@ def refresh_repomd_updateinfo(mirror, data, mirror_url):
         url=url,
         checksum=checksum,
         checksum_type=checksum_type,
-        text='Downloading Errata data',
+        text='Fetching Errata data',
         metadata_type='updateinfo')
 
     if not mirror.last_access_ok:
@@ -198,7 +198,7 @@ def refresh_repomd_modules(mirror, data, mirror_url):
         url=url,
         checksum=checksum,
         checksum_type=checksum_type,
-        text='Downloading Module data',
+        text='Fetching Module data',
         metadata_type='module')
 
     if not mirror.last_access_ok:
@@ -226,7 +226,7 @@ def refresh_repomd_primary(mirror, data, mirror_url):
         url=url,
         checksum=checksum,
         checksum_type=checksum_type,
-        text='Downloading Package data',
+        text='Fetching Package data',
         metadata_type='package')
 
     if not mirror.last_access_ok:

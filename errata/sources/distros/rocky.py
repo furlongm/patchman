@@ -24,7 +24,7 @@ from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
 from packages.utils import parse_package_string, get_or_create_package
 from patchman.signals import pbar_start, pbar_update
-from util import get_url, download_url, info_message, error_message
+from util import get_url, fetch_content, info_message, error_message
 
 
 def update_rocky_errata(concurrent_processing=True):
@@ -33,7 +33,7 @@ def update_rocky_errata(concurrent_processing=True):
     rocky_errata_api_host = 'https://apollo.build.resf.org'
     rocky_errata_api_url = '/api/v3/'
     if check_rocky_errata_endpoint_health(rocky_errata_api_host):
-        advisories = download_rocky_advisories(rocky_errata_api_host, rocky_errata_api_url, concurrent_processing)
+        advisories = fetch_rocky_advisories(rocky_errata_api_host, rocky_errata_api_url, concurrent_processing)
         process_rocky_errata(advisories, concurrent_processing)
 
 
@@ -44,7 +44,7 @@ def check_rocky_errata_endpoint_health(rocky_errata_api_host):
     rocky_errata_healthcheck_url = rocky_errata_api_host + rocky_errata_healthcheck_path
     headers = {'Accept': 'application/json'}
     res = get_url(rocky_errata_healthcheck_url, headers=headers)
-    data = download_url(res, 'Rocky Linux Errata API healthcheck')
+    data = fetch_content(res, 'Rocky Linux Errata API healthcheck')
     try:
         health = json.loads(data)
         if health.get('status') == 'ok':
@@ -62,17 +62,17 @@ def check_rocky_errata_endpoint_health(rocky_errata_api_host):
         return False
 
 
-def download_rocky_advisories(rocky_errata_api_host, rocky_errata_api_url, concurrent_processing):
-    """ Download Rocky Linux advisories and return the list
+def fetch_rocky_advisories(rocky_errata_api_host, rocky_errata_api_url, concurrent_processing):
+    """ Fetch Rocky Linux advisories and return the list
     """
     if concurrent_processing:
-        return download_rocky_advisories_concurrently(rocky_errata_api_host, rocky_errata_api_url)
+        return fetch_rocky_advisories_concurrently(rocky_errata_api_host, rocky_errata_api_url)
     else:
-        return download_rocky_advisories_serially(rocky_errata_api_host, rocky_errata_api_url)
+        return fetch_rocky_advisories_serially(rocky_errata_api_host, rocky_errata_api_url)
 
 
-def download_rocky_advisories_serially(rocky_errata_api_host, rocky_errata_api_url):
-    """ Download Rocky Linux advisories serially and return the list
+def fetch_rocky_advisories_serially(rocky_errata_api_host, rocky_errata_api_url):
+    """ Fetch Rocky Linux advisories serially and return the list
     """
     rocky_errata_advisories_url = rocky_errata_api_host + rocky_errata_api_url + 'advisories/'
     headers = {'Accept': 'application/json'}
@@ -82,7 +82,7 @@ def download_rocky_advisories_serially(rocky_errata_api_host, rocky_errata_api_u
     params = {'page': 1, 'size': 100}
     while True:
         res = get_url(rocky_errata_advisories_url, headers=headers, params=params)
-        data = download_url(res, f'Rocky Advisories {page}{"/"+pages if pages else ""}')
+        data = fetch_content(res, f'Rocky Advisories {page}{"/"+pages if pages else ""}')
         advisories_dict = json.loads(data)
         advisories += advisories_dict.get('advisories')
         links = advisories_dict.get('links')
@@ -99,20 +99,20 @@ def download_rocky_advisories_serially(rocky_errata_api_host, rocky_errata_api_u
     return advisories
 
 
-def download_rocky_advisories_concurrently(rocky_errata_api_host, rocky_errata_api_url):
-    """ Download Rocky Linux advisories concurrently and return the list
+def fetch_rocky_advisories_concurrently(rocky_errata_api_host, rocky_errata_api_url):
+    """ Fetch Rocky Linux advisories concurrently and return the list
     """
     rocky_errata_advisories_url = rocky_errata_api_host + rocky_errata_api_url + 'advisories/'
     headers = {'Accept': 'application/json'}
     advisories = []
     params = {'page': 1, 'size': 100}
     res = get_url(rocky_errata_advisories_url, headers=headers, params=params)
-    data = download_url(res, 'Rocky Advisories Page 1')
+    data = fetch_content(res, 'Rocky Advisories Page 1')
     advisories_dict = json.loads(data)
     links = advisories_dict.get('links')
     last_link = links.get('last')
     pages = int(last_link.split('=')[-1])
-    ptext = 'Downloading Rocky Advisories'
+    ptext = 'Fetching Rocky Advisories'
     pbar_start.send(sender=None, ptext=ptext, plen=pages)
     i = 0
     with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
@@ -126,7 +126,7 @@ def download_rocky_advisories_concurrently(rocky_errata_api_host, rocky_errata_a
 
 
 def get_rocky_advisory(rocky_errata_advisories_url, page):
-    """ Download a single Rocky Linux advisory
+    """ Fetch a single Rocky Linux advisory
     """
     headers = {'Accept': 'application/json'}
     params = {'page': page, 'size': 100}

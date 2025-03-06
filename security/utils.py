@@ -33,20 +33,20 @@ def get_or_create_cve(cve_id):
     return cve
 
 
-def update_cves(cve_id=None, download_nist_data=False):
-    """ Download the latest CVE data from the CVE API.
+def update_cves(cve_id=None, fetch_nist_data=False):
+    """ Fetch the latest CVE data from the CVE API.
         e.g. https://cveawg.mitre.org/api/cve/CVE-2024-1234
     """
     if cve_id:
         cve = CVE.objects.get(cve_id=cve_id)
-        cve.download_cve_data(download_nist_data, sleep_secs=0)
+        cve.fetch_cve_data(fetch_nist_data, sleep_secs=0)
     else:
         for cve in CVE.objects.all():
-            cve.download_cve_data(download_nist_data)
+            cve.fetch_cve_data(fetch_nist_data)
 
 
 def update_cwes(cve_id=None):
-    """ Download the latest CWEs from the CWE API.
+    """ Fetch the latest CWEs from the CWE API.
         e.g. https://cwe-api.mitre.org/api/v1/cwe/74,79
              https://cwe-api.mitre.org/api/v1/cwe/weakness/79
     """
@@ -56,7 +56,7 @@ def update_cwes(cve_id=None):
     else:
         cwes = CWE.objects.all()
     for cwe in cwes:
-        cwe.download_cwe_data()
+        cwe.fetch_cwe_data()
 
 
 def fixup_reference(ref):

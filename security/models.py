@@ -22,7 +22,7 @@ from django.db import models
 from django.urls import reverse
 
 from security.managers import CVEManager
-from util import get_url, download_url, tz_aware_datetime, error_message
+from util import get_url, fetch_content, tz_aware_datetime, error_message
 
 
 class Reference(models.Model):
@@ -53,11 +53,11 @@ class CWE(models.Model):
     def int_id(self):
         return int(self.cwe_id.split('-')[1])
 
-    def download_cwe_data(self):
+    def fetch_cwe_data(self):
         int_id = self.int_id
         mitre_cwe_url = f'https://cwe-api.mitre.org/api/v1/cwe/{int_id}'
         res = get_url(mitre_cwe_url)
-        data = download_url(res, f'Downloading {self.cwe_id} data')
+        data = fetch_content(res, f'Fetching {self.cwe_id} data')
         cwe_json = json.loads(data)
         if cwe_json == 'at least one CWE not found':
             return
@@ -65,7 +65,7 @@ class CWE(models.Model):
         if cwe.get('Type').endswith('weakness'):
             weakness_url = f'https://cwe-api.mitre.org/api/v1/cwe/weakness/{int_id}'
             res = get_url(weakness_url)
-            data = download_url(res, f'Downloading {self.cwe_id} weakness data')
+            data = fetch_content(res, f'Fetching {self.cwe_id} weakness data')
             weakness_json = json.loads(data)
             for weakness in weakness_json.get('Weaknesses'):
                 if int(weakness.get('ID')) == int_id:
@@ -109,26 +109,26 @@ class CVE(models.Model):
     def get_absolute_url(self):
         return reverse('security:cve_detail', args=[self.cve_id])
 
-    def download_cve_data(self, download_nist_data=False, sleep_secs=6):
-        self.download_mitre_cve_data()
-        if download_nist_data:
-            self.download_nist_cve_data()
+    def fetch_cve_data(self, fetch_nist_data=False, sleep_secs=6):
+        self.fetch_mitre_cve_data()
+        if fetch_nist_data:
+            self.fetch_nist_cve_data()
             sleep(sleep_secs)  # rate limited, see https://nvd.nist.gov/developers/start-here
 
-    def download_mitre_cve_data(self):
+    def fetch_mitre_cve_data(self):
         mitre_cve_url = f'https://cveawg.mitre.org/api/cve/{self.cve_id}'
         res = get_url(mitre_cve_url)
         if res.status_code == 404:
             error_message.send(sender=None, text=f'404 - Skipping {self.cve_id} - {mitre_cve_url}')
             return
-        data = download_url(res, f'Downloading {self.cve_id} MITRE data')
+        data = fetch_content(res, f'Fetching {self.cve_id} MITRE data')
         cve_json = json.loads(data)
         self.parse_mitre_cve_data(cve_json)
 
-    def download_nist_cve_data(self):
+    def fetch_nist_cve_data(self):
         nist_cve_url = f'https://services.nvd.nist.gov/rest/json/cves/2.0?cveId={self.cve_id}'
         res = get_url(nist_cve_url)
-        data = download_url(res, f'Downloading {self.cve_id} NIST data')
+        data = fetch_content(res, f'Fetching {self.cve_id} NIST data')
         if res.status_code == 404:
             error_message.send(sender=None, text=f'404 - Skipping {self.cve_id} - {nist_cve_url}')
         cve_json = json.loads(data)

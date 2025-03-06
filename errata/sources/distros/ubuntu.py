@@ -25,7 +25,7 @@ from operatingsystems.models import OSRelease, OSVariant
 from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package, PackageName
 from packages.utils import get_or_create_package, parse_package_string, find_evr
-from util import get_url, download_url, get_sha256, bunzip2, get_setting_of_type
+from util import get_url, fetch_content, get_sha256, bunzip2, get_setting_of_type
 from patchman.signals import error_message, pbar_start, pbar_update
 
 
@@ -34,9 +34,9 @@ def update_ubuntu_errata(concurrent_processing=False):
     """
     codenames = retrieve_ubuntu_codenames()
     create_ubuntu_os_releases(codenames)
-    data = download_ubuntu_usn_db()
+    data = fetch_ubuntu_usn_db()
     if data:
-        expected_checksum = download_ubuntu_usn_db_checksum()
+        expected_checksum = fetch_ubuntu_usn_db_checksum()
         actual_checksum = get_sha256(data)
         if actual_checksum == expected_checksum:
             parse_usn_data(data, concurrent_processing)
@@ -46,20 +46,20 @@ def update_ubuntu_errata(concurrent_processing=False):
             error_message.send(sender=None, text=e)
 
 
-def download_ubuntu_usn_db():
-    """ Download the Ubuntu USN database
+def fetch_ubuntu_usn_db():
+    """ Fetch the Ubuntu USN database
     """
     ubuntu_usn_db_json_url = 'https://usn.ubuntu.com/usn-db/database.json.bz2'
     res = get_url(ubuntu_usn_db_json_url)
-    return download_url(res, 'Downloading Ubuntu Errata')
+    return fetch_content(res, 'Fetching Ubuntu Errata')
 
 
-def download_ubuntu_usn_db_checksum():
-    """ Download the Ubuntu USN database checksum
+def fetch_ubuntu_usn_db_checksum():
+    """ Fetch the Ubuntu USN database checksum
     """
     ubuntu_usn_db_checksum_url = 'https://usn.ubuntu.com/usn-db/database.json.bz2.sha256'
     res = get_url(ubuntu_usn_db_checksum_url)
-    return download_url(res, 'Downloading Ubuntu Errata Checksum').decode().split()[0]
+    return fetch_content(res, 'Fetching Ubuntu Errata Checksum').decode().split()[0]
 
 
 def parse_usn_data(data, concurrent_processing):
@@ -214,7 +214,7 @@ def retrieve_ubuntu_codenames():
     """
     distro_info_url = 'https://debian.pages.debian.net/distro-info-data/ubuntu.csv'
     res = get_url(distro_info_url)
-    ubuntu_csv = download_url(res, 'Downloading Ubuntu distro data')
+    ubuntu_csv = fetch_content(res, 'Fetching Ubuntu distro data')
     reader = csv.DictReader(StringIO(ubuntu_csv.decode()))
     codename_to_version = {}
     for row in reader:
