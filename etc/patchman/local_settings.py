@@ -33,13 +33,13 @@ SECRET_KEY = ''
 ALLOWED_HOSTS = ['127.0.0.1', '*']
 
 # Maximum number of mirrors to add or refresh per repo
-MAX_MIRRORS = 3
+MAX_MIRRORS = 2
 
 # Number of days to wait before raising that a host has not reported
 DAYS_WITHOUT_REPORT = 14
 
 # Whether to run patchman under the gunicorn web server
-RUN_GUNICORN = False
+RUN_GUNICORN = True
 
 CACHES = {
     'default': {

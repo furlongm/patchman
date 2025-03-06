@@ -21,7 +21,7 @@ from operatingsystems.utils import get_or_create_osrelease, get_or_create_osvari
 from patchman.signals import error_message, pbar_start, pbar_update
 from packages.models import Package
 from packages.utils import find_evr, get_matching_packages
-from util import get_url, download_url
+from util import get_url, fetch_content
 
 
 def update_arch_errata(concurrent_processing=False):
@@ -29,16 +29,16 @@ def update_arch_errata(concurrent_processing=False):
         https://security.archlinux.org/advisories.json
     """
     add_arch_linux_osrelease()
-    advisories = download_arch_errata()
+    advisories = fetch_arch_errata()
     parse_arch_errata(advisories, concurrent_processing)
 
 
-def download_arch_errata():
-    """ Download Arch Linux Errata Advisories
+def fetch_arch_errata():
+    """ Fetch Arch Linux Errata Advisories
         https://security.archlinux.org/advisories.json
     """
     res = get_url('https://security.archlinux.org/advisories.json')
-    advisories = download_url(res, 'Downloading Arch Advisories')
+    advisories = fetch_content(res, 'Fetching Arch Advisories')
     return json.loads(advisories)
 
 

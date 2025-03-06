@@ -24,7 +24,7 @@ def update_cve(cve_id):
     """ Task to update a CVE
     """
     cve = CVE.objects.get(id=cve_id)
-    cve.download_cve_data()
+    cve.fetch_cve_data()
 
 
 @shared_task
@@ -40,7 +40,7 @@ def update_cwe(cwe_id):
     """ Task to update a CWE
     """
     cwe = CWE.objects.get(id=cwe_id)
-    cwe.download_cwe_data()
+    cwe.fetch_cwe_data()
 
 
 @shared_task

@@ -27,7 +27,7 @@ from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
 from packages.utils import get_or_create_package, find_evr
 from patchman.signals import error_message, pbar_start, pbar_update
-from util import get_url, download_url, get_setting_of_type
+from util import get_url, fetch_content, get_setting_of_type
 
 
 def update_debian_errata(concurrent_processing=True):
@@ -37,29 +37,29 @@ def update_debian_errata(concurrent_processing=True):
     """
     codenames = retrieve_debian_codenames()
     create_debian_os_releases(codenames)
-    dsas = download_debian_dsa_advisories()
-    dlas = download_debian_dla_advisories()
+    dsas = fetch_debian_dsa_advisories()
+    dlas = fetch_debian_dla_advisories()
     advisories = dsas + dlas
     accepted_codenames = get_accepted_debian_codenames()
     errata = parse_debian_errata(advisories, accepted_codenames)
     create_debian_errata(errata, accepted_codenames, concurrent_processing)
 
 
-def download_debian_dsa_advisories():
-    """ Download the current Debian DLA file
+def fetch_debian_dsa_advisories():
+    """ Fetch the current Debian DLA file
     """
     debian_dsa_url = 'https://salsa.debian.org/security-tracker-team/security-tracker/raw/master/data/DSA/list'
     res = get_url(debian_dsa_url)
-    data = download_url(res, 'Downloading Debian DSAs')
+    data = fetch_content(res, 'Fetching Debian DSAs')
     return data.decode()
 
 
-def download_debian_dla_advisories():
-    """ Download the current Debian DSA file
+def fetch_debian_dla_advisories():
+    """ Fetch the current Debian DSA file
     """
     debian_dsa_url = 'https://salsa.debian.org/security-tracker-team/security-tracker/raw/master/data/DLA/list'
     res = get_url(debian_dsa_url)
-    data = download_url(res, 'Downloading Debian DLAs')
+    data = fetch_content(res, 'Fetching Debian DLAs')
     return data.decode()
 
 
@@ -194,8 +194,8 @@ def parse_debian_erratum_packages(line, accepted_codenames):
     stop=stop_after_attempt(10),
     wait=wait_exponential(multiplier=1, min=2, max=15),
 )
-def download_debian_package_dsc(codename, package, version):
-    """ Download a DSC file for the given source package
+def fetch_debian_package_dsc(codename, package, version):
+    """ Fetch a DSC file for the given source package
         From this we can determine which packages are built from
         a given source package
     """
@@ -229,7 +229,7 @@ def retrieve_debian_codenames():
     """
     distro_info_url = 'https://debian.pages.debian.net/distro-info-data/debian.csv'
     res = get_url(distro_info_url)
-    debian_csv = download_url(res, 'Downloading Debian distro data')
+    debian_csv = fetch_content(res, 'Fetching Debian distro data')
     reader = csv.DictReader(StringIO(debian_csv.decode()))
     codename_to_version = {}
     for row in reader:
@@ -253,7 +253,7 @@ def process_debian_erratum_affected_packages(e, package_data):
     """ Process packages affected by Debian errata
     """
     codename, source_package, source_version = package_data
-    dsc = download_debian_package_dsc(codename, source_package, source_version)
+    dsc = fetch_debian_package_dsc(codename, source_package, source_version)
     if not dsc:
         return
     epoch, ver, rel = find_evr(str(dsc.get_version()))

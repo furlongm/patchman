@@ -29,7 +29,7 @@ from packages.models import PackageString
 from packages.utils import find_evr
 from patchman.signals import info_message, warning_message, error_message, pbar_start, pbar_update
 from repos.utils import add_mirrors_from_urls, mirror_checksum_is_valid, update_mirror_packages
-from util import extract, get_url, get_datetime_now, get_checksum, Checksum, download_url, response_is_valid
+from util import extract, get_url, get_datetime_now, get_checksum, Checksum, fetch_content, response_is_valid
 
 
 def refresh_gentoo_main_repo(repo):
@@ -243,7 +243,7 @@ def refresh_gentoo_repo(repo):
     ts = get_datetime_now()
     for mirror in repo.mirror_set.filter(mirrorlist=False, refresh=True, enabled=True):
         res = get_url(mirror.url + '.md5sum')
-        data = download_url(res, 'Downloading Repo checksum')
+        data = fetch_content(res, 'Fetching Repo checksum')
         if data is None:
             mirror.fail()
             continue
@@ -258,7 +258,7 @@ def refresh_gentoo_repo(repo):
         res = get_url(mirror.url)
         mirror.last_access_ok = response_is_valid(res)
         if mirror.last_access_ok:
-            data = download_url(res, 'Downloading Repo data')
+            data = fetch_content(res, 'Fetching Repo data')
             if data is None:
                 mirror.fail()
                 continue
