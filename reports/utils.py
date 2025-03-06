@@ -410,17 +410,13 @@ def get_os(os, arch):
 
     if os.startswith('Gentoo'):
         osrelease_name = 'Gentoo Linux'
-        # presumptive, can be changed once a real cpe is assigned/used
-        cpe_name = 'cpe:2.3:o:gentoo:gentoo_linux:::'
+        cpe_name = 'cpe:2.3:o:gentoo:linux:-:*:*:*:*:*:*:*'
     elif os.startswith('Arch'):
-        # presumptive, can be changed once a real cpe is assigned/used
-        cpe_name = 'cpe:2.3:o:archlinux:arch_linux:::'
+        cpe_name = 'cpe:2.3:o:archlinux:arch_linux:-:*:*:*:*:*:*:*'
     elif os.startswith('Debian'):
         major, minor = os.split(' ')[1].split('.')
-        debian_version = f'{major}.{minor}'
         osrelease_name = f'Debian {major}'
-        # presumptive, can be changed once a real cpe is assigned/used
-        cpe_name = f'cpe:2.3:o:debian:debian_linux:{debian_version}::'
+        cpe_name = f'cpe:2.3:o:debian:debian_linux:{major}.0:*:*:*:*:*:*:*'
     elif os.startswith('Ubuntu'):
         lts = ''
         if 'LTS' in os:
@@ -428,7 +424,7 @@ def get_os(os, arch):
         major, minor, patch = os.split(' ')[1].split('.')
         ubuntu_version = f'{major}_{minor}'
         osrelease_name = f'Ubuntu {major}.{minor}{lts}'
-        cpe_name = f'cpe:2.3:o:canonical:ubuntu_linux:{ubuntu_version}::'
+        cpe_name = f"cpe:2.3:o:canonical:ubuntu_linux:{ubuntu_version}:*:*:*:{'lts' if lts else '*'}:*:*:*"
     elif os.startswith('AlmaLinux'):
         osvariant_name = os.replace('AlmaLinux', 'Alma Linux')
         osrelease_name = osvariant_name.split('.')[0]
