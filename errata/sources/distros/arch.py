@@ -17,7 +17,7 @@
 import concurrent.futures
 import json
 
-from operatingsystems.utils import get_or_create_osrelease, get_or_create_osvariant
+from operatingsystems.utils import get_or_create_osrelease
 from patchman.signals import error_message, pbar_start, pbar_update
 from packages.models import Package
 from packages.utils import find_evr, get_matching_packages
@@ -102,8 +102,7 @@ def process_arch_erratum(advisory, osrelease):
 def add_arch_linux_osrelease():
     """ Add Arch Linux OSRelease and link existing OSVariants
     """
-    osrelease = get_or_create_osrelease(name='Arch Linux')
-    get_or_create_osvariant(name='Arch Linux', osrelease=osrelease)
+    get_or_create_osrelease(name='Arch Linux')
 
 
 def add_arch_erratum_references(e, advisory):
