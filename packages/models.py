@@ -68,8 +68,8 @@ class Package(models.Model):
     PACKAGE_TYPES = (
         (RPM, 'rpm'),
         (DEB, 'deb'),
-        (ARCH, 'arch'),
-        (GENTOO, 'gentoo'),
+        (ARCH, 'pkgbuild'),
+        (GENTOO, 'ebuild'),
         (UNKNOWN, 'unknown'),
     )
 
@@ -98,10 +98,14 @@ class Package(models.Model):
             rel = f'-{self.release}'
         else:
             rel = ''
-        if self.packagetype == 'G':
-            return f'{self.category}/{self.name}-{epo}{self.version}{rel}-{self.arch}'
+        if self.packagetype == self.GENTOO:
+            return f'{self.category}/{self.name}_{epo}{self.version}{rel}_{self.arch}.{self.get_packagetype_display()}'
+        elif self.packagetype in [self.DEB, self.ARCH]:
+            return f'{self.name}_{epo}{self.version}{rel}_{self.arch}.{self.get_packagetype_display()}'
+        elif self.packagetype == self.RPM:
+            return f'{self.name}-{epo}{self.version}{rel}-{self.arch}.{self.get_packagetype_display()}'
         else:
-            return f'{self.name}-{epo}{self.version}{rel}-{self.arch}'
+            return f'{self.name}-{epo}{self.version}{rel}-{self.arch}.{self.get_packagetype_display()}'
 
     def get_absolute_url(self):
         return reverse('packages:package_detail', args=[self.id])
