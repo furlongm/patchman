@@ -517,19 +517,19 @@ def process_args(args):
         host_updates_alt(args.host)
         showhelp = False
         recheck = True
-    if args.dbcheck and recheck:
-        dbcheck(args.remove_duplicates)
     if args.dns_checks:
         dns_checks(args.host)
         showhelp = False
     if args.update_errata:
-        update_errata(args.erratum_type)
+        update_errata(args.erratum_type, args.force, args.repo)
         mark_errata_security_updates()
         showhelp = False
     if args.update_cves:
         update_cves(args.cve, args.fetch_nist_data)
         update_cwes(args.cve)
         showhelp = False
+    if args.dbcheck and recheck:
+        dbcheck(args.remove_duplicates)
     return showhelp
 
 
