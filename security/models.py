@@ -101,7 +101,7 @@ class CVE(models.Model):
     objects = CVEManager()
 
     class Meta:
-        ordering = ['cve_id']
+        ordering = ['-cve_id']
 
     def __str__(self):
         return self.cve_id
