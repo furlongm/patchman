@@ -288,11 +288,12 @@ def process_debian_dsc_arches(arches):
         'ppc64el',
         'riscv64',
         's390x',
-        'all',  # architecture-independent packages
     ]
     for arch in arches.split(','):
         if arch == 'any':
             return official_ports
+        elif arch == 'all':
+            return ['all']  # architecture-independent packages
         elif arch in official_ports:
             accepted_arches.append(arch)
             continue
