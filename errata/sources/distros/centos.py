@@ -15,7 +15,7 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 import re
-from lxml import etree
+from defusedxml import ElementTree as ET
 
 from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
@@ -65,7 +65,7 @@ def parse_centos_errata_checksum(data):
 def parse_centos_errata(data):
     """ Parse CentOS errata from https://cefs.steve-meier.de/
     """
-    result = etree.XML(data)
+    result = ET.XML(data)
     errata_xml = result.findall('*')
     elen = len(errata_xml)
     pbar_start.send(sender=None, ptext=f'Processing {elen} CentOS Errata', plen=elen)
@@ -76,7 +76,7 @@ def parse_centos_errata(data):
             continue
         e = parse_centos_errata_tag(child.tag, child.attrib)
         if e is not None:
-            parse_centos_errata_children(e, child.getchildren())
+            parse_centos_errata_children(e, child.iter())
 
 
 def parse_centos_errata_tag(name, attribs):
