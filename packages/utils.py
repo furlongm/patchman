@@ -224,22 +224,39 @@ def get_or_create_package_update(oldpackage, newpackage, security):
     return update
 
 
-def get_matching_packages(name, epoch, version, release, p_type):
-    """ Get packages matching certain criteria
-        Returns the matching packages or None
+def get_matching_packages(name, epoch, version, release, p_type, arch=None):
+    """ Get packages matching the name, epoch, version, release, and package_type
+        Arch can be omitted if unknown
+        Returns the matching packages or an empty list
     """
     try:
         package_name = PackageName.objects.get(name=name)
     except PackageName.DoesNotExist:
-        return
-    if package_name:
+        return []
+    if arch:
+        if not isinstance(arch, PackageArchitecture):
+            try:
+                arch = PackageArchitecture.objects.get_or_create(name=arch)
+            except PackageArchitecture.DoesNotExist:
+                return []
         packages = Package.objects.filter(
+            epoch=epoch,
+            name=package_name,
+            version=version,
+            release=release,
+            arch=arch,
+            packagetype=p_type,
+        )
+        return packages
+    else:
+        packages = Package.objects.filter(
+            epoch=epoch,
             name=package_name,
             version=version,
             release=release,
             packagetype=p_type,
         )
-        return packages
+    return packages
 
 
 def clean_packageupdates():
