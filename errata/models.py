@@ -42,6 +42,7 @@ class Erratum(models.Model):
     class Meta:
         verbose_name = 'Erratum'
         verbose_name_plural = 'Errata'
+        ordering = ['-issue_date', 'name']
 
     def __str__(self):
         text = f'{self.name} ({self.e_type}), {self.cves.count()} related CVEs, '
