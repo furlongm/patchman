@@ -59,6 +59,37 @@ def update_cwes(cve_id=None):
         cwe.fetch_cwe_data()
 
 
+def fixup_bugzilla_url(url):
+    bugzilla_hosts = [
+        'bugzilla.redhat.com', 'bugzilla.opensuse.org', 'bugzilla.suse.com',
+        'bugs.debian.org', 'bugs.kde.org', 'bugzilla.mozilla.org', 'bugzilla.gnome.org',
+    ]
+    if url.hostname in bugzilla_hosts and url.path == '/show_bug.cgi':
+        bug = url.query.split('=')[1]
+        path = f'/{bug}'
+        url = url._replace(path=path, query='')
+    return url
+
+
+def fixup_rhn_url(url):
+    if url.hostname == 'rhn.redhat.com':
+        netloc = url.netloc.replace('rhn', 'access')
+        path = url.path.replace('.html', '')
+        url = url._replace(netloc=netloc, path=path)
+    return url
+
+
+def fixup_ubuntu_usn_url(url):
+    if ('ubuntu.com' in url.hostname and 'usn/' in url.path) or url.hostname == 'usn.ubuntu.com':
+        netloc = url.netloc.replace('usn.', '').replace('www.', '')
+        path = url.path.replace('usn/', 'security/notices/').replace('usn', 'USN').rstrip('/')
+        usn_id = path.split('/')[-1]
+        if 'USN' not in usn_id:
+            path = '/'.join(path.split('/')[:-1]) + '/USN-' + usn_id
+        url = url._replace(netloc=netloc, path=path)
+    return url
+
+
 def fixup_reference(ref):
     """ Fix up a Security Reference object to normalize the URL and type
     """
@@ -68,13 +99,7 @@ def fixup_reference(ref):
         ref_type = 'Mailing List'
     if ref_type == 'bugzilla' or 'bug' in url.hostname or 'bugs' in url.path:
         ref_type = 'Bug Tracker'
-    if ('ubuntu.com' in url.hostname and 'usn/' in url.path) or url.hostname == 'usn.ubuntu.com':
-        netloc = url.netloc.replace('usn.', '').replace('www.', '')
-        path = url.path.replace('usn/', 'security/notices/').replace('usn', 'USN').rstrip('/')
-        usn_id = path.split('/')[-1]
-        if 'USN' not in usn_id:
-            path = '/'.join(path.split('/')[:-1]) + '/USN-' + usn_id
-        url = url._replace(netloc=netloc, path=path)
+    url = fixup_ubuntu_usn_url(url)
     if url.hostname == 'ubuntu.com' and url.path.startswith('/security/notices/USN'):
         ref_type = 'USN'
     if 'launchpad.net' in url.hostname:
@@ -83,15 +108,8 @@ def fixup_reference(ref):
         bug = url.path.split('/')[-1]
         path = f'/bugs/{bug}'
         url = url._replace(netloc=netloc, path=path)
-    if url.hostname in ['bugzilla.redhat.com', 'bugzilla.opensuse.org', 'bugs.suse.com'] and \
-            url.path == '/show_bug.cgi':
-        bug = url.query.split('=')[1]
-        path = f'/{bug}'
-        url = url._replace(path=path, query='')
-    if url.hostname == 'rhn.redhat.com':
-        netloc = url.netloc.replace('rhn', 'access')
-        path = url.path.replace('.html', '')
-        url = url._replace(netloc=netloc, path=path)
+    url = fixup_bugzilla_url(url)
+    url = fixup_rhn_url(url)
     if url.hostname == 'access.redhat.com':
         if 'l1d-cache-eviction-and-vector-register-sampling' in url.path or \
                 'security/vulnerabilities/speculativeexecution' in url.path or \
