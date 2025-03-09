@@ -128,6 +128,8 @@ def add_updateinfo_osreleases(e, collection, osrelease_names):
         elif osrelease_name.startswith('rocky-linux'):
             version = osrelease_name.split('-')[2]
             osrelease_name = 'Rocky Linux ' + version
+        elif osrelease_name in ['Amazon Linux', 'Amazon Linux AMI']:
+            osrelease_name = 'Amazon Linux 1'
         osrelease = get_or_create_osrelease(name=osrelease_name)
         e.osreleases.add(osrelease)
 
