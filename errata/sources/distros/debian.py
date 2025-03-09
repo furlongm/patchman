@@ -20,14 +20,15 @@ import re
 from datetime import datetime
 from debian.deb822 import Dsc
 from io import StringIO
-from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from operatingsystems.models import OSRelease
 from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
 from packages.utils import get_or_create_package, find_evr
-from patchman.signals import error_message, pbar_start, pbar_update
-from util import get_url, fetch_content, get_setting_of_type
+from patchman.signals import error_message, pbar_start, pbar_update, warning_message
+from util import get_url, fetch_content, get_setting_of_type, extract
+
+DSCs = {}
 
 
 def update_debian_errata(concurrent_processing=True):
@@ -40,6 +41,7 @@ def update_debian_errata(concurrent_processing=True):
     dsas = fetch_debian_dsa_advisories()
     dlas = fetch_debian_dla_advisories()
     advisories = dsas + dlas
+    fetch_dscs_from_debian_package_file_maps()
     accepted_codenames = get_accepted_debian_codenames()
     errata = parse_debian_errata(advisories, accepted_codenames)
     create_debian_errata(errata, accepted_codenames, concurrent_processing)
@@ -61,6 +63,47 @@ def fetch_debian_dla_advisories():
     res = get_url(debian_dsa_url)
     data = fetch_content(res, 'Fetching Debian DLAs')
     return data.decode()
+
+
+def fetch_dscs_from_debian_package_file_maps():
+    """ Fetch the current Debian package file maps
+    """
+    repos = ['debian', 'debian-security']
+    for repo in repos:
+        file_map_url = f'https://deb.debian.org/{repo}/indices/package-file.map.bz2'
+        res = get_url(file_map_url)
+        data = fetch_content(res, f'Fetching `{repo}` package file map')
+        file_map_data = extract(data, file_map_url).decode()
+        parse_debian_package_file_map(file_map_data, repo)
+
+
+def parse_debian_package_file_map(data, repo):
+    """ Parse the a Debian package file map
+        Format:
+            Path: ./pool/updates/main/3/389-ds-base/389-ds-base_1.4.0.21-1+deb10u1.dsc
+            Source: 389-ds-base
+            Source-Version: 1.4.0.21-1+deb10u1
+    """
+    global DSCs
+    parsing_dsc = False
+    for line in data.splitlines():
+        if line.startswith('Path:'):
+            if line.endswith('.dsc'):
+                parsing_dsc = True
+                path = line.split(' ')[1].lstrip('./')
+                url = f'https://deb.debian.org/{repo}/{path}'
+            else:
+                parsing_dsc = False
+        elif line.startswith('Source:') and parsing_dsc:
+            source = line.split(' ')[1]
+        elif line.startswith('Source-Version:') and parsing_dsc:
+            version = line.split(' ')[1]
+            if not DSCs.get(source):
+                DSCs[source] = {}
+            if not DSCs[source].get(version):
+                DSCs[source][version] = {}
+            DSCs[source][version] = {'url': url}
+            parsing_dsc = False
 
 
 def parse_debian_errata(advisories, accepted_codenames):
@@ -87,7 +130,7 @@ def parse_debian_errata(advisories, accepted_codenames):
                 e['releases'].append(release)
                 if not e.get('packages').get(release):
                     e['packages'][release] = []
-                e['packages'][release].append(parse_debian_erratum_packages(line, accepted_codenames))
+                e['packages'][release].append(parse_debian_erratum_package(line, accepted_codenames))
     # add the last one
     errata = add_errata_by_codename(errata, e, accepted_codenames)
     return errata
@@ -175,9 +218,9 @@ def process_debian_erratum(erratum, accepted_codenames):
         error_message.send(sender=None, text=exc)
 
 
-def parse_debian_erratum_packages(line, accepted_codenames):
-    """ Parse the codename and source packages from a DSA/DLA file
-        Return the DSC object
+def parse_debian_erratum_package(line, accepted_codenames):
+    """ Parse the codename and source package from a DSA/DLA file
+        Returns the source package and source version
     """
     distro_package_pattern = re.compile(r'^\t\[(.+?)\] - (.+?) (.*)')
     match = re.match(distro_package_pattern, line)
@@ -186,29 +229,34 @@ def parse_debian_erratum_packages(line, accepted_codenames):
         if codename in accepted_codenames:
             source_package = match.group(2)
             source_version = match.group(3)
-            return [codename, source_package, source_version]
+            fetch_debian_dsc_package_list(source_package, source_version)
+            return source_package, source_version
 
 
-@retry(
-    retry=retry_if_exception_type(ConnectionError),
-    stop=stop_after_attempt(10),
-    wait=wait_exponential(multiplier=1, min=2, max=15),
-)
-def fetch_debian_package_dsc(codename, package, version):
-    """ Fetch a DSC file for the given source package
-        From this we can determine which packages are built from
-        a given source package
+def get_debian_dsc_package_list(package, version):
+    """ Get the package list from a DSC file for a given source package/version
     """
-    dsc_pattern = re.compile(r'.*"(http.*dsc)"')
-    source_url = f'https://packages.debian.org/source/{codename}/{package}'
+    global DSCs
+    if not DSCs.get(package) or not DSCs[package].get(version):
+        return
+    package_list = DSCs[package][version].get('package_list')
+    if package_list:
+        return package_list
+
+
+def fetch_debian_dsc_package_list(package, version):
+    """ Fetch the package list from a DSC file for a given source package/version
+    """
+    global DSCs
+    if not DSCs.get(package) or not DSCs[package].get(version):
+        warning_message.send(sender=None, text=f'No DSC found for {package} {version}')
+        return
+    source_url = DSCs[package][version]['url']
     res = get_url(source_url)
     data = res.content
-    dscs = re.findall(dsc_pattern, data.decode())
-    if dscs:
-        dsc_url = dscs[0]
-        res = get_url(dsc_url)
-        data = res.content
-        return Dsc(data.decode())
+    dsc = Dsc(data.decode())
+    package_list = dsc.get('package-list')
+    DSCs[package][version]['package_list'] = package_list
 
 
 def get_accepted_debian_codenames():
@@ -252,12 +300,11 @@ def create_debian_os_releases(codename_to_version):
 def process_debian_erratum_affected_packages(e, package_data):
     """ Process packages affected by Debian errata
     """
-    codename, source_package, source_version = package_data
-    dsc = fetch_debian_package_dsc(codename, source_package, source_version)
-    if not dsc:
+    source_package, source_version = package_data
+    epoch, ver, rel = find_evr(source_version)
+    package_list = get_debian_dsc_package_list(source_package, source_version)
+    if not package_list:
         return
-    epoch, ver, rel = find_evr(str(dsc.get_version()))
-    package_list = dsc.get('package-list')
     for line in package_list.splitlines():
         if not line:
             continue
