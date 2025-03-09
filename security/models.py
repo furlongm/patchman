@@ -141,7 +141,7 @@ class CVE(models.Model):
             cve = vulnerability.get('cve')
             cve_id = cve.get('id')
             if cve_id != self.cve_id:
-                error_message.send(sender=None, text=f'CVE ID mismatch - {self.cve_id} - {cve_id}')
+                error_message.send(sender=None, text=f'CVE ID mismatch - {self.cve_id} != {cve_id}')
                 return
             metrics = cve.get('metrics')
             for metric, score_data in metrics.items():
