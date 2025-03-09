@@ -443,6 +443,8 @@ def get_os(os, arch):
     elif os.startswith('Oracle'):
         osvariant_name = os.replace(' Server', '')
         osrelease_name = osvariant_name.split('.')[0]
+    elif os.startswith('Amazon Linux AMI 2018.03'):
+        osrelease_name = osvariant_name = 'Amazon Linux 1'
 
     osrelease = get_or_create_osrelease(name=osrelease_name, codename=osrelease_codename, cpe_name=cpe_name)
     osvariant = get_or_create_osvariant(
