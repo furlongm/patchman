@@ -29,22 +29,27 @@ from util import get_setting_of_type
 
 
 @shared_task
-def update_yum_repo_errata():
+def update_yum_repo_errata(repo_id=None, force=False):
     """ Update all yum repos errata
     """
-    for repo in Repository.objects.filter(repotype=Repository.RPM):
-        repo.refresh_errata()
+    if repo_id:
+        repo = Repository.objects.get(id=repo_id)
+        repo.refresh_errata(force)
+    else:
+        for repo in Repository.objects.filter(repotype=Repository.RPM):
+            repo.refresh_errata(force)
 
 
 @shared_task
-def update_errata(erratum_type=None):
+def update_errata(erratum_type=None, force=False, repo=None):
     """ Update all distros errata
     """
     errata_os_updates = []
+    erratum_types = ['yum', 'rocky', 'alma', 'arch', 'ubuntu', 'debian', 'centos']
     erratum_type_defaults = ['yum', 'rocky', 'alma', 'arch', 'ubuntu', 'debian']
     if erratum_type:
-        if erratum_type not in erratum_type_defaults:
-            error_message.send(sender=None, text=f'Erratum type `{erratum_type}` not in {erratum_type_defaults}')
+        if erratum_type not in erratum_types:
+            error_message.send(sender=None, text=f'Erratum type `{erratum_type}` not in {erratum_types}')
         else:
             errata_os_updates = erratum_type
     else:
@@ -54,7 +59,7 @@ def update_errata(erratum_type=None):
             default=erratum_type_defaults,
         )
     if 'yum' in errata_os_updates:
-        update_yum_repo_errata()
+        update_yum_repo_errata(repo_id=repo, force=force)
     if 'arch' in errata_os_updates:
         update_arch_errata()
     if 'alma' in errata_os_updates:
