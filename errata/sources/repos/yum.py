@@ -22,10 +22,10 @@ from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
 from packages.utils import get_or_create_package
 from patchman.signals import pbar_start, pbar_update, error_message
-from util import extract
+from util import extract, get_url
 
 
-def extract_updateinfo(data, url):
+def extract_updateinfo(data, url, concurrent_processing=True):
     """ Parses updateinfo.xml and extracts package/errata information
     """
     extracted = extract(data, url)
@@ -33,15 +33,34 @@ def extract_updateinfo(data, url):
         tree = ET.parse(BytesIO(extracted))
         root = tree.getroot()
         elen = root.__len__()
-        pbar_start.send(sender=None, ptext=f'Extracting {elen} updateinfo Errata', plen=elen)
-        i = 0
-        with concurrent.futures.ProcessPoolExecutor(max_workers=100) as executor:
-            futures = [executor.submit(process_updateinfo_erratum, update) for update in root.findall('update')]
-            for future in concurrent.futures.as_completed(futures):
-                i += 1
-                pbar_update.send(sender=None, index=i + 1)
+        updates = root.findall('update')
     except ET.ParseError as e:
         error_message.send(sender=None, text=f'Error parsing updateinfo file from {url} : {e}')
+    if concurrent_processing:
+        extract_updateinfo_concurrently(updates, elen)
+    else:
+        extract_updateinfo_serially(updates, elen)
+
+
+def extract_updateinfo_serially(updates, elen):
+    """ Parses updateinfo.xml and extracts package/errata information serially
+    """
+    pbar_start.send(sender=None, ptext=f'Extracting {elen} updateinfo Errata', plen=elen)
+    for i, update in enumerate(updates):
+        process_updateinfo_erratum(update)
+        pbar_update.send(sender=None, index=i + 1)
+
+
+def extract_updateinfo_concurrently(updates, elen):
+    """ Parses updateinfo.xml and extracts package/errata information concurrently
+    """
+    pbar_start.send(sender=None, ptext=f'Extracting {elen} updateinfo Errata', plen=elen)
+    i = 0
+    with concurrent.futures.ProcessPoolExecutor(max_workers=100) as executor:
+        futures = [executor.submit(process_updateinfo_erratum, update) for update in updates]
+        for future in concurrent.futures.as_completed(futures):
+            i += 1
+            pbar_update.send(sender=None, index=i + 1)
 
 
 def process_updateinfo_erratum(update):
