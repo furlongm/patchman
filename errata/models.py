@@ -57,7 +57,7 @@ class Erratum(models.Model):
             for package in self.packages.all():
                 affected_updates = PackageUpdate.objects.filter(
                     newpackage=package,
-                    security=False
+                    security=False,
                 )
                 for affected_update in affected_updates:
                     if not affected_update.security:
@@ -77,6 +77,9 @@ class Erratum(models.Model):
     def add_cve(self, cve_id):
         """ Add a CVE to an Erratum object
         """
+        if not cve_id.startswith('CVE') or not cve_id.split('-')[1].isdigit():
+            error_message.send(sender=None, text=f'Not a CVE ID: {cve_id}')
+            return
         self.cves.add(get_or_create_cve(cve_id))
 
     def add_reference(self, ref_type, url):
