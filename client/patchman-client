@@ -488,7 +488,7 @@ get_repos() {
             if [ ! -z ${CPE_NAME} ] ; then
                 id="${CPE_NAME}-${id}"
             fi
-            j=$(echo ${i} | sed -e "s#'${full_id}' '${name}'#'${name}' '${id}' '${priority}'#")
+            j=$(echo ${i} | sed -e "s#'${full_id}' '${name}'#'${name}' '${id}' '${priority}'#" | sed -e "s/'\[/'/g" -e "s/\]'/'/g")
             echo "'rpm' ${j}" >> "${tmpfile_rep}"
             unset priority
         done
