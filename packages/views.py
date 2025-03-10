@@ -113,8 +113,8 @@ def package_list(request):
 def package_name_list(request):
     packages = PackageName.objects.select_related()
 
-    if 'arch' in request.GET:
-        packages = packages.filter(package__arch=request.GET['arch']).distinct()
+    if 'arch_id' in request.GET:
+        packages = packages.filter(package__arch=request.GET['arch_id']).distinct()
 
     if 'packagetype' in request.GET:
         packages = packages.filter(package__packagetype=request.GET['packagetype']).distinct()
@@ -141,7 +141,7 @@ def package_name_list(request):
 
     filter_list = []
     filter_list.append(Filter(request, 'Package Type', 'packagetype', Package.PACKAGE_TYPES))
-    filter_list.append(Filter(request, 'Architecture', 'arch', PackageArchitecture.objects.all()))
+    filter_list.append(Filter(request, 'Architecture', 'arch_id', PackageArchitecture.objects.all()))
     filter_bar = FilterBar(request, filter_list)
 
     return render(request,
