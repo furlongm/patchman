@@ -16,7 +16,7 @@
 
 import re
 import yaml
-from defusedxml import ElementTree as ET
+from defusedxml import ElementTree
 from io import BytesIO
 
 from errata.sources.repos.yum import extract_updateinfo
@@ -39,7 +39,7 @@ def get_repomd_url(mirror_url, data, url_type='primary'):
     extracted = extract(data, mirror_url)
     location = None
     try:
-        tree = ET.parse(BytesIO(extracted))
+        tree = ElementTree.parse(BytesIO(extracted))
         root = tree.getroot()
         for child in root:
             if child.attrib.get('type') == url_type:
@@ -49,7 +49,7 @@ def get_repomd_url(mirror_url, data, url_type='primary'):
                     if grandchild.tag == f'{{{ns}}}checksum':
                         checksum = grandchild.text
                         checksum_type = grandchild.attrib.get('type')
-    except ET.ParseError as e:
+    except ElementTree.ParseError as e:
         error_message.send(sender=None, text=(f'Error parsing repomd from {mirror_url}: {e}'))
     if not location:
         return None, None, None
@@ -110,7 +110,7 @@ def extract_yum_packages(data, url):
     ns = 'http://linux.duke.edu/metadata/common'
     packages = set()
     try:
-        context = ET.iterparse(BytesIO(extracted), events=('start', 'end'))
+        context = ElementTree.iterparse(BytesIO(extracted), events=('start', 'end'))
         for event, elem in context:
             if event == 'start':
                 if elem.tag == f'{{{ns}}}metadata':
@@ -152,7 +152,7 @@ def extract_yum_packages(data, url):
                         text = f'Error parsing Package: {name} {epoch} {version} {release} {arch}'
                         error_message.send(sender=None, text=text)
                 elem.clear()
-    except ET.ParseError as e:
+    except ElementTree.ParseError as e:
         error_message.send(sender=None, text=f'Error parsing yum primary.xml from {url}: {e}')
     return packages
 

@@ -17,8 +17,7 @@
 
 import re
 from io import BytesIO
-
-from defusedxml import ElementTree as ET
+from defusedxml import ElementTree
 from tenacity import RetryError
 
 from django.db import IntegrityError
@@ -121,7 +120,7 @@ def get_metalink_urls(url):
     extracted = extract(data, url)
     ns = 'http://www.metalinker.org/'
     try:
-        tree = ET.parse(BytesIO(extracted))
+        tree = ElementTree.parse(BytesIO(extracted))
         root = tree.getroot()
         for child in root:
             if child.tag == f'{{{ns}}}files':
@@ -133,7 +132,7 @@ def get_metalink_urls(url):
                                     if greatgreatgrandchild.tag == f'{{{ns}}}url':
                                         if greatgreatgrandchild.attrib.get('protocol') in ['https', 'http']:
                                             metalink_urls.append(greatgreatgrandchild.text)
-    except ET.ParseError as e:
+    except ElementTree.ParseError as e:
         error_message.send(sender=None, text=f'Error parsing metalink {url}: {e}')
     return metalink_urls
 
