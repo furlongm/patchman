@@ -20,7 +20,7 @@ import re
 import shutil
 import tarfile
 import tempfile
-from defusedxml import ElementTree as ET
+from defusedxml import ElementTree
 from fnmatch import fnmatch
 from io import BytesIO
 
@@ -94,7 +94,7 @@ def get_gentoo_overlay_mirrors(repo_name):
         return
     mirrors = []
     try:
-        tree = ET.parse(BytesIO(res.content))
+        tree = ElementTree.parse(BytesIO(res.content))
         root = tree.getroot()
         for child in root:
             if child.tag == 'repo':
@@ -105,7 +105,7 @@ def get_gentoo_overlay_mirrors(repo_name):
                     if found and element.tag == 'source':
                         if element.text.startswith('http'):
                             mirrors.append(element.text)
-    except ET.ParseError as e:
+    except ElementTree.ParseError as e:
         error_message.send(sender=None, text=f'Error parsing {gentoo_overlays_url}: {e}')
     return mirrors
 
@@ -119,7 +119,7 @@ def get_gentoo_mirror_urls():
         return
     mirrors = {}
     try:
-        tree = ET.parse(BytesIO(res.content))
+        tree = ElementTree.parse(BytesIO(res.content))
         root = tree.getroot()
         for child in root:
             if child.tag == 'mirrorgroup':
@@ -139,7 +139,7 @@ def get_gentoo_mirror_urls():
                         elif element.tag == 'uri':
                             if element.get('protocol') == 'http':
                                 mirrors[name]['urls'].append(element.text)
-    except ET.ParseError as e:
+    except ElementTree.ParseError as e:
         error_message.send(sender=None, text=f'Error parsing {gentoo_distfiles_url}: {e}')
     mirror_urls = []
     # for now, ignore region data and choose MAX_MIRRORS mirrors at random

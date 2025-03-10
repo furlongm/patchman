@@ -16,7 +16,7 @@
 
 import concurrent.futures
 from io import BytesIO
-import defusedxml.ElementTree as ET
+from defusedxml import ElementTree
 
 from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
@@ -30,11 +30,11 @@ def extract_updateinfo(data, url, concurrent_processing=True):
     """
     extracted = extract(data, url)
     try:
-        tree = ET.parse(BytesIO(extracted))
+        tree = ElementTree.parse(BytesIO(extracted))
         root = tree.getroot()
         elen = root.__len__()
         updates = root.findall('update')
-    except ET.ParseError as e:
+    except ElementTree.ParseError as e:
         error_message.send(sender=None, text=f'Error parsing updateinfo file from {url} : {e}')
     if concurrent_processing:
         extract_updateinfo_concurrently(updates, elen)
