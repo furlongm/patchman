@@ -77,9 +77,55 @@ def process_updateinfo_erratum(update):
     update.clear()
 
 
+def add_distro_references(e):
+    """ Adds distro-specific references to an Erratum
+    """
+    urls = []
+    name = e.name
+    e_type = e.erratum_type
+    if name.startswith('ALAS'):
+        ref_type = 'Amazon Advisory'
+        if name[4] == '-':
+            update_path = ''
+        elif name[4:6] == '2-':
+            update_path = 'AL2/'
+            name = name.replace('ALAS2', 'ALAS')
+        elif name[4:8] == '2023':
+            update_path = 'AL2023/'
+            name = name.replace('ALAS2023', 'ALAS')
+        urls.append(f'https://alas.aws.amazon.com/{update_path}{name}.html')
+    elif name.startswith('openSUSE-SLE'):
+        ref_type = 'SUSE Advisory'
+        update_type = e_type[0].upper() + 'U'
+        year = name.split('-')[-2]
+        number = name.split('-')[-1].zfill(4)
+        identifier = f'{year}:{number}'
+        prefix = f'SUSE-{update_type}'
+        name = f'{prefix}-{identifier}-1'
+        url_root = 'https://www.suse.com/support/update/announcement/'
+        url_path = f'{year}/{prefix}-{year}{number}-'
+        for i in range(1, 10):
+            url = f'{url_root}{url_path}{i}'
+            res = get_url(url)
+            if res.status_code != 200:
+                break
+            urls.append(f'{url_root}{url_path}{i}')
+    elif name.startswith('EL'):
+        ref_type = 'Oracle Advisory'
+        urls.append(f'https://linux.oracle.com/errata/{name}.html')
+    elif name.startswith('RL'):
+        ref_type = 'Rocky Advisory'
+        urls.append(f'https://errata.rockylinux.org/{name}')
+        urls.append(f'https://apollo.build.resf.org/{name}')
+    if urls:
+        for url in urls:
+            e.add_reference(ref_type, url)
+
+
 def add_updateinfo_erratum_references(e, update):
     """ Adds references to an Erratum
     """
+    add_distro_references(e)
     references = update.find('references')
     for reference in references.findall('reference'):
         if reference.attrib.get('type') == 'cve':
