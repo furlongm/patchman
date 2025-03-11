@@ -177,7 +177,7 @@ def add_mirrors_from_urls(repo, mirror_urls):
         from repos.models import Mirror
         # FIXME: maybe we should store the mirrorlist url with full path to repomd.xml?
         # that is what metalink urls return now
-        m, c = Mirror.objects.get_or_create(repo=repo, url=mirror_url.rstrip('/').rstrip('repodata/repomd.xml'))
+        m, c = Mirror.objects.get_or_create(repo=repo, url=mirror_url.rstrip('/').replace('repodata/repomd.xml', ''))
         if c:
             text = f'Added Mirror - {mirror_url}'
             info_message.send(sender=None, text=text)

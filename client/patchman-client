@@ -574,24 +574,52 @@ get_repos() {
     fi
 
     # Gentoo
-    if [ "${os}" == "Gentoo" ] ; then
+    if [[ "${os}" =~ "Gentoo" ]] ; then
         if [ ${verbose} == 1 ] ; then
             echo 'Finding portage repos...'
         fi
-        declare -A repos
-        repos[gentoo]='-1000'
-        repos_conf=$(awk '/\[/{prefix=$0; next} $1{print prefix $0}' /etc/portage/repos.conf/*.conf | grep '^\[')
-        for stanza in ${repos_conf} ; do
-            repo=$(echo ${stanza} | cut -d ']' -f 1 | sed -e 's/\[//')
-            rhs=$(echo ${stanza} | cut -d ']' -f 2 | grep -v '^#')
-            if [[ ${rhs} =~ "priority" ]] ; then
-                priority=$(echo ${rhs} | sed -e 's/^ *priority *= *//')
-                repos[${repo}]+=${priority}
-                unset priority
+        declare -A repo_info
+        repos_output=$(portageq repos_config /)
+        repo_name=""
+        priority=""
+        sync_uri=""
+
+        while IFS= read -r line; do
+            # if the line starts with a section header (e.g., [gentoo], [guru]), it's the repo name
+            if [[ "${line}" =~ ^\[(.*)\] ]]; then
+                # if we already have a repo_name, save the previous entry
+                if [[ -n "${repo_name}" && -n "${sync_uri}" ]]; then
+                    repo_info["${repo_name}"]="${priority},${sync_uri}"
+                fi
+                # else start new repo parsing, resetting vars
+                repo_name="${BASH_REMATCH[1]}"
+                priority=""
+                sync_uri=""
             fi
-        done
-        for r in "${!repos[@]}"; do
-            echo "'gentoo' 'Gentoo Linux ${r} ${host_arch}' '${r}' '${repos[${r}]}'" >> "${tmpfile_rep}"
+
+            # if the line contains "priority", extract the value, 0 if it doesnt exist
+            if [[ "${line}" =~ "priority" ]]; then
+                priority=$(echo "${line}" | cut -d'=' -f2 | xargs)
+            fi
+
+            # if the line contains "sync-uri", extract the value
+            if [[ "${line}" =~ "sync-uri" ]]; then
+                sync_uri=$(echo "${line}" | cut -d'=' -f2 | xargs)
+            fi
+        done <<< "${repos_output}"
+
+        # save the last repository entry if it's available
+        if [[ -n "${repo_name}" && -n "${sync_uri}" ]]; then
+            repo_info["${repo_name}"]="${priority},${sync_uri}"
+        fi
+
+        for repo in "${!repo_info[@]}"; do
+            priority=$(echo ${repo_info[$repo]} | cut -d',' -f1)
+            sync_uri=$(echo ${repo_info[$repo]} | cut -d',' -f2)
+            if [ "${priority}" == "" ] ; then
+                priority=0
+            fi
+            echo "'gentoo' 'Gentoo Linux ${repo} Repo ${host_arch}' '${repo}' '${priority}' '${sync_uri}'" >> "${tmpfile_rep}"
         done
     fi
 
