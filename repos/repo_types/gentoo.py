@@ -16,15 +16,14 @@
 
 import git
 import os
-import re
 import shutil
 import tarfile
 import tempfile
 from defusedxml import ElementTree
 from fnmatch import fnmatch
 from io import BytesIO
+from pathlib import Path
 
-from arch.models import PackageArchitecture
 from packages.models import PackageString
 from packages.utils import find_evr
 from patchman.signals import info_message, warning_message, error_message, pbar_start, pbar_update
@@ -37,6 +36,55 @@ def refresh_gentoo_main_repo(repo):
     """
     mirrors = get_gentoo_mirror_urls()
     add_mirrors_from_urls(repo, mirrors)
+    ts = get_datetime_now()
+    for mirror in repo.mirror_set.filter(mirrorlist=False, refresh=True, enabled=True):
+        if mirror.url == 'https://api.gentoo.org/mirrors/distfiles.xml':
+            mirror.mirrorlist = True
+            mirror.save()
+            continue
+
+        res = get_url(mirror.url + '.md5sum')
+        data = fetch_content(res, 'Fetching Repo checksum')
+        if data is None:
+            mirror.fail()
+            continue
+
+        checksum = data.decode().split()[0]
+        if checksum is None:
+            mirror.fail()
+            continue
+
+        if mirror.packages_checksum == checksum:
+            text = 'Mirror checksum has not changed, not refreshing Package metadata'
+            warning_message.send(sender=None, text=text)
+            continue
+
+        res = get_url(mirror.url)
+        mirror.last_access_ok = response_is_valid(res)
+        if not mirror.last_access_ok:
+            mirror.fail()
+            continue
+
+        data = fetch_content(res, 'Fetching Repo data')
+        if data is None:
+            mirror.fail()
+            continue
+        extracted = extract(data, mirror.url)
+        info_message.send(sender=None, text=f'Found Gentoo Repo - {mirror.url}')
+
+        computed_checksum = get_checksum(data, Checksum.md5)
+        if not mirror_checksum_is_valid(computed_checksum, checksum, mirror, 'package'):
+            mirror.fail()
+            continue
+        else:
+            mirror.packages_checksum = checksum
+
+        packages = extract_gentoo_packages(mirror, extracted)
+        if packages:
+            update_mirror_packages(mirror, packages)
+
+        mirror.timestamp = ts
+        mirror.save()
 
 
 def refresh_gentoo_overlay_repo(repo):
@@ -44,6 +92,14 @@ def refresh_gentoo_overlay_repo(repo):
     """
     mirrors = get_gentoo_overlay_mirrors(repo.repo_id)
     add_mirrors_from_urls(repo, mirrors)
+    ts = get_datetime_now()
+    for mirror in repo.mirror_set.filter(mirrorlist=False, refresh=True, enabled=True):
+        # FIXME: need to check for failure
+        packages = extract_gentoo_overlay_packages(mirror)
+        if packages:
+            update_mirror_packages(mirror, packages)
+        mirror.timestamp = ts
+        mirror.save()
 
 
 def get_gentoo_ebuild_keywords(content):
@@ -82,7 +138,10 @@ def get_gentoo_ebuild_keywords(content):
                 continue
             keywords.add(keyword)
         break
-    return keywords
+    if keywords:
+        return keywords
+    else:
+        return default_keywords
 
 
 def get_gentoo_overlay_mirrors(repo_name):
@@ -157,7 +216,25 @@ def extract_gentoo_ebuilds(data):
         for member in tar.getmembers():
             if member.isfile() and member.name.endswith('ebuild') and not member.name.endswith('skel.ebuild'):
                 file_content = tar.extractfile(member).read()
-                extracted_ebuilds[member.name] = file_content
+                full_path = Path(member.name)
+                ebuild_path = Path(*full_path.parts[1:])
+                extracted_ebuilds[str(ebuild_path)] = file_content
+    return extracted_ebuilds
+
+
+def extract_gentoo_overlay_ebuilds(t):
+    """ Extract ebuilds from a Gentoo overlay tarball
+    """
+    extracted_ebuilds = {}
+    for root, dirs, files in os.walk(t):
+        for name in files:
+            if fnmatch(name, '*.ebuild'):
+                package_name = root.replace(t + '/', '')
+                if len(package_name.split('/')) > 2:
+                    continue
+                with open(os.path.join(root, name), 'rb') as f:
+                    content = f.read()
+                extracted_ebuilds[f'{package_name}/{name}'] = content
     return extracted_ebuilds
 
 
@@ -175,14 +252,14 @@ def extract_gentoo_packages_from_ebuilds(extracted_ebuilds):
         return
 
     packages = set()
-    flen = len(extracted_ebuilds)
-    pbar_start.send(sender=None, ptext=f'Processing {flen} ebuilds', plen=flen)
+    elen = len(extracted_ebuilds)
+    pbar_start.send(sender=None, ptext=f'Processing {elen} ebuilds', plen=elen)
     for i, (path, content) in enumerate(extracted_ebuilds.items()):
         pbar_update.send(sender=None, index=i + 1)
         components = path.split(os.sep)
-        category = components[1]
-        name = components[2]
-        evr = components[3].replace(f'{name}-', '').replace('.ebuild', '')
+        category = components[0]
+        name = components[1]
+        evr = components[2].replace(f'{name}-', '').replace('.ebuild', '')
         epoch, version, release = find_evr(evr)
         arches = get_gentoo_ebuild_keywords(content)
         for arch in arches:
@@ -205,29 +282,12 @@ def extract_gentoo_overlay_packages(mirror):
     """ Extract packages from gentoo overlay repo
     """
     t = tempfile.mkdtemp()
-    git.Repo.clone_from(mirror.url, t, branch='master', depth=1)
+    info_message.send(sender=None, text=f'Extracting Gentoo packages from {mirror.url}')
+    git.Repo.clone_from(mirror.url, t, depth=1)
     packages = set()
-    arch, c = PackageArchitecture.objects.get_or_create(name='any')
-    for root, dirs, files in os.walk(t):
-        for name in files:
-            if fnmatch(name, '*.ebuild'):
-                full_name = root.replace(t + '/', '')
-                p_category, p_name = full_name.split('/')
-                m = re.match(fr'{p_name}-(.*)\.ebuild', name)
-                if m:
-                    p_evr = m.group(1)
-                epoch, version, release = find_evr(p_evr)
-                package = PackageString(
-                    name=p_name.lower(),
-                    epoch=epoch,
-                    version=version,
-                    release=release,
-                    arch=arch,
-                    packagetype='G',
-                    category=p_category,
-                )
-                packages.add(package)
+    extracted_ebuilds = extract_gentoo_overlay_ebuilds(t)
     shutil.rmtree(t)
+    packages = extract_gentoo_packages_from_ebuilds(extracted_ebuilds)
     return packages
 
 
@@ -235,48 +295,6 @@ def refresh_gentoo_repo(repo):
     """ Refresh a Gentoo repo
     """
     if repo.repo_id == 'gentoo':
-        repo_type = 'main'
         refresh_gentoo_main_repo(repo)
     else:
         refresh_gentoo_overlay_repo(repo)
-        repo_type = 'overlay'
-    ts = get_datetime_now()
-    for mirror in repo.mirror_set.filter(mirrorlist=False, refresh=True, enabled=True):
-        res = get_url(mirror.url + '.md5sum')
-        data = fetch_content(res, 'Fetching Repo checksum')
-        if data is None:
-            mirror.fail()
-            continue
-        checksum = data.decode().split()[0]
-        if checksum is None:
-            mirror.fail()
-            continue
-        if mirror.packages_checksum == checksum:
-            text = 'Mirror checksum has not changed, not refreshing Package metadata'
-            warning_message.send(sender=None, text=text)
-            continue
-        res = get_url(mirror.url)
-        mirror.last_access_ok = response_is_valid(res)
-        if mirror.last_access_ok:
-            data = fetch_content(res, 'Fetching Repo data')
-            if data is None:
-                mirror.fail()
-                continue
-            extracted = extract(data, mirror.url)
-            text = f'Found Gentoo Repo - {mirror.url}'
-            info_message.send(sender=None, text=text)
-            computed_checksum = get_checksum(data, Checksum.md5)
-            if not mirror_checksum_is_valid(computed_checksum, checksum, mirror, 'package'):
-                continue
-            else:
-                mirror.packages_checksum = checksum
-            if repo_type == 'main':
-                packages = extract_gentoo_packages(mirror, extracted)
-            elif repo_type == 'overlay':
-                packages = extract_gentoo_overlay_packages(mirror)
-            mirror.timestamp = ts
-            if packages:
-                update_mirror_packages(mirror, packages)
-        else:
-            mirror.fail()
-        mirror.save()

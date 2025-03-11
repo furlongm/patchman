@@ -34,10 +34,6 @@ from repos.utils import get_or_create_repo
 def process_repos(report, host):
     """ Processes the quoted repos string sent with a report
     """
-    if host.osvariant.name.startswith('Gentoo'):
-        gentoo_repo = Repository.objects.get(repo_id='gentoo')
-        host_repos = HostRepo.objects.filter(host=host)
-        hostrepo, c = host_repos.get_or_create(host=host, repo=gentoo_repo)
     if report.repos:
         repo_ids = []
         host_repos = HostRepo.objects.filter(host=host)
@@ -224,6 +220,7 @@ def process_repo(repo, arch):
         r_type = Repository.GENTOO
         r_id = repo.pop(2)
         r_priority = repo[2]
+        arch = 'any'
 
     if repo[1]:
         r_name = repo[1]
@@ -232,6 +229,8 @@ def process_repo(repo, arch):
 
     unknown = []
     for r_url in repo[3:]:
+        if r_type == Repository.GENTOO and r_url.startswith('rsync'):
+            r_url = 'https://api.gentoo.org/mirrors/distfiles.xml'
         try:
             mirror = Mirror.objects.get(url=r_url.strip('/'))
         except Mirror.DoesNotExist:
@@ -359,19 +358,6 @@ def process_gentoo_package(package, name, category, repo):
     category, created = PackageCategory.objects.get_or_create(name=category)
     package.category = category
     package.save()
-
-    repo_arch, created = MachineArchitecture.objects.get_or_create(name='any')
-    repo_name = 'Gentoo Linux'
-    gentoo_repo = get_or_create_repo(repo_name, repo_arch, Repository.GENTOO, repo)
-
-    if repo == 'gentoo':
-        url = 'https://api.gentoo.org/mirrors/distfiles.xml'
-    else:
-        # this may not be correct. the urls are hardcoded anyway in repos/utils.py
-        # need to figure out a better way to determine which repo/repo url to use
-        url = 'https://api.gentoo.org/overlays/repositories.xml'
-    mirror, c = Mirror.objects.get_or_create(repo=gentoo_repo, url=url, mirrorlist=True)
-    MirrorPackage.objects.create(mirror=mirror, package=package)
 
 
 def get_arch(arch):
