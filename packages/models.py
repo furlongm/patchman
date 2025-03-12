@@ -99,7 +99,7 @@ class Package(models.Model):
         else:
             rel = ''
         if self.packagetype == self.GENTOO:
-            return f'{self.category}/{self.name}_{epo}{self.version}{rel}_{self.arch}.{self.get_packagetype_display()}'
+            return f'{self.category}/{self.name}-{epo}{self.version}{rel}-{self.arch}.{self.get_packagetype_display()}'
         elif self.packagetype in [self.DEB, self.ARCH]:
             return f'{self.name}_{epo}{self.version}{rel}_{self.arch}.{self.get_packagetype_display()}'
         elif self.packagetype == self.RPM:
@@ -195,10 +195,14 @@ class PackageString(models.Model):
             rel = f'-{self.release}'
         else:
             rel = ''
-        if self.packagetype == 'G':
-            return f'{self.category}/{self.name}-{epo}{self.version}{rel}-{self.arch}'
+        if self.packagetype == self.GENTOO:
+            return f'{self.category}/{self.name}-{epo}{self.version}{rel}-{self.arch}.{self.get_packagetype_display()}'
+        elif self.packagetype in [self.DEB, self.ARCH]:
+            return f'{self.name}_{epo}{self.version}{rel}_{self.arch}.{self.get_packagetype_display()}'
+        elif self.packagetype == self.RPM:
+            return f'{self.name}-{epo}{self.version}{rel}-{self.arch}.{self.get_packagetype_display()}'
         else:
-            return f'{self.name}-{epo}{self.version}{rel}-{self.arch}'
+            return f'{self.name}-{epo}{self.version}{rel}-{self.arch}.{self.get_packagetype_display()}'
 
     def __key(self):
         return (self.name, self.epoch, self.version, self.release, self.arch, self.packagetype, self.category)
