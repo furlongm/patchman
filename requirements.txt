@@ -19,3 +19,4 @@ celery==5.4.0
 redis==5.2.1
 django-celery-beat==2.7.0
 tqdm==4.67.1
+cvss==3.4

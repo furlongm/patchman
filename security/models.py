@@ -16,6 +16,7 @@
 
 import json
 import re
+from cvss import CVSS2, CVSS3, CVSS4
 from time import sleep
 
 from django.db import models
@@ -81,6 +82,9 @@ class CVSS(models.Model):
     version = models.DecimalField(max_digits=2, decimal_places=1)
     vector_string = models.CharField(max_length=255, blank=True, null=True)
 
+    class Meta:
+        unique_together = ['score', 'severity', 'version', 'vector_string']
+
     def __str__(self):
         return f'{self.score} ({self.severity}) [{self.vector_string}]'
 
@@ -109,8 +113,37 @@ class CVE(models.Model):
     def get_absolute_url(self):
         return reverse('security:cve_detail', args=[self.cve_id])
 
+    def add_cvss_score(self, vector_string, score=None, severity=None, version=None):
+        if not version:
+            version = vector_string.split('/')[0].replace('CVSS:', '')
+        if version.startswith('2'):
+            cvss_score = CVSS2(vector_string)
+        elif version.startswith('3'):
+            cvss_score = CVSS3(vector_string)
+        elif version.startswith('4'):
+            cvss_score = CVSS4(vector_string)
+        if not score:
+            score = cvss_score.base_score
+        if not severity:
+            severity = cvss_score.severities()[0]
+        existing = self.cvss_scores.filter(version=version, vector_string=vector_string)
+        if existing:
+            cvss = existing.first()
+        else:
+            cvss, created = CVSS.objects.get_or_create(
+                version=version,
+                vector_string=vector_string,
+                score=score,
+                severity=severity,
+            )
+        cvss.score = score
+        cvss.severity = severity
+        cvss.save()
+        self.cvss_scores.add(cvss)
+
     def fetch_cve_data(self, fetch_nist_data=False, sleep_secs=6):
         self.fetch_mitre_cve_data()
+        self.fetch_osv_dev_cve_data()
         if fetch_nist_data:
             self.fetch_nist_cve_data()
             sleep(sleep_secs)  # rate limited, see https://nvd.nist.gov/developers/start-here
@@ -124,6 +157,29 @@ class CVE(models.Model):
         data = fetch_content(res, f'Fetching {self.cve_id} MITRE data')
         cve_json = json.loads(data)
         self.parse_mitre_cve_data(cve_json)
+
+    def fetch_osv_dev_cve_data(self):
+        osv_dev_cve_url = f'https://api.osv.dev/v1/vulns/{self.cve_id}'
+        res = get_url(osv_dev_cve_url)
+        if res.status_code == 404:
+            error_message.send(sender=None, text=f'404 - Skipping {self.cve_id} - {osv_dev_cve_url}')
+            return
+        data = fetch_content(res, f'Fetching {self.cve_id} OSV data')
+        cve_json = json.loads(data)
+        self.parse_osv_dev_cve_data(cve_json)
+
+    def parse_osv_dev_cve_data(self, cve_json):
+        from security.utils import get_or_create_reference
+        references = cve_json.get('references')
+        if references:
+            for reference in references:
+                ref_type = reference.get('type').capitalize()
+                url = reference.get('url')
+                get_or_create_reference(ref_type, url)
+        scores = cve_json.get('severity')
+        if scores:
+            for score in scores:
+                self.add_cvss_score(vector_string=score.get('score'))
 
     def fetch_nist_cve_data(self):
         nist_cve_url = f'https://services.nvd.nist.gov/rest/json/cves/2.0?cveId={self.cve_id}'
@@ -149,13 +205,12 @@ class CVE(models.Model):
                     for scores in score_data:
                         for key, value in scores.items():
                             if key.startswith('cvssData'):
-                                cvss_score, created = CVSS.objects.get_or_create(
+                                self.add_cvss_score(
+                                    vector_string=value.get('vectorString'),
                                     score=value.get('baseScore'),
                                     severity=value.get('baseSeverity'),
-                                    version=value.get('version'),
-                                    vector_string=value.get('vectorString'),
+                                    version=value.get('version')
                                 )
-                                self.cvss_scores.add(cvss_score)
             references = cve.get('references')
             for reference in references:
                 ref_type = 'Link'
@@ -210,11 +265,10 @@ class CVE(models.Model):
                 if metric.get('format') == 'CVSS':
                     for key, value in metric.items():
                         if key.startswith('cvss'):
-                            cvss_score, created = CVSS.objects.get_or_create(
+                            self.add_cvss_score(
+                                vector_string=value.get('vectorString'),
                                 score=value.get('baseScore'),
                                 severity=value.get('baseSeverity'),
-                                version=value.get('version'),
-                                vector_string=value.get('vectorString'),
+                                version=value.get('version')
                             )
-                            self.cvss_scores.add(cvss_score)
         self.save()
