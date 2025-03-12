@@ -19,7 +19,7 @@ from errata.models import Erratum
 
 
 class ErratumAdmin(admin.ModelAdmin):
-    readonly_fields = ('packages', 'references')
+    readonly_fields = ('affected_packages', 'fixed_packages', 'references')
 
 
 admin.site.register(Erratum, ErratumAdmin)

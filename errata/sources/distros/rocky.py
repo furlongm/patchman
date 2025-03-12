@@ -227,13 +227,14 @@ def add_rocky_erratum_packages(e, advisory):
     """
     from modules.utils import get_matching_modules
     packages = advisory.get('packages')
+    fixed_packages = set()
     for package in packages:
         package_name = package.get('nevra')
         if package_name:
             name, epoch, ver, rel, dist, arch = parse_package_string(package_name)
             p_type = Package.RPM
-            pkg = get_or_create_package(name, epoch, ver, rel, arch, p_type)
-            e.packages.add(pkg)
+            fixed_package = get_or_create_package(name, epoch, ver, rel, arch, p_type)
+            fixed_packages.add(fixed_package)
             module_name = package.get('module_name')
             module_context = package.get('module_context')
             module_stream = package.get('module_stream')
@@ -247,4 +248,5 @@ def add_rocky_erratum_packages(e, advisory):
                     arch,
                 )
                 for match in matching_modules:
-                    match.packages.add(pkg)
+                    match.packages.add(fixed_package)
+    e.add_fixed_packages(fixed_packages)

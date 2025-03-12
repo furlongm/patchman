@@ -39,13 +39,19 @@ def package_list(request):
         packages = packages.filter(packagetype=request.GET['packagetype']).distinct()
 
     if 'erratum_id' in request.GET:
-        packages = packages.filter(erratum=request.GET['erratum_id']).distinct()
+        if request.GET['type'] == 'affected':
+            packages = packages.filter(affected_by_erratum=request.GET['erratum_id']).distinct()
+        elif request.GET['type'] == 'fixed':
+            packages = packages.filter(provides_fix_in_erratum=request.GET['erratum_id']).distinct()
 
     if 'host' in request.GET:
         packages = packages.filter(host__hostname=request.GET['host']).distinct()
 
     if 'cve_id' in request.GET:
-        packages = packages.filter(erratum__cves__cve_id=request.GET['cve_id']).distinct()
+        if request.GET['type'] == 'affected':
+            packages = packages.filter(affected_by_erratum__cves__cve_id=request.GET['cve_id']).distinct()
+        elif request.GET['type'] == 'fixed':
+            packages = packages.filter(provides_fix_in_erratum__cves__cve_id=request.GET['cve_id']).distinct()
 
     if 'mirror_id' in request.GET:
         packages = packages.filter(mirror=request.GET['mirror_id']).distinct()

@@ -222,4 +222,4 @@ def add_updateinfo_packages(e, update):
                 p_type=Package.RPM,
             )
             packages.add(package)
-        e.add_packages(packages)
+        e.add_fixed_packages(packages)

@@ -10,7 +10,7 @@
       <th class="col-sm-auto">Type</th>
       <th class="col-sm-auto">Repositories</th>
       <th class="col-sm-auto">Hosts</th>
-      <th class="col-sm-auto">Errata</th>
+      <th class="col-sm-2" colspan="2">Errata</th>
     </tr>
   </thead>
   <tbody>
@@ -22,7 +22,8 @@
         <td> {{ package.arch }} </td><td> {{ package.get_packagetype_display }} </td>
         <td> <a href="{% url 'repos:repo_list' %}?package_id={{ package.id }}">Available from {{ package.repo_count }} Repositories</a> </td>
         <td> <a href="{% url 'hosts:host_list' %}?package_id={{ package.id }}">Installed on {{ package.host_set.count }} Hosts</a> </td>
-        <td> <a href="{% url 'errata:erratum_list' %}?package_id={{ package.id }}">Affected by {{ package.erratum_set.count }} Errata</a> </td>
+        <td> <a href="{% url 'errata:erratum_list' %}?package_id={{ package.id }}&type=affected">Affected by {{ package.affected_by_erratum.count }} Errata</a> </td>
+        <td> <a href="{% url 'errata:erratum_list' %}?package_id={{ package.id }}&type=fixed">Provides fix in {{ package.provides_fix_in_erratum.count }} Errata</a> </td>
       </tr>
     {% endfor %}
   </tbody>

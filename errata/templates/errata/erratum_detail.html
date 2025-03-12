@@ -10,7 +10,8 @@
 
 <ul class="nav nav-tabs">
   <li class="active"><a data-toggle="tab" href="#erratum_details">Details</a></li>
-  <li><a data-toggle="tab" href="#erratum_packages">Packages Affected ({{ erratum.packages.count }})</a></li>
+  <li><a data-toggle="tab" href="#erratum_affected_packages">Packages Affected ({{ erratum.affected_packages.count }})</a></li>
+  <li><a data-toggle="tab" href="#erratum_fixed_packages">Packages Fixed ({{ erratum.fixed_packages.count }})</a></li>
 </ul>
 
 <div class="tab-content">
@@ -21,7 +22,8 @@
         <tr><th class="col-sm-1">Type</th><td> {{ erratum.e_type }} </td></tr>
         <tr><th class="col-sm-1">Published Date</th><td>{{ erratum.issue_date|date|default_if_none:'' }}</td></tr>
         <tr><th class="col-sm-1">Synopsis</th><td> {{ erratum.synopsis }} </td></tr>
-        <tr><th class="col-sm-1">Packages Affected</th><td><a href="{% url 'packages:package_list' %}?erratum_id={{ erratum.id }}"> {{ erratum.packages.count }} </a></td></tr>
+        <tr><th class="col-sm-1">Packages Affected</th><td><a href="{% url 'packages:package_list' %}?erratum_id={{ erratum.id }}&type=affected"> {{ erratum.affected_packages.count }} </a></td></tr>
+        <tr><th class="col-sm-1">Packages Fixed</th><td><a href="{% url 'packages:package_list' %}?erratum_id={{ erratum.id }}&type=fixed"> {{ erratum.fixed_packages.count }} </a></td></tr>
         <tr>
           <th class="col-sm-2">OS Releases Affected</th>
           <td>
@@ -56,16 +58,25 @@
       </table>
     </div>
   </div>
-  <div class="tab-pane fade in" id="erratum_packages">
+  <div class="tab-pane fade in" id="erratum_affected_packages">
     <div class="well well-sm">
-      <div id="packages">
-        <div class="well well-sm">
-          {% for package in erratum.packages.select_related %}
-            <span class="label label-brick {% cycle 'bg-info' 'bg-success' %}">
-              <a href="{{ package.get_absolute_url }}"> {{ package }} </a>
-            </span>
-          {% endfor %}
-        </div>
+      <div class="well well-sm">
+        {% for package in erratum.affected_packages.all %}
+          <span class="label label-brick {% cycle 'bg-info' 'bg-success' %}">
+            <a href="{{ package.get_absolute_url }}"> {{ package }} </a>
+          </span>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="tab-pane fade in" id="erratum_fixed_packages">
+    <div class="well well-sm">
+      <div class="well well-sm">
+        {% for package in erratum.fixed_packages.all %}
+          <span class="label label-brick {% cycle 'bg-info' 'bg-success' %}">
+            <a href="{{ package.get_absolute_url }}"> {{ package }} </a>
+          </span>
+        {% endfor %}
       </div>
     </div>
   </div>

@@ -12,7 +12,8 @@
 
 <ul class="nav nav-tabs">
   <li class="active"><a data-toggle="tab" href="#cve_details">Details</a></li>
-  <li><a data-toggle="tab" href="#cve_packages">Packages Affected ({{ packages|length }})</a></li>
+  <li><a data-toggle="tab" href="#cve_affected_packages">Packages Affected ({{ affected_packages|length }})</a></li>
+  <li><a data-toggle="tab" href="#cve_fixed_packages">Packages Fixed ({{ fixed_packages|length }})</a></li>
 </ul>
 
 <div class="tab-content">
@@ -46,7 +47,8 @@
             {% endfor %}
           </td>
         </tr>
-        <tr><th class="col-sm-1">Affected Packages</th><td><a href="{% url 'packages:package_list' %}?cve_id={{ cve.cve_id }}">{{ packages|length }}</a></td>
+        <tr><th class="col-sm-1">Affected Packages</th><td><a href="{% url 'packages:package_list' %}?cve_id={{ cve.cve_id }}&type=affected">{{ affected_packages|length }}</a></td>
+        <tr><th class="col-sm-1">Fixed Packages</th><td><a href="{% url 'packages:package_list' %}?cve_id={{ cve.cve_id }}&type=fixed">{{ fixed_packages|length }}</a></td>
         <tr><th class="col-sm-1">Errata</th><td><a href="{% url 'errata:erratum_list' %}?cve_id={{ cve.cve_id }}">{{ cve.erratum_set.count }}</a></td>
         <tr>
           <th class="col-sm-2">OSes Affected</th>
@@ -79,9 +81,18 @@
       </table>
     </div>
   </div>
-  <div class="tab-pane fade" id="cve_packages">
+  <div class="tab-pane fade" id="cve_affected_packages">
     <div class="well well-sm">
-      {% for package in packages %}
+      {% for package in affected_packages %}
+        <span class="label label-brick {% cycle 'bg-info' 'bg-success' %}">
+          <a href="{{ package.get_absolute_url }}">{{ package }}</a>
+        </span>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="tab-pane fade" id="cve_fixed_packages">
+    <div class="well well-sm">
+      {% for package in fixed_packages %}
         <span class="label label-brick {% cycle 'bg-info' 'bg-success' %}">
           <a href="{{ package.get_absolute_url }}">{{ package }}</a>
         </span>

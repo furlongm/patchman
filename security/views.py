@@ -113,13 +113,15 @@ def cve_list(request):
 @login_required
 def cve_detail(request, cve_id):
     cve = get_object_or_404(CVE, cve_id=cve_id)
-    packages = Package.objects.filter(erratum__in=cve.erratum_set.all()).distinct()
+    affected_packages = Package.objects.filter(affected_by_erratum__in=cve.erratum_set.all()).distinct()
+    fixed_packages = Package.objects.filter(provides_fix_in_erratum__in=cve.erratum_set.all()).distinct()
     osreleases = OSRelease.objects.filter(erratum__in=cve.erratum_set.all()).distinct()
     references = Reference.objects.filter(Q(erratum__in=cve.erratum_set.all()) | Q(cve=cve)).distinct()
     return render(request,
                   'security/cve_detail.html',
                   {'cve': cve,
-                   'packages': packages,
+                   'affected_packages': affected_packages,
+                   'fixed_packages': fixed_packages,
                    'osreleases': osreleases,
                    'references': references,
                    })

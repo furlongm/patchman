@@ -20,7 +20,7 @@ import json
 from operatingsystems.utils import get_or_create_osrelease
 from patchman.signals import error_message, pbar_start, pbar_update
 from packages.models import Package
-from packages.utils import find_evr, get_matching_packages
+from packages.utils import find_evr, get_matching_packages, get_or_create_package
 from util import get_url, fetch_content
 
 
@@ -149,17 +149,65 @@ def add_arch_erratum_packages(e, advisory):
     data = res.content
     group = json.loads(data)
     packages = group.get('packages')
+
     affected = group.get('affected')
-    epoch, version, release = find_evr(affected)
+    affected_packages = find_arch_affected_packages(affected, packages)
+    e.add_affected_packages(affected_packages)
+
+    fixed = group.get('fixed')
+    fixed_packages = find_arch_fixed_packages(fixed, packages)
+    e.add_fixed_packages(fixed_packages)
+
+    add_arch_erratum_group_references(e, group)
+    add_arch_erratum_group_cves(e, group)
+
+
+def find_arch_affected_packages(affected, packages):
+    """ Find Arch Linux Erratum Affected Packages
+        This checks existing packages for matches and does not
+        require an architecture
+    """
     package_type = Package.ARCH
+    epoch, version, release = find_evr(affected)
+    affected_packages = set()
     for package in packages:
         matching_packages = get_matching_packages(package, epoch, version, release, package_type)
-        if matching_packages:
-            for match in matching_packages:
-                e.packages.add(match)
+        for match in matching_packages:
+            affected_packages.add(match)
+    return affected_packages
+
+
+def find_arch_fixed_packages(fixed, packages):
+    """ Find Arch Linux Erratum Fixed Packages
+        This adds new packages with arch x86_64 only
+    """
+    package_type = Package.ARCH
+    epoch, version, release = find_evr(fixed)
+    fixed_packages = set()
+    for package in packages:
+        fixed_package = get_or_create_package(
+            name=package,
+            epoch=epoch,
+            version=version,
+            release=release,
+            arch='x86_64',
+            p_type=package_type
+        )
+        fixed_packages.add(fixed_package)
+    return fixed_packages
+
+
+def add_arch_erratum_group_references(e, group):
+    """ Add Arch Linux Erratum References
+    """
     references = group.get('references')
     for reference in references:
         e.add_reference('Link', reference)
+
+
+def add_arch_erratum_group_cves(e, group):
+    """ Add Arch Linux Erratum CVEs
+    """
     cve_ids = group.get('issues')
     for cve_id in cve_ids:
         e.add_cve(cve_id)

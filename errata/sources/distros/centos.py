@@ -115,6 +115,7 @@ def add_centos_erratum_references(e, references):
 def parse_centos_errata_children(e, children):
     """ Parse errata children to obtain architecture, release and packages
     """
+    fixed_packages = set()
     for c in children:
         if c.tag == 'os_arch':
             pass
@@ -130,8 +131,9 @@ def parse_centos_errata_children(e, children):
                 release = match.group(1)
                 if accepted_centos_release([release]):
                     p_type = Package.RPM
-                    pkg = get_or_create_package(name, epoch, ver, rel, arch, p_type)
-                    e.packages.add(pkg)
+                    fixed_package = get_or_create_package(name, epoch, ver, rel, arch, p_type)
+                    fixed_packages.add(fixed_package)
+    e.add_fixed_packages(fixed_packages)
 
 
 def get_centos_erratum_releases(releases_xml):

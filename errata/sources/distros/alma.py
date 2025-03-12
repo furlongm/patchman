@@ -130,20 +130,23 @@ def add_alma_erratum_references(e, advisory):
 def add_alma_erratum_packages(e, advisory):
     """ Parse and add packages for Alma Linux errata
     """
+    fixed_packages = set()
     packages = advisory.get('packages')
     for package in packages:
         package_name = package.get('filename')
         if package_name:
             name, epoch, ver, rel, dist, arch = parse_package_string(package_name)
             p_type = Package.RPM
-            pkg = get_or_create_package(name, epoch, ver, rel, arch, p_type)
-            e.packages.add(pkg)
+            fixed_package = get_or_create_package(name, epoch, ver, rel, arch, p_type)
+            fixed_packages.add(fixed_package)
+    e.add_fixed_packages(fixed_packages)
 
 
 def add_alma_erratum_modules(e, advisory):
     """ Parse and add modules for Alma Linux errata
     """
     from modules.utils import get_matching_modules
+    fixed_packages = set()
     modules = advisory.get('modules')
     for module in modules:
         name = module.get('name')
@@ -153,6 +156,7 @@ def add_alma_erratum_modules(e, advisory):
         version = module.get('version')
         matching_modules = get_matching_modules(name, stream, version, context, arch)
         for match in matching_modules:
-            for package in match.packages.all():
-                match.packages.add(package)
-                e.packages.add(package)
+            for fixed_package in match.packages.all():
+                match.packages.add(fixed_package)
+                fixed_packages.add(fixed_package)
+    e.add_fixed_packages(fixed_packages)

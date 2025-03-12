@@ -16,6 +16,7 @@
 
 from util import tz_aware_datetime
 from errata.models import Erratum
+from packages.models import PackageUpdate
 from patchman.signals import pbar_start, pbar_update, warning_message
 
 
@@ -65,3 +66,19 @@ def mark_errata_security_updates():
     for i, e in enumerate(Erratum.objects.all()):
         pbar_update.send(sender=None, index=i + 1)
         e.scan_for_security_updates()
+
+
+def scan_package_updates_for_affected_packages():
+    """ Scan PackageUpdates for packages affected by errata
+    """
+    for pu in PackageUpdate.objects.all():
+        for e in pu.newpackage.provides_fix_in_erratum.all():
+            e.affected_packages.add(pu.oldpackage)
+
+
+def add_errata_affected_packages():
+    elen = Erratum.objects.count()
+    pbar_start.send(sender=None, ptext=f'Adding affected packages to {elen} Errata', plen=elen)
+    for i, e in enumerate(Erratum.objects.all()):
+        pbar_update.send(sender=None, index=i + 1)
+        e.fetch_osv_dev_data()

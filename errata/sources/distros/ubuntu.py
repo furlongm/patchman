@@ -23,8 +23,8 @@ from urllib.parse import urlparse
 
 from operatingsystems.models import OSRelease, OSVariant
 from operatingsystems.utils import get_or_create_osrelease
-from packages.models import Package, PackageName
-from packages.utils import get_or_create_package, parse_package_string, find_evr
+from packages.models import Package
+from packages.utils import get_or_create_package, parse_package_string, find_evr, get_matching_packages
 from util import get_url, fetch_content, get_sha256, bunzip2, get_setting_of_type
 from patchman.signals import error_message, pbar_start, pbar_update
 
@@ -162,8 +162,8 @@ def add_ubuntu_erratum_packages(e, advisory):
     """ Add Ubuntu erratum packages
     """
     affected_releases = advisory.get('releases')
-    package_names = PackageName.objects.all()
     p_type = Package.DEB
+    fixed_packages = set()
     for release, packages in affected_releases.items():
         if release in get_accepted_ubuntu_codenames():
             arches = packages.get('archs')
@@ -174,26 +174,25 @@ def add_ubuntu_erratum_packages(e, advisory):
                         package_name = os.path.basename(path)
                         if package_name.endswith('.deb'):
                             name, epoch, ver, rel, dist, arch = parse_package_string(package_name)
-                            pkg = get_or_create_package(name, epoch, ver, rel, arch, p_type)
-                            e.packages.add(pkg)
+                            fixed_package = get_or_create_package(name, epoch, ver, rel, arch, p_type)
+                            fixed_packages.add(fixed_package)
             else:
                 binaries = packages.get('binaries')
                 allbinaries = packages.get('allbinaries')
                 for package_name, package_data in (binaries | allbinaries).items():
+                    # we don't know the architecture so this requires the packages to
+                    # exist (e.g. on a host or a mirror) to be captured
                     epoch, ver, rel = find_evr(package_data.get('version'))
-                    try:
-                        p_name = package_names.get(name=package_name)
-                    except PackageName.DoesNotExist:
-                        continue
-                    matching_packages = Package.objects.filter(
-                        name=p_name,
+                    matching_packages = get_matching_packages(
+                        name=package_name,
                         epoch=epoch,
                         version=ver,
                         release=rel,
-                        packagetype=p_type,
+                        p_type=p_type,
                     )
-                    for package in matching_packages:
-                        e.packages.add(package)
+                    for fixed_package in matching_packages:
+                        fixed_packages.add(fixed_package)
+    e.add_fixed_packages(fixed_packages)
 
 
 def get_accepted_ubuntu_codenames():
