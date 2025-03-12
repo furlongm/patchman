@@ -25,12 +25,12 @@ from zypp_plugin import Plugin
 
 class MyPlugin(Plugin):
 
-    def PLUGINBEGIN(self, headers, body):
+    def PLUGINBEGIN(self, headers, body):  # noqa
         logging.info('PLUGINBEGIN')
         logging.debug(f'headers: {headers}')
         self.ack()
 
-    def PACKAGESETCHANGED(self, headers, body):
+    def PACKAGESETCHANGED(self, headers, body):  # noqa
         logging.info('PACKAGESETCHANGED')
         logging.debug(f'headers: {headers}')
         print('Sending report to patchman server...')
@@ -40,7 +40,7 @@ class MyPlugin(Plugin):
         os.system(command)
         self.ack()
 
-    def PLUGINEND(self, headers, body):
+    def PLUGINEND(self, headers, body):  # noqa
         logging.info('PLUGINEND')
         logging.debug(f'headers: {headers}')
         self.ack()
