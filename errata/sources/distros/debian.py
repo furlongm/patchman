@@ -213,7 +213,7 @@ def process_debian_erratum(erratum, accepted_codenames):
             osrelease = OSRelease.objects.get(codename=codename)
             e.osreleases.add(osrelease)
             for package in packages:
-                process_debian_erratum_affected_packages(e, package)
+                process_debian_erratum_fixed_packages(e, package)
     except Exception as exc:
         error_message.send(sender=None, text=exc)
 
@@ -297,14 +297,15 @@ def create_debian_os_releases(codename_to_version):
             get_or_create_osrelease(name=osrelease_name, codename=codename)
 
 
-def process_debian_erratum_affected_packages(e, package_data):
-    """ Process packages affected by Debian errata
+def process_debian_erratum_fixed_packages(e, package_data):
+    """ Process packages fixed in a Debian errata
     """
     source_package, source_version = package_data
     epoch, ver, rel = find_evr(source_version)
     package_list = get_debian_dsc_package_list(source_package, source_version)
     if not package_list:
         return
+    fixed_packages = set()
     for line in package_list.splitlines():
         if not line:
             continue
@@ -314,8 +315,9 @@ def process_debian_erratum_affected_packages(e, package_data):
         name = line_parts[0]
         arches = process_debian_dsc_arches(line_parts[4])
         for arch in arches:
-            package = get_or_create_package(name, epoch, ver, rel, arch, Package.DEB)
-            e.packages.add(package)
+            fixed_package = get_or_create_package(name, epoch, ver, rel, arch, Package.DEB)
+            fixed_packages.add(fixed_package)
+    e.add_fixed_packages(fixed_packages)
 
 
 def process_debian_dsc_arches(arches):

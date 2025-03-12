@@ -28,6 +28,7 @@ from taggit.managers import TaggableManager
 
 from arch.models import MachineArchitecture
 from domains.models import Domain
+from errata.models import Erratum
 from hosts.utils import update_rdns
 from modules.models import Module
 from operatingsystems.models import OSVariant
@@ -57,6 +58,7 @@ class Host(models.Model):
     host_repos_only = models.BooleanField(default=True)
     tags = TaggableManager(blank=True)
     updated_at = models.DateTimeField(default=timezone.now)
+    errata = models.ManyToManyField(Erratum, blank=True)
 
     from hosts.managers import HostManager
     objects = HostManager()
@@ -240,19 +242,23 @@ class Host(models.Model):
                 if pu_is_module_package:
                     if not pu_in_enabled_modules:
                         continue
-                if highest_package.compare_version(pu) == -1 \
-                        and package.compare_version(pu) == -1:
-
-                    if priority is not None:
-                        # proceed only if the package is from a repo with a
-                        # priority and that priority is >= the repo priority
-                        pu_best_repo = find_best_repo(pu, hostrepos)
-                        if pu_best_repo:
-                            pu_priority = pu_best_repo.priority
-                            if pu_priority >= priority:
-                                highest_package = pu
-                    else:
-                        highest_package = pu
+                if package.compare_version(pu) == -1:
+                    # package updates that are fixed by erratum (may already be superceded by another update)
+                    errata = pu.provides_fix_in_erratum.all()
+                    if errata:
+                        for erratum in errata:
+                            self.errata.add(erratum)
+                    if highest_package.compare_version(pu) == -1:
+                        if priority is not None:
+                            # proceed only if the package is from a repo with a
+                            # priority and that priority is >= the repo priority
+                            pu_best_repo = find_best_repo(pu, hostrepos)
+                            if pu_best_repo:
+                                pu_priority = pu_best_repo.priority
+                                if pu_priority >= priority:
+                                    highest_package = pu
+                        else:
+                            highest_package = pu
 
             if highest_package != package:
                 uid = self.process_update(package, highest_package)
@@ -282,9 +288,14 @@ class Host(models.Model):
                 if pu_is_module_package:
                     if not pu_in_enabled_modules:
                         continue
-                if highest_package.compare_version(pu) == -1 \
-                        and package.compare_version(pu) == -1:
-                    highest_package = pu
+                if package.compare_version(pu) == -1:
+                    # package updates that are fixed by erratum (may already be superceded by another update)
+                    errata = pu.provides_fix_in_erratum.all()
+                    if errata:
+                        for erratum in errata:
+                            self.errata.add(erratum)
+                    if highest_package.compare_version(pu) == -1:
+                        highest_package = pu
 
             if highest_package != package:
                 uid = self.process_update(package, highest_package)

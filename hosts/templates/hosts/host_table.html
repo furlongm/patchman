@@ -4,8 +4,9 @@
     <tr>
       <th class="col-sm-3">Hostname</th>
       <th class="col-sm-1" colspan="2">Updates</th>
+      <th class="col-sm-1">Affected by Errata</th>
       <th class="col-sm-2">Running Kernel</th>
-      <th class="col-sm-3">OS Variant</th>
+      <th class="col-sm-2">OS Variant</th>
       <th class="col-sm-2">Last Report</th>
       <th class="col-sm-1">Reboot Status</th>
     </tr>
@@ -16,6 +17,7 @@
       <td><a href="{{ host.get_absolute_url }}">{{ host }}</a></td>
       <td class="centered" style="color:red">{% with count=host.get_num_security_updates %}{% if count != 0 %}{{ count }}{% else %}&nbsp;{% endif %}{% endwith %}</td>
       <td class="centered" style="color:orange">{% with count=host.get_num_bugfix_updates %}{% if count != 0 %}{{ count }}{% else %}&nbsp;{% endif %}{% endwith %}</td>
+      <td class="centered">{% with count=host.errata.count %}{% if count != 0 %}<a href="{% url 'errata:erratum_list' %}?host={{ host.hostname }}">{{ count }}{% else %}&nbsp;{% endif %}{% endwith %}<a/></td>
       <td>{{ host.kernel }}</td>
       <td><a href="{{ host.osvariant.get_absolute_url }}">{{ host.osvariant }}</a></td>
       <td>{{ host.lastreport }}{% report_alert host.lastreport %}</td>

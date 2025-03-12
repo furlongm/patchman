@@ -41,10 +41,16 @@ def erratum_list(request):
         errata = errata.filter(cves__cve_id=request.GET['cve_id'])
 
     if 'package_id' in request.GET:
-        errata = errata.filter(packages=request.GET['package_id'])
+        if request.GET['type'] == 'affected':
+            errata = errata.filter(affected_packages=request.GET['package_id'])
+        elif request.GET['type'] == 'fixed':
+            errata = errata.filter(fixed_packages=request.GET['package_id'])
 
     if 'osrelease_id' in request.GET:
         errata = errata.filter(osreleases=request.GET['osrelease_id'])
+
+    if 'host' in request.GET:
+        errata = errata.filter(host__hostname=request.GET['host'])
 
     if 'search' in request.GET:
         terms = request.GET['search'].lower()

@@ -286,7 +286,8 @@ def clean_packages(remove_duplicates=False):
     packages = Package.objects.filter(
         mirror__isnull=True,
         host__isnull=True,
-        erratum__isnull=True,
+        affected_by_erratum__isnull=True,
+        provides_fix_in_erratum__isnull=True,
         module__isnull=True,
     )
     plen = packages.count()

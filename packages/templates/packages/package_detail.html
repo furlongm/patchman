@@ -16,9 +16,9 @@
       <th class="col-sm-1">Release</th>
       <th class="col-sm-1">Arch</th>
       <th class="col-sm-1">Type</th>
-      <th class="col-sm-2">Repositories</th>
-      <th class="col-sm-2">Hosts</th>
-      <th class="col-sm-2">Errata</th>
+      <th class="col-sm-1">Repositories</th>
+      <th class="col-sm-1">Hosts</th>
+      <th class="col-sm-2" colspan="2">Errata</th>
     </tr>
     <tr>
       <td> {{ package.epoch }} </td>
@@ -26,7 +26,8 @@
       <td> {{ package.arch }} </td><td> {{ package.get_packagetype_display }} </td>
       <td> <a href="{% url 'repos:repo_list' %}?package_id={{ package.id }}">Available from {{ package.repo_count }} Repositories</a> </td>
       <td> <a href="{% url 'hosts:host_list' %}?package_id={{ package.id }}">Installed on {{ package.host_set.count }} Hosts</a> </td>
-      <td> <a href="{% url 'errata:erratum_list' %}?package_id={{ package.id }}">Affected by {{ package.erratum_set.count }} Errata</a> </td>
+      <td> <a href="{% url 'errata:erratum_list' %}?package_id={{ package.id }}&type=affected">Affected by {{ package.affected_by_erratum.count }} Errata</a> </td>
+      <td> <a href="{% url 'errata:erratum_list' %}?package_id={{ package.id }}&type=fixed">Provides fix in {{ package.provides_fix_in_erratum.count }} Errata</a> </td>
     </tr>
     <tr><td colspan="9"><a href="{% url 'packages:package_name_detail' package.name %}">See All Versions of this Package</a></td></tr>
   </table>

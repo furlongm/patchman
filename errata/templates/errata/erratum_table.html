@@ -2,11 +2,12 @@
 <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
   <thead>
     <tr>
-      <th class="col-sm-1">ID</th>
+      <th class="col-sm-2">ID</th>
       <th class="col-sm-1">Type</th>
-      <th class="col-sm-2">Published Date</th>
+      <th class="col-sm-1">Published Date</th>
       <th class="col-sm-4">Synopsis</th>
       <th class="col-sm-1">Packages Affected</th>
+      <th class="col-sm-1">Packages Fixed</th>
       <th class="col-sm-1">OS Releases Affected</th>
       <th class="col-sm-1">CVEs</th>
       <th class="col-sm-1">References</th>
@@ -19,10 +20,11 @@
         <td>{{ erratum.e_type }}</td>
         <td>{{ erratum.issue_date|date|default_if_none:'' }}</td>
         <td>{{ erratum.synopsis }}</td>
-        <td><a href="{% url 'packages:package_list' %}?erratum_id={{ erratum.id }}">{{ erratum.packages.count }}</a></td>
-        <td><a href="{% url 'operatingsystems:osrelease_list' %}?erratum_id={{ erratum.id }}">{{ erratum.osreleases.count }}</a></td>
-        <td><a href="{% url 'security:cve_list' %}?erratum_id={{ erratum.id }}">{{ erratum.cves.count }}</td>
-        <td><a href="{% url 'security:reference_list' %}?erratum_id={{ erratum.id }}">{{ erratum.references.count }}</a></td>
+        <td>{% with count=erratum.affected_packages.count %}{% if count != 0 %}<a href="{% url 'packages:package_list' %}?erratum_id={{ erratum.id }}&type=affected">{{ count }}</a>{% else %}&nbsp;{% endif %}{% endwith %}</td>
+        <td>{% with count=erratum.fixed_packages.count %}{% if count != 0 %}<a href="{% url 'packages:package_list' %}?erratum_id={{ erratum.id }}&type=fixed">{{ count }}</a>{% else %}&nbsp;{% endif %}{% endwith %}</td>
+        <td>{% with count=erratum.osreleases.count %}{% if count != 0 %}<a href="{% url 'operatingsystems:osrelease_list' %}?erratum_id={{ erratum.id }}">{{ count }}</a>{% else %}&nbsp;{% endif %}{% endwith %}</td>
+        <td>{% with count=erratum.cves.count %}{% if count != 0 %}<a href="{% url 'security:cve_list' %}?erratum_id={{ erratum.id }}">{{ count }}</a>{% else %}&nbsp;{% endif %}{% endwith %}</td>
+        <td>{% with count=erratum.references.count %}{% if count != 0 %}<a href="{% url 'security:reference_list' %}?erratum_id={{ erratum.id }}">{{ count }}</a>{% else %}&nbsp;{% endif %}{% endwith %}</td>
       </tr>
     {% endfor %}
   </tbody>
