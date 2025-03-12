@@ -123,7 +123,7 @@ def add_alma_erratum_references(e, advisory):
             e.add_cve(ref_id)
             continue
         if ref_type == 'self':
-            ref_type = ref_id.split('-')[0].upper()
+            ref_type = 'Alma Advisory'
         e.add_reference(ref_type, er_url)
 
 

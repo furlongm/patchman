@@ -22,6 +22,7 @@ from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
 from packages.utils import get_or_create_package
 from patchman.signals import pbar_start, pbar_update, error_message
+from security.models import Reference
 from util import extract, get_url
 
 
@@ -68,21 +69,21 @@ def process_updateinfo_erratum(update):
     """
     from errata.utils import get_or_create_erratum
     e_type = update.attrib.get('type')
-    name = update.find('id').text
+    e_name = update.find('id').text
+    name, ref_type, urls = get_distro_data(e_name, e_type)
     synopsis = update.find('title').text
     issue_date = update.find('issued').attrib.get('date')
     e, created = get_or_create_erratum(name, e_type, issue_date, synopsis)
-    add_updateinfo_erratum_references(e, update)
+    add_updateinfo_erratum_references(e, update, ref_type, urls)
     add_updateinfo_packages(e, update)
     update.clear()
 
 
-def add_distro_references(e):
-    """ Adds distro-specific references to an Erratum
+def get_distro_data(name, e_type):
+    """ Adds distro-specific names and references to an Erratum
     """
     urls = []
-    name = e.name
-    e_type = e.erratum_type
+    ref_type = 'Link'
     if name.startswith('ALAS'):
         ref_type = 'Amazon Advisory'
         if name[4] == '-':
@@ -94,7 +95,7 @@ def add_distro_references(e):
             update_path = 'AL2023/'
             name = name.replace('ALAS2023', 'ALAS')
         urls.append(f'https://alas.aws.amazon.com/{update_path}{name}.html')
-    elif name.startswith('openSUSE-SLE'):
+    elif name.startswith('openSUSE-SLE') or name.startswith('openSUSE'):
         ref_type = 'SUSE Advisory'
         update_type = e_type[0].upper() + 'U'
         year = name.split('-')[-2]
@@ -106,6 +107,8 @@ def add_distro_references(e):
         url_path = f'{year}/{prefix}-{year}{number}-'
         for i in range(1, 10):
             url = f'{url_root}{url_path}{i}'
+            if Reference.objects.filter(url=url).exists():
+                continue
             res = get_url(url)
             if res.status_code != 200:
                 break
@@ -117,15 +120,15 @@ def add_distro_references(e):
         ref_type = 'Rocky Advisory'
         urls.append(f'https://errata.rockylinux.org/{name}')
         urls.append(f'https://apollo.build.resf.org/{name}')
+    return name, ref_type, urls
+
+
+def add_updateinfo_erratum_references(e, update, ref_type, urls):
+    """ Adds references to an Erratum
+    """
     if urls:
         for url in urls:
             e.add_reference(ref_type, url)
-
-
-def add_updateinfo_erratum_references(e, update):
-    """ Adds references to an Erratum
-    """
-    add_distro_references(e)
     references = update.find('references')
     for reference in references.findall('reference'):
         if reference.attrib.get('type') == 'cve':

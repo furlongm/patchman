@@ -136,13 +136,20 @@ def fixup_reference(ref):
     return ref
 
 
-def get_or_create_reference(ref_type, url):
+def get_or_create_reference(ref_type, url, update_ref_type=False):
     """ Get or create a Reference object.
     """
     reference = fixup_reference({'ref_type': ref_type, 'url': url})
     if reference:
-        ref, created = Reference.objects.get_or_create(
-            ref_type=reference.get('ref_type'),
-            url=reference.get('url'),
-        )
+        refs = Reference.objects.filter(url=reference.get('url'))
+        if refs:
+            ref = refs.first()
+            if ref.url != reference.get('url') and update_ref_type:
+                ref.ref_type = ref_type
+                ref.save()
+        else:
+            ref, created = Reference.objects.get_or_create(
+                ref_type=reference.get('ref_type'),
+                url=reference.get('url'),
+            )
         return ref
