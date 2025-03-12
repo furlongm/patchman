@@ -86,6 +86,16 @@ def object_count(page):
 
 
 @register.simple_tag
+def get_querydict(request):
+    get = request.GET.copy()
+    if 'page' in get:
+        del get['page']
+    if 'search' in get:
+        del get['search']
+    return get
+
+
+@register.simple_tag
 def get_querystring(request):
     get = request.GET.copy()
     if 'page' in get:
@@ -94,9 +104,9 @@ def get_querystring(request):
 
 
 @register.simple_tag
-def searchform(terms):
+def searchform(terms, querydict):
     template = get_template('searchbar.html')
-    html = template.render({'post_url': '.', 'terms': terms})
+    html = template.render({'post_url': '.', 'terms': terms, 'querydict': querydict})
     return html
 
 
