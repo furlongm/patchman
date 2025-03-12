@@ -46,6 +46,7 @@
           <th class="col-sm-2">References</th>
           <td>
             <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+              <tr><td>osv.dev</td><td><a href="https://osv.dev/vulnerability/{{ erratum.name }}">https://osv.dev/vulnerability/{{ erratum.name }}</a></td></tr>
               {% for reference in erratum.references.all %}
                 <tr>
                   <td>{{ reference.ref_type }}</td>
