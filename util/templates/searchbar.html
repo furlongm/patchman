@@ -2,7 +2,10 @@
 <div>
   <form method="get">
     <div class="input-group">
-      <input type="text" class="form-control input-sm" placeholder="Search" name="search" value="{{ terms }}" id="search">
+      <input type="text" class="form-control input-sm" placeholder="Search" name="search" id="search" value="{{ terms }}">
+      {% for key, value in querydict.items %}
+        <input type="hidden" id="{{ key }}" name="{{ key }}" value="{{ value }}">
+      {% endfor %}
       <div class="input-group-btn">
         <button class="btn btn-primary btn-sm" type="submit">{% bootstrap_icon "search" %}</button>
       </div>

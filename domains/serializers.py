@@ -20,6 +20,6 @@ from domains.models import Domain
 
 
 class DomainSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta(object):
+    class Meta:
         model = Domain
         fields = ('id', 'name')
