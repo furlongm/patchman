@@ -297,10 +297,20 @@ get_installed_archlinux_packages() {
     fi
 }
 
+get_installed_gentoo_packages() {
+    if check_command_exists qkeyword ; then
+        gentoo_package_arch=$(qkeyword -A)
+    fi
+    if check_command_exists qlist ; then
+        qlist -Ic -F "'%{PN}' '%{SLOT}' '%{PV}' REL'%{PR}' '${gentoo_package_arch}' 'gentoo' '%{CAT}' '%{REPO}'" | sed -e "s/REL'r/'/g"  >> "${tmpfile_pkg}"
+    fi
+}
+
 get_packages() {
     get_installed_rpm_packages
     get_installed_deb_packages
     get_installed_archlinux_packages
+    get_installed_gentoo_packages
 }
 
 get_modules() {
@@ -346,7 +356,9 @@ get_host_data() {
             os="${PRETTY_NAME}"
         elif [ "${ID}" == "arch" ] ; then
             os="${NAME}"
-        elif [[ "${ID}" =~ "suse" ]] ; then
+        elif [ "${ID}" == "gentoo" ] ; then
+            os="${PRETTY_NAME} ${VERSION_ID}"
+        elif [[ "${ID_LIKE}" =~ "suse" ]] ; then
             os="${PRETTY_NAME}"
         elif [ "${ID}" == "astra" ] ; then
             os="${NAME} $(cat /etc/astra_version)"
@@ -385,6 +397,9 @@ get_host_data() {
                 esac
             fi
         done
+    fi
+    if [ ! -z "${CPE_NAME}" ] ; then
+        os="${os} [${CPE_NAME}]"
     fi
     if ${verbose} ; then
         echo "Kernel:   ${host_kernel}"
@@ -452,7 +467,7 @@ get_repos() {
         fi
         # replace this with a dedicated awk or simple python script?
         yum_repolist=$(yum repolist enabled --verbose 2>/dev/null | sed -e "s/:\? *([0-9]\+ more)$//g" -e "s/ ([0-9]\+$//g" -e "s/:\? more)$//g" -e "s/'//g" -e "s/%/%%/g")
-        for i in $(echo "${yum_repolist}" | awk '{ if ($1=="Repo-id") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'"'"' "} if ($1=="Repo-name") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'" ${host_arch}'"' "} if ($1=="Repo-mirrors" || $1=="Repo-metalink:") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'"'"' "} if ($1=="Repo-baseurl" || $1=="Repo-baseurl:") { url=1; comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else { if (url==1) { if ($1==":") { comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else {url=0; print "";} } } }' | sed -e "s/\/'/'/g" | sed -e "s/ ' /' /") ; do
+        for i in $(echo "${yum_repolist}" | awk '{ if ($1=="Repo-id") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'"'"' "} if ($1=="Repo-name") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'" ${host_arch}'"' "} if ($1=="Repo-mirrors" || $1=="Repo-metalink") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'"'"' "} if ($1=="Repo-baseurl" || $1=="Repo-baseurl:") { url=1; comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else { if (url==1) { if ($1==":") { comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else {url=0; print "";} } } }' | sed -e "s/\/'/'/g" | sed -e "s/ ' /' /") ; do
             full_id=$(echo ${i} | cut -d \' -f 2)
             id=$(echo ${i} | cut -d \' -f 2 | cut -d \/ -f 1)
             name=$(echo ${i} | cut -d \' -f 4)
@@ -463,7 +478,7 @@ get_repos() {
             if [ "${priority}" == "" ] ; then
                 priority=99
             fi
-            redhat_repo=$(echo ${i} | grep -e "https://.*/XMLRPC.*\|https://cdn.redhat.com/.*")
+            redhat_repo=$(echo ${i} | grep -e "https://.*/XMLRPC.*\|https://cdn[-[a-z]*]*.redhat.com/.*")
             if [ ${?} == 0 ] || ${local_updates} ; then
                 if ${verbose} ; then
                     echo "Finding updates locally for ${id}"
@@ -473,7 +488,7 @@ get_repos() {
             if [ ! -z ${CPE_NAME} ] ; then
                 id="${CPE_NAME}-${id}"
             fi
-            j=$(echo ${i} | sed -e "s#'${full_id}' '${name}'#'${name}' '${id}' '${priority}'#")
+            j=$(echo ${i} | sed -e "s#'${full_id}' '${name}'#'${name}' '${id}' '${priority}'#" | sed -e "s/'\[/'/g" -e "s/\]'/'/g")
             echo "'rpm' ${j}" >> "${tmpfile_rep}"
             unset priority
         done
@@ -484,7 +499,8 @@ get_repos() {
         if ${verbose} ; then
             echo 'Finding apt repos...'
         fi
-        IFS=${FULL_IFS} read -r osname shortversion <<<$(echo "${os}" | awk '{print $1,$2}' | cut -d . -f 1,2)
+        osname=$(echo ${os} | cut -d " " -f 1)
+        shortversion=${VERSION_ID}
         repo_string="'deb\' \'${osname} ${shortversion} ${host_arch} repo at"
         repos=$(apt-cache policy | grep -v Translation | grep -E "^ *[0-9]{1,5}" | grep -E " mirror\+file|http(s)?:" | sed -e "s/^ *//g" -e "s/ *$//g" | cut -d " " -f 1,2,3,4)
         non_mirror_repos=$(echo "${repos}" | grep -Ev "mirror\+file")
@@ -510,11 +526,11 @@ get_repos() {
             echo 'Finding zypper repos...'
         fi
         if [ $(zypper -q --no-refresh lr --details | head -n 1 | grep Keep) ] ; then
-            zypper_lr_cols="2,3,8,10"
+            zypper_lr_cols='{print "${os}" $3 "|" $2 "|" $8 "|" $10}'
         else
-            zypper_lr_cols="2,3,7,9"
+            zypper_lr_cols='{print "${os}" $3 "|" $2 "|" $7 "|" $9}'
         fi
-        for i in $(zypper -q --no-refresh lr -E -u --details | grep -v ^$ | tail -n +3 | cut -d "|" -f ${zypper_lr_cols} | sed -e "s/ *|/ ${host_arch} |/" -e "s/\?[a-zA-Z0-9_-]* *$//" -e "s/^ /'/g" -e "s/ *| */' '/g" -e "s/ *$/'/g") ; do
+        for i in $(zypper -q --no-refresh lr -E -u --details | grep -v ^$ | tail -n +3 | awk -F"|" "${zypper_lr_cols}" | sed -e "s/\${os}/${PRETTY_NAME}/" -e "s/ *|/ ${host_arch} |/" -e "s/\?[a-zA-Z0-9_-]* *$//" -e "s/^/'/g" -e "s/ *| */' '/g" -e "s/ *$/'/g") ; do
             echo \'rpm\' ${i} >> "${tmpfile_rep}"
             id=$(echo ${i} | cut -d \' -f 4)
             suse_repo=$(echo ${i} | grep -e "https://updates.suse.com/.*")
@@ -554,6 +570,56 @@ get_repos() {
         done
         for r in "${!repos[@]}"; do
             echo "'arch' 'Arch Linux ${r} ${host_arch}' '${r}' ${repos[${r}]}" >> "${tmpfile_rep}"
+        done
+    fi
+
+    # Gentoo
+    if [[ "${os}" =~ "Gentoo" ]] ; then
+        if [ ${verbose} == 1 ] ; then
+            echo 'Finding portage repos...'
+        fi
+        declare -A repo_info
+        repos_output=$(portageq repos_config /)
+        repo_name=""
+        priority=""
+        sync_uri=""
+
+        while IFS= read -r line; do
+            # if the line starts with a section header (e.g., [gentoo], [guru]), it's the repo name
+            if [[ "${line}" =~ ^\[(.*)\] ]]; then
+                # if we already have a repo_name, save the previous entry
+                if [[ -n "${repo_name}" && -n "${sync_uri}" ]]; then
+                    repo_info["${repo_name}"]="${priority},${sync_uri}"
+                fi
+                # else start new repo parsing, resetting vars
+                repo_name="${BASH_REMATCH[1]}"
+                priority=""
+                sync_uri=""
+            fi
+
+            # if the line contains "priority", extract the value, 0 if it doesnt exist
+            if [[ "${line}" =~ "priority" ]]; then
+                priority=$(echo "${line}" | cut -d'=' -f2 | xargs)
+            fi
+
+            # if the line contains "sync-uri", extract the value
+            if [[ "${line}" =~ "sync-uri" ]]; then
+                sync_uri=$(echo "${line}" | cut -d'=' -f2 | xargs)
+            fi
+        done <<< "${repos_output}"
+
+        # save the last repository entry if it's available
+        if [[ -n "${repo_name}" && -n "${sync_uri}" ]]; then
+            repo_info["${repo_name}"]="${priority},${sync_uri}"
+        fi
+
+        for repo in "${!repo_info[@]}"; do
+            priority=$(echo ${repo_info[$repo]} | cut -d',' -f1)
+            sync_uri=$(echo ${repo_info[$repo]} | cut -d',' -f2)
+            if [ "${priority}" == "" ] ; then
+                priority=0
+            fi
+            echo "'gentoo' 'Gentoo Linux ${repo} Repo ${host_arch}' '${repo}' '${priority}' '${sync_uri}'" >> "${tmpfile_rep}"
         done
     fi
 
@@ -629,10 +695,11 @@ post_data() {
 }
 
 if ! check_command_exists which || \
+   ! check_command_exists awk || \
    ! check_command_exists mktemp || \
    ! check_command_exists curl || \
    ! check_command_exists flock ; then
-    echo "which, mktemp, flock or curl was not found, exiting."
+    echo "which, awk, mktemp, flock or curl was not found, exiting."
     exit 1
 fi
 
