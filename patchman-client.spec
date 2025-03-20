@@ -8,7 +8,7 @@ License: GPLv3
 URL: http://patchman.openbytes.ie
 Source: %{expand:%%(pwd)}
 BuildArch: noarch
-Requires: curl which coreutils util-linux
+Requires: curl which coreutils util-linux awk
 
 %define binary_payload w9.gzdio
 
