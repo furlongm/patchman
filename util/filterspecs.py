@@ -22,17 +22,14 @@ from operator import itemgetter
 
 
 def get_query_string(qs):
-    newqs = ['{0!s}={1!s}'.format(k, v) for k, v in list(qs.items())]
-    return '?' + '&amp;'.join(newqs).replace(' ', '%20')
+    new_qs = [f'{k}={v}' for k, v in list(qs.items())]
+    return '?' + '&amp;'.join(new_qs).replace(' ', '%20')
 
 
-class Filter(object):
+class Filter:
 
-    def __init__(self, request, name, filters, header=''):
-        if header == '':
-            self.header = name
-        else:
-            self.header = header
+    def __init__(self, request, header, name, filters):
+        self.header = header
 
         if isinstance(filters, tuple):
             filters = dict(filters)
@@ -54,18 +51,17 @@ class Filter(object):
 
     def output(self, qs):
         if self.name in qs:
-            del(qs[self.name])
+            del qs[self.name]
 
         output = '<div class="panel panel-default">\n'
-        output += '<div class="panel-heading">'
-        output += '{0!s}</div>\n'.format(self.header.replace('_', ' '))
+        output += f'<div class="panel-heading">{self.header}</div>\n'
         output += '<div class="panel-body">\n'
         output += '<div class="list-group list-group-info">\n'
-        output += '<a href="{0!s}" '.format(get_query_string(qs))
+        output += f'<a href="{get_query_string(qs)}" '
         output += 'class="list-group-item'
         if self.selected is None:
             output += ' list-group-item-success'
-        output += '">all</a>\n'
+        output += '">Unfiltered</a>\n'
 
         filters = sorted(iter(self.filters.items()), key=itemgetter(1))
         for k, v in filters:
@@ -73,13 +69,13 @@ class Filter(object):
             if str(self.selected) == str(k):
                 style = 'list-group-item-success'
             qs[self.name] = k
-            output += '<a href="{0!s}" class='.format(get_query_string(qs))
-            output += '"list-group-item {0!s}">{1!s}</a>\n'.format(style, v)
+            output += f'<a href="{get_query_string(qs)}" class='
+            output += f'"list-group-item {style}">{v}</a>\n'
         output += '</div></div></div>'
         return output
 
 
-class FilterBar(object):
+class FilterBar:
 
     def __init__(self, request, filter_list):
         self.request = request

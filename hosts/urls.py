@@ -26,4 +26,5 @@ urlpatterns = [
     path('<str:hostname>/', views.host_detail, name='host_detail'),
     path('<str:hostname>/delete/', views.host_delete, name='host_delete'),
     path('<str:hostname>/edit/', views.host_edit, name='host_edit'),
+    path('<str:hostname>/updates/', views.host_find_updates, name='host_updates'),
 ]
