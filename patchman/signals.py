@@ -17,8 +17,8 @@
 
 from django.dispatch import Signal
 
-progress_info_s = Signal()
-progress_update_s = Signal()
+pbar_start = Signal()
+pbar_update = Signal()
 info_message = Signal()
 warning_message = Signal()
 error_message = Signal()

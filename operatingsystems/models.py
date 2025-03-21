@@ -22,37 +22,50 @@ from arch.models import MachineArchitecture
 from repos.models import Repository
 
 
-class OSGroup(models.Model):
+class OSRelease(models.Model):
 
-    name = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255, unique=True, blank=False, null=False)
     repos = models.ManyToManyField(Repository, blank=True)
+    codename = models.CharField(max_length=255, blank=True)
+    cpe_name = models.CharField(max_length=255, null=True, blank=True, unique=True)
+
+    from operatingsystems.managers import OSReleaseManager
+    objects = OSReleaseManager()
 
     class Meta:
-        verbose_name = 'Operating System Group'
-        verbose_name_plural = 'Operating System Groups'
-        ordering = ('name',)
+        verbose_name = 'Operating System Release'
+        verbose_name_plural = 'Operating System Releases'
+        unique_together = ['name', 'codename', 'cpe_name']
+        ordering = ['name']
 
     def __str__(self):
-        return self.name
+        if self.codename:
+            return f'{self.name} ({self.codename})'
+        else:
+            return self.name
 
     def get_absolute_url(self):
-        return reverse('operatingsystems:osgroup_detail', args=[str(self.id)])
+        return reverse('operatingsystems:osrelease_detail', args=[str(self.id)])
+
+    def natural_key(self):
+        return (self.name, self.codename, self.cpe_name)
 
 
-class OS(models.Model):
+class OSVariant(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
     arch = models.ForeignKey(MachineArchitecture, blank=True, null=True, on_delete=models.CASCADE)
-    osgroup = models.ForeignKey(OSGroup, blank=True, null=True,
-                                on_delete=models.SET_NULL)
+    osrelease = models.ForeignKey(OSRelease, blank=True, null=True, on_delete=models.SET_NULL)
+    codename = models.CharField(max_length=255, blank=True)
 
     class Meta:
-        verbose_name = 'Operating System'
-        verbose_name_plural = 'Operating Systems'
-        ordering = ('name',)
+        verbose_name = 'Operating System Variant'
+        verbose_name_plural = 'Operating System Variants'
+        ordering = ['name']
 
     def __str__(self):
-        return self.name
+        osvariant_name = f'{self.name} {self.arch}'
+        return osvariant_name
 
     def get_absolute_url(self):
-        return reverse('operatingsystems:os_detail', args=[str(self.id)])
+        return reverse('operatingsystems:osvariant_detail', args=[str(self.id)])

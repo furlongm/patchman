@@ -15,8 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.forms import ModelForm, ModelMultipleChoiceField, TextInput, \
-    Form, ModelChoiceField, ValidationError
+from django.forms import ModelForm, ModelMultipleChoiceField, TextInput, Form, ModelChoiceField, ValidationError
 from django.contrib.admin.widgets import FilteredSelectMultiple
 
 from repos.models import Repository, Mirror
@@ -91,9 +90,9 @@ class EditMirrorForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['url'].widget = TextInput(attrs={'size': 150},)
-        self.fields['file_checksum'].widget = TextInput(attrs={'size': 100},)
+        self.fields['packages_checksum'].widget = TextInput(attrs={'size': 100},)
 
     class Meta:
         model = Mirror
         fields = ('repo', 'url', 'enabled', 'refresh', 'mirrorlist',
-                  'last_access_ok', 'fail_count', 'file_checksum')
+                  'last_access_ok', 'fail_count', 'packages_checksum')
