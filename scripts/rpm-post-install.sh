@@ -23,6 +23,9 @@ patchman-manage migrate --run-syncdb --fake-initial
 sqlite3 /var/lib/patchman/db/patchman.db 'PRAGMA journal_mode=WAL;'
 
 chown -R apache:apache /var/lib/patchman
+adduser --system --group patchman-celery
+usermod -a -G apache patchman-celery
+chmod g+w /var/lib/patchman /var/lib/patchman/db /var/lib/patchman/db/patchman.db
 chcon --type httpd_sys_rw_content_t /var/lib/patchman/db/patchman.db
 semanage port -a -t http_port_t -p tcp 5672
 setsebool -P httpd_can_network_memcache 1
