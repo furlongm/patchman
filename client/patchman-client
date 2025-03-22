@@ -1,6 +1,8 @@
 #!/bin/bash
 
 export LC_ALL=C
+export FULL_IFS=$' \t\n'
+export NL_IFS=$'\n'
 
 conf=/etc/patchman/patchman-client.conf
 protocol=1
@@ -71,17 +73,20 @@ cleanup() {
         echo "Debug: not deleting ${tmpfile_rep} (repos)"
         echo "Debug: not deleting ${tmpfile_sec} (security updates)"
         echo "Debug: not deleting ${tmpfile_bug} (updates)"
+        echo "Debug: not deleting ${tmpfile_mod} (modules)"
     elif ${verbose} && ! ${debug} ; then
         echo "Deleting ${tmpfile_pkg}"
         echo "Deleting ${tmpfile_rep}"
         echo "Deleting ${tmpfile_sec}"
         echo "Deleting ${tmpfile_bug}"
+        echo "Deleting ${tmpfile_mod}"
     fi
     if ! ${debug} ; then
         rm -fr "${tmpfile_pkg}"
         rm -fr "${tmpfile_rep}"
         rm -fr "${tmpfile_sec}"
         rm -fr "${tmpfile_bug}"
+        rm -fr "${tmpfile_mod}"
     fi
     flock -u 200
     rm -fr "${lock_dir}/patchman.lock"
@@ -170,13 +175,75 @@ check_command_exists() {
     fi
 }
 
+check_for_modularity() {
+    modularity=false
+    if check_command_exists yum ; then
+        if ${verbose} ; then
+            echo 'Checking for modularity...'
+        fi
+        if yum module 2>&1 | grep -q 'No such command' ; then
+            modularity=false
+        else
+            modularity=true
+        fi
+    fi
+}
+
+parse_module() {
+    module_info=$(echo -e ${1})
+    module_arch=$(echo "${module_info}" | grep ^Architecture | cut -d : -f 2 | awk '{$1=$1};1')
+    module_repo=$(echo "${module_info}" | grep ^Repo | cut -d : -f 2 | awk '{$1=$1};1')
+    module_stream=$(echo "${module_info}" | grep ^Stream | cut -d : -f 2 | sed -e 's/ \[.*//g' | awk '{$1=$1};1')
+    module_version=$(echo "${module_info}" | grep ^Version | cut -d : -f 2 | awk '{$1=$1};1')
+    module_context=$(echo "${module_info}" | grep ^Context | cut -d : -f 2 | awk '{$1=$1};1')
+    module_packages=$(echo "${module_info}" | sed -n '/Artifacts/,$p' | sed -e 's/Artifacts //' | sed -e 's/^: *//g' | grep -v ^$)
+    IFS=${NL_IFS}
+    module_package_str=""
+    for package in ${module_packages} ; do
+        module_package_str="${module_package_str} '${package}'"
+    done
+    IFS=${FULL_IFS}
+    if [ ! -z ${CPE_NAME} ] ; then
+        module_repo="${CPE_NAME}-${module_repo}"
+    fi
+    echo "'${module}' '${module_stream}' '${module_version}' '${module_context}' '${module_arch}' '${module_repo}'${module_package_str}" >> ${tmpfile_mod}
+}
+
+get_enabled_modules() {
+    if ${verbose} ; then
+        echo 'Finding enabled yum modules...'
+    fi
+
+    enabled_modules=$(yum module list --enabled \
+        | grep "\[e\]" \
+        | grep -v ^Hint \
+        | awk '{print $1}')
+
+    for module in ${enabled_modules} ; do
+        modules_info=$(yum module info ${module} | grep -v ^Hint)
+        unset x
+        while read -r line ; do
+            if [ -z "${line}" ] ; then
+                echo -e "${x}" | grep -q -E "^Stream.*\[e\]" && parse_module "${x}"
+                unset x
+            else
+                x="${x}${line}\n"
+            fi
+        done < <(echo "${modules_info}")
+    done
+
+    if ${debug} ; then
+        cat "${tmpfile_mod}"
+    fi
+}
+
 get_installed_rpm_packages() {
     if check_command_exists rpm ; then
         if ${verbose} ; then
             echo 'Finding installed rpms...'
         fi
 
-        rpm -qa --queryformat "'%{NAME}' '%{EPOCH}' '%{version}' '%{RELEASE}' '%{ARCH}' 'rpm'\n" 2>/dev/null \
+        rpm -qa --queryformat "'%{NAME}' '%{EPOCH}' '%{VERSION}' '%{RELEASE}' '%{ARCH}' 'rpm'\n" 2>/dev/null \
         | sed -e 's/(none)//g' \
         | sed -e 's/\+/%2b/g' >> "${tmpfile_pkg}"
 
@@ -191,29 +258,51 @@ get_installed_deb_packages() {
         if ${verbose} ; then
             echo 'Finding installed debs...'
         fi
-        OLDIFS=${IFS}
-        IFS="
-"
-        dpkg_query_output=$(dpkg-query -W --showformat="\${Status}\|\${Package} \${Version} \${Architecture}\n" \
-                            | egrep '^(install)|(hold) ok installed' \
-                            | sed -e 's/^\(install\|hold\) ok installed|//g')
-        for i in ${dpkg_query_output} ; do
-            IFS=${OLDIFS}
-            read -r name fullversion arch <<<$(echo "${i}" | cut -d " " -f 1,2,3)
-            read -r remaining release <<<$(echo "${fullversion}" | sed -e "s/\(.*\)-\(.*\)/\1 \2/")
-            epoch=$(echo "${remaining}" | cut -d ":" -f 1 -s)
-            version=$(echo "${remaining}" | sed -e "s/.*:\(.*\)/\1/")
-            echo \'${name}\' \'${epoch}\' \'${version}\' \'${release}\' \'${arch}\' \'deb\'>> "${tmpfile_pkg}"
-            if ${debug} ; then
-                echo \'${name}\' \'${epoch}\' \'${version}\' \'${release}\' \'${arch}\' \'deb\'
-            fi
-        done
+        dpkg-query -W --showformat='${Status}|${Package}|${Version}|${Architecture}\n' |
+            awk -f <(cat <<'AWK'
+                /^(install|hold) ok installed\|/ {
+                    split($0, parts, "|");
+                    package = parts[2];
+                    version = parts[3];
+                    architecture = parts[4];
+                    epoch = "";
+                    release = "";
+
+                    if (split(version, epoch_t, ":") > 1) {
+                        epoch = epoch_t[1];
+                        version = substr(version, length(epoch) + 2);
+                    }
+                    n = split(version, version_t, "-");
+                    if (n > 1) {
+                        release = version_t[n]
+                        version = substr(version, 1, length(version) - length(release) - 1);
+                    }
+
+                    print "'" package "'", "'" epoch "'", "'" version "'", "'" release "'", "'" architecture "'", "'deb'"
+                }
+AWK
+            ) >> "${tmpfile_pkg}"
+        if ${debug} ; then
+            echo "'name' 'epoch' 'version' 'release' 'arch' 'type'"
+            cat "${tmpfile_pkg}"
+        fi
     fi
 }
 
 get_installed_archlinux_packages() {
     if check_command_exists pacman ; then
+        IFS=${NL_IFS}
         pacman -Q -i | awk -v q="'" -v s=" " '/^Name/{n=$3} /^Version/{l=split($3, e, ":"); if (l==2) {ep=e[1]; v=e[2]} else {ep=""; v=$3}; split(v, r, "-")} /^Architecture/{a=$3} /^$/{print q n q s q ep q s q r[1] q s q r[2] q s q a q s q"arch"q}' >> "${tmpfile_pkg}"
+        IFS=${FULL_IFS}
+    fi
+}
+
+get_installed_gentoo_packages() {
+    if check_command_exists qkeyword ; then
+        gentoo_package_arch=$(qkeyword -A)
+    fi
+    if check_command_exists qlist ; then
+        qlist -Ic -F "'%{PN}' '%{SLOT}' '%{PV}' REL'%{PR}' '${gentoo_package_arch}' 'gentoo' '%{CAT}' '%{REPO}'" | sed -e "s/REL'r/'/g"  >> "${tmpfile_pkg}"
     fi
 }
 
@@ -221,6 +310,14 @@ get_packages() {
     get_installed_rpm_packages
     get_installed_deb_packages
     get_installed_archlinux_packages
+    get_installed_gentoo_packages
+}
+
+get_modules() {
+    check_for_modularity
+    if ${modularity} ; then
+        get_enabled_modules
+    fi
 }
 
 get_hostname() {
@@ -259,8 +356,12 @@ get_host_data() {
             os="${PRETTY_NAME}"
         elif [ "${ID}" == "arch" ] ; then
             os="${NAME}"
-        elif [[ "${ID}" =~ "suse" ]] ; then
+        elif [ "${ID}" == "gentoo" ] ; then
+            os="${PRETTY_NAME} ${VERSION_ID}"
+        elif [[ "${ID_LIKE}" =~ "suse" ]] ; then
             os="${PRETTY_NAME}"
+        elif [ "${ID}" == "astra" ] ; then
+            os="${NAME} $(cat /etc/astra_version)"
         else
             os="${NAME} ${VERSION}"
         fi
@@ -297,6 +398,9 @@ get_host_data() {
             fi
         done
     fi
+    if [ ! -z "${CPE_NAME}" ] ; then
+        os="${os} [${CPE_NAME}]"
+    fi
     if ${verbose} ; then
         echo "Kernel:   ${host_kernel}"
         echo "Arch:     ${host_arch}"
@@ -306,23 +410,40 @@ get_host_data() {
 
 get_yum_updates() {
     yum -q makecache 2>/dev/null
-    yum -C --security list updates --disablerepo="*" --enablerepo="${1}" 2>&1 \
-    | grep -v 'excluded' \
+    let yum_major_version=$(yum --version | head -n 1 | cut -d "." -f 1)
+    if [ ${yum_major_version} -gt 3 ] ; then
+        yum -q -C --security list updates --disablerepo="*" --enablerepo="${1}" 2>&1 \
+        | tr "\n" "#" | sed -e 's/# / /g' | tr "#" "\n" \
+        | grep -v ': ' \
+        | grep -v 'Limiting package lists to security relevant ones' \
+        | grep -v 'Available Upgrades' \
+        | grep -v 'Updated Packages' \
+        | grep -v 'excluded' \
+        | grep -v 'Last metadata expiration check' \
+        | grep -v 'needed for security' \
+        | grep -v 'Loaded plugins' \
+        | grep -v 'Subscription Management' \
+        | grep -v 'Failed to set locale' \
+        >> "${tmpfile_sec}"
+        sed -i '/^$/d' "${tmpfile_sec}"
+    fi
+    yum -q -C list updates --disablerepo="*" --enablerepo="${1}" 2>&1 \
+    | tr "\n" "#" | sed -e 's/# / /g' | tr "#" "\n" \
+    | grep -v ': ' \
     | grep -v 'Available Upgrades' \
     | grep -v 'Updated Packages' \
+    | grep -v 'excluded' \
     | grep -v 'Last metadata expiration check' \
     | grep -v 'needed for security' \
     | grep -v 'Loaded plugins' \
     | grep -v 'Subscription Management' \
-    >> "${tmpfile_sec}"
-    yum -C list updates --disablerepo="*" --enablerepo="${1}" 2>&1 \
-    | grep -v 'excluded' \
-    | grep -v 'Available Upgrades' \
-    | grep -v 'Updated Packages' \
-    | grep -v 'Last metadata expiration check' \
-    | grep -v 'Loaded plugins' \
-    | grep -v 'Subscription Management' \
+    | grep -v 'Failed to set locale' \
     >> "${tmpfile_bug}"
+    sed -i '/^$/d' "${tmpfile_bug}"
+    if [ ! -z ${CPE_NAME} ] ; then
+        sed -i -e "s#${1}#${CPE_NAME}-${1}#g" "${tmpfile_sec}"
+        sed -i -e "s#${1}#${CPE_NAME}-${1}#g" "${tmpfile_bug}"
+    fi
 }
 
 get_zypper_updates() {
@@ -332,9 +453,7 @@ get_zypper_updates() {
 }
 
 get_repos() {
-    OLDIFS=${IFS}
-    IFS="
-"
+    IFS=${NL_IFS}
 
     # Red Hat / CentOS
     if check_command_exists yum ; then
@@ -344,11 +463,11 @@ get_repos() {
         releasever=$(rpm -q --qf "%{version}\n" --whatprovides redhat-release | sort -u)
         let numrepos=$(ls /etc/yum.repos.d/*.repo | wc -l)
         if [ ${numrepos} -gt 0 ] ; then
-            priorities=$(sed -n -e "/^name/h; /priority *=/{ G; s/\n/ /; s/ity *= *\(.*\)/ity=\1/ ; s/\$releasever/${releasever}/ ; s/name=\(.*\)/'\1 ${host_arch}'/ ; p }" /etc/yum.repos.d/*.repo)
+            priorities=$(sed -n -e "/^name/h; /priority *=/{ G; s/\n/ /; s/ity *= *\(.*\)/ity=\1/ ; s/\$releasever/${releasever}/ ; s/name *= *\(.*\)/'\1 ${host_arch}'/ ; p }" /etc/yum.repos.d/*.repo)
         fi
         # replace this with a dedicated awk or simple python script?
         yum_repolist=$(yum repolist enabled --verbose 2>/dev/null | sed -e "s/:\? *([0-9]\+ more)$//g" -e "s/ ([0-9]\+$//g" -e "s/:\? more)$//g" -e "s/'//g" -e "s/%/%%/g")
-        for i in $(echo "${yum_repolist}" | awk '{ if ($1=="Repo-id") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'"'"' "} if ($1=="Repo-name") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'" ${host_arch}'"' "} if ($1=="Repo-mirrors" || $1=="Repo-metalink:") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'"'"' "} if ($1=="Repo-baseurl" || $1=="Repo-baseurl:") { url=1; comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else { if (url==1) { if ($1==":") { comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else {url=0; print "";} } } }' | sed -e "s/\/'/'/g" | sed -e "s/ ' /' /") ; do
+        for i in $(echo "${yum_repolist}" | awk '{ if ($1=="Repo-id") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'"'"' "} if ($1=="Repo-name") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'" ${host_arch}'"' "} if ($1=="Repo-mirrors" || $1=="Repo-metalink") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'"'"' "} if ($1=="Repo-baseurl" || $1=="Repo-baseurl:") { url=1; comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else { if (url==1) { if ($1==":") { comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else {url=0; print "";} } } }' | sed -e "s/\/'/'/g" | sed -e "s/ ' /' /") ; do
             full_id=$(echo ${i} | cut -d \' -f 2)
             id=$(echo ${i} | cut -d \' -f 2 | cut -d \/ -f 1)
             name=$(echo ${i} | cut -d \' -f 4)
@@ -359,14 +478,17 @@ get_repos() {
             if [ "${priority}" == "" ] ; then
                 priority=99
             fi
-            j=$(echo ${i} | sed -e "s#'${full_id}' '${name}'#'${name}' '${id}' '${priority}'#")
-            redhat_repo=$(echo ${j} | grep -e "https://.*/XMLRPC.*\|https://cdn.redhat.com/.*")
+            redhat_repo=$(echo ${i} | grep -e "https://.*/XMLRPC.*\|https://cdn[-[a-z]*]*.redhat.com/.*")
             if [ ${?} == 0 ] || ${local_updates} ; then
                 if ${verbose} ; then
                     echo "Finding updates locally for ${id}"
                 fi
                 get_yum_updates ${id}
             fi
+            if [ ! -z ${CPE_NAME} ] ; then
+                id="${CPE_NAME}-${id}"
+            fi
+            j=$(echo ${i} | sed -e "s#'${full_id}' '${name}'#'${name}' '${id}' '${priority}'#" | sed -e "s/'\[/'/g" -e "s/\]'/'/g")
             echo "'rpm' ${j}" >> "${tmpfile_rep}"
             unset priority
         done
@@ -377,11 +499,23 @@ get_repos() {
         if ${verbose} ; then
             echo 'Finding apt repos...'
         fi
-        IFS=${OLDIFS} read -r osname shortversion <<<$(echo "${os}" | awk '{print $1,$2}' | cut -d . -f 1,2)
+        osname=$(echo ${os} | cut -d " " -f 1)
+        shortversion=${VERSION_ID}
         repo_string="'deb\' \'${osname} ${shortversion} ${host_arch} repo at"
-        repos=$(apt-cache policy | grep -E "[0-9]{1,5} http(s)?:" | grep -v Translation | sed -e "s/^ *//g" -e "s/ *$//g" | cut -d " " -f 1,2,3,4)
-        dist_repos=$(echo "${repos}" | grep -v -e "Packages$")
-        nondist_repos=$(echo "${repos}" | grep -e "Packages$")
+        repos=$(apt-cache policy | grep -v Translation | grep -E "^ *[0-9]{1,5}" | grep -E " mirror\+file|http(s)?:" | sed -e "s/^ *//g" -e "s/ *$//g" | cut -d " " -f 1,2,3,4)
+        non_mirror_repos=$(echo "${repos}" | grep -Ev "mirror\+file")
+        dist_repos=$(echo "${non_mirror_repos}" | grep -v -e "Packages$")
+        nondist_repos=$(echo "${non_mirror_repos}" | grep -e "Packages$")
+        mirror_repos=$(echo "${repos}" | grep -E "mirror\+file")
+        for mirror_repo in ${mirror_repos} ; do
+            mirror_file=$(echo "${mirror_repo}" | sed -e "s/.* mirror+file://g" | cut -d " " -f 1)
+            if [ -f "${mirror_file}" ] ; then
+                for url in $(cat ${mirror_file}) ; do
+                    dist_repo=$(echo "${mirror_repo}" | sed -e "s#mirror+file:${mirror_file}#${url}#g")
+                    dist_repos="${dist_repos}"$'\n'"${dist_repo}"
+                done
+            fi
+        done
         echo "${dist_repos}" | sed -e "s/\([0-9]*\) \(http:.*\|https:.*\)[\/]\? \(.*\/.*\) \(.*\)/${repo_string} \2\/dists\/\3\/binary-\4' '\1' '\2\/dists\/\3\/binary-\4'/" >> "${tmpfile_rep}"
         echo "${nondist_repos}" | sed -e "s/\([0-9]*\) \(http:.*\|https:.*\)[\/]\? \(.*\/\?.*\) Packages/${repo_string} \2\/\3' '\1' '\2\/\3'/" >> "${tmpfile_rep}"
     fi
@@ -391,7 +525,12 @@ get_repos() {
         if ${verbose} ; then
             echo 'Finding zypper repos...'
         fi
-        for i in $(zypper -q --no-refresh lr -E -u --details | grep -v ^$ | tail -n +3 | cut -d "|" -f 2,3,7,9 | sed -e "s/ *|/ ${host_arch} |/" -e "s/\?[a-zA-Z0-9_-]* *$//" -e "s/^ /'/g" -e "s/ *| */' '/g" -e "s/ *$/'/g") ; do
+        if [ $(zypper -q --no-refresh lr --details | head -n 1 | grep Keep) ] ; then
+            zypper_lr_cols='{print "${os}" $3 "|" $2 "|" $8 "|" $10}'
+        else
+            zypper_lr_cols='{print "${os}" $3 "|" $2 "|" $7 "|" $9}'
+        fi
+        for i in $(zypper -q --no-refresh lr -E -u --details | grep -v ^$ | tail -n +3 | awk -F"|" "${zypper_lr_cols}" | sed -e "s/\${os}/${PRETTY_NAME}/" -e "s/ *|/ ${host_arch} |/" -e "s/\?[a-zA-Z0-9_-]* *$//" -e "s/^/'/g" -e "s/ *| */' '/g" -e "s/ *$/'/g") ; do
             echo \'rpm\' ${i} >> "${tmpfile_rep}"
             id=$(echo ${i} | cut -d \' -f 4)
             suse_repo=$(echo ${i} | grep -e "https://updates.suse.com/.*")
@@ -434,7 +573,57 @@ get_repos() {
         done
     fi
 
-    IFS=${OLDIFS}
+    # Gentoo
+    if [[ "${os}" =~ "Gentoo" ]] ; then
+        if [ ${verbose} == 1 ] ; then
+            echo 'Finding portage repos...'
+        fi
+        declare -A repo_info
+        repos_output=$(portageq repos_config /)
+        repo_name=""
+        priority=""
+        sync_uri=""
+
+        while IFS= read -r line; do
+            # if the line starts with a section header (e.g., [gentoo], [guru]), it's the repo name
+            if [[ "${line}" =~ ^\[(.*)\] ]]; then
+                # if we already have a repo_name, save the previous entry
+                if [[ -n "${repo_name}" && -n "${sync_uri}" ]]; then
+                    repo_info["${repo_name}"]="${priority},${sync_uri}"
+                fi
+                # else start new repo parsing, resetting vars
+                repo_name="${BASH_REMATCH[1]}"
+                priority=""
+                sync_uri=""
+            fi
+
+            # if the line contains "priority", extract the value, 0 if it doesnt exist
+            if [[ "${line}" =~ "priority" ]]; then
+                priority=$(echo "${line}" | cut -d'=' -f2 | xargs)
+            fi
+
+            # if the line contains "sync-uri", extract the value
+            if [[ "${line}" =~ "sync-uri" ]]; then
+                sync_uri=$(echo "${line}" | cut -d'=' -f2 | xargs)
+            fi
+        done <<< "${repos_output}"
+
+        # save the last repository entry if it's available
+        if [[ -n "${repo_name}" && -n "${sync_uri}" ]]; then
+            repo_info["${repo_name}"]="${priority},${sync_uri}"
+        fi
+
+        for repo in "${!repo_info[@]}"; do
+            priority=$(echo ${repo_info[$repo]} | cut -d',' -f1)
+            sync_uri=$(echo ${repo_info[$repo]} | cut -d',' -f2)
+            if [ "${priority}" == "" ] ; then
+                priority=0
+            fi
+            echo "'gentoo' 'Gentoo Linux ${repo} Repo ${host_arch}' '${repo}' '${priority}' '${sync_uri}'" >> "${tmpfile_rep}"
+        done
+    fi
+
+    IFS=${FULL_IFS}
 
     sed -i -e '/^$/d' "${tmpfile_rep}"
 
@@ -480,6 +669,7 @@ post_data() {
     curl_opts="${curl_opts} -F repos=\<${tmpfile_rep}"
     curl_opts="${curl_opts} -F sec_updates=\<${tmpfile_sec}"
     curl_opts="${curl_opts} -F bug_updates=\<${tmpfile_bug}"
+    curl_opts="${curl_opts} -F modules=\<${tmpfile_mod}"
     curl_opts="${curl_opts} -F reboot=\"${reboot}\""
     post_command="curl ${curl_opts} ${server%/}/reports/upload/"
 
@@ -487,7 +677,7 @@ post_data() {
         echo "${post_command}"
     fi
 
-    result=$(eval ${post_command})
+    result=$(eval "${post_command}")
     retval=${?}
 
     if [ ! ${retval} -eq 0 ] ; then
@@ -504,8 +694,12 @@ post_data() {
     fi
 }
 
-if ! check_command_exists which || ! check_command_exists mktemp || ! check_command_exists curl ; then
-    echo "which, mktemp or curl was not found, exiting."
+if ! check_command_exists which || \
+   ! check_command_exists awk || \
+   ! check_command_exists mktemp || \
+   ! check_command_exists curl || \
+   ! check_command_exists flock ; then
+    echo "which, awk, mktemp, flock or curl was not found, exiting."
     exit 1
 fi
 
@@ -533,9 +727,11 @@ tmpfile_pkg=$(mktemp)
 tmpfile_rep=$(mktemp)
 tmpfile_sec=$(mktemp)
 tmpfile_bug=$(mktemp)
+tmpfile_mod=$(mktemp)
 
 get_host_data
 get_packages
+get_modules
 if ${repo_check} ; then
     get_repos
 fi

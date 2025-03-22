@@ -23,7 +23,7 @@ class HostSerializer(serializers.HyperlinkedModelSerializer):
     bugfix_update_count = serializers.SerializerMethodField()
     security_update_count = serializers.SerializerMethodField()
 
-    class Meta(object):
+    class Meta:
         model = Host
         fields = ('id', 'hostname', 'ipaddress', 'reversedns', 'check_dns',
                   'os', 'kernel', 'arch', 'domain', 'lastreport', 'repos',
@@ -31,13 +31,13 @@ class HostSerializer(serializers.HyperlinkedModelSerializer):
                   'updated_at', 'bugfix_update_count', 'security_update_count')
 
     def get_bugfix_update_count(self, obj):
-        return len([u for u in obj.updates.all() if not u.security])
+        return obj.updates.filter(security=False).count()
 
     def get_security_update_count(self, obj):
-        return len([u for u in obj.updates.all() if u.security])
+        return obj.updates.filter(security=True).count()
 
 
 class HostRepoSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta(object):
+    class Meta:
         model = HostRepo
         fields = ('host', 'repo', 'enabled', 'priority')
