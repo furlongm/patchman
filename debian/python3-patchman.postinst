@@ -13,6 +13,7 @@ if [ "$1" = "configure" ] ; then
     apache2_invoke enconf patchman.conf
 
     adduser --system --group patchman-celery
+    usermod -a -G www-data patchman-celery
 
     patchman-set-secret-key
     chown www-data /etc/patchman/local_settings.py
