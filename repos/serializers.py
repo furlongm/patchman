@@ -20,21 +20,19 @@ from repos.models import Repository, Mirror, MirrorPackage
 
 
 class RepositorySerializer(serializers.HyperlinkedModelSerializer):
-    class Meta(object):
+    class Meta:
         model = Repository
-        fields = ('id', 'name', 'arch', 'security', 'repotype', 'enabled',
-                  'auth_required')
+        fields = ('id', 'name', 'arch', 'security', 'repotype', 'enabled', 'auth_required')
 
 
 class MirrorSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta(object):
+    class Meta:
         model = Mirror
-        fields = ('id', 'repo', 'url', 'last_access_ok', 'file_checksum',
-                  'timestamp', 'mirrorlist', 'enabled', 'refresh',
-                  'fail_count')
+        fields = ('id', 'repo', 'url', 'last_access_ok', 'packages_checksum',
+                  'timestamp', 'mirrorlist', 'enabled', 'refresh', 'fail_count')
 
 
 class MirrorPackageSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta(object):
+    class Meta:
         model = MirrorPackage
         fields = ('id', 'mirror', 'package', 'enabled')

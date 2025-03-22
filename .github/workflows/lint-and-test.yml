@@ -8,18 +8,20 @@ jobs:
   lint-and-test:
     runs-on: ubuntu-latest
     strategy:
-      max-parallel: 4
+      max-parallel: 5
       matrix:
-        python-version: [3.6, 3.7, 3.8]
+        python-version: ['3.x']
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
+          sudo apt update
+          sudo apt -y install libxslt-dev libxml2-dev
+          python -m pip install --upgrade pip setuptools
           pip install -r requirements.txt
       - name: Lint with flake8
         run: |
@@ -29,4 +31,6 @@ jobs:
       - name: Set secret key
         run: ./sbin/patchman-set-secret-key
       - name: Test with django
-        run: ./manage.py test
+        run: |
+          pip install legacy-cgi
+          ./manage.py test

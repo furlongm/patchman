@@ -106,6 +106,7 @@ python3-requests
 python3-colorama
 python3-magic
 python3-humanize
+python3-yaml
 ```
 
 The server can optionally make use of celery to asynchronously process the
