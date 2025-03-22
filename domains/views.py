@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets
 
 from domains.models import Domain
 from domains.serializers import DomainSerializer
@@ -26,4 +26,4 @@ class DomainViewSet(viewsets.ModelViewSet):
     """
     queryset = Domain.objects.all()
     serializer_class = DomainSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    filterset_fields = ['name']

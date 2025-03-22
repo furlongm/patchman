@@ -19,7 +19,8 @@ if [ "$1" = "configure" ] ; then
     patchman-manage collectstatic --noinput
 
     patchman-manage makemigrations
-    patchman-manage migrate --run-syncdb
+    patchman-manage migrate --run-syncdb --fake-initial
+    sqlite3 /var/lib/patchman/db/patchman.db 'PRAGMA journal_mode=WAL;'
 
     chown -R www-data:www-data /var/lib/patchman
 
