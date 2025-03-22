@@ -6,8 +6,9 @@
 
 <div class="row">
   <div class="col-sm-10">
-    {% searchform %}
-    {% gen_table page.object_list %}
+    {% get_querydict request as querydict %}
+    {% searchform terms querydict %}
+    {% gen_table page.object_list table_template %}
     <div class="centered">
       {% object_count page %}
     </div>
