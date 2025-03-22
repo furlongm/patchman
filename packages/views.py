@@ -23,26 +23,107 @@ from django.db.models import Q
 from rest_framework import viewsets
 
 from util.filterspecs import Filter, FilterBar
-from packages.models import PackageName, Package, PackageUpdate, \
-    Erratum, ErratumReference
+from packages.models import PackageName, Package, PackageUpdate
 from arch.models import PackageArchitecture
-from packages.serializers import PackageNameSerializer, \
-    PackageSerializer, PackageUpdateSerializer, ErratumSerializer, \
-    ErratumReferenceSerializer
+from packages.serializers import PackageNameSerializer, PackageSerializer, PackageUpdateSerializer
 
 
 @login_required
 def package_list(request):
+    packages = Package.objects.select_related()
 
-    packages = PackageName.objects.select_related()
-
-    if 'arch' in request.GET:
-        packages = packages.filter(
-            package__arch=int(request.GET['arch'])).distinct()
+    if 'arch_id' in request.GET:
+        packages = packages.filter(arch=request.GET['arch_id']).distinct()
 
     if 'packagetype' in request.GET:
-        packages = packages.filter(
-            package__packagetype=request.GET['packagetype']).distinct()
+        packages = packages.filter(packagetype=request.GET['packagetype']).distinct()
+
+    if 'erratum_id' in request.GET:
+        if request.GET['type'] == 'affected':
+            packages = packages.filter(affected_by_erratum=request.GET['erratum_id']).distinct()
+        elif request.GET['type'] == 'fixed':
+            packages = packages.filter(provides_fix_in_erratum=request.GET['erratum_id']).distinct()
+
+    if 'host' in request.GET:
+        packages = packages.filter(host__hostname=request.GET['host']).distinct()
+
+    if 'cve_id' in request.GET:
+        if request.GET['type'] == 'affected':
+            packages = packages.filter(affected_by_erratum__cves__cve_id=request.GET['cve_id']).distinct()
+        elif request.GET['type'] == 'fixed':
+            packages = packages.filter(provides_fix_in_erratum__cves__cve_id=request.GET['cve_id']).distinct()
+
+    if 'mirror_id' in request.GET:
+        packages = packages.filter(mirror=request.GET['mirror_id']).distinct()
+
+    if 'module_id' in request.GET:
+        packages = packages.filter(module=request.GET['module_id']).distinct()
+
+    if 'affected_by_errata' in request.GET:
+        affected_by_errata = request.GET['affected_by_errata'] == 'true'
+        if affected_by_errata:
+            packages = packages.filter(erratum__isnull=False)
+        else:
+            packages = packages.filter(erratum__isnull=True)
+
+    if 'installed_on_hosts' in request.GET:
+        installed_on_hosts = request.GET['installed_on_hosts'] == 'true'
+        if installed_on_hosts:
+            packages = packages.filter(host__isnull=False)
+        else:
+            packages = packages.filter(host__isnull=True)
+
+    if 'available_in_repos' in request.GET:
+        available_in_repos = request.GET['available_in_repos'] == 'true'
+        if available_in_repos:
+            packages = packages.filter(mirror__isnull=False)
+        else:
+            packages = packages.filter(mirror__isnull=True)
+
+    if 'search' in request.GET:
+        terms = request.GET['search'].lower()
+        query = Q()
+        for term in terms.split(' '):
+            q = Q(name__name__icontains=term)
+            query = query & q
+        packages = packages.filter(query)
+    else:
+        terms = ''
+
+    page_no = request.GET.get('page')
+    paginator = Paginator(packages, 50)
+
+    try:
+        page = paginator.page(page_no)
+    except PageNotAnInteger:
+        page = paginator.page(1)
+    except EmptyPage:
+        page = paginator.page(paginator.num_pages)
+
+    filter_list = []
+    filter_list.append(Filter(request, 'Affected by Errata', 'affected_by_errata', {'true': 'Yes', 'false': 'No'}))
+    filter_list.append(Filter(request, 'Installed on Hosts', 'installed_on_hosts', {'true': 'Yes', 'false': 'No'}))
+    filter_list.append(Filter(request, 'Available in Repos', 'available_in_repos', {'true': 'Yes', 'false': 'No'}))
+    filter_list.append(Filter(request, 'Package Type', 'packagetype', Package.PACKAGE_TYPES))
+    filter_list.append(Filter(request, 'Architecture', 'arch_id', PackageArchitecture.objects.all()))
+    filter_bar = FilterBar(request, filter_list)
+
+    return render(request,
+                  'packages/package_list.html',
+                  {'page': page,
+                   'filter_bar': filter_bar,
+                   'terms': terms})
+
+
+@login_required
+def package_name_list(request):
+    packages = PackageName.objects.select_related()
+
+    if 'arch_id' in request.GET:
+        packages = packages.filter(package__arch=request.GET['arch_id']).distinct()
+
+    if 'packagetype' in request.GET:
+        packages = packages.filter(package__packagetype=request.GET['packagetype']).distinct()
 
     if 'search' in request.GET:
         terms = request.GET['search'].lower()
@@ -65,32 +146,34 @@ def package_list(request):
         page = paginator.page(paginator.num_pages)
 
     filter_list = []
-    filter_list.append(
-        Filter(request, 'arch', PackageArchitecture.objects.all()))
-#   Disabled due to being a huge slowdown
-#    filter_list.append(
-#        Filter(
-#            request, 'packagetype',
-#            Package.objects.values_list('packagetype', flat=True).distinct()))
+    filter_list.append(Filter(request, 'Package Type', 'packagetype', Package.PACKAGE_TYPES))
+    filter_list.append(Filter(request, 'Architecture', 'arch_id', PackageArchitecture.objects.all()))
     filter_bar = FilterBar(request, filter_list)
 
     return render(request,
-                  'packages/package_list.html',
+                  'packages/package_name_list.html',
                   {'page': page,
                    'filter_bar': filter_bar,
-                   'terms': terms}, )
+                   'terms': terms,
+                   'table_template': 'packages/package_name_table.html'})
 
 
 @login_required
-def package_detail(request, packagename):
-
-    package = get_object_or_404(PackageName, name=packagename)
-    allversions = Package.objects.select_related().filter(name=package.id)
-
+def package_detail(request, package_id):
+    package = get_object_or_404(Package, id=package_id)
     return render(request,
                   'packages/package_detail.html',
+                  {'package': package})
+
+
+@login_required
+def package_name_detail(request, packagename):
+    package = get_object_or_404(PackageName, name=packagename)
+    allversions = Package.objects.select_related().filter(name=package.id)
+    return render(request,
+                  'packages/package_name_detail.html',
                   {'package': package,
-                   'allversions': allversions}, )
+                   'allversions': allversions})
 
 
 class PackageNameViewSet(viewsets.ModelViewSet):
@@ -125,19 +208,3 @@ class PackageUpdateViewSet(viewsets.ModelViewSet):
     queryset = PackageUpdate.objects.all()
     serializer_class = PackageUpdateSerializer
     filterset_fields = ['oldpackage', 'newpackage', 'security']
-
-
-class ErratumViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows errata to be viewed or edited.
-    """
-    queryset = Erratum.objects.all()
-    serializer_class = ErratumSerializer
-
-
-class ErratumReferenceViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows erratum references to be viewed or edited.
-    """
-    queryset = ErratumReference.objects.all()
-    serializer_class = ErratumReferenceSerializer

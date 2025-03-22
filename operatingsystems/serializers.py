@@ -16,16 +16,16 @@
 
 from rest_framework import serializers
 
-from operatingsystems.models import OS, OSGroup
+from operatingsystems.models import OSVariant, OSRelease
 
 
-class OSSerializer(serializers.HyperlinkedModelSerializer):
+class OSVariantSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
-        model = OS
-        fields = ('id', 'name', 'osgroup')
+        model = OSVariant
+        fields = ('id', 'name', 'osrelease', 'arch')
 
 
-class OSGroupSerializer(serializers.HyperlinkedModelSerializer):
+class OSReleaseSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
-        model = OSGroup
-        fields = ('id', 'name', 'repos')
+        model = OSRelease
+        fields = ('id', 'name', 'codename', 'repos')
