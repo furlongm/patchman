@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block page_title %}Erratum - {{ erratum }} {% endblock %}
+
+{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'errata:erratum_list' %}">Errata</a></li><li class="active">{{ erratum }}</li>{% endblock %}
+
+{% block content_title %} Erratum - {{ erratum }} {% endblock %}
+
+{% block content %}
+
+<ul class="nav nav-tabs">
+  <li class="active"><a data-toggle="tab" href="#erratum_details">Details</a></li>
+  <li><a data-toggle="tab" href="#erratum_affected_packages">Packages Affected ({{ erratum.affected_packages.count }})</a></li>
+  <li><a data-toggle="tab" href="#erratum_fixed_packages">Packages Fixed ({{ erratum.fixed_packages.count }})</a></li>
+</ul>
+
+<div class="tab-content">
+  <div class="tab-pane fade in active" id="erratum_details">
+    <div class="well well-sm">
+      <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+        <tr><th class="col-sm-1">Name</th><td> {{ erratum.name }} </td></tr>
+        <tr><th class="col-sm-1">Type</th><td> {{ erratum.e_type }} </td></tr>
+        <tr><th class="col-sm-1">Published Date</th><td>{{ erratum.issue_date|date|default_if_none:'' }}</td></tr>
+        <tr><th class="col-sm-1">Synopsis</th><td> {{ erratum.synopsis }} </td></tr>
+        <tr><th class="col-sm-1">Packages Affected</th><td><a href="{% url 'packages:package_list' %}?erratum_id={{ erratum.id }}&type=affected"> {{ erratum.affected_packages.count }} </a></td></tr>
+        <tr><th class="col-sm-1">Packages Fixed</th><td><a href="{% url 'packages:package_list' %}?erratum_id={{ erratum.id }}&type=fixed"> {{ erratum.fixed_packages.count }} </a></td></tr>
+        <tr>
+          <th class="col-sm-2">OS Releases Affected</th>
+          <td>
+            {% for osrelease in erratum.osreleases.all %}
+              <a href="{{ osrelease.get_absolute_url }}">{{ osrelease }}</a><br />
+            {% endfor %}
+          </td>
+        </tr>
+        <tr>
+          <th class="col-sm-2">CVEs</th>
+          <td>
+            <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+              {% for cve in erratum.cves.all %}
+                <tr><td><a href="{{ cve.get_absolute_url }}">{{ cve }}</a></td></tr>
+              {% endfor %}
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <th class="col-sm-2">References</th>
+          <td>
+            <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+              <tr><td>osv.dev</td><td><a href="https://osv.dev/vulnerability/{{ erratum.name }}">https://osv.dev/vulnerability/{{ erratum.name }}</a></td></tr>
+              {% for reference in erratum.references.all %}
+                <tr>
+                  <td>{{ reference.ref_type }}</td>
+                  <td><a href="{{ reference.url }}">{{reference.url}}</a></td>
+                </tr>
+              {% endfor %}
+            </table>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <div class="tab-pane fade in" id="erratum_affected_packages">
+    <div class="well well-sm">
+      <div class="well well-sm">
+        {% for package in erratum.affected_packages.all %}
+          <span class="label label-brick {% cycle 'bg-info' 'bg-success' %}">
+            <a href="{{ package.get_absolute_url }}"> {{ package }} </a>
+          </span>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="tab-pane fade in" id="erratum_fixed_packages">
+    <div class="well well-sm">
+      <div class="well well-sm">
+        {% for package in erratum.fixed_packages.all %}
+          <span class="label label-brick {% cycle 'bg-info' 'bg-success' %}">
+            <a href="{{ package.get_absolute_url }}"> {{ package }} </a>
+          </span>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

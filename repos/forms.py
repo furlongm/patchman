@@ -15,15 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.forms import ModelForm, ModelMultipleChoiceField, TextInput, \
-    Form, ModelChoiceField, ValidationError
+from django.forms import ModelForm, ModelMultipleChoiceField, TextInput, Form, ModelChoiceField, ValidationError
 from django.contrib.admin.widgets import FilteredSelectMultiple
 
 from repos.models import Repository, Mirror
 
 
 class EditRepoForm(ModelForm):
-    class Media(object):
+    class Media:
         css = {
             'all': ('admin/css/widgets.css',)
         }
@@ -35,11 +34,11 @@ class EditRepoForm(ModelForm):
         widget=FilteredSelectMultiple('Mirrors', is_stacked=False))
 
     def __init__(self, *args, **kwargs):
-        super(EditRepoForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['name'].widget = TextInput(attrs={'size': 100})
         self.fields['repo_id'].widget = TextInput(attrs={'size': 100})
 
-    class Meta(object):
+    class Meta:
         model = Repository
         fields = ('name', 'repo_id', 'repotype', 'arch', 'security', 'enabled',
                   'mirrors', 'auth_required')
@@ -57,12 +56,12 @@ class CreateRepoForm(ModelForm):
     def __init__(self, *args, **kwargs):
         arch = kwargs.pop('arch', False)
         repotype = kwargs.pop('repotype', False)
-        super(CreateRepoForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.arch = arch
         self.repotype = repotype
         self.fields['name'].label = 'New Repository'
 
-    class Meta(object):
+    class Meta:
         model = Repository
         fields = ('name',)
 
@@ -82,18 +81,18 @@ class CreateRepoForm(ModelForm):
 
 
 class EditMirrorForm(ModelForm):
-    class Media(object):
+    class Media:
         css = {
             'all': ('admin/css/widgets.css',)
         }
         js = ('animations.js', 'actions.js')
 
     def __init__(self, *args, **kwargs):
-        super(EditMirrorForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['url'].widget = TextInput(attrs={'size': 150},)
-        self.fields['file_checksum'].widget = TextInput(attrs={'size': 100},)
+        self.fields['packages_checksum'].widget = TextInput(attrs={'size': 100},)
 
-    class Meta(object):
+    class Meta:
         model = Mirror
         fields = ('repo', 'url', 'enabled', 'refresh', 'mirrorlist',
-                  'last_access_ok', 'fail_count', 'file_checksum')
+                  'last_access_ok', 'fail_count', 'packages_checksum')

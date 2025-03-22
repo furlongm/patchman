@@ -17,7 +17,7 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 #
 # zypp system plugin for patchman
-#
+
 import os
 import logging
 from zypp_plugin import Plugin
@@ -25,24 +25,24 @@ from zypp_plugin import Plugin
 
 class MyPlugin(Plugin):
 
-    def PLUGINBEGIN(self, headers, body):
-        logging.info("PLUGINBEGIN")
-        logging.debug("headers: {0!s}".format(headers))
+    def PLUGINBEGIN(self, headers, body):  # noqa
+        logging.info('PLUGINBEGIN')
+        logging.debug(f'headers: {headers}')
         self.ack()
 
-    def PACKAGESETCHANGED(self, headers, body):
-        logging.info("PACKAGESETCHANGED")
-        logging.debug("headers: {0!s}".format(headers))
-        print('patchman: sending data')
+    def PACKAGESETCHANGED(self, headers, body):  # noqa
+        logging.info('PACKAGESETCHANGED')
+        logging.debug(f'headers: {headers}')
+        print('Sending report to patchman server...')
         servicecmd = '/usr/sbin/patchman-client'
         args = '-n'
-        command = '{0!s} {1!s}> /dev/null'.format(servicecmd, args)
+        command = f'{servicecmd} {args}> /dev/null'
         os.system(command)
         self.ack()
 
-    def PLUGINEND(self, headers, body):
-        logging.info("PLUGINEND")
-        logging.debug("headers: {0!s}".format(headers))
+    def PLUGINEND(self, headers, body):  # noqa
+        logging.info('PLUGINEND')
+        logging.debug(f'headers: {headers}')
         self.ack()
 
 
