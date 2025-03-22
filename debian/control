@@ -18,10 +18,10 @@ Depends: ${misc:Depends}, python3 (>= 3.11), python3-django (>= 4.2),
  python3-djangorestframework, python3-django-filters, python3-debian,
  python3-rpm, python3-tqdm, python3-defusedxml, python3-pip, python3-tenacity,
  python3-requests, python3-colorama, python3-magic, python3-humanize,
- python3-pymemcache, python3-yaml, memcached, libapache2-mod-wsgi-py3,
- apache2, python3-django-taggit, python3-celery, python3-django-celery-beat,
- python3-redis, python3-git
-Suggests: python3-mysqldb, python3-psycopg2
+ python3-yaml, libapache2-mod-wsgi-py3, apache2,
+ celery, python3-celery, python3-django-celery-beat, redis-server,
+ python3-redis, python3-git, python3-django-taggit
+Suggests: python3-mysqldb, python3-psycopg2, python3-pymemcache, memcached
 Description: Django-based patch status monitoring tool for linux systems.
  .
  Patchman provides a web interface for monitoring host package updates.
