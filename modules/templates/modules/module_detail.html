@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% load common bootstrap3 %}
+
+{% block page_title %}Module - {{ module }} {% endblock %}
+
+{% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'modules:module_list' %}">Modules</a></li><li class="active">{{ module }}</li>{% endblock %}
+
+{% block content_title %}Module - {{ module }} {% endblock %}
+
+{% block content %}
+
+<ul class="nav nav-tabs">
+  <li class="active"><a data-toggle="tab" href="#module_details">Details</a></li>
+  <li><a data-toggle="tab" href="#module_packages">Packages</a></li>
+  <li><a data-toggle="tab" href="#module_hosts">Hosts with this Module Enabled</a></li>
+</ul>
+
+<div class="tab-content">
+  <div class="tab-pane fade in active" id="module_details">
+    <div class="well well-sm">
+      <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+        <tr><th>Name</th><td> {{ module.name }} </td></tr>
+        <tr><th>ID</th><td> {{ module.id }} </td></tr>
+        <tr><th>Stream</th><td> {{ module.stream }} </td></tr>
+        <tr><th>Version</th><td> {{ module.version }} </td></tr>
+        <tr><th>Context</th><td> {{ module.context }} </td></tr>
+        <tr><th>Architecture</th><td> {{ module.arch }} </td></tr>
+        <tr><th>Repo</th><td><a href="{{ module.repo.get_absolute_url }}">{{ module.repo }}</a></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="tab-pane fade in" id="module_packages">
+    <div class="well well-sm">
+      <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Epoch</th>
+            <th>Version</th>
+            <th>Release</th>
+            <th>Arch</th>
+            <th>Type</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for package in module.packages.all %}
+            <tr>
+              <td> {{ package.name }} </td>
+              <td> {{ package.epoch }} </td>
+              <td> {{ package.version }} </td>
+              <td> {{ package.release }} </td>
+              <td> {{ package.arch }} </td>
+              <td> {{ package.get_packagetype_display }} </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="tab-pane fade in" id="module_hosts">
+    <div class="well well-sm">
+      {% gen_table module.host_set.all.distinct %}
+    </div>
+  </div>
+</div>
+{% endblock %}

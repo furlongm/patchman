@@ -1,0 +1,17 @@
+{% load common %}
+<table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+  <thead>
+    <tr>
+      <th class="col-sm-6">Package</th>
+      <th class="col-sm-6">Versions available</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for packagename in object_list %}
+      <tr>
+        <td><a href="{{ packagename.get_absolute_url }}">{{ packagename }}</a></td>
+        <td>{{ packagename.package_set.count }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
