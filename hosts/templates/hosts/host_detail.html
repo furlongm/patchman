@@ -23,29 +23,28 @@
     <div class="well well-sm">
       <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
         <tr><th>Hostname</th><td> {{ host.hostname }} </td></tr>
-        <tr><th>Domain</th><td> <a href="{% url 'hosts:host_list' %}?domain={{ host.domain.id }}">{{ host.domain }}</a> </td></tr>
+        <tr><th>Domain</th><td> <a href="{% url 'hosts:host_list' %}?domain_id={{ host.domain.id }}">{{ host.domain }}</a> </td></tr>
         <tr><th>Reporting IP Address</th><td> {{ host.ipaddress }} </td></tr>
         <tr><th>Reverse DNS</th><td> {{ host.reversedns }} </td></tr>
-        <tr><th>OS</th><td> <a href="{{ host.os.get_absolute_url }}">{{ host.os }}</a> </td></tr>
-        <tr><th>OS Group</th><td> <a href="{{ host.os.osgroup.get_absolute_url }}">{{ host.os.osgroup }}</a> </td></tr>
+        <tr><th>OS Release</th><td> <a href="{{ host.osvariant.osrelease.get_absolute_url }}">{{ host.osvariant.osrelease }}</a> </td></tr>
+        <tr><th>OS Variant</th><td> <a href="{{ host.osvariant.get_absolute_url }}">{{ host.osvariant }}</a> </td></tr>
         <tr><th>Kernel</th><td> {{ host.kernel }} </td></tr>
         <tr><th>Architecture</th><td> {{ host.arch }} </td></tr>
         <tr>
           <th>Tags</th>
           <td>
-          {% load tagging_tags %}
-          {% tags_for_object host as tags %}
-          {% for tag in tags %}
+          {% for tag in host.tags.all %}
             <a href="{% url 'hosts:host_list' %}?tag={{ tag }}">{{ tag }}</a>
           {% endfor %}
           </td>
         </tr>
         <tr><th>Updated</th><td> {{ host.updated_at }} </td></tr>
         <tr><th>Last Report</th><td> {{ host.lastreport }} </td></tr>
+        <tr><th>Packages Installed</th><td> <a href="{% url 'packages:package_list' %}?host={{ host }}">{{ host.packages.count}}</a> </td></tr>
         <tr><th>Updates Available</th><td> <a data-toggle="tab" href="{{ host.get_absolute_url }}#host_updates">{{ host.updates.count }}</a> </td></tr>
+        <tr><th>Errata</th><td><a href="{% url 'errata:erratum_list' %}?host={{ host.hostname }}">{{ host.errata.count }}<a/></td>
         <tr><th>Reboot Required</th><td> {{ host.reboot_required }} </td></tr>
-        <tr><th>Packages Installed</th><td> <a data-toggle="tab" href="{{ host.get_absolute_url }}#host_packages">{{ host.packages.count}}</a> </td></tr>
-        <tr><th>Repos In Use</th><td>{% if host.host_repos_only %}Host Repos{% else %}Host and OS Group Repos{% endif %}</td></tr>
+        <tr><th>Repos In Use</th><td>{% if host.host_repos_only %}Host Repos{% else %}Host and OS Release Repos{% endif %}</td></tr>
         <tr>
           <th>Last 3 reports</th>
           <td>
@@ -60,6 +59,7 @@
       {% if user.is_authenticated and perms.is_admin %}
         <a class="btn btn-primary btn-sm" role="button" href="{% url 'hosts:host_delete' host.hostname %}">{% bootstrap_icon "trash" %} Delete this Host</a>
         <a class="btn btn-primary btn-sm" role="button" href="{% url 'hosts:host_edit' host.hostname %}">{% bootstrap_icon "edit" %} Edit this Host</a>
+        <a class="btn btn-primary btn-sm" role="button" href="{% url 'hosts:host_updates' host.hostname %}">{% bootstrap_icon "refresh" %} Find Updates for this Host</a>
       {% endif %}
     </div>
   </div>
@@ -116,16 +116,16 @@
             </tr>
           {% endfor %}
         {% endif %}
-        {% with osrepos=host.os.osgroup.repos.select_related %}
-          {% if osrepos and not host.host_repos_only %}
-            {% for osrepo in osrepos %}
-              {% if osrepo.arch == host.arch %}
+        {% with osrelease_repos=host.osvariant.osrelease.repos.select_related %}
+          {% if osrelease_repos and not host.host_repos_only %}
+            {% for osrelease_repo in osrelease_repos %}
+              {% if osrelease_repo.arch == host.arch or osrelease_repo.arch == 'any' %}
                 <tr>
-                  <td> <a href="{{ osrepo.get_absolute_url }}">{{ osrepo.name }}</a> </td>
-                  <td>OS Group</td>
+                  <td> <a href="{{ osrelease_repo.get_absolute_url }}">{{ osrelease_repo.name }}</a> </td>
+                  <td>OS Release</td>
                   <td>N/A</td>
-                  <td class="centered"> {% yes_no_img osrepo.enabled %} </td>
-                  <td class="centered"> {% yes_no_img osrepo.security %} </td>
+                  <td class="centered"> {% yes_no_img osrelease_repo.enabled %} </td>
+                  <td class="centered"> {% yes_no_img osrelease_repo.security %} </td>
                 </tr>
               {% endif %}
             {% endfor %}
@@ -138,9 +138,7 @@
 
   <div class="tab-pane fade in" id="host_modules">
     <div class="well well-sm">
-        <div class="well">
-          {% gen_table host.modules.all %}
-        </div>
+      {% gen_table host.modules.all %}
     </div>
   </div>
 
@@ -148,7 +146,7 @@
     <div class="well well-sm">
       <button class="btn btn-primary btn-sm" data-toggle="collapse" data-target="#packages">Show/Hide Installed Packages</button>
       <div id="packages" class="collapse">
-        <div class="well">
+        <div class="well well-sm">
           {% for package in host.packages.select_related %}
             <span class="label label-brick {% cycle 'bg-info' 'bg-success' %}">
               <a href="{{ package.name.get_absolute_url }}"> {{ package }} </a>

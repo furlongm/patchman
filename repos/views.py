@@ -29,12 +29,10 @@ from rest_framework import viewsets
 from util.filterspecs import Filter, FilterBar
 from hosts.models import HostRepo
 from repos.models import Repository, Mirror, MirrorPackage
-from operatingsystems.models import OSGroup
+from operatingsystems.models import OSRelease
 from arch.models import MachineArchitecture
-from repos.forms import EditRepoForm, LinkRepoForm, CreateRepoForm, \
-    EditMirrorForm
-from repos.serializers import RepositorySerializer, \
-    MirrorSerializer, MirrorPackageSerializer
+from repos.forms import EditRepoForm, LinkRepoForm, CreateRepoForm, EditMirrorForm
+from repos.serializers import RepositorySerializer, MirrorSerializer, MirrorPackageSerializer
 
 
 @login_required
@@ -45,23 +43,22 @@ def repo_list(request):
     if 'repotype' in request.GET:
         repos = repos.filter(repotype=request.GET['repotype'])
 
-    if 'arch' in request.GET:
-        repos = repos.filter(arch=request.GET['arch'])
+    if 'arch_id' in request.GET:
+        repos = repos.filter(arch=request.GET['arch_id'])
 
-    if 'osgroup' in request.GET:
-        repos = repos.filter(osgroup=request.GET['osgroup'])
+    if 'osrelease_id' in request.GET:
+        repos = repos.filter(osrelease=request.GET['osrelease_id'])
 
     if 'security' in request.GET:
-        security = request.GET['security'] == 'True'
+        security = request.GET['security'] == 'true'
         repos = repos.filter(security=security)
 
     if 'enabled' in request.GET:
-        enabled = request.GET['enabled'] == 'True'
+        enabled = request.GET['enabled'] == 'true'
         repos = repos.filter(enabled=enabled)
 
     if 'package_id' in request.GET:
-        repos = repos.filter(
-            mirror__packages=int(request.GET['package_id']))
+        repos = repos.filter(mirror__packages=request.GET['package_id'])
 
     if 'search' in request.GET:
         terms = request.GET['search'].lower()
@@ -86,24 +83,19 @@ def repo_list(request):
         page = paginator.page(paginator.num_pages)
 
     filter_list = []
-    filter_list.append(
-        Filter(
-            request,
-            'repotype',
-            Repository.objects.values_list('repotype', flat=True).distinct()))
-    filter_list.append(Filter(request,
-                              'arch',
-                              MachineArchitecture.objects.all()))
-    filter_list.append(Filter(request, 'enabled', {False: 'No', True: 'Yes'}))
-    filter_list.append(Filter(request, 'security', {False: 'No', True: 'Yes'}))
-    filter_list.append(Filter(request, 'osgroup', OSGroup.objects.all()))
+    filter_list.append(Filter(request, 'OS Release', 'osrelease_id', OSRelease.objects.filter(repos__in=repos)))
+    filter_list.append(Filter(request, 'Enabled', 'enabled', {'true': 'Yes', 'false': 'No'}))
+    filter_list.append(Filter(request, 'Security', 'security', {'true': 'Yes', 'false': 'No'}))
+    filter_list.append(Filter(request, 'Repo Type', 'repotype', Repository.REPO_TYPES))
+    filter_list.append(Filter(request, 'Architecture', 'arch_id',
+                              MachineArchitecture.objects.filter(repository__in=repos)))
     filter_bar = FilterBar(request, filter_list)
 
     return render(request,
                   'repos/repo_list.html',
                   {'page': page,
                    'filter_bar': filter_bar,
-                   'terms': terms}, )
+                   'terms': terms})
 
 
 @login_required
@@ -115,9 +107,7 @@ def mirror_list(request):
                 text = 'Not all mirror architectures are the same,'
                 text += ' cannot link to or create repos'
                 messages.info(request, text)
-                return render(request,
-                              'repos/mirror_with_repo_list.html',
-                              {'page': page, 'checksum': checksum}, )
+                return render(request, 'repos/mirror_with_repo_list.html', {'page': page, 'checksum': checksum})
 
             if mirror.repo.repotype != repotype:
                 text = 'Not all mirror repotypes are the same,'
@@ -125,7 +115,7 @@ def mirror_list(request):
                 messages.info(request, text)
                 return render(request,
                               'repos/mirror_with_repo_list.html',
-                              {'page': page, 'checksum': checksum}, )
+                              {'page': page, 'checksum': checksum})
         return True
 
     def move_mirrors(repo):
@@ -142,7 +132,7 @@ def mirror_list(request):
             if oldrepo.mirror_set.count() == 0:
                 oldrepo.delete()
 
-    mirrors = Mirror.objects.select_related().order_by('file_checksum')
+    mirrors = Mirror.objects.select_related().order_by('packages_checksum')
 
     checksum = None
     if 'checksum' in request.GET:
@@ -150,7 +140,10 @@ def mirror_list(request):
     if 'checksum' in request.POST:
         checksum = request.POST['checksum']
     if checksum is not None:
-        mirrors = mirrors.filter(file_checksum=checksum)
+        mirrors = mirrors.filter(packages_checksum=checksum)
+
+    if 'repo_id' in request.GET:
+        mirrors = mirrors.filter(repo=request.GET['repo_id'])
 
     if 'search' in request.GET:
         terms = request.GET['search'].lower()
@@ -191,7 +184,7 @@ def mirror_list(request):
             repo.security = security
             repo.save()
             move_mirrors(repo)
-            text = f'Mirrors linked to new Repository {repo!s}'
+            text = f'Mirrors linked to new Repository {repo}'
             messages.info(request, text)
             return redirect(repo.get_absolute_url())
 
@@ -199,7 +192,7 @@ def mirror_list(request):
         if link_form.is_valid():
             repo = link_form.cleaned_data['name']
             move_mirrors(repo)
-            text = f'Mirrors linked to Repository {repo!s}'
+            text = f'Mirrors linked to Repository {repo}'
             messages.info(request, text)
             return redirect(repo.get_absolute_url())
     else:
@@ -217,10 +210,10 @@ def mirror_list(request):
                               {'page': page,
                                'link_form': link_form,
                                'create_form': create_form,
-                               'checksum': checksum}, )
+                               'checksum': checksum})
     return render(request,
                   'repos/mirror_list.html',
-                  {'page': page}, )
+                  {'page': page})
 
 
 @login_required
@@ -228,7 +221,7 @@ def mirror_detail(request, mirror_id):
     mirror = get_object_or_404(Mirror, id=mirror_id)
     return render(request,
                   'repos/mirror_detail.html',
-                  {'mirror': mirror}, )
+                  {'mirror': mirror})
 
 
 @login_required
@@ -238,7 +231,7 @@ def mirror_delete(request, mirror_id):
     if request.method == 'POST':
         if 'delete' in request.POST:
             mirror.delete()
-            text = f'Mirror {mirror!s} has been deleted'
+            text = f'Mirror {mirror} has been deleted'
             messages.info(request, text)
             return redirect(reverse('repos:mirror_list'))
         elif 'cancel' in request.POST:
@@ -246,7 +239,7 @@ def mirror_delete(request, mirror_id):
 
     return render(request,
                   'repos/mirror_delete.html',
-                  {'mirror': mirror}, )
+                  {'mirror': mirror})
 
 
 @login_required
@@ -260,7 +253,7 @@ def mirror_edit(request, mirror_id):
             if edit_form.is_valid():
                 mirror = edit_form.save()
                 mirror.save()
-                text = f'Saved changes to Mirror {mirror!s}'
+                text = f'Saved changes to Mirror {mirror}'
                 messages.info(request, text)
                 return redirect(mirror.get_absolute_url())
             else:
@@ -272,7 +265,7 @@ def mirror_edit(request, mirror_id):
 
     return render(request,
                   'repos/mirror_edit.html',
-                  {'mirror': mirror, 'edit_form': edit_form}, )
+                  {'mirror': mirror, 'edit_form': edit_form})
 
 
 @login_required
@@ -282,7 +275,7 @@ def repo_detail(request, repo_id):
 
     return render(request,
                   'repos/repo_detail.html',
-                  {'repo': repo}, )
+                  {'repo': repo})
 
 
 @login_required
@@ -304,7 +297,7 @@ def repo_edit(request, repo_id):
                     repo.enable()
                 else:
                     repo.disable()
-                text = f'Saved changes to Repository {repo!s}'
+                text = f'Saved changes to Repository {repo}'
                 messages.info(request, text)
                 return redirect(repo.get_absolute_url())
             else:
@@ -317,7 +310,7 @@ def repo_edit(request, repo_id):
 
     return render(request,
                   'repos/repo_edit.html',
-                  {'repo': repo, 'edit_form': edit_form}, )
+                  {'repo': repo, 'edit_form': edit_form})
 
 
 @login_required
@@ -330,7 +323,7 @@ def repo_delete(request, repo_id):
             for mirror in repo.mirror_set.all():
                 mirror.delete()
             repo.delete()
-            text = f'Repository {repo!s} has been deleted'
+            text = f'Repository {repo} has been deleted'
             messages.info(request, text)
             return redirect(reverse('repos:repo_list'))
         elif 'cancel' in request.POST:
@@ -338,7 +331,7 @@ def repo_delete(request, repo_id):
 
     return render(request,
                   'repos/repo_delete.html',
-                  {'repo': repo}, )
+                  {'repo': repo})
 
 
 @login_required
@@ -355,7 +348,7 @@ def repo_toggle_enabled(request, repo_id):
     if request.is_ajax():
         return HttpResponse(status=204)
     else:
-        text = f'Repository {repo!s} has been {status!s}'
+        text = f'Repository {repo} has been {status}'
         messages.info(request, text)
         return redirect(repo.get_absolute_url())
 
@@ -374,10 +367,22 @@ def repo_toggle_security(request, repo_id):
     if request.is_ajax():
         return HttpResponse(status=204)
     else:
-        text = f'Repository {repo!s} has been marked'
-        text += f' as a {sectype!s} update repo'
+        text = f'Repository {repo} has been marked'
+        text += f' as a {sectype} update repo'
         messages.info(request, text)
         return redirect(repo.get_absolute_url())
+
+
+@login_required
+def repo_refresh(request, repo_id):
+    """ Refresh a repo using a celery task
+    """
+    from repos.tasks import refresh_repo
+    repo = get_object_or_404(Repository, id=repo_id)
+    refresh_repo.delay(repo.id)
+    text = f'Repostory {repo} is being refreshed'
+    messages.info(request, text)
+    return redirect(repo.get_absolute_url())
 
 
 class RepositoryViewSet(viewsets.ModelViewSet):
