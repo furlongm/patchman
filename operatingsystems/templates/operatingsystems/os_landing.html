@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block page_title %} Operating Systems {% endblock %}
+
+{% block breadcrumbs %} {{ block.super }} <li class="active"><a href="{% url 'operatingsystems:os_landing' %}">Operating Systems</a></li>{% endblock %}
+
+{% block content_title %} Operating Systems {% endblock %}
+
+{% block content %}
+
+<div class="well well-sm">
+  <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+    <tr><td><a href="{% url 'operatingsystems:osrelease_list' %}">OS Releases</a></td></tr>
+    <tr><td><a href="{% url 'operatingsystems:osvariant_list' %}">OS Variants</a></td></tr>
+  </table>
+</div>
+
+{% endblock %}

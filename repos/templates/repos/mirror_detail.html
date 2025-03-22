@@ -14,14 +14,14 @@
   <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
     <tr><th>Repo</th><td> <a href="{{ mirror.repo.get_absolute_url }}">{{ mirror.repo }}</a> </td></tr>
     <tr><th>URL</th><td> <a href="{{ mirror.url }}">{{ mirror.url }}</a> </td></tr>
-    <tr><th>Packages</th><td> {{ mirror.packages.count }} </td></tr>
+    <tr><th>Packages</th><td><a href="{% url 'packages:package_list' %}?mirror_id={{ mirror.id }}">{{ mirror.packages.count }}</a></td></tr>
     <tr><th>Enabled</th><td> {% yes_no_img mirror.enabled 'Enabled' 'Not Enabled' %} </td></tr>
     <tr><th>Refresh</th><td> {% yes_no_img mirror.refresh 'True' 'False' %} </td></tr>
     <tr><th>Mirrorlist/Metalink</th><td> {% yes_no_img mirror.mirrorlist 'True' 'False' %} </td></tr>
     <tr><th>Last Access OK</th><td> {% yes_no_img mirror.last_access_ok 'True' 'False' %} </td></tr>
     <tr><th>Fail Count</th><td> {{ mirror.fail_count }} </td></tr>
     <tr><th>Timestamp</th><td> {{ mirror.timestamp }} </td></tr>
-    <tr><th>Checksum</th><td> {{ mirror.file_checksum }} </td></tr>
+    <tr><th>Checksum</th><td> {{ mirror.packages_checksum }} </td></tr>
   </table>
   {% if user.is_authenticated and perms.is_admin %}
     <a class="btn btn-primary btn-sm" role="button" href="{% url 'repos:mirror_delete' mirror.id %}">{% bootstrap_icon "trash" %} Delete this Mirror</a>

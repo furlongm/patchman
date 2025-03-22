@@ -22,7 +22,7 @@ class Architecture(models.Model):
 
     name = models.CharField(unique=True, max_length=255)
 
-    class Meta(object):
+    class Meta:
         abstract = True
 
     def __str__(self):

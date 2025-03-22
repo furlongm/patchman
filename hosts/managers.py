@@ -20,4 +20,4 @@ from django.db import models
 
 class HostManager(models.Manager):
     def get_queryset(self):
-        return super(HostManager, self).get_queryset().select_related()
+        return super().get_queryset().select_related()

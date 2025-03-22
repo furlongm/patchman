@@ -11,7 +11,7 @@ git tag v${version}
 # Build DEB package
 
 ```shell
-sudo apt -y install python-setuptools debhelper dh-exec dh-python git-buildpackage
+sudo apt -y install python3-setuptools debhelper dh-exec dh-python git-buildpackage
 gbp dch --commit
 gbp buildpackage -uc -us
 ```

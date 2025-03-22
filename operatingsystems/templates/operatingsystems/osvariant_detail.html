@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% load common bootstrap3 %}
+
+{% block page_title %}OS Variant - {{ osvariant }} {% endblock %}
+
+{% block content_title %} OS Variant - {{ osvariant }} {% endblock %}
+
+{% block breadcrumbs %} {{ block.super }} <li class="link"><a href="{% url 'operatingsystems:os_landing' %}">Operating Systems</a></li><li><a href="{% url 'operatingsystems:osvariant_list' %}">OS Variants</a></li><li class="active">{{ osvariant }}</li>{% endblock %}
+
+{% block content %}
+
+<ul class="nav nav-tabs">
+  <li class="active"><a data-toggle="tab" href="#os_details">Details</a></li>
+  <li><a data-toggle="tab" href="#os_hosts">Hosts where this OS Variant is installed</a></li>
+  <li><a data-toggle="tab" href="#os_osreleases">Associated OS Release</a></li>
+</ul>
+
+<div class="tab-content">
+
+  <div class="tab-pane fade in active" id="os_details">
+    <div class="well well-sm">
+      <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+        <tr><th>Name</th><td> {{ osvariant.name }} </td></tr>
+        <tr><th>Architecture</th><td> {{ osvariant.arch }} </td></tr>
+        <tr><th>Codename</th><td> {{ osvariant.codename }} </td></tr>
+        <tr><th>Hosts</th><td><a href="{% url 'hosts:host_list' %}?osvariant_id={{ osvariant.id }}">{{ osvariant.host_set.count }}</a></td></tr>
+        <tr><th>OS Release</th><td>{% if osvariant.osrelease != None %}<a href="{{ osvariant.osrelease.get_absolute_url }}"> {{ osvariant.osrelease }} </a>{% else %}No OS Release{% endif %}</td></tr>
+      </table>
+      {% if user.is_authenticated and perms.is_admin %}
+        <a class="btn btn-primary btn-sm" role="button" href="{% url 'operatingsystems:osvariant_delete' osvariant.id %}">{% bootstrap_icon "trash" %} Delete this OS Variant</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="tab-pane fade in" id="os_hosts">
+    <div class="well well-sm">
+      {% gen_table osvariant.host_set.all %}
+    </div>
+  </div>
+
+  <div class="tab-pane fade in" id="os_osreleases">
+    <div class="well well-sm">
+      {% if user.is_authenticated and perms.is_admin %}
+        <div class="well well-sm">
+          <form action={{ request.path }} method="post">
+            {% csrf_token %}
+            {% bootstrap_form add_form size='small' %}
+            <button name="add" type="submit" class="btn btn-primary btn-sm">{% bootstrap_icon "link" %} Associate this OS Variant with an existing OS Release</button>
+          </form>
+        </div>
+        <div class="well well-sm">
+          <form action={{ request.path }} method="post">
+            {% csrf_token %}
+            {% bootstrap_form create_form size='small' %}
+            <button name="create" type="submit" class="btn btn-primary btn-sm">{% bootstrap_icon "flash" %} Create a new OS Release and associate this OS Variant with it</button>
+          </form>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

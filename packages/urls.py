@@ -22,6 +22,9 @@ from packages import views
 app_name = 'packages'
 
 urlpatterns = [
-    path('', views.package_list, name='package_list'),
-    path('<str:packagename>/', views.package_detail, name='package_detail'),
+    path('', views.package_name_list, name='package_name_list'),
+    path('name/', views.package_name_list, name='package_name_list'),
+    path('name/<str:packagename>/', views.package_name_detail, name='package_name_detail'),
+    path('id/', views.package_list, name='package_list'),
+    path('id/<int:package_id>/', views.package_detail, name='package_detail'),
 ]
