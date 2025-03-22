@@ -35,11 +35,11 @@ class Module(models.Model):
     class Meta:
         verbose_name = 'Module'
         verbose_name_plural = 'Modules'
-        unique_together = ('name', 'stream', 'version', 'context', 'arch',)
-        ordering = ('name', 'stream',)
+        unique_together = ['name', 'stream', 'version', 'context', 'arch']
+        ordering = ['name', 'stream']
 
     def __str__(self):
-        return f'{self.name}-{self.stream}'
+        return f'{self.name}-{self.stream}-{self.version}-{self.version}-{self.context}'
 
     def get_absolute_url(self):
         return reverse('modules:module_detail', args=[str(self.id)])

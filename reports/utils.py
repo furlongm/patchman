@@ -17,17 +17,18 @@
 
 import re
 
-from django.db import IntegrityError, DatabaseError, transaction
+from django.db import IntegrityError
 
-from hosts.models import HostRepo
 from arch.models import MachineArchitecture, PackageArchitecture
+from domains.models import Domain
+from hosts.models import HostRepo
+from modules.utils import get_or_create_module
+from operatingsystems.utils import get_or_create_osrelease, get_or_create_osvariant
+from packages.models import Package, PackageCategory
+from packages.utils import find_evr, get_or_create_package, get_or_create_package_update, parse_package_string
+from patchman.signals import pbar_start, pbar_update, info_message
 from repos.models import Repository, Mirror, MirrorPackage
-from modules.models import Module
-from packages.models import Package
-from packages.utils import find_evr, get_or_create_package, \
-    get_or_create_package_update, parse_package_string
-from patchman.signals import progress_info_s, progress_update_s, \
-    error_message, info_message
+from repos.utils import get_or_create_repo
 
 
 def process_repos(report, host):
@@ -38,28 +39,19 @@ def process_repos(report, host):
         host_repos = HostRepo.objects.filter(host=host)
         repos = parse_repos(report.repos)
 
-        progress_info_s.send(sender=None,
-                             ptext=f'{str(host)[0:25]!s} repos',
-                             plen=len(repos))
+        pbar_start.send(sender=None, ptext=f'{host} Repos', plen=len(repos))
         for i, repo_str in enumerate(repos):
             repo, priority = process_repo(repo_str, report.arch)
             if repo:
                 repo_ids.append(repo.id)
                 try:
-                    with transaction.atomic():
-                        hostrepo, c = host_repos.get_or_create(host=host,
-                                                               repo=repo)
-                except IntegrityError as e:
-                    error_message.send(sender=None, text=e)
+                    hostrepo, c = host_repos.get_or_create(host=host, repo=repo)
+                except IntegrityError:
                     hostrepo = host_repos.get(host=host, repo=repo)
-                try:
-                    if hostrepo.priority != priority:
-                        hostrepo.priority = priority
-                        with transaction.atomic():
-                            hostrepo.save()
-                except IntegrityError as e:
-                    error_message.send(sender=None, text=e)
-            progress_update_s.send(sender=None, index=i + 1)
+                if hostrepo.priority != priority:
+                    hostrepo.priority = priority
+                    hostrepo.save()
+            pbar_update.send(sender=None, index=i + 1)
 
         for hostrepo in host_repos:
             if hostrepo.repo_id not in repo_ids:
@@ -73,21 +65,13 @@ def process_modules(report, host):
         module_ids = []
         modules = parse_modules(report.modules)
 
-        progress_info_s.send(sender=None,
-                             ptext=f'{str(host)[0:25]!s} modules',
-                             plen=len(modules))
+        pbar_start.send(sender=None, ptext=f'{host} Modules', plen=len(modules))
         for i, module_str in enumerate(modules):
             module = process_module(module_str)
             if module:
                 module_ids.append(module.id)
-                try:
-                    with transaction.atomic():
-                        host.modules.add(module)
-                except IntegrityError as e:
-                    error_message.send(sender=None, text=e)
-                except DatabaseError as e:
-                    error_message.send(sender=None, text=e)
-            progress_update_s.send(sender=None, index=i + 1)
+                host.modules.add(module)
+            pbar_update.send(sender=None, index=i + 1)
 
         for module in host.modules.all():
             if module.id not in module_ids:
@@ -101,25 +85,16 @@ def process_packages(report, host):
         package_ids = []
 
         packages = parse_packages(report.packages)
-        progress_info_s.send(sender=None,
-                             ptext=f'{str(host)[0:25]!s} packages',
-                             plen=len(packages))
+        pbar_start.send(sender=None, ptext=f'{host} Packages', plen=len(packages))
         for i, pkg_str in enumerate(packages):
             package = process_package(pkg_str, report.protocol)
             if package:
                 package_ids.append(package.id)
-                try:
-                    with transaction.atomic():
-                        host.packages.add(package)
-                except IntegrityError as e:
-                    error_message.send(sender=None, text=e)
-                except DatabaseError as e:
-                    error_message.send(sender=None, text=e)
+                host.packages.add(package)
             else:
                 if pkg_str[0].lower() != 'gpg-pubkey':
-                    text = f'No package returned for {pkg_str!s}'
-                    info_message.send(sender=None, text=text)
-            progress_update_s.send(sender=None, index=i + 1)
+                    info_message.send(sender=None, text=f'No package returned for {pkg_str}')
+            pbar_update.send(sender=None, index=i + 1)
 
         for package in host.packages.all():
             if package.id not in package_ids:
@@ -157,14 +132,12 @@ def add_updates(updates, host):
         host.updates.remove(host_update)
     ulen = len(updates)
     if ulen > 0:
-        ptext = f'{str(host)[0:25]!s} updates'
-        progress_info_s.send(sender=None, ptext=ptext, plen=ulen)
-
+        pbar_start.send(sender=None, ptext=f'{host} Updates', plen=ulen)
         for i, (u, sec) in enumerate(updates.items()):
             update = process_update(host, u, sec)
             if update:
                 host.updates.add(update)
-            progress_update_s.send(sender=None, index=i + 1)
+            pbar_update.send(sender=None, index=i + 1)
 
 
 def parse_updates(updates_string, security):
@@ -174,7 +147,7 @@ def parse_updates(updates_string, security):
     updates = {}
     ulist = updates_string.lower().split()
     while ulist:
-        name = f'{ulist[0]!s} {ulist[1]!s} {ulist[2]!s}\n'
+        name = f'{ulist[0]} {ulist[1]} {ulist[2]}\n'
         del ulist[:3]
         updates[name] = security
     return updates
@@ -182,7 +155,7 @@ def parse_updates(updates_string, security):
 
 def process_update(host, update_string, security):
     """ Processes a single sanitized update string and converts to an update
-    object. Only works if the original package exists. Returns None otherwise
+        object. Only works if the original package exists. Returns None otherwise
     """
     update_str = update_string.split()
     repo_id = update_str[2]
@@ -192,29 +165,26 @@ def process_update(host, update_string, security):
     p_arch = parts[2]
 
     p_epoch, p_version, p_release = find_evr(update_str[1])
-    package = get_or_create_package(name=p_name,
-                                    epoch=p_epoch,
-                                    version=p_version,
-                                    release=p_release,
-                                    arch=p_arch,
-                                    p_type='R')
+    package = get_or_create_package(
+        name=p_name,
+        epoch=p_epoch,
+        version=p_version,
+        release=p_release,
+        arch=p_arch,
+        p_type=Package.RPM
+    )
     try:
         repo = Repository.objects.get(repo_id=repo_id)
     except Repository.DoesNotExist:
         repo = None
     if repo:
         for mirror in repo.mirror_set.all():
-            with transaction.atomic():
-                MirrorPackage.objects.create(mirror=mirror, package=package)
+            MirrorPackage.objects.create(mirror=mirror, package=package)
 
-    installed_packages = host.packages.filter(name=package.name,
-                                              arch=package.arch,
-                                              packagetype='R')
+    installed_packages = host.packages.filter(name=package.name, arch=package.arch, packagetype=Package.RPM)
     if installed_packages:
         installed_package = installed_packages[0]
-        update = get_or_create_package_update(oldpackage=installed_package,
-                                              newpackage=package,
-                                              security=security)
+        update = get_or_create_package_update(oldpackage=installed_package, newpackage=package, security=security)
         return update
 
 
@@ -223,9 +193,9 @@ def parse_repos(repos_string):
     """
     repos = []
     for r in [s for s in repos_string.splitlines() if s]:
-        repodata = re.findall('\'.*?\'', r)
+        repodata = re.findall(r"'.*?'", r)
         for i, rs in enumerate(repodata):
-            repodata[i] = rs.replace('\'', '')
+            repodata[i] = rs.replace("'", '')
         repos.append(repodata)
     return repos
 
@@ -246,59 +216,50 @@ def process_repo(repo, arch):
         r_type = Repository.ARCH
         r_id = repo[2]
         r_priority = 0
+    elif repo[0] == 'gentoo':
+        r_type = Repository.GENTOO
+        r_id = repo.pop(2)
+        r_priority = repo[2]
+        arch = 'any'
 
     if repo[1]:
         r_name = repo[1]
 
-    machine_arches = MachineArchitecture.objects.all()
-    with transaction.atomic():
-        r_arch, c = machine_arches.get_or_create(name=arch)
+    r_arch, c = MachineArchitecture.objects.get_or_create(name=arch)
 
     unknown = []
     for r_url in repo[3:]:
+        if r_type == Repository.GENTOO and r_url.startswith('rsync'):
+            r_url = 'https://api.gentoo.org/mirrors/distfiles.xml'
         try:
-            mirror = Mirror.objects.get(url=r_url)
+            mirror = Mirror.objects.get(url=r_url.strip('/'))
         except Mirror.DoesNotExist:
             if repository:
-                Mirror.objects.create(repo=repository, url=r_url)
+                Mirror.objects.create(repo=repository, url=r_url.rstrip('/'))
             else:
                 unknown.append(r_url)
         else:
             repository = mirror.repo
     if not repository:
-        repositories = Repository.objects.all()
-        try:
-            with transaction.atomic():
-                repository, c = repositories.get_or_create(name=r_name,
-                                                           arch=r_arch,
-                                                           repotype=r_type)
-        except IntegrityError as e:
-            error_message.send(sender=None, text=e)
-            repository = repositories.get(name=r_name,
-                                          arch=r_arch,
-                                          repotype=r_type)
-        except DatabaseError as e:
-            error_message.send(sender=None, text=e)
+        repository = get_or_create_repo(r_name, r_arch, r_type)
 
     if r_id and repository.repo_id != r_id:
         repository.repo_id = r_id
-        with transaction.atomic():
-            repository.save()
+
+    if r_name and repository.name != r_name:
+        repository.name = r_name
 
     for url in unknown:
-        Mirror.objects.create(repo=repository, url=url)
+        Mirror.objects.create(repo=repository, url=url.rstrip('/'))
 
     for mirror in Mirror.objects.filter(repo=repository).values('url'):
-        if mirror['url'].find('cdn.redhat.com') != -1 or \
-                mirror['url'].find('nu.novell.com') != -1 or \
-                mirror['url'].find('updates.suse.com') != -1:
+        mirror_url = mirror.get('url')
+        auth_urls = ['cdn.redhat.com', 'cdn-ubi.redhat.com', 'nu.novell.com', 'updates.suse.com']
+        if any(auth_url in mirror_url for auth_url in auth_urls):
             repository.auth_required = True
-            with transaction.atomic():
-                repository.save()
-        if mirror['url'].find('security') != -1:
+        if 'security' in mirror_url:
             repository.security = True
-            with transaction.atomic():
-                repository.save()
+    repository.save()
 
     return repository, r_priority
 
@@ -308,66 +269,39 @@ def parse_modules(modules_string):
     """
     modules = []
     for module in modules_string.splitlines():
-        module_string = [m for m in module.replace('\'', '').split(' ') if m]
+        module_string = [m for m in module.replace("'", '').split(' ') if m]
         if module_string:
             modules.append(module_string)
     return modules
 
 
 def process_module(module_str):
-    """ Processes a single sanitied module string and converts to a module
+    """ Processes a single sanitized module string and converts to a module
     """
     m_name = module_str[0]
     m_stream = module_str[1]
     m_version = module_str[2]
     m_context = module_str[3]
-    arch = module_str[4]
+    m_arch = module_str[4]
     repo_id = module_str[5]
 
-    package_arches = PackageArchitecture.objects.all()
-    with transaction.atomic():
-        m_arch, c = package_arches.get_or_create(name=arch)
+    arch, c = PackageArchitecture.objects.get_or_create(name=m_arch)
 
     try:
-        m_repo = Repository.objects.get(repo_id=repo_id)
+        repo = Repository.objects.get(repo_id=repo_id)
     except Repository.DoesNotExist:
-        m_repo = None
+        repo = None
 
     packages = set()
-    for pkg_str in module_str[6:-1]:
+    for pkg_str in module_str[6:]:
         p_type = Package.RPM
         p_name, p_epoch, p_ver, p_rel, p_dist, p_arch = parse_package_string(pkg_str)
         package = get_or_create_package(p_name, p_epoch, p_ver, p_rel, p_arch, p_type)
         packages.add(package)
 
-    modules = Module.objects.all()
-    try:
-        with transaction.atomic():
-            module, c = modules.get_or_create(name=m_name,
-                                              stream=m_stream,
-                                              version=m_version,
-                                              context=m_context,
-                                              arch=m_arch,
-                                              repo=m_repo)
-    except IntegrityError as e:
-        error_message.send(sender=None, text=e)
-        module = modules.get(name=m_name,
-                             stream=m_stream,
-                             version=m_version,
-                             context=m_context,
-                             arch=m_arch,
-                             repo=m_repo)
-    except DatabaseError as e:
-        error_message.send(sender=None, text=e)
-
+    module = get_or_create_module(m_name, m_stream, m_version, m_context, arch, repo)
     for package in packages:
-        try:
-            with transaction.atomic():
-                module.packages.add(package)
-        except IntegrityError as e:
-            error_message.send(sender=None, text=e)
-        except DatabaseError as e:
-            error_message.send(sender=None, text=e)
+        module.packages.add(package)
     return module
 
 
@@ -376,7 +310,7 @@ def parse_packages(packages_string):
     """
     packages = []
     for p in packages_string.splitlines():
-        packages.append(p.replace('\'', '').split(' '))
+        packages.append(p.replace("'", '').split(' '))
     return packages
 
 
@@ -389,6 +323,7 @@ def process_package(pkg, protocol):
         arch = 'unknown'
 
         name = pkg[0]
+        p_category = p_repo = None
         if pkg[1]:
             epoch = pkg[1]
         if pkg[2]:
@@ -404,8 +339,111 @@ def process_package(pkg, protocol):
             p_type = Package.RPM
         elif pkg[5] == 'arch':
             p_type = Package.ARCH
+        elif pkg[5] == 'gentoo':
+            p_type = Package.GENTOO
+            p_category = pkg[6]
+            p_repo = pkg[7]
         else:
             p_type = Package.UNKNOWN
 
         package = get_or_create_package(name, epoch, ver, rel, arch, p_type)
+        if p_type == Package.GENTOO:
+            process_gentoo_package(package, name, p_category, p_repo)
         return package
+
+
+def process_gentoo_package(package, name, category, repo):
+    """ Processes a single gentoo package
+    """
+    category, created = PackageCategory.objects.get_or_create(name=category)
+    package.category = category
+    package.save()
+
+
+def get_arch(arch):
+    """ Get or create MachineArchitecture from arch
+        Returns the MachineArchitecture
+    """
+    return MachineArchitecture.objects.get_or_create(name=arch)[0]
+
+
+def get_os(os, arch):
+    """ Get or create OSRelease and OSVariant from os details
+        Returns the OSVariant
+    """
+    cpe_name = codename = osrelease_codename = osvariant_codename = None
+    osrelease_name = osvariant_name = os
+
+    # find cpe_name if it exists
+    match = re.match(r'(.*) \[(.*)\]', os)
+    if match:
+        os = match.group(1)
+        cpe_name = match.group(2)
+
+    # find codename if it exists
+    match = re.match(r'(.*) \((.*)\)', os)
+    if match:
+        os = match.group(1)
+        codename = match.group(2)
+        if os.startswith('AlmaLinux'):
+            # alma changes the codename with each minor release, so it's useless to us now
+            osvariant_codename = codename
+        else:
+            osrelease_codename = codename
+
+    osrelease_name = os
+    osvariant_name = os
+
+    if os.startswith('Gentoo'):
+        osrelease_name = 'Gentoo Linux'
+        cpe_name = 'cpe:2.3:o:gentoo:linux:-:*:*:*:*:*:*:*'
+    elif os.startswith('Arch'):
+        cpe_name = 'cpe:2.3:o:archlinux:arch_linux:-:*:*:*:*:*:*:*'
+    elif os.startswith('Debian'):
+        major, minor = os.split(' ')[1].split('.')
+        osrelease_name = f'Debian {major}'
+        cpe_name = f'cpe:2.3:o:debian:debian_linux:{major}.0:*:*:*:*:*:*:*'
+    elif os.startswith('Ubuntu'):
+        lts = ''
+        if 'LTS' in os:
+            lts = ' LTS'
+        major, minor, patch = os.split(' ')[1].split('.')
+        ubuntu_version = f'{major}_{minor}'
+        osrelease_name = f'Ubuntu {major}.{minor}{lts}'
+        cpe_name = f"cpe:2.3:o:canonical:ubuntu_linux:{ubuntu_version}:*:*:*:{'lts' if lts else '*'}:*:*:*"
+    elif os.startswith('AlmaLinux'):
+        osvariant_name = os.replace('AlmaLinux', 'Alma Linux')
+        osrelease_name = osvariant_name.split('.')[0]
+    elif os.startswith('Rocky'):
+        osvariant_name = os
+        osrelease_name = osvariant_name.split('.')[0]
+    elif os.startswith('Red Hat'):
+        osvariant_name = os.replace(' release', '')
+        osrelease_name = osvariant_name.split('.')[0]
+    elif os.startswith('Fedora'):
+        osvariant_name = os.replace(' release', '')
+        osrelease_name = osvariant_name.split('.')[0]
+    elif os.startswith('CentOS'):
+        osvariant_name = os.replace(' release', '')
+        osrelease_name = osvariant_name.split('.')[0]
+    elif os.startswith('Oracle'):
+        osvariant_name = os.replace(' Server', '')
+        osrelease_name = osvariant_name.split('.')[0]
+    elif os.startswith('Amazon Linux AMI 2018.03'):
+        osrelease_name = osvariant_name = 'Amazon Linux 1'
+
+    osrelease = get_or_create_osrelease(name=osrelease_name, codename=osrelease_codename, cpe_name=cpe_name)
+    osvariant = get_or_create_osvariant(
+        name=osvariant_name,
+        osrelease=osrelease,
+        codename=osvariant_codename,
+        arch=arch,
+    )
+    return osvariant
+
+
+def get_domain(report_domain):
+    if not report_domain:
+        report_domain = 'unknown'
+    domain, c = Domain.objects.get_or_create(name=report_domain)
+    return domain

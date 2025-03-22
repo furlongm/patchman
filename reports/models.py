@@ -15,22 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.db import models, IntegrityError, DatabaseError, transaction
+from django.db import models
 from django.urls import reverse
 
-from hosts.models import Host
-from arch.models import MachineArchitecture
-from operatingsystems.models import OS
-from domains.models import Domain
+from hosts.utils import get_or_create_host
 from patchman.signals import error_message, info_message
-
-from socket import gethostbyaddr, herror
 
 
 class Report(models.Model):
 
     created = models.DateTimeField(auto_now_add=True)
-    accessed = models.DateTimeField(auto_now_add=True)
     host = models.CharField(max_length=255, null=True)
     domain = models.CharField(max_length=255, null=True)
     tags = models.CharField(max_length=255, null=True, default='')
@@ -51,16 +45,17 @@ class Report(models.Model):
     class Meta:
         verbose_name_plural = 'Report'
         verbose_name_plural = 'Reports'
-        ordering = ('-created',)
+        ordering = ['-created']
 
     def __str__(self):
-        return f"{self.host!s} {self.created.strftime('%c')!s}"
+        return f"{self.host} {self.created.strftime('%c')}"
 
     def get_absolute_url(self):
         return reverse('reports:report_detail', args=[str(self.id)])
 
     def parse(self, data, meta):
-
+        """ Parse a report and save the object
+        """
         x_real_ip = meta.get('HTTP_X_REAL_IP')
         x_forwarded_for = meta.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
@@ -86,107 +81,48 @@ class Report(models.Model):
                  'reboot']
 
         for attr in attrs:
-            setattr(self, attr, data.get(attr).strip())
+            if data.get(attr):
+                setattr(self, attr, data.get(attr))
+            else:
+                setattr(self, attr, '')
 
-        if self.host is not None:
+        if self.host:
             self.host = self.host.lower()
             fqdn = self.host.split('.', 1)
             if len(fqdn) == 2:
                 self.domain = fqdn.pop()
-
-        with transaction.atomic():
-            self.save()
+        self.save()
 
     def process(self, find_updates=True, verbose=False):
         """ Process a report and extract os, arch, domain, packages, repos etc
         """
+        if not self.os or not self.kernel or not self.arch:
+            error_message.send(sender=None, text=f'Error: OS, kernel or arch not sent with report {self.id}')
+            return
 
-        if self.os and self.kernel and self.arch and not self.processed:
+        if self.processed:
+            info_message.send(sender=None, text=f'Report {self.id} has already been processed')
+            return
 
-            oses = OS.objects.all()
-            with transaction.atomic():
-                os, c = oses.get_or_create(name=self.os)
+        from reports.utils import get_arch, get_os, get_domain
+        arch = get_arch(self.arch)
+        osvariant = get_os(self.os, arch)
+        domain = get_domain(self.domain)
+        host = get_or_create_host(self, arch, osvariant, domain)
 
-            machine_arches = MachineArchitecture.objects.all()
-            with transaction.atomic():
-                arch, c = machine_arches.get_or_create(name=self.arch)
+        if verbose:
+            info_message.send(sender=None, text=f'Processing report {self.id} - {self.host}')
 
-            if not self.domain:
-                self.domain = 'unknown'
-            domains = Domain.objects.all()
-            with transaction.atomic():
-                domain, c = domains.get_or_create(name=self.domain)
+        from reports.utils import process_packages, process_repos, process_updates, process_modules
+        process_repos(report=self, host=host)
+        process_modules(report=self, host=host)
+        process_packages(report=self, host=host)
+        process_updates(report=self, host=host)
 
-            if not self.host:
-                try:
-                    self.host = str(gethostbyaddr(self.report_ip)[0])
-                except herror:
-                    self.host = self.report_ip
+        self.processed = True
+        self.save()
 
-            hosts = Host.objects.all()
-            with transaction.atomic():
-                host, c = hosts.get_or_create(
-                    hostname=self.host,
-                    defaults={
-                        'ipaddress': self.report_ip,
-                        'arch': arch,
-                        'os': os,
-                        'domain': domain,
-                        'lastreport': self.created,
-                    })
-
-            host.ipaddress = self.report_ip
-            host.kernel = self.kernel
-            host.arch = arch
-            host.os = os
-            host.domain = domain
-            host.lastreport = self.created
-            host.tags = self.tags
-            if self.reboot == 'True':
-                host.reboot_required = True
-            else:
-                host.reboot_required = False
-            try:
-                with transaction.atomic():
-                    host.save()
-            except IntegrityError as e:
-                error_message.send(sender=None, text=e)
-            except DatabaseError as e:
-                error_message.send(sender=None, text=e)
-            host.check_rdns()
-
+        if find_updates:
             if verbose:
-                text = 'Processing report '
-                text += f'{self.id!s} - {self.host!s}'
-                info_message.send(sender=None, text=text)
-
-            from reports.utils import process_packages, \
-                process_repos, process_updates, process_modules
-            with transaction.atomic():
-                process_repos(report=self, host=host)
-            with transaction.atomic():
-                process_modules(report=self, host=host)
-            with transaction.atomic():
-                process_packages(report=self, host=host)
-            with transaction.atomic():
-                process_updates(report=self, host=host)
-
-            self.processed = True
-            with transaction.atomic():
-                self.save()
-
-            if find_updates:
-                if verbose:
-                    text = 'Finding updates for report '
-                    text += f'{self.id!s} - {self.host!s}'
-                    info_message.send(sender=None, text=text)
-                host.find_updates()
-        else:
-            if self.processed:
-                text = f'Report {self.id!s} '
-                text += 'has already been processed'
-                info_message.send(sender=None, text=text)
-            else:
-                text = 'Error: OS, kernel or arch not sent '
-                text += f'with report {self.id!s}'
-                error_message.send(sender=None, text=text)
+                info_message.send(sender=None, text=f'Finding updates for report {self.id} - {self.host}')
+            host.find_updates()
