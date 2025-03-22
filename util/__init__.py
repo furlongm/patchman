@@ -29,23 +29,22 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 from time import time
 from tqdm import tqdm
 
-from patchman.signals import error_message, info_message, debug_message
-
-http_proxy = getenv('http_proxy')
-http_proxy = getenv('https_proxy')
-proxies = {
-   'http': http_proxy,
-   'https': https_proxy,
-}
-
 from django.utils.timezone import make_aware
 from django.utils.dateparse import parse_datetime
 from django.conf import settings
 
+from patchman.signals import error_message, info_message, debug_message
 
 pbar = None
 verbose = None
 Checksum = Enum('Checksum', 'md5 sha sha1 sha256 sha512')
+
+http_proxy = getenv('http_proxy')
+https_proxy = getenv('https_proxy')
+proxies = {
+   'http': http_proxy,
+   'https': https_proxy,
+}
 
 
 def get_verbosity():
