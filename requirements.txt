@@ -4,13 +4,13 @@ django-extensions==3.2.1
 django-bootstrap3==23.1
 python-debian==0.1.49
 defusedxml==0.7.1
-PyYAML==6.0.1
+PyYAML==6.0.2
 chardet==4.0.0
 requests==2.32.3
 colorama==0.4.4
-djangorestframework==3.14.0
-django-filter==21.1
-humanize==4.11.0
+djangorestframework==3.15.2
+django-filter==25.1
+humanize==4.12.1
 version-utils==0.3.0
 python-magic==0.4.25
 gitpython==3.1.44
