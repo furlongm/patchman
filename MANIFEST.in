@@ -15,5 +15,6 @@ recursive-include operatingsystems *
 recursive-include packages *
 recursive-include repos *
 recursive-include reports *
+recursive-include modules *
 recursive-include sbin *
 recursive-include etc *
