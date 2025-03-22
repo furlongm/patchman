@@ -3,7 +3,7 @@ Section: python
 Priority: optional
 Maintainer: Marcus Furlong <furlongm@gmail.com>
 Uploaders: Marcus Furlong <furlongm@gmail.com>
-Build-Depends: debhelper (>=13), python3 (>= 3.11), dh-python, dh-exec, dh-systemd
+Build-Depends: debhelper (>=13), python3 (>= 3.11), dh-python, dh-exec
 Standards-Version: 4.6.2
 Homepage: https://github.com/furlongm/patchman
 Vcs-Git: git://github.com/furlongm/patchman
