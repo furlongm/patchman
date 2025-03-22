@@ -59,7 +59,7 @@ LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'America/NewYork'
 USE_I18N = True
 USE_L10N = True
-USE_TZ = False
+USE_TZ = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
@@ -77,20 +77,24 @@ DEFAULT_APPS = [
 
 THIRD_PARTY_APPS = [
     'django_extensions',
-    'tagging',
+    'taggit',
     'bootstrap3',
     'rest_framework',
     'django_filters',
+    'celery',
+    'django_celery_beat',
 ]
 
 LOCAL_APPS = [
     'arch.apps.ArchConfig',
     'domains.apps.DomainsConfig',
+    'errata.apps.ErrataConfig',
     'hosts.apps.HostsConfig',
     'modules.apps.ModulesConfig',
     'operatingsystems.apps.OperatingsystemsConfig',
     'packages.apps.PackagesConfig',
     'repos.apps.ReposConfig',
+    'security.apps.SecurityConfig',
     'reports.apps.ReportsConfig',
     'util.apps.UtilConfig',
 ]
@@ -102,15 +106,9 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 100,
 }
 
-try:
-    from celery import Celery  # noqa
-except ImportError:
-    USE_ASYNC_PROCESSING = False
-else:
-    THIRD_PARTY_APPS += ['celery']
-    CELERY_IMPORTS = ['reports.tasks']
-    USE_ASYNC_PROCESSING = True
-    CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
+TAGGIT_CASE_INSENSITIVE = True
+
+CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
 
 LOGIN_REDIRECT_URL = '/patchman/'
 LOGOUT_REDIRECT_URL = '/patchman/login/'

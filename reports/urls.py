@@ -26,5 +26,5 @@ urlpatterns = [
     path('upload/', views.upload),
     path('<int:report_id>/', views.report_detail, name='report_detail'),
     path('<int:report_id>/delete/', views.report_delete, name='report_delete'),
-    path('<int:report_id>/process/', views.report_process, name='report_process'),  # noqa
+    path('<int:report_id>/process/', views.report_process, name='report_process'),
 ]
