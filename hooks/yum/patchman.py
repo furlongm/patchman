@@ -15,7 +15,6 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 import os
-
 from yum.plugins import TYPE_CORE
 
 requires_api_version = '2.1'
@@ -23,10 +22,10 @@ plugin_type = (TYPE_CORE,)
 
 
 def posttrans_hook(conduit):
-    conduit.info(2, 'patchman: sending data')
+    conduit.info(2, 'Sending report to patchman server...')
     servicecmd = conduit.confString('main',
                                     'servicecmd',
                                     '/usr/sbin/patchman-client')
     args = '-n'
-    command = f'{servicecmd!s} {args!s}> /dev/null'
+    command = f'{servicecmd} {args}> /dev/null'
     os.system(command)

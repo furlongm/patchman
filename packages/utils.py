@@ -16,17 +16,62 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 import re
-from defusedxml.lxml import _etree as etree
 
-from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned
-from django.db import IntegrityError, DatabaseError, transaction
+from django.db import IntegrityError, transaction
 
-from util import bunzip2, get_url, download_url, get_sha1
-from packages.models import ErratumReference, Erratum, PackageName, \
-    Package, PackageUpdate
-from arch.models import MachineArchitecture, PackageArchitecture
-from patchman.signals import error_message, progress_info_s, progress_update_s
+from arch.models import PackageArchitecture
+from packages.models import PackageName, Package, PackageUpdate, PackageCategory, PackageString
+from patchman.signals import error_message, info_message
+
+
+def convert_package_to_packagestring(package):
+    """ Convert a Package object to a PackageString object
+    """
+    name = package.name.name
+    arch = package.arch.name
+    if package.category:
+        category = package.category.name
+    else:
+        category = None
+
+    string_package = PackageString(
+        name=name,
+        epoch=package.epoch,
+        version=package.version,
+        release=package.release,
+        arch=arch,
+        packagetype=package.packagetype,
+        category=category,
+    )
+    return string_package
+
+
+def convert_packagestring_to_package(strpackage):
+    """ Convert a PackageString object to a Package object
+    """
+    name, created = PackageName.objects.get_or_create(name=strpackage.name.lower())
+    epoch = strpackage.epoch
+    version = strpackage.version
+    release = strpackage.release
+    arch, created = PackageArchitecture.objects.get_or_create(name=strpackage.arch)
+    packagetype = strpackage.packagetype
+    if strpackage.category:
+        category, created = PackageCategory.objects.get_or_create(name=strpackage.category)
+    else:
+        category = None
+
+    with transaction.atomic():
+        package, created = Package.objects.get_or_create(
+              name=name,
+              epoch=epoch,
+              version=version,
+              release=release,
+              arch=arch,
+              packagetype=packagetype,
+              category=category,
+        )
+    return package
 
 
 def find_evr(s):
@@ -62,180 +107,63 @@ def find_version(s, epoch, release):
     """ Given a package version string, return the version
     """
     try:
-        es = f'{epoch!s}:'
+        es = f'{epoch}:'
         e = s.index(es) + len(epoch) + 1
     except ValueError:
         e = 0
     try:
-        rs = f'-{release!s}'
+        rs = f'-{release}'
         r = s.index(rs)
     except ValueError:
         r = len(s)
     return s[e:r]
 
 
-def update_errata(force=False):
-    """ Update CentOS errata from https://cefs.steve-meier.de/
-        and mark packages that are security updates
+def parse_debian_package_string(pkg_str):
+    """ Parse a debian package string and return
+        name, epoch, ver, release, arch
     """
-    data = download_errata_checksum()
-    expected_checksum = parse_errata_checksum(data)
-    data = download_errata()
-    actual_checksum = get_sha1(data)
-    if actual_checksum != expected_checksum:
-        e = 'CEFS checksum did not match, skipping errata parsing'
+    parts = pkg_str.split('_')
+    name = parts[0]
+    full_version = parts[1]
+    arch = parts[2]
+    epoch, ver, rel = find_evr(full_version)
+    return name, epoch, ver, rel, None, arch
+
+
+def parse_redhat_package_string(pkg_str):
+    """ Parse a redhat package string and return
+        name, epoch, ver, release, dist, arch
+    """
+    rpm_pkg_re = re.compile(r'(\S+)-(?:(\d*):)?(.*)-(~?\w+)[.+]?(~?\S+)?\.(\S+)$')  # noqa
+    m = rpm_pkg_re.match(pkg_str)
+    if m:
+        name, epoch, ver, rel, dist, arch = m.groups()
+    else:
+        e = f'Error parsing package string: "{pkg_str}"'
         error_message.send(sender=None, text=e)
+        return
+    if dist:
+        rel = f'{rel}.{dist}'
+    return name, epoch, ver, rel, dist, arch
+
+
+def parse_package_string(pkg_str):
+    """ Parse a package string and return
+        name, epoch, ver, release, dist, arch
+    """
+    if pkg_str.endswith('.deb'):
+        return parse_debian_package_string(pkg_str.removesuffix('.deb'))
+    elif pkg_str.endswith('.rpm'):
+        return parse_redhat_package_string(pkg_str.removesuffix('.rpm'))
     else:
-        if data:
-            parse_errata(bunzip2(data), force)
-
-
-def download_errata_checksum():
-    """ Download CentOS errata checksum from https://cefs.steve-meier.de/
-    """
-    res = get_url('https://cefs.steve-meier.de/errata.latest.sha1')
-    return download_url(res, 'Downloading Errata Checksum:')
-
-
-def download_errata():
-    """ Download CentOS errata from https://cefs.steve-meier.de/
-    """
-    res = get_url('https://cefs.steve-meier.de/errata.latest.xml.bz2')
-    return download_url(res, 'Downloading CentOS Errata:')
-
-
-def parse_errata_checksum(data):
-    """ Parse the errata checksum and return the bz2 checksum
-    """
-    for line in data.decode('utf-8').splitlines():
-        if line.endswith('errata.latest.xml.bz2'):
-            return line.split()[0]
-
-
-def parse_errata(data, force):
-    """ Parse CentOS errata from https://cefs.steve-meier.de/
-    """
-    result = etree.XML(data)
-    errata_xml = result.findall('*')
-    elen = len(errata_xml)
-    ptext = f'Processing {elen!s} Errata:'
-    progress_info_s.send(sender=None, ptext=ptext, plen=elen)
-    for i, child in enumerate(errata_xml):
-        progress_update_s.send(sender=None, index=i + 1)
-        if not check_centos_release(child.findall('os_release')):
-            continue
-        e = parse_errata_tag(child.tag, child.attrib, force)
-        if e is not None:
-            parse_errata_children(e, child.getchildren())
-
-
-def parse_errata_tag(name, attribs, force):
-    """ Parse all tags that contain errata. If the erratum already exists,
-        we assume that it already has all refs, packages, releases and arches.
-    """
-    e = None
-    if name.startswith('CE'):
-        issue_date = attribs['issue_date']
-        references = attribs['references']
-        synopsis = attribs['synopsis']
-        if name.startswith('CEBA'):
-            etype = 'bugfix'
-        elif name.startswith('CESA'):
-            etype = 'security'
-        elif name.startswith('CEEA'):
-            etype = 'enhancement'
-        e = create_erratum(name=name,
-                           etype=etype,
-                           issue_date=issue_date,
-                           synopsis=synopsis,
-                           force=force)
-        if e is not None:
-            add_erratum_refs(e, references)
-    return e
-
-
-def parse_errata_children(e, children):
-    """ Parse errata children to obtain architecture, release and packages
-    """
-    for c in children:
-        if c.tag == 'os_arch':
-            m_arches = MachineArchitecture.objects.all()
-            with transaction.atomic():
-                m_arch, c = m_arches.get_or_create(name=c.text)
-            e.arches.add(m_arch)
-        elif c.tag == 'os_release':
-            from operatingsystems.models import OSGroup
-            osgroups = OSGroup.objects.all()
-            osgroup_name = f'CentOS {c.text!s}'
-            with transaction.atomic():
-                osgroup, c = osgroups.get_or_create(name=osgroup_name)
-            e.releases.add(osgroup)
-        elif c.tag == 'packages':
-            pkg_str = c.text.replace('.rpm', '')
-            pkg_re = re.compile('(\S+)-(?:(\d*):)?(.*)-(~?\w+)[.+]?(~?\S+)?\.(\S+)$')  # noqa
-            m = pkg_re.match(pkg_str)
-            if m:
-                name, epoch, ver, rel, dist, arch = m.groups()
-            else:
-                e = 'Error parsing errata: '
-                e += f'could not parse package "{pkg_str!s}"'
-                error_message.send(sender=None, text=e)
-                continue
-            if dist:
-                rel = f'{rel!s}.{dist!s}'
-            p_type = Package.RPM
-            pkg = get_or_create_package(name, epoch, ver, rel, arch, p_type)
-            e.packages.add(pkg)
-
-
-def check_centos_release(releases_xml):
-    """ Check if we care about the release that the erratum affects
-    """
-    releases = set()
-    for release in releases_xml:
-        releases.add(int(release.text))
-    if hasattr(settings, 'MIN_CENTOS_RELEASE') and \
-            isinstance(settings.MIN_CENTOS_RELEASE, int):
-        min_release = settings.MIN_CENTOS_RELEASE
-    else:
-        # defaults to CentOS 6
-        min_release = 6
-    wanted_release = False
-    for release in releases:
-        if release >= min_release:
-            wanted_release = True
-    return wanted_release
-
-
-def create_erratum(name, etype, issue_date, synopsis, force=False):
-    """ Create an Erratum object. Returns the object or None if it already
-        exists. To force update the erratum, set force=True
-    """
-    errata = Erratum.objects.all()
-    with transaction.atomic():
-        e, c = errata.get_or_create(name=name,
-                                    etype=etype,
-                                    issue_date=issue_date,
-                                    synopsis=synopsis)
-    if c or force:
-        return e
-
-
-def add_erratum_refs(e, references):
-    """ Add references to an Erratum object
-    """
-    for reference in references.split(' '):
-        erratarefs = ErratumReference.objects.all()
-        with transaction.atomic():
-            er, c = erratarefs.get_or_create(url=reference)
-        e.references.add(er)
+        return parse_redhat_package_string(pkg_str)
 
 
 def get_or_create_package(name, epoch, version, release, arch, p_type):
     """ Get or create a Package object. Returns the object. Returns None if the
         package is the pseudo package gpg-pubkey, or if it cannot create it
     """
-    package = None
     name = name.lower()
     if name == 'gpg-pubkey':
         return
@@ -243,45 +171,17 @@ def get_or_create_package(name, epoch, version, release, arch, p_type):
     if epoch in [None, 0, '0']:
         epoch = ''
 
-    try:
-        with transaction.atomic():
-            package_names = PackageName.objects.all()
-            p_name, c = package_names.get_or_create(name=name)
-    except IntegrityError as e:
-        error_message.send(sender=None, text=e)
-        p_name = package_names.get(name=name)
-    except DatabaseError as e:
-        error_message.send(sender=None, text=e)
-
-    package_arches = PackageArchitecture.objects.all()
+    package_name, c = PackageName.objects.get_or_create(name=name)
+    package_arch, c = PackageArchitecture.objects.get_or_create(name=arch)
     with transaction.atomic():
-        p_arch, c = package_arches.get_or_create(name=arch)
-
-    packages = Package.objects.all()
-    potential_packages = packages.filter(
-        name=p_name,
-        arch=p_arch,
-        version=version,
-        release=release,
-        packagetype=p_type,
-    ).order_by('-epoch')
-    if potential_packages.exists():
-        package = potential_packages[0]
-        if epoch and package.epoch != epoch:
-            package.epoch = epoch
-            with transaction.atomic():
-                package.save()
-    else:
-        try:
-            with transaction.atomic():
-                package = packages.create(name=p_name,
-                                          arch=p_arch,
-                                          epoch=epoch,
-                                          version=version,
-                                          release=release,
-                                          packagetype=p_type)
-        except DatabaseError as e:
-            error_message.send(sender=None, text=e)
+        package, c = Package.objects.get_or_create(
+            name=package_name,
+            arch=package_arch,
+            epoch=epoch,
+            version=version,
+            release=release,
+            packagetype=p_type,
+        )
     return package
 
 
@@ -289,7 +189,6 @@ def get_or_create_package_update(oldpackage, newpackage, security):
     """ Get or create a PackageUpdate object. Returns the object. Returns None
         if it cannot be created
     """
-    updates = PackageUpdate.objects.all()
     # see if any version of this update exists
     # if it's already marked as a security update, leave it that way
     # if not, mark it as a security update if security==True
@@ -298,71 +197,131 @@ def get_or_create_package_update(oldpackage, newpackage, security):
     # very likely to happen. if it does, we err on the side of caution
     # and mark it as the security update
     try:
-        update = updates.get(
-            oldpackage=oldpackage,
-            newpackage=newpackage
-        )
+        update = PackageUpdate.objects.get(oldpackage=oldpackage, newpackage=newpackage)
     except PackageUpdate.DoesNotExist:
         update = None
     except MultipleObjectsReturned:
         e = 'Error: MultipleObjectsReturned when attempting to add package \n'
         e += f'update with oldpackage={oldpackage} | newpackage={newpackage}:'
         error_message.send(sender=None, text=e)
-        updates = updates.filter(
-            oldpackage=oldpackage,
-            newpackage=newpackage
-        )
+        updates = PackageUpdate.objects.filter(oldpackage=oldpackage, newpackage=newpackage)
         for update in updates:
-            e = str(update)
-            error_message.send(sender=None, text=e)
+            error_message.send(sender=None, text=str(update))
         return
     try:
         if update:
             if security and not update.security:
                 update.security = True
-                with transaction.atomic():
-                    update.save()
+                update.save()
         else:
-            with transaction.atomic():
-                update, c = updates.get_or_create(
-                    oldpackage=oldpackage,
-                    newpackage=newpackage,
-                    security=security)
-    except IntegrityError as e:
-        error_message.send(sender=None, text=e)
-        update = updates.get(oldpackage=oldpackage,
-                             newpackage=newpackage,
-                             security=security)
-    except DatabaseError as e:
-        error_message.send(sender=None, text=e)
+            update, c = PackageUpdate.objects.get_or_create(
+                oldpackage=oldpackage,
+                newpackage=newpackage,
+                security=security,
+            )
+    except IntegrityError:
+        update = PackageUpdate.objects.get(oldpackage=oldpackage, newpackage=newpackage, security=security)
     return update
 
 
-def mark_errata_security_updates():
-    """ For each set of erratum packages, modify any PackageUpdate that
-        should be marked as a security update.
+def get_matching_packages(name, epoch, version, release, p_type, arch=None):
+    """ Get packages matching the name, epoch, version, release, and package_type
+        Arch can be omitted if unknown
+        Returns the matching packages or an empty list
     """
-    package_updates = PackageUpdate.objects.all()
-    errata = Erratum.objects.all()
-    elen = Erratum.objects.count()
-    ptext = f'Scanning {elen!s} Errata:'
-    progress_info_s.send(sender=None, ptext=ptext, plen=elen)
-    for i, erratum in enumerate(errata):
-        progress_update_s.send(sender=None, index=i + 1)
-        if erratum.etype == 'security':
-            for package in erratum.packages.all():
-                affected_updates = package_updates.filter(
-                    newpackage=package,
-                    security=False
-                )
-                for affected_update in affected_updates:
-                    if not affected_update.security:
-                        affected_update.security = True
-                        try:
-                            with transaction.atomic():
-                                affected_update.save()
-                        except IntegrityError as e:
-                            error_message.send(sender=None, text=e)
-                            # a version of this update already exists that is
-                            # marked as a security update, so delete this one
-                            affected_update.delete()
+    try:
+        package_name = PackageName.objects.get(name=name)
+    except PackageName.DoesNotExist:
+        return []
+    if arch:
+        if not isinstance(arch, PackageArchitecture):
+            try:
+                arch = PackageArchitecture.objects.get_or_create(name=arch)
+            except PackageArchitecture.DoesNotExist:
+                return []
+        packages = Package.objects.filter(
+            epoch=epoch,
+            name=package_name,
+            version=version,
+            release=release,
+            arch=arch,
+            packagetype=p_type,
+        )
+        return packages
+    else:
+        packages = Package.objects.filter(
+            epoch=epoch,
+            name=package_name,
+            version=version,
+            release=release,
+            packagetype=p_type,
+        )
+    return packages
+
+
+def clean_packageupdates():
+    """ Removes PackageUpdate objects that are no longer linked to any hosts
+    """
+    package_updates = list(PackageUpdate.objects.all())
+    for update in package_updates:
+        if update.host_set.count() == 0:
+            text = f'Removing unused PackageUpdate {update}'
+            info_message.send(sender=None, text=text)
+            update.delete()
+        for duplicate in package_updates:
+            if update.oldpackage == duplicate.oldpackage and update.newpackage == duplicate.newpackage and \
+                    update.security == duplicate.security and update.id != duplicate.id:
+                text = f'Removing duplicate PackageUpdate: {update}'
+                info_message.send(sender=None, text=text)
+                for host in duplicate.host_set.all():
+                    host.updates.remove(duplicate)
+                    host.updates.add(update)
+                duplicate.delete()
+
+
+def clean_packages(remove_duplicates=False):
+    """ Remove packages that are no longer in use
+        Optionally check for duplicate packages and remove those too
+    """
+    packages = Package.objects.filter(
+        mirror__isnull=True,
+        host__isnull=True,
+        affected_by_erratum__isnull=True,
+        provides_fix_in_erratum__isnull=True,
+        module__isnull=True,
+    )
+    plen = packages.count()
+    if plen == 0:
+        info_message.send(sender=None, text='No orphaned Packages found.')
+    else:
+        info_message.send(sender=None, text=f'Removing {plen} orphaned Packages')
+        packages.delete()
+    if remove_duplicates:
+        info_message.send(sender=None, text='Checking for duplicate Packages...')
+        for package in Package.objects.all():
+            potential_duplicates = Package.objects.filter(
+                name=package.name,
+                arch=package.arch,
+                epoch=package.epoch,
+                version=package.version,
+                release=package.release,
+                packagetype=package.packagetype,
+                category=package.category,
+            )
+            if potential_duplicates.count() > 1:
+                for dupe in potential_duplicates:
+                    if dupe.id != package.id:
+                        info_message.send(sender=None, text=f'Removing duplicate Package {dupe}')
+                        dupe.delete()
+
+
+def clean_packagenames():
+    """ Remove package names that are no longer in use
+    """
+    names = PackageName.objects.filter(package__isnull=True)
+    nlen = names.count()
+    if nlen == 0:
+        info_message.send(sender=None, text='No orphaned PackageNames found.')
+    else:
+        info_message.send(sender=None, text=f'Removing {nlen} orphaned PackageNames')
+        names.delete()

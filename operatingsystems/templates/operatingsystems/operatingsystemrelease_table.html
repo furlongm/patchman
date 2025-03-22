@@ -1,0 +1,27 @@
+{% load common %}
+<table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+  <thead>
+    <tr>
+      <th class="col-sm-3">OS Release</th>
+      <th class="col-sm-2">CPE Name</th>
+      <th class="col-sm-1">Codename</th>
+      <th class="col-sm-1">Repos</th>
+      <th class="col-sm-1">OS Variants</th>
+      <th class="col-sm-1">Hosts</th>
+      <th class="col-sm-1">Errata</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for osrelease in object_list %}
+      <tr>
+        <td><a href="{{ osrelease.get_absolute_url }}">{{ osrelease.name }}</a></td>
+        <td>{% if osrelease.cpe_name %}{{ osrelease.cpe_name }}{% endif %}</td>
+        <td>{% if osrelease.codename %}{{ osrelease.codename }}{% endif %}</td>
+        <td><a href="{% url 'repos:repo_list' %}?osrelease_id={{ osrelease.id }}">{{ osrelease.repos.count }}</a></td>
+        <td><a href="{% url 'operatingsystems:osvariant_list' %}?osrelease_id={{ osrelease.id }}">{{ osrelease.osvariant_set.count }}</a></td>
+        <td><a href="{% url 'hosts:host_list' %}?osrelease_id={{ osrelease.id }}">{% host_count osrelease %}</a></td>
+        <td><a href="{% url 'errata:erratum_list' %}?osrelease_id={{ osrelease.id }}">{{ osrelease.erratum_set.count }}</a></td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
