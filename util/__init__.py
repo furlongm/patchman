@@ -14,13 +14,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
-from os import getenv
 
 import requests
 import bz2
 import magic
 import zlib
 import lzma
+import os
 from datetime import datetime, timezone
 from enum import Enum
 from hashlib import md5, sha1, sha256, sha512
@@ -39,8 +39,8 @@ pbar = None
 verbose = None
 Checksum = Enum('Checksum', 'md5 sha sha1 sha256 sha512')
 
-http_proxy = getenv('http_proxy')
-https_proxy = getenv('https_proxy')
+http_proxy = os.getenv('http_proxy')
+https_proxy = os.getenv('https_proxy')
 proxies = {
    'http': http_proxy,
    'https': https_proxy,
@@ -122,7 +122,7 @@ def get_url(url, headers={}, params={}):
     response = None
     try:
         debug_message.send(sender=None, text=f'Trying {url} headers:{headers} params:{params}')
-        response = requests.get(url, headers=headers, params=params, stream=True, proxies = proxies, timeout=30)
+        response = requests.get(url, headers=headers, params=params, stream=True, proxies=proxies, timeout=30)
         debug_message.send(sender=None, text=f'{response.status_code}: {response.headers}')
         if response.status_code in [403, 404]:
             return response
