@@ -5,7 +5,7 @@ django-bootstrap3==23.1
 python-debian==0.1.49
 defusedxml==0.7.1
 PyYAML==6.0.2
-chardet==4.0.0
+chardet==5.2.0
 requests==2.32.3
 colorama==0.4.4
 djangorestframework==3.15.2
