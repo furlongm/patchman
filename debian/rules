@@ -9,7 +9,7 @@ clean::
 export PYBUILD_NAME=patchman
 
 %:
-	dh $@ --with python3 --buildsystem=pybuild
+	dh $@ --with=python3 --buildsystem=pybuild --with=systemd
 
 override_dh_auto_test:
 	true
