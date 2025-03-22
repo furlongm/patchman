@@ -3,7 +3,11 @@
 from django.db import migrations, models
 import django.db.models.deletion
 import django.utils.timezone
-import tagging.fields
+try:
+    import tagging.fields
+    has_tagging = True
+except ImportError:
+    has_tagging = False
 
 
 class Migration(migrations.Migration):
@@ -13,22 +17,25 @@ class Migration(migrations.Migration):
     dependencies = [
     ]
 
+    fields=[
+        ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+        ('hostname', models.CharField(max_length=255, unique=True)),
+        ('ipaddress', models.GenericIPAddressField()),
+        ('reversedns', models.CharField(blank=True, max_length=255, null=True)),
+        ('check_dns', models.BooleanField(default=False)),
+        ('kernel', models.CharField(max_length=255)),
+        ('lastreport', models.DateTimeField()),
+        ('reboot_required', models.BooleanField(default=False)),
+        ('host_repos_only', models.BooleanField(default=True)),
+        ('updated_at', models.DateTimeField(default=django.utils.timezone.now)),
+    ]
+    if has_tagging:
+        fields.append(('tags', tagging.fields.TagField(blank=True, max_length=255)))
+
     operations = [
         migrations.CreateModel(
             name='Host',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('hostname', models.CharField(max_length=255, unique=True)),
-                ('ipaddress', models.GenericIPAddressField()),
-                ('reversedns', models.CharField(blank=True, max_length=255, null=True)),
-                ('check_dns', models.BooleanField(default=False)),
-                ('kernel', models.CharField(max_length=255)),
-                ('lastreport', models.DateTimeField()),
-                ('reboot_required', models.BooleanField(default=False)),
-                ('host_repos_only', models.BooleanField(default=True)),
-                ('tags', tagging.fields.TagField(blank=True, max_length=255)),
-                ('updated_at', models.DateTimeField(default=django.utils.timezone.now)),
-            ],
+            fields=fields,
             options={
                 'verbose_name': 'Host',
                 'verbose_name_plural': 'Hosts',

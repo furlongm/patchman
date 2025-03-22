@@ -14,7 +14,7 @@
   <li class="active"><a data-toggle="tab" href="#repo_details">Details</a></li>
   <li><a data-toggle="tab" href="#repo_mirrors">Mirrors</a></li>
   <li><a data-toggle="tab" href="#repo_hosts">Hosts with this Repository</a></li>
-  <li><a data-toggle="tab" href="#repo_osgroups">OS Groups with this Repository</a></li>
+  <li><a data-toggle="tab" href="#repo_osreleases">OS Releases with this Repository</a></li>
   <li><a data-toggle="tab" href="#repo_modules">Modules in this Repository</a></li>
 </ul>
 
@@ -22,13 +22,14 @@
   <div class="tab-pane fade in active" id="repo_details">
     <div class="well well-sm">
       <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
-        <tr><th>Name</th><td> {{ repo.name }} </td></tr>
-        <tr><th>ID</th><td> {% if repo.id != None %} {{ repo.id }} {% endif %}</td></tr>
+        <tr><th class="col-sm-2">Name</th><td> {{ repo.name }} </td></tr>
+        <tr><th>Repo ID</th><td> {% if repo.repo_id %} {{ repo.repo_id }} {% endif %}</td></tr>
         <tr><th>Type</th><td> {{ repo.get_repotype_display }} </td></tr>
         <tr><th>Architecture</th><td> {{ repo.arch }} </td></tr>
         <tr><th>Security</th><td> {% yes_no_img repo.security 'Security' 'Not Security' %} </td></tr>
         <tr><th>Enabled</th><td> {% yes_no_img repo.enabled 'Enabled' 'Not Enabled' %} </td></tr>
-        <tr><th>Mirrors</th><td> {{ repo.mirror_set.count }} </td></tr>
+        <tr><th>Mirrors</th><td> <a href="{% url 'repos:mirror_list' %}?repo_id={{ repo.id }}">{{ repo.mirror_set.count }}</a> </td></tr>
+        <tr><th>Hosts with this Repository</th><td> <a href="{% url 'hosts:host_list' %}?repo_id={{ repo.id }}">{{ repo.host_set.count }}</a> </td></tr>
         <tr><th>Requires Authentication</th><td> {{ repo.auth_required }} </td></tr>
       </table>
       {% if user.is_authenticated and perms.is_admin %}
@@ -44,6 +45,7 @@
         {% else %}
           <a class="btn btn-primary btn-sm" role="button" href="{% url 'repos:repo_toggle_security' repo.id %}">{% bootstrap_icon "star" %} Mark as Security repo</a>
         {% endif %}
+          <a class="btn btn-primary btn-sm" role="button" href="{% url 'repos:repo_refresh' repo.id %}">{% bootstrap_icon "tasks" %} Refresh this Repository</a>
       {% endif %}
     </div>
   </div>
@@ -60,17 +62,15 @@
     </div>
   </div>
 
-  <div class="tab-pane fade in" id="repo_osgroups">
+  <div class="tab-pane fade in" id="repo_osreleases">
     <div class="well well-sm">
-      {% gen_table repo.osgroup_set.all.distinct %}
+      {% gen_table repo.osrelease_set.all.distinct %}
     </div>
   </div>
 
   <div class="tab-pane fade in" id="repo_modules">
     <div class="well well-sm">
-        <div class="well">
-          {% gen_table repo.module_set.all %}
-        </div>
+      {% gen_table repo.module_set.all %}
     </div>
   </div>
 </div>

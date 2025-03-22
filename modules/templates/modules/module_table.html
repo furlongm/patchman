@@ -19,7 +19,7 @@
         <td>{{ module.version }}</td>
         <td>{{ module.context }}</td>
         <td><a href="{{ module.repo.get_absolute_url }}">{{ module.repo }}</a></td>
-        <td>{{ module.packages.count }}</td>
+        <td><a href="{% url 'packages:package_list' %}?module_id={{ module.id }}">{{ module.packages.count }}</a></td>
         <td>{{ module.host_set.count }}</td>
       </tr>
     {% endfor %}

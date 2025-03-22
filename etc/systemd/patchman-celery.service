@@ -1,0 +1,14 @@
+[Unit]
+Description=Patchman Celery Service
+Requires=network-online.target
+After=network-onlne.target
+
+[Service]
+Type=simple
+User=patchman-celery
+Group=patchman-celery
+EnvironmentFile=/etc/patchman/celery
+ExecStart=/usr/bin/celery --broker redis://${REDIS_HOST}:${REDIS_PORT}/0 --app patchman worker --loglevel info --beat --scheduler django_celery_beat.schedulers:DatabaseScheduler --task-events --pool threads
+
+[Install]
+WantedBy=multi-user.target

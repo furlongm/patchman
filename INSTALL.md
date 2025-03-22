@@ -63,8 +63,8 @@ apt -y install gcc libxml2-dev libxslt1-dev virtualenv python3-dev zlib1g-dev  #
 dnf -y install gcc libxml2-devel libxslt-devel python3-virtualenv              # (centos/rocky/alma)
 mkdir /srv/patchman
 cd /srv/patchman
-virtualenv .
-. bin/activate
+python3 -m venv .venv
+. .venv/bin/activate
 pip install --upgrade pip
 pip install patchman gunicorn whitenoise==3.3.1
 patchman-manage migrate
@@ -118,6 +118,28 @@ be configured:
    * SECRET_KEY - create a random secret key
    * STATIC_ROOT - should point to `/srv/patchman/run/static` if installing from
      source
+
+## Patchman-client Settings
+
+The client comes with a default configuration. This configuration will attempt to upload the reports to a server at *patchman.example.com*. This configuration needs to be updated to connect to your own patchman installation.
+
+In `/etc/patchman/patchman-client.conf`, look for the following line(s):
+
+```
+# Patchman server
+server=https://patchman.example.com 
+
+# Options to curl
+curl_options="--insecure --connect-timeout 60 --max-time 300"
+
+...
+```
+ * *server* needs to point the URL where your patchman server 
+is running
+ * *--insecure* in the curl_options tells the client to ignore certificates, if you set them up correctly and are using patchman with "https:/...", you could remove this flag to increase security
+
+
+
 
 
 ## Configure Database
