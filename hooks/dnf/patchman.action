@@ -1,0 +1,1 @@
+*:any:if [ -x /usr/sbin/patchman-client ] ; then echo 'Sending report to patchman server...' ; /usr/sbin/patchman-client -n ; fi

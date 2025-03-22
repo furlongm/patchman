@@ -18,44 +18,44 @@
 from django.forms import ModelForm, ModelMultipleChoiceField
 from django.contrib.admin.widgets import FilteredSelectMultiple
 
-from operatingsystems.models import OS, OSGroup
+from operatingsystems.models import OSVariant, OSRelease
 from repos.models import Repository
 
 
-class AddOSToOSGroupForm(ModelForm):
+class AddOSVariantToOSReleaseForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
-        super(AddOSToOSGroupForm, self).__init__(*args, **kwargs)
-        self.fields['osgroup'].label = 'OS Groups'
+        super().__init__(*args, **kwargs)
+        self.fields['osrelease'].label = 'OS Releases'
 
-    class Meta(object):
-        model = OS
-        fields = ('osgroup',)
+    class Meta:
+        model = OSVariant
+        fields = ('osrelease',)
 
 
-class CreateOSGroupForm(ModelForm):
+class CreateOSReleaseForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
-        super(CreateOSGroupForm, self).__init__(*args, **kwargs)
-        self.fields['name'].label = 'New OS Group'
+        super().__init__(*args, **kwargs)
+        self.fields['name'].label = 'New OS Release'
 
-    class Meta(object):
-        model = OSGroup
+    class Meta:
+        model = OSRelease
         fields = ('name',)
 
 
-class AddReposToOSGroupForm(ModelForm):
+class AddReposToOSReleaseForm(ModelForm):
 
     repos = ModelMultipleChoiceField(
         queryset=Repository.objects.select_related(),
         required=False,
         label=None,
-        widget=FilteredSelectMultiple('Repos', False))
+        widget=FilteredSelectMultiple('Repos', False, attrs={'size': '30'}))
 
     def __init__(self, *args, **kwargs):
-        super(AddReposToOSGroupForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['repos'].label = ''
 
-    class Meta(object):
-        model = OSGroup
+    class Meta:
+        model = OSRelease
         fields = ('repos',)
