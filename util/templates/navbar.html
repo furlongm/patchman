@@ -13,8 +13,10 @@
             <li class="{% if '/dashboard' in request.path %}active{% endif %}"><a href="{% url 'util:dashboard' %}">Dashboard</a></li>
             <li class="{% if '/hosts' in request.path %}active{% endif %}">    <a href="{% url 'hosts:host_list' %}">Hosts</a></li>
             <li class="{% if '/repos' in request.path %}active{% endif %}">    <a href="{% url 'repos:repo_list' %}">Repositories</a></li>
-            <li class="{% if '/packages' in request.path %}active{% endif %}"> <a href="{% url 'packages:package_list' %}">Packages</a></li>
-            <li class="{% if '/os' in request.path %}active{% endif %}">       <a href="{% url 'operatingsystems:os_list' %}">Operating Systems</a></li>
+            <li class="{% if '/packages' in request.path %}active{% endif %}"> <a href="{% url 'packages:package_name_list' %}">Packages</a></li>
+            <li class="{% if '/errata' in request.path %}active{% endif %}">   <a href="{% url 'errata:erratum_list' %}">Errata</a></li>
+            <li class="{% if '/cves' in request.path %}active{% endif %}">     <a href="{% url 'security:cve_list' %}">CVEs</a></li>
+            <li class="{% if '/os' in request.path %}active{% endif %}">       <a href="{% url 'operatingsystems:osrelease_list' %}">Operating Systems</a></li>
             <li class="{% if '/reports' in request.path %}active{% endif %}">  <a href="{% url 'reports:report_list' %}">Reports</a></li>
             {% if user.is_superuser %}
               <li><a href="{% url 'admin:index' %}">Django Admin</a></li>

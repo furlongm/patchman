@@ -25,10 +25,12 @@ from rest_framework import routers
 
 from arch import views as arch_views
 from domains import views as domain_views
+from errata import views as errata_views
 from hosts import views as host_views
 from operatingsystems import views as os_views
 from packages import views as package_views
 from repos import views as repo_views
+from security import views as security_views
 
 router = routers.DefaultRouter()
 router.register(r'package-architecture', arch_views.PackageArchitectureViewSet)
@@ -36,13 +38,14 @@ router.register(r'machine-architecture', arch_views.MachineArchitectureViewSet)
 router.register(r'domain', domain_views.DomainViewSet)
 router.register(r'host', host_views.HostViewSet)
 router.register(r'host-repo', host_views.HostRepoViewSet)
-router.register(r'os', os_views.OSViewSet)
-router.register(r'os-group', os_views.OSGroupViewSet)
+router.register(r'os-variant', os_views.OSVariantViewSet)
+router.register(r'os-release', os_views.OSReleaseViewSet)
 router.register(r'package-name', package_views.PackageNameViewSet)
 router.register(r'package', package_views.PackageViewSet)
 router.register(r'package-update', package_views.PackageUpdateViewSet)
-router.register(r'erratum', package_views.ErratumViewSet)
-router.register(r'erratum-reference', package_views.ErratumReferenceViewSet)
+router.register(r'cve', security_views.CVEViewSet)
+router.register(r'reference', security_views.ReferenceViewSet),
+router.register(r'erratum', errata_views.ErratumViewSet)
 router.register(r'repo', repo_views.RepositoryViewSet)
 router.register(r'mirror', repo_views.MirrorViewSet)
 router.register(r'mirror-package', repo_views.MirrorPackageViewSet)
@@ -55,10 +58,13 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),  # noqa
     path('', include('util.urls', namespace='util')),
+    path('errata/', include('errata.urls', namespace='errata')),
     path('reports/', include('reports.urls', namespace='reports')),
     path('hosts/', include('hosts.urls', namespace='hosts')),
     path('packages/', include('packages.urls', namespace='packages')),
+    path('modules/', include('modules.urls', namespace='modules')),
     path('repos/', include('repos.urls', namespace='repos')),
+    path('security/', include('security.urls', namespace='security')),
     path('os/', include('operatingsystems.urls', namespace='operatingsystems')),  # noqa
 ]
 
