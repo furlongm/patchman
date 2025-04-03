@@ -11,7 +11,7 @@ COPY ./etc/patchman/apache.conf.example /etc/apache2/sites-available/patchman.co
 RUN /srv/patchman/setup.py install
 
 COPY ./etc/patchman/patchman-email.conf /etc/patchman/
-COPY /srv/patchman/email/patchman-email /usr/bin/patchman-email
+COPY ./email/patchman-email /usr/bin/patchman-email
 
 RUN a2enmod wsgi
 RUN a2ensite patchman
