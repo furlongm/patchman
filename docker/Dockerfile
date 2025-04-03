@@ -1,28 +1,23 @@
 FROM debian:bookworm-slim
 
-RUN apt update && apt upgrade
-RUN apt install -y apache2 libapache2-mod-wsgi-py3 mariadb-client python-celery-common python3-celery python3-colorama python3-debian python3-defusedxml python3-django python3-django-extensions python3-django-tagging python3-djangorestframework python3-humanize python3-lxml python3-magic python3-mysqldb python3-pip python3-progressbar python3-pymemcache python3-redis python3-requests python3-rpm sendmail sharutils uuid-runtime weasyprint
+RUN apt -y update && apt -y upgrade
+RUN apt install -y apache2 libapache2-mod-wsgi-py3 mariadb-client python-celery-common python3-celery python3-debian python3-defusedxml python3-lxml python3-mysqldb python3-pip python3-progressbar python3-redis python3-rpm sendmail sharutils uuid-runtime weasyprint
 
-RUN pip3 install django-bootstrap3 --break-system-packages
-
-RUN mkdir -p /srv/patchman && mkdir -p /var/lib/patchman/db
+WORKDIR /srv/patchman
 
 COPY . /srv/patchman/
-COPY ./etc/patchman/local_settings.py /etc/patchman/
-COPY ./etc/patchman/patchman-email.conf /etc/patchman/
 COPY ./etc/patchman/apache.conf.example /etc/apache2/sites-available/patchman.conf
 
-RUN ln -s /srv/patchman/manage.py /usr/bin/patchman-manage
-RUN ln -s /srv/patchman/sbin/patchman /usr/bin/patchman
-RUN ln -s /srv/patchman/sbin/patchman-set-secret-key /usr/bin/patchman-set-secret-key
-RUN ln -s /srv/patchman/email/patchman-email /usr/bin/patchman-email
+RUN /srv/patchman/setup.py install
+
+COPY ./etc/patchman/patchman-email.conf /etc/patchman/
+COPY /srv/patchman/email/patchman-email /usr/bin/patchman-email
 
 RUN a2enmod wsgi
 RUN a2ensite patchman
 
-RUN chown -R :www-data /etc/patchman && chmod -R g+r /etc/patchman
-RUN chown -R :www-data /var/lib/patchman && chmod -R g+w /var/lib/patchman/db
-RUN chmod +x /srv/patchman/patchman/*.py
+RUN mkdir -p /var/lib/patchman/db
+RUN chown :www-data /var/lib/patchman/db && chmod 2770 /var/lib/patchman/db
 
 EXPOSE 80
 
