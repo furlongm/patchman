@@ -79,6 +79,20 @@ else
     sed -i '41,49 {/^#/ ! s/\(.*\)/#\1/}' /etc/patchman/local_settings.py
 fi
 
+# Sync database on container first start
+if [ ! -f /var/lib/patchman/.firstrun ]; then
+    patchman-manage makemigrations
+    patchman-manage migrate --run-syncdb --fake-initial
+    patchman-manage collectstatic
+
+    # If SQLite is being used, allow httpd to write
+    if [ -z "${DB_ENGINE}" ]; then
+        chmod 660 /var/lib/patchman/db/patchman.db
+    fi
+
+    touch /var/lib/patchman/.firstrun
+fi
+
 # Starts Celery for for realtime processing of reports from clients
 if [ ! -z "${CELERY_BROKER}" ]; then
     broker="${CELERY_BROKER}"
