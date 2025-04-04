@@ -2,7 +2,7 @@
 services:
   patchman:
     container_name: patchman
-    image: furlongm/patchman 
+    image: furlongm/patchman:latest 
     restart: unless-stopped
     environment:
       TIMEZONE: America/New_York
