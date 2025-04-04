@@ -15,6 +15,12 @@ if [ ! -z "${DB_ENGINE}" ]; then
 
     if [[ $(grep "ENGINE" /etc/patchman/local_settings.py | wc -l) < 2 ]]; then
         if [ "${DB_ENGINE}" == "MySQL" ]; then
+            if [ ! -z "${DB_PORT}" ]; then
+                dbPort="${DB_PORT}"
+            else
+                dbPort="3306"
+            fi
+
             cat <<-EOF >> /etc/patchman/local_settings.py
 
 			DATABASES = {
@@ -24,7 +30,7 @@ if [ ! -z "${DB_ENGINE}" ]; then
 			        'USER': '${DB_USER}',
 			        'PASSWORD': '${DB_PASSWORD}',
 			        'HOST': '${DB_HOST}',
-			        'PORT': '${DB_PORT}',
+			        'PORT': '"$dbPort"',
 			        'STORAGE_ENGINE': 'INNODB',
 			        'CHARSET' : 'utf8'
 			    }
@@ -32,6 +38,12 @@ if [ ! -z "${DB_ENGINE}" ]; then
 			EOF
 
         elif [ "${DB_ENGINE}" == "PostgreSQL" ]; then
+            if [ ! -z "${DB_PORT}" ]; then
+                dbPort="${DB_PORT}"
+            else
+                dbPort="5432"
+            fi
+
             cat <<-EOF >> /etc/patchman/local_settings.py
 
 			DATABASES = {
