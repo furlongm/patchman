@@ -1,19 +1,21 @@
 #!/bin/bash
 
+conf="/etc/patchman/local_settings.py"
+
 # Configure ADMINS
 if [ -n "${ADMIN_NAME}" ]; then
-    sed -i '6 {s/Your Name/'"${ADMIN_NAME}"'/}' /etc/patchman/local_settings.py
+    sed -i '6 {s/Your Name/'"${ADMIN_NAME}"'/}' "$conf"
 fi
 
 if [ -n "${ADMIN_EMAIL}" ]; then
-    sed -i '6 {s/you@example.com/'"${ADMIN_EMAIL}"'/}' /etc/patchman/local_settings.py
+    sed -i '6 {s/you@example.com/'"${ADMIN_EMAIL}"'/}' "$conf"
 fi
 
 # Configure DATABASES
 if [ -n "${DB_ENGINE}" ]; then
-    sed -i '9,14 {/^#/ ! s/\(.*\)/#\1/}' /etc/patchman/local_settings.py
+    sed -i '9,14 {/^#/ ! s/\(.*\)/#\1/}' "$conf"
 
-    if [[ $(grep -c "ENGINE" /etc/patchman/local_settings.py) -lt 2 ]]; then
+    if [[ $(grep -c "ENGINE" "$conf") -lt 2 ]]; then
         if [ "${DB_ENGINE}" == "MySQL" ]; then
             if [ -n "${DB_PORT}" ]; then
                 dbPort="${DB_PORT}"
@@ -21,7 +23,7 @@ if [ -n "${DB_ENGINE}" ]; then
                 dbPort="3306"
             fi
 
-            cat <<-EOF >> /etc/patchman/local_settings.py
+            cat <<-EOF >> "$conf"
 
 			DATABASES = {
 			    'default': {
@@ -44,7 +46,7 @@ if [ -n "${DB_ENGINE}" ]; then
                 dbPort="5432"
             fi
 
-            cat <<-EOF >> /etc/patchman/local_settings.py
+            cat <<-EOF >> "$conf"
 
 			DATABASES = {
 			    'default': {
@@ -64,13 +66,13 @@ fi
 
 # Configure TIME_ZONE
 if [ -n  "${TIMEZONE}" ]; then
-    sed -i '18 {s/America\/New_York/'"${TIMEZONE/\//\\/}"'/}' /etc/patchman/local_settings.py
+    sed -i '18 {s/America\/New_York/'"${TIMEZONE/\//\\/}"'/}' "$conf"
 fi
 
 # Configure SECRET_KEY 
-if [ -z "$(grep "SECRET_KEY" /etc/patchman/local_settings.py | cut -d " " -f 3 | tr -d "'")" ]; then 
+if [ -z "$(grep "SECRET_KEY" "$conf" | cut -d " " -f 3 | tr -d "'")" ]; then 
     if [ -n "${SECRET_KEY}" ]; then
-        sed -i "s/SECRET_KEY = ''/SECRET_KEY = '"${SECRET_KEY}"'/g" /etc/patchman/local_settings.py 
+        sed -i "s/SECRET_KEY = ''/SECRET_KEY = '"${SECRET_KEY}"'/g" "$conf" 
     else
         patchman-set-secret-key
     fi
@@ -86,9 +88,9 @@ if [ -n "${MEMCACHED_ADDR}" ]; then
         memcachedPort="11211"
     fi
 
-    sed -i "s/'LOCATION': '127.0.0.1:11211'/'LOCATION': '"$memcachedAddr":"$memcachedPort"'/g" /etc/patchman/local_settings.py 
+    sed -i "s/'LOCATION': '127.0.0.1:11211'/'LOCATION': '"$memcachedAddr":"$memcachedPort"'/g" "$conf" 
 else
-    sed -i '41,49 {/^#/ ! s/\(.*\)/#\1/}' /etc/patchman/local_settings.py
+    sed -i '41,49 {/^#/ ! s/\(.*\)/#\1/}' "$conf"
 fi
 
 # Sync database on container first start
@@ -115,13 +117,13 @@ if [ -n "${CELERY_BROKER}" ]; then
         brokerPort=6379
     fi
 
-    if [ -z "$(grep "USE_ASYNC_PROCESSING" /etc/patchman/local_settings.py | cut -d " " -f 3 | tr -d "'")" ]; then 
-        echo "" >> /etc/patchman/local_settings.py
-        echo "USE_ASYNC_PROCESSING = True" >> /etc/patchman/local_settings.py
+    if [ -z "$(grep "USE_ASYNC_PROCESSING" "$conf" | cut -d " " -f 3 | tr -d "'")" ]; then 
+        echo "" >> "$conf"
+        echo "USE_ASYNC_PROCESSING = True" >> "$conf"
     fi
 
-    if [ -z "$(grep "CELERY_BROKER_URL" /etc/patchman/local_settings.py | cut -d " " -f 3 | tr -d "'")" ]; then 
-        echo "CELERY_BROKER_URL = 'redis://"$broker":"$brokerPort"/0'" >> /etc/patchman/local_settings.py
+    if [ -z "$(grep "CELERY_BROKER_URL" "$conf" | cut -d " " -f 3 | tr -d "'")" ]; then 
+        echo "CELERY_BROKER_URL = 'redis://"$broker":"$brokerPort"/0'" >> "$conf"
     fi
 
     C_FORCE_ROOT=1 celery -b redis://"$broker":"$brokerPort"/0 -A patchman worker -l INFO -E &
