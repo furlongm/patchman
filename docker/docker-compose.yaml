@@ -1,25 +1,23 @@
 ---
-networks:
-  patchman:
-    name: patchman
-    driver: bridge
-    ipam:
-      driver: default
-      config:
-      - subnet: 10.0.0.0/24
-        gateway: 10.0.0.1
-
 services:
   patchman:
     container_name: patchman
-    image: patchman:latest
-    build:
-      context: .
+    image: furlongm/patchman 
     restart: unless-stopped
-    entrypoint: ["/usr/sbin/apache2ctl", "-DFOREGROUND"]
-    networks:
-      patchman:
-        ipv4_address: '10.0.0.10'
+    environment:
+      TIMEZONE: America/New_York
+      ADMIN_NAME: admin_name
+      ADMIN_EMAIL: admin_mail@domain.tld
+      DB_ENGINE: MySQL
+      DB_DATABASE: patchman
+      DB_USER: user
+      DB_PASSWORD: changeme
+      DB_HOST: patchman-db
+      DB_PORT: 3306
+      MEMCACHED_ADDR: memcached
+      MEMCACHED_PORT: 11211
+      CELERY_BROKER: redis
+      CELERY_BROKER_PORT: 6379
     depends_on:
       - patchman-db
       - memcached
@@ -30,27 +28,18 @@ services:
     image: mysql:latest
     restart: unless-stopped
     command: ["mysqld", "--character-set-server=utf8", "--collation-server=utf8_general_ci"]
-    networks:
-      patchman:
-        ipv4_address: '10.0.0.11'
     environment:
       MYSQL_ROOT_PASSWORD: changeme 
-      MYSQL_DATABASE: changeme 
-      MYSQL_USER: changeme
+      MYSQL_DATABASE: patchman 
+      MYSQL_USER: user
       MYSQL_PASSWORD: changeme
 
   memcached:
     container_name: memcached
     image: memcached:latest
     restart: unless-stopped
-    networks:
-      patchman:
-        ipv4_address: '10.0.0.12'
 
   redis:
     container_name: redis
     image: redis:latest
     restart: unless-stopped
-    networks:
-      patchman:
-        ipv4_address: '10.0.0.13'
