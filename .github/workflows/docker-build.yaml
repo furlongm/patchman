@@ -28,6 +28,6 @@ jobs:
           file: docker/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{vars.DOCKERHUB_USERNAME}}/{{vars.DOCKERHUB_CONTAINER}}:latest,${{vars.DOCKERHUB_USERNAME}}/${{vars_DOCKERHUB_CONTAINER}}:v3.0.19
+          tags: ${{vars.DOCKERHUB_USERNAME}}/{{vars.DOCKERHUB_CONTAINER}}:latest,${{vars.DOCKERHUB_USERNAME}}/${{vars_DOCKERHUB_CONTAINER}}:${{github.ref_name}}
           cache-from: type=gha
           cache-to: type=gha,mode=max
