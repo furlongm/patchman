@@ -327,11 +327,13 @@ def dns_checks(host=None):
         host.check_rdns()
 
 
-def process_reports(host=None, force=False):
+def process_reports(host=None, force=False, updates=False):
     """ Process all pending reports, specify host to process only a single host
         The --force option forces even processed reports to be reprocessed
         No reports are skipped in case some reports contain repo information
         and others only contain package information.
+        The updates argument is passed to find_updates, to cause the report processing
+        to find all updates for the host.
     """
     reports = []
     if host:
@@ -348,7 +350,7 @@ def process_reports(host=None, force=False):
     info_message.send(sender=None, text=text)
 
     for report in reports:
-        report.process(find_updates=False)
+        report.process(find_updates=updates)
 
 
 def dbcheck(remove_duplicates=False):
@@ -415,6 +417,9 @@ def collect_args():
     parser.add_argument(
         '-p', '--process-reports', action='store_true',
         help='Process pending Reports')
+    parser.add_argument(
+        '-P', '--process-reports-updates', action='store_true',
+        help='Process pending Reports and find updates for hosts with reports')
     parser.add_argument(
         '-c', '--clean-reports', action='store_true',
         help='Remove all but the last three Reports')
@@ -500,7 +505,10 @@ def process_args(args):
         clean_reports(args.host)
         showhelp = False
     if args.process_reports:
-        process_reports(args.host, args.force)
+        process_reports(args.host, args.force, False)
+        showhelp = False
+    if args.process_reports_updates:
+        process_reports(args.host, args.force, True)
         showhelp = False
     if args.dbcheck:
         dbcheck(args.remove_duplicates)
