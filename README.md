@@ -202,3 +202,27 @@ Errata for CentOS can be downloaded from https://cefs.steve-meier.de/ .
 These errata are parsed and stored in the database. If a PackageUpdate
 contains a package that is a security update in the errata, then that update is
 marked as being a security update.
+
+## Local Settings Configuration
+
+The project uses a local settings file for configuration. To set up your local environment:
+
+1. Copy the template file to create your local settings:
+   ```bash
+   cp etc/patchman/local_settings.py.template /etc/patchman/local_settings.py
+   ```
+
+2. Edit `/etc/patchman/local_settings.py` with your specific configuration:
+   - Set a secure `SECRET_KEY`
+   - Configure your database settings
+   - Set appropriate `ALLOWED_HOSTS`
+   - Configure email settings
+   - Set up Celery and caching if needed
+
+3. Make sure the settings file has the correct permissions:
+   ```bash
+   sudo chown www-data /etc/patchman/local_settings.py
+   sudo chmod 640 /etc/patchman/local_settings.py
+   ```
+
+Note: The local settings file is not tracked in git to protect sensitive information. Make sure to keep your local settings file secure and never commit it to version control.
