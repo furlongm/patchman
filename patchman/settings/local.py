@@ -5,7 +5,7 @@ import site
 import sys
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-development-key-change-in-production'
@@ -34,6 +34,8 @@ THIRD_PARTY_APPS = [
     'bootstrap3',
     'rest_framework',
     'django_filters',
+    'celery',
+    'django_celery_beat',
 ]
 
 LOCAL_APPS = [
@@ -131,6 +133,9 @@ REST_FRAMEWORK = {
 # Taggit settings
 TAGGIT_CASE_INSENSITIVE = True
 
+# Celery settings
+CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
+
 # Login URLs
 LOGIN_REDIRECT_URL = '/patchman/'
 LOGOUT_REDIRECT_URL = '/patchman/login/'
@@ -152,4 +157,43 @@ CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
     }
+}
+
+# Uncomment to enable redis caching for e.g. 30 seconds
+# Note that the UI results may be out of date for this amount of time
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+#         'LOCATION': 'redis://127.0.0.1:6379',
+#         'TIMEOUT': 30,
+#     }
+# }
+
+from datetime import timedelta        # noqa
+from celery.schedules import crontab  # noqa
+CELERY_BEAT_SCHEDULE = {
+    'process_all_unprocessed_reports': {
+        'task': 'reports.tasks.process_reports',
+        'schedule': crontab(minute='*/5'),
+     },
+    'refresh_repos_daily': {
+        'task': 'repos.tasks.refresh_repos',
+        'schedule': crontab(hour=4, minute=00),
+    },
+    'update_errata_cves_cwes_every_12_hours': {
+        'task': 'errata.tasks.update_errata_and_cves',
+        'schedule': timedelta(hours=12),
+    },
+    'run_database_maintenance_daily': {
+        'task': 'util.tasks.clean_database',
+        'schedule': crontab(hour=6, minute=00),
+    },
+    'remove_old_reports': {
+        'task': 'reports.tasks.remove_reports_with_no_hosts',
+        'schedule': timedelta(days=7),
+    },
+    'find_host_updates': {
+        'task': 'hosts.tasks.find_all_host_updates_homogenous',
+        'schedule': timedelta(hours=24),
+    },
 }
