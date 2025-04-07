@@ -32,7 +32,7 @@ if [ -n "${DB_ENGINE}" ]; then
 			        'USER': '${DB_USER}',
 			        'PASSWORD': '${DB_PASSWORD}',
 			        'HOST': '${DB_HOST}',
-			        'PORT': '"$dbPort"',
+			        'PORT': '$dbPort',
 			        'STORAGE_ENGINE': 'INNODB',
 			        'CHARSET' : 'utf8'
 			    }
@@ -55,7 +55,7 @@ if [ -n "${DB_ENGINE}" ]; then
 			        'USER': '${DB_USER}',
 			        'PASSWORD': '${DB_PASSWORD}',
 			        'HOST': '${DB_HOST}',
-			        'PORT': '${DB_PORT}',
+			        'PORT': '$dbPort',
 			        'CHARSET' : 'utf8'
 			    }
 			}
