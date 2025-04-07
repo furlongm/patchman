@@ -95,6 +95,10 @@ if [ "${USE_CACHE}" ] && [ -n "${REDIS_ADDR}" ]; then
     sed -i '52,58 {s/^# //}' "$conf"
 
     sed -i "55 {s/127.0.0.1:6379/$redisAddr:$redisPort/}" "$conf" 
+
+    if [ -n "${CACHE_TIMEOUT}" ]; then
+        sed -i "56 {s/30/${CACHE_TIMEOUT}/}" "$conf" 
+    fi
 fi
 
 # Sync database on container first start
