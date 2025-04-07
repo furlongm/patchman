@@ -5,22 +5,24 @@ services:
     image: furlongm/patchman:latest 
     restart: unless-stopped
     environment:
-      TIMEZONE: America/New_York
       ADMIN_NAME: admin_name
       ADMIN_EMAIL: admin_mail@domain.tld
+      TIMEZONE: America/New_York
       DB_ENGINE: MySQL
+      DB_HOST: patchman-db
+      DB_PORT: 3306
       DB_DATABASE: patchman
       DB_USER: user
       DB_PASSWORD: changeme
-      DB_HOST: patchman-db
-      DB_PORT: 3306
-      MEMCACHED_ADDR: memcached
-      MEMCACHED_PORT: 11211
-      CELERY_BROKER: redis
-      CELERY_BROKER_PORT: 6379
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      USE_CELERY: True
+      USE_CACHE: True
+      CACHE_TIMEOUT: 20
+    ports:
+      - 80:80/tcp
     depends_on:
       - patchman-db
-      - memcached
       - redis
 
   patchman-db:
@@ -33,11 +35,6 @@ services:
       MYSQL_DATABASE: patchman 
       MYSQL_USER: user
       MYSQL_PASSWORD: changeme
-
-  memcached:
-    container_name: memcached
-    image: memcached:latest
-    restart: unless-stopped
 
   redis:
     container_name: redis
