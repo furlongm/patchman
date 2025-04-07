@@ -13,9 +13,9 @@ fi
 
 # Configure DATABASES
 if [ -n "${DB_ENGINE}" ]; then
-    sed -i '9,14 {/^#/ ! s/\(.*\)/#\1/}' "$conf"
+    sed -i '9,18 {/^#/ ! s/\(.*\)/#\1/}' "$conf"
 
-    if [[ $(grep -c "ENGINE" "$conf") -lt 2 ]]; then
+    if [[ $(grep -v "#" "$conf" | grep -c "ENGINE") -lt 2 ]]; then
         if [ "${DB_ENGINE}" == "MySQL" ]; then
             if [ -n "${DB_PORT}" ]; then
                 dbPort="${DB_PORT}"
