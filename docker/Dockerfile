@@ -1,7 +1,7 @@
 FROM debian:bookworm-slim
 
 RUN apt -y update && apt -y upgrade
-RUN apt install -y apache2 libapache2-mod-wsgi-py3 mariadb-client python-celery-common python3-celery python3-debian python3-defusedxml python3-lxml python3-mysqldb python3-pip python3-progressbar python3-psycopg2 python3-redis python3-rpm 
+RUN apt install -y apache2 git libapache2-mod-wsgi-py3 mariadb-client python-celery-common python3-celery python3-debian python3-defusedxml python3-lxml python3-mysqldb python3-pip python3-progressbar python3-psycopg2 python3-redis python3-rpm 
 
 WORKDIR /srv/patchman
 
