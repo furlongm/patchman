@@ -66,7 +66,7 @@ fi
 
 # Configure TIME_ZONE
 if [ -n  "${TIMEZONE}" ]; then
-    sed -i '18 {s/America\/New_York/'"${TIMEZONE/\//\\/}"'/}' "$conf"
+    sed -i '22 {s/America\/New_York/'"${TIMEZONE/\//\\/}"'/}' "$conf"
 fi
 
 # Configure SECRET_KEY 
@@ -79,18 +79,22 @@ if [ -z "$(grep "SECRET_KEY" "$conf" | cut -d " " -f 3 | tr -d "'")" ]; then
 fi
 
 # Configure CACHES
-if [ -n "${MEMCACHED_ADDR}" ]; then
-    memcachedAddr="${MEMCACHED_ADDR}"
+if ["${USE_CACHE}" == True ] && [ -n "${REDIS_ADDR}" ]; then
+    redisAddr="${REDIS_ADDR}"
 
-    if [ -n "${MEMCACHED_PORT}" ]; then
-        memcachedPort="${MEMCACHED_PORT}"
+    if [ -n "${REDIS_PORT}" ]; then
+        redisPort="${REDIS_PORT}"
     else
-        memcachedPort="11211"
+        redisPort="6379"
     fi
 
-    sed -i "s/'LOCATION': '127.0.0.1:11211'/'LOCATION': '"$memcachedAddr":"$memcachedPort"'/g" "$conf" 
-else
-    sed -i '41,49 {/^#/ ! s/\(.*\)/#\1/}' "$conf"
+    # Comment DummyCache Block
+    sed -i '44,48 {/^#/ ! s/\(.*\)/#\1/}' "$conf"
+
+    # Uncomment RedisCache Block
+    sed -i '52,58 {s/^# //}' "$conf"
+
+    sed -i "55 {s/127.0.0.1:6379/$redisAddr:$redisPort/}" "$conf" 
 fi
 
 # Sync database on container first start
@@ -108,13 +112,13 @@ if [ ! -f /var/lib/patchman/.firstrun ]; then
 fi
 
 # Starts Celery for for realtime processing of reports from clients
-if [ -n "${CELERY_BROKER}" ]; then
-    broker="${CELERY_BROKER}"
+if ["${USE_CELERY}" == True ] && [ -n "${REDIS_ADDR}" ]; then
+    redisAddr="${REDIS_ADDR}"
 
-    if [ -n "${CELERY_BROKER_PORT}" ]; then
-        brokerPort="${CELERY_BROKER_PORT}"
+    if [ -n "${REDIS_PORT}" ]; then
+        redisPort="${REDIS_PORT}"
     else
-        brokerPort=6379
+        redisPort=6379
     fi
 
     if [ -z "$(grep "USE_ASYNC_PROCESSING" "$conf" | cut -d " " -f 3 | tr -d "'")" ]; then 
@@ -123,10 +127,10 @@ if [ -n "${CELERY_BROKER}" ]; then
     fi
 
     if [ -z "$(grep "CELERY_BROKER_URL" "$conf" | cut -d " " -f 3 | tr -d "'")" ]; then 
-        echo "CELERY_BROKER_URL = 'redis://"$broker":"$brokerPort"/0'" >> "$conf"
+        echo "CELERY_BROKER_URL = 'redis://$redisAddr:$redisPort/0'" >> "$conf"
     fi
 
-    C_FORCE_ROOT=1 celery -b redis://"$broker":"$brokerPort"/0 -A patchman worker -l INFO -E &
+    C_FORCE_ROOT=1 celery -b redis://"$redisAddr":"$redisPort"/0 -A patchman worker -l INFO -E &
 fi
 
 # Starts Apache httpd process
