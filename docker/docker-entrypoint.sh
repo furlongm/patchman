@@ -79,8 +79,8 @@ if [ -z "$(grep "SECRET_KEY" "$conf" | cut -d " " -f 3 | tr -d "'")" ]; then
 fi
 
 # Configure CACHES
-if [ "${USE_CACHE}" ] && [ -n "${REDIS_ADDR}" ]; then
-    redisAddr="${REDIS_ADDR}"
+if [ "${USE_CACHE}" ] && [ -n "${REDIS_HOST}" ]; then
+    redisHost="${REDIS_HOST}"
 
     if [ -n "${REDIS_PORT}" ]; then
         redisPort="${REDIS_PORT}"
@@ -94,7 +94,7 @@ if [ "${USE_CACHE}" ] && [ -n "${REDIS_ADDR}" ]; then
     # Uncomment RedisCache Block
     sed -i '52,58 {s/^# //}' "$conf"
 
-    sed -i "55 {s/127.0.0.1:6379/$redisAddr:$redisPort/}" "$conf" 
+    sed -i "55 {s/127.0.0.1:6379/$redisHost:$redisPort/}" "$conf" 
 
     if [ -n "${CACHE_TIMEOUT}" ]; then
         sed -i "56 {s/30/${CACHE_TIMEOUT}/}" "$conf" 
@@ -116,8 +116,8 @@ if [ ! -f /var/lib/patchman/.firstrun ]; then
 fi
 
 # Starts Celery for for realtime processing of reports from clients
-if [ "${USE_CELERY}" ] && [ -n "${REDIS_ADDR}" ]; then
-    redisAddr="${REDIS_ADDR}"
+if [ "${USE_CELERY}" ] && [ -n "${REDIS_HOST}" ]; then
+    redisHost="${REDIS_HOST}"
 
     if [ -n "${REDIS_PORT}" ]; then
         redisPort="${REDIS_PORT}"
@@ -131,10 +131,10 @@ if [ "${USE_CELERY}" ] && [ -n "${REDIS_ADDR}" ]; then
     fi
 
     if [ -z "$(grep "CELERY_BROKER_URL" "$conf" | cut -d " " -f 3 | tr -d "'")" ]; then 
-        echo "CELERY_BROKER_URL = 'redis://$redisAddr:$redisPort/0'" >> "$conf"
+        echo "CELERY_BROKER_URL = 'redis://$redisHost:$redisPort/0'" >> "$conf"
     fi
 
-    C_FORCE_ROOT=1 celery -b redis://"$redisAddr":"$redisPort"/0 -A patchman worker -l INFO -E &
+    C_FORCE_ROOT=1 celery -b redis://"$redisHost":"$redisPort"/0 -A patchman worker -l INFO -E &
 fi
 
 # Starts Apache httpd process
