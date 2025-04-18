@@ -23,6 +23,9 @@ if [ "$1" = "configure" ] ; then
     sqlite3 /var/lib/patchman/db/patchman.db 'PRAGMA journal_mode=WAL;'
 
     chown -R www-data:www-data /var/lib/patchman
+    adduser --system --group patchman-celery
+    usermod -a -G www-data patchman-celery
+    chmod g+w /var/lib/patchman /var/lib/patchman/db /var/lib/patchman/db/patchman.db
 
     echo
     echo "Remember to run 'patchman-manage createsuperuser' to create a user."
