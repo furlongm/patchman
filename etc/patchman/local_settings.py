@@ -38,6 +38,18 @@ MAX_MIRRORS = 2
 # Number of days to wait before raising that a host has not reported
 DAYS_WITHOUT_REPORT = 14
 
+# list of errata sources to update, remove unwanted ones to improve performance
+ERRATA_OS_UPDATES = ['yum', 'rocky', 'alma', 'arch', 'ubuntu', 'debian']
+
+# list of Alma Linux releases to update
+ALMA_RELEASES = [8, 9]
+
+# list of Debian Linux releases to update
+DEBIAN_CODENAMES = ['bookworm', 'trixie']
+
+# list of Ubuntu Linux releases to update
+UBUNTU_CODENAMES = ['jammy', 'noble']
+
 # Whether to run patchman under the gunicorn web server
 RUN_GUNICORN = False
 
