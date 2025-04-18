@@ -1,16 +1,15 @@
 # Django settings for patchman project.
 
-DEBUG = False
+DEBUG = True
 
 ADMINS = (
-    ('Your Name', 'you@example.com'),
+    ('Admin', 'admin@example.com'),
 )
 
 DATABASES = {
     'default': {
-#        'ENGINE': 'django.db.backends.sqlite3',  # noqa disabled until django 5.1 is in use, see https://blog.pecar.me/django-sqlite-dblock
-        'ENGINE': 'patchman.sqlite3',
-        'NAME': '/var/lib/patchman/db/patchman.db',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'patchman.db',
         'OPTIONS': {
             'timeout': 30
         }
@@ -26,11 +25,11 @@ TIME_ZONE = 'America/New_York'
 LANGUAGE_CODE = 'en-us'
 
 # Create a unique string here, and don't share it with anybody.
-SECRET_KEY = ''
+SECRET_KEY = 'change-this-in-production'
 
 # Add the IP addresses that your web server will be listening on,
 # instead of '*'
-ALLOWED_HOSTS = ['127.0.0.1', '*']
+ALLOWED_HOSTS = ['127.0.0.1']
 
 # Maximum number of mirrors to add or refresh per repo
 MAX_MIRRORS = 2
@@ -56,6 +55,11 @@ CACHES = {
 #         'TIMEOUT': 30,
 #     }
 # }
+
+# Celery settings
+CELERY_BROKER_URL = 'memory://'
+CELERY_RESULT_BACKEND = 'cache'
+CELERY_CACHE_BACKEND = 'memory'
 
 from datetime import timedelta        # noqa
 from celery.schedules import crontab  # noqa
@@ -84,4 +88,4 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'hosts.tasks.find_all_host_updates_homogenous',
         'schedule': timedelta(hours=24),
     },
-}
+} 
