@@ -84,7 +84,6 @@ def parse_debian_package_file_map(data, repo):
             Source: 389-ds-base
             Source-Version: 1.4.0.21-1+deb10u1
     """
-    global DSCs
     parsing_dsc = False
     for line in data.splitlines():
         if line.startswith('Path:'):
@@ -236,7 +235,6 @@ def parse_debian_erratum_package(line, accepted_codenames):
 def get_debian_dsc_package_list(package, version):
     """ Get the package list from a DSC file for a given source package/version
     """
-    global DSCs
     if not DSCs.get(package) or not DSCs[package].get(version):
         return
     package_list = DSCs[package][version].get('package_list')
@@ -247,7 +245,6 @@ def get_debian_dsc_package_list(package, version):
 def fetch_debian_dsc_package_list(package, version):
     """ Fetch the package list from a DSC file for a given source package/version
     """
-    global DSCs
     if not DSCs.get(package) or not DSCs[package].get(version):
         warning_message.send(sender=None, text=f'No DSC found for {package} {version}')
         return
