@@ -92,7 +92,6 @@ class CVSS(models.Model):
 class CVE(models.Model):
 
     cve_id = models.CharField(max_length=255, unique=True)
-    title = models.CharField(max_length=255, blank=True, null=True)
     description = models.TextField(blank=True, default='')
     reserved_date = models.DateTimeField(blank=True, null=True)
     published_date = models.DateTimeField(blank=True, null=True)
@@ -233,32 +232,23 @@ class CVE(models.Model):
         if updated_date:
             self.updated_date = tz_aware_datetime(cve_metadata.get('dateUpdated'))
         cna_container = cve_json.get('containers').get('cna')
-        title = cna_container.get('title')
-        if not title:
-            product = cna_container.get('product')
         descriptions = cna_container.get('descriptions')
         if descriptions:
             self.description = descriptions[0].get('value')
         problem_types = cna_container.get('problemTypes', [])
         for problem_type in problem_types:
             descriptions = problem_type.get('descriptions')
-            if descriptions:
-                for description in descriptions:
-                    cwe_description = description.get('description')
-                    if description.get('type') == 'CWE':
-                        cwe_id = description.get('cweId')
-                        if cwe_id:
-                            cwe, created = CWE.objects.get_or_create(cwe_id=cwe_id)
-                            self.cwes.add(cwe)
-                    cwe_ids = re.findall(r'CWE-\d+', cwe_description)
-                    for cwe_id in cwe_ids:
+            for description in descriptions:
+                if description.get('type') == 'CWE':
+                    cwe_id = description.get('cweId')
+                    if cwe_id:
                         cwe, created = CWE.objects.get_or_create(cwe_id=cwe_id)
                         self.cwes.add(cwe)
-        if not title:
-            if product and cwe_description:
-                self.title = f'{product} - {cwe_description}'
-            else:
-                self.title = ''
+                cwe_description = description.get('description')
+                cwe_ids = re.findall(r'CWE-\d+', cwe_description)
+                for cwe_id in cwe_ids:
+                    cwe, created = CWE.objects.get_or_create(cwe_id=cwe_id)
+                    self.cwes.add(cwe)
         metrics = cna_container.get('metrics')
         if metrics:
             for metric in metrics:
