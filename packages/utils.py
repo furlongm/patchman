@@ -22,7 +22,7 @@ from django.db import IntegrityError, transaction
 
 from arch.models import PackageArchitecture
 from packages.models import PackageName, Package, PackageUpdate, PackageCategory, PackageString
-from patchman.signals import error_message, info_message
+from patchman.signals import error_message, info_message, warning_message
 
 
 def convert_package_to_packagestring(package):
@@ -174,14 +174,29 @@ def get_or_create_package(name, epoch, version, release, arch, p_type):
     package_name, c = PackageName.objects.get_or_create(name=name)
     package_arch, c = PackageArchitecture.objects.get_or_create(name=arch)
     with transaction.atomic():
-        package, c = Package.objects.get_or_create(
-            name=package_name,
-            arch=package_arch,
-            epoch=epoch,
-            version=version,
-            release=release,
-            packagetype=p_type,
-        )
+        try:
+            package, c = Package.objects.get_or_create(
+                name=package_name,
+                arch=package_arch,
+                epoch=epoch,
+                version=version,
+                release=release,
+                packagetype=p_type,
+            )
+        except MultipleObjectsReturned:
+            packages = Package.objects.filter(
+                name=package_name,
+                arch=package_arch,
+                epoch=epoch,
+                version=version,
+                release=release,
+                packagetype=p_type,
+            )
+            package = packages.first()
+            # TODO this should handle gentoo package categories too, otherwise we may be deleting packages
+            # that should be kept
+            warning_message.send(sender=None, text=f'Deleting duplicate packages: {packages.exclude(id=package.id)}')
+            packages.exclude(id=package.id).delete()
     return package
 
 
