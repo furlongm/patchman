@@ -30,7 +30,8 @@ from django.conf import settings  # noqa
 django_setup()
 
 from arch.utils import clean_architectures
-from errata.utils import mark_errata_security_updates, add_errata_affected_packages
+from errata.utils import mark_errata_security_updates, enrich_errata, \
+    scan_package_updates_for_affected_packages
 from errata.tasks import update_errata
 from hosts.models import Host
 from modules.utils import clean_modules
@@ -522,8 +523,9 @@ def process_args(args):
         showhelp = False
     if args.update_errata:
         update_errata(args.erratum_type, args.force, args.repo)
+        scan_package_updates_for_affected_packages()
         mark_errata_security_updates()
-        add_errata_affected_packages()
+        enrich_errata()
         showhelp = False
     if args.update_cves:
         update_cves(args.cve, args.fetch_nist_data)
