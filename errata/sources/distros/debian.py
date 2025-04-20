@@ -303,14 +303,11 @@ def process_debian_erratum_fixed_packages(e, package_data):
     if not package_list:
         return
     fixed_packages = set()
-    for line in package_list.splitlines():
-        if not line:
+    for package in package_list:
+        if package.get('package-type') != 'deb':
             continue
-        line_parts = line.split()
-        if line_parts[1] != 'deb':
-            continue
-        name = line_parts[0]
-        arches = process_debian_dsc_arches(line_parts[4])
+        name = package.get('package')
+        arches = process_debian_dsc_arches(package.get('_other'))
         for arch in arches:
             fixed_package = get_or_create_package(name, epoch, ver, rel, arch, Package.DEB)
             fixed_packages.add(fixed_package)
