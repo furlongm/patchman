@@ -21,6 +21,8 @@ from datetime import datetime
 from debian.deb822 import Dsc
 from io import StringIO
 
+from django.db import connections
+
 from operatingsystems.models import OSRelease
 from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
@@ -181,6 +183,7 @@ def create_debian_errata_serially(errata, accepted_codenames):
 def create_debian_errata_concurrently(errata, accepted_codenames):
     """ Create Debian Errata concurrently
     """
+    connections.close_all()
     elen = len(errata)
     pbar_start.send(sender=None, ptext=f'Processing {elen} Debian Errata', plen=elen)
     i = 0
