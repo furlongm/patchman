@@ -125,19 +125,20 @@ class CVE(models.Model):
             score = cvss_score.base_score
         if not severity:
             severity = cvss_score.severities()[0]
-        existing = self.cvss_scores.filter(version=version, vector_string=vector_string)
-        if existing:
-            cvss = existing.first()
-        else:
+        try:
             cvss, created = CVSS.objects.get_or_create(
                 version=version,
                 vector_string=vector_string,
                 score=score,
                 severity=severity,
             )
-        cvss.score = score
-        cvss.severity = severity
-        cvss.save()
+        except CVSS.MultipleObjectsReturned:
+            matching_cvsses = CVSS.objects.filter(
+                version=version,
+                vector_string=vector_string,
+            )
+            cvss = matching_cvsses.first()
+            matching_cvsses.exclude(id=cvss.id).delete()
         self.cvss_scores.add(cvss)
 
     def fetch_cve_data(self, fetch_nist_data=False, sleep_secs=6):
