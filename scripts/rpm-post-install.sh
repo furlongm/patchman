@@ -11,6 +11,8 @@ fi
 
 systemctl enable httpd
 systemctl restart httpd
+systemctl enable redis
+systemctl start redis
 
 patchman-set-secret-key
 chown apache /etc/patchman/local_settings.py

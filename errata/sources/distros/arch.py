@@ -17,6 +17,8 @@
 import concurrent.futures
 import json
 
+from django.db import connections
+
 from operatingsystems.utils import get_or_create_osrelease
 from patchman.signals import error_message, pbar_start, pbar_update
 from packages.models import Package
@@ -66,6 +68,7 @@ def parse_arch_errata_concurrently(advisories):
     """ Parse Arch Linux Errata Advisories concurrently
     """
     osrelease = get_or_create_osrelease(name='Arch Linux')
+    connections.close_all()
     elen = len(advisories)
     pbar_start.send(sender=None, ptext=f'Processing {elen} Arch Advisories', plen=elen)
     i = 0

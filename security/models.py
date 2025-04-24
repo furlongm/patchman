@@ -92,7 +92,6 @@ class CVSS(models.Model):
 class CVE(models.Model):
 
     cve_id = models.CharField(max_length=255, unique=True)
-    title = models.CharField(max_length=255, blank=True, null=True)
     description = models.TextField(blank=True, default='')
     reserved_date = models.DateTimeField(blank=True, null=True)
     published_date = models.DateTimeField(blank=True, null=True)
@@ -126,19 +125,20 @@ class CVE(models.Model):
             score = cvss_score.base_score
         if not severity:
             severity = cvss_score.severities()[0]
-        existing = self.cvss_scores.filter(version=version, vector_string=vector_string)
-        if existing:
-            cvss = existing.first()
-        else:
+        try:
             cvss, created = CVSS.objects.get_or_create(
                 version=version,
                 vector_string=vector_string,
                 score=score,
                 severity=severity,
             )
-        cvss.score = score
-        cvss.severity = severity
-        cvss.save()
+        except CVSS.MultipleObjectsReturned:
+            matching_cvsses = CVSS.objects.filter(
+                version=version,
+                vector_string=vector_string,
+            )
+            cvss = matching_cvsses.first()
+            matching_cvsses.exclude(id=cvss.id).delete()
         self.cvss_scores.add(cvss)
 
     def fetch_cve_data(self, fetch_nist_data=False, sleep_secs=6):
@@ -233,32 +233,23 @@ class CVE(models.Model):
         if updated_date:
             self.updated_date = tz_aware_datetime(cve_metadata.get('dateUpdated'))
         cna_container = cve_json.get('containers').get('cna')
-        title = cna_container.get('title')
-        if not title:
-            product = cna_container.get('product')
         descriptions = cna_container.get('descriptions')
         if descriptions:
             self.description = descriptions[0].get('value')
         problem_types = cna_container.get('problemTypes', [])
         for problem_type in problem_types:
             descriptions = problem_type.get('descriptions')
-            if descriptions:
-                for description in descriptions:
-                    cwe_description = description.get('description')
-                    if description.get('type') == 'CWE':
-                        cwe_id = description.get('cweId')
-                        if cwe_id:
-                            cwe, created = CWE.objects.get_or_create(cwe_id=cwe_id)
-                            self.cwes.add(cwe)
-                    cwe_ids = re.findall(r'CWE-\d+', cwe_description)
-                    for cwe_id in cwe_ids:
+            for description in descriptions:
+                if description.get('type') == 'CWE':
+                    cwe_id = description.get('cweId')
+                    if cwe_id:
                         cwe, created = CWE.objects.get_or_create(cwe_id=cwe_id)
                         self.cwes.add(cwe)
-        if not title:
-            if product and cwe_description:
-                self.title = f'{product} - {cwe_description}'
-            else:
-                self.title = ''
+                cwe_description = description.get('description')
+                cwe_ids = re.findall(r'CWE-\d+', cwe_description)
+                for cwe_id in cwe_ids:
+                    cwe, created = CWE.objects.get_or_create(cwe_id=cwe_id)
+                    self.cwes.add(cwe)
         metrics = cna_container.get('metrics')
         if metrics:
             for metric in metrics:
