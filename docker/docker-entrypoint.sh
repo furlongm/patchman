@@ -89,15 +89,15 @@ if [ "${USE_CACHE}" ] && [ -n "${REDIS_HOST}" ]; then
     fi
 
     # Comment DummyCache Block
-    sed -i '44,48 {/^#/ ! s/\(.*\)/#\1/}' "$conf"
+    sed -i '47,51 {/^#/ ! s/\(.*\)/#\1/}' "$conf"
 
     # Uncomment RedisCache Block
-    sed -i '52,58 {s/^# //}' "$conf"
+    sed -i '55,61 {s/^# //}' "$conf"
 
-    sed -i "55 {s/127.0.0.1:6379/$redisHost:$redisPort/}" "$conf" 
+    sed -i "58 {s/127.0.0.1:6379/$redisHost:$redisPort/}" "$conf" 
 
     if [ -n "${CACHE_TIMEOUT}" ]; then
-        sed -i "56 {s/30/${CACHE_TIMEOUT}/}" "$conf" 
+        sed -i "59 {s/30/${CACHE_TIMEOUT}/}" "$conf" 
     fi
 fi
 
