@@ -21,6 +21,8 @@ from datetime import datetime
 from debian.deb822 import Dsc
 from io import StringIO
 
+from django.db import connections
+
 from operatingsystems.models import OSRelease
 from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
@@ -84,7 +86,6 @@ def parse_debian_package_file_map(data, repo):
             Source: 389-ds-base
             Source-Version: 1.4.0.21-1+deb10u1
     """
-    global DSCs
     parsing_dsc = False
     for line in data.splitlines():
         if line.startswith('Path:'):
@@ -182,6 +183,7 @@ def create_debian_errata_serially(errata, accepted_codenames):
 def create_debian_errata_concurrently(errata, accepted_codenames):
     """ Create Debian Errata concurrently
     """
+    connections.close_all()
     elen = len(errata)
     pbar_start.send(sender=None, ptext=f'Processing {elen} Debian Errata', plen=elen)
     i = 0
@@ -236,7 +238,6 @@ def parse_debian_erratum_package(line, accepted_codenames):
 def get_debian_dsc_package_list(package, version):
     """ Get the package list from a DSC file for a given source package/version
     """
-    global DSCs
     if not DSCs.get(package) or not DSCs[package].get(version):
         return
     package_list = DSCs[package][version].get('package_list')
@@ -247,7 +248,6 @@ def get_debian_dsc_package_list(package, version):
 def fetch_debian_dsc_package_list(package, version):
     """ Fetch the package list from a DSC file for a given source package/version
     """
-    global DSCs
     if not DSCs.get(package) or not DSCs[package].get(version):
         warning_message.send(sender=None, text=f'No DSC found for {package} {version}')
         return
@@ -306,14 +306,11 @@ def process_debian_erratum_fixed_packages(e, package_data):
     if not package_list:
         return
     fixed_packages = set()
-    for line in package_list.splitlines():
-        if not line:
+    for package in package_list:
+        if package.get('package-type') != 'deb':
             continue
-        line_parts = line.split()
-        if line_parts[1] != 'deb':
-            continue
-        name = line_parts[0]
-        arches = process_debian_dsc_arches(line_parts[4])
+        name = package.get('package')
+        arches = process_debian_dsc_arches(package.get('_other'))
         for arch in arches:
             fixed_package = get_or_create_package(name, epoch, ver, rel, arch, Package.DEB)
             fixed_packages.add(fixed_package)
