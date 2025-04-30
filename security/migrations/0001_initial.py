@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('cwe_id', models.CharField(max_length=255, unique=True)),
                 ('name', models.CharField(blank=True, max_length=255, null=True)),
-                ('description', models.CharField(blank=True, max_length=65535, null=True)),
+                ('description', models.CharField(blank=True, max_length=255, null=True)),
             ],
         ),
         migrations.CreateModel(
@@ -36,7 +36,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('cve_id', models.CharField(max_length=255, unique=True)),
                 ('title', models.CharField(blank=True, max_length=255, null=True)),
-                ('description', models.CharField(max_length=65535)),
+                ('description', models.CharField(max_length=255)),
                 ('reserved_date', models.DateTimeField(blank=True, null=True)),
                 ('published_date', models.DateTimeField(blank=True, null=True)),
                 ('rejected_date', models.DateTimeField(blank=True, null=True)),
