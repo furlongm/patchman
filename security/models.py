@@ -29,7 +29,7 @@ from util import get_url, fetch_content, tz_aware_datetime, error_message
 class Reference(models.Model):
 
     ref_type = models.CharField(max_length=255)
-    url = models.URLField(max_length=2000)
+    url = models.URLField(max_length=765)
 
     class Meta:
         unique_together = ['ref_type', 'url']
