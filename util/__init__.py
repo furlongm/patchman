@@ -50,7 +50,6 @@ proxies = {
 def get_verbosity():
     """ Get the global verbosity level
     """
-    global verbose
     return verbose
 
 
@@ -64,7 +63,7 @@ def set_verbosity(value):
 def create_pbar(ptext, plength, ljust=35, **kwargs):
     """ Create a global progress bar if global verbose is True
     """
-    global pbar, verbose
+    global pbar
     if verbose and plength > 0:
         jtext = str(ptext).ljust(ljust)
         pbar = tqdm(total=plength, desc=jtext, position=0, leave=True, ascii=' >=')
@@ -74,7 +73,7 @@ def create_pbar(ptext, plength, ljust=35, **kwargs):
 def update_pbar(index, **kwargs):
     """ Update the global progress bar if global verbose is True
     """
-    global pbar, verbose
+    global pbar
     if verbose and pbar:
         pbar.update(n=index-pbar.n)
         if index >= pbar.total:
@@ -86,7 +85,6 @@ def fetch_content(response, text='', ljust=35):
     """ Display a progress bar to fetch the request content if verbose is
         True. Otherwise, just return the request content
     """
-    global verbose
     if not response:
         return
     if verbose:

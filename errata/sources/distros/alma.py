@@ -17,6 +17,8 @@
 import concurrent.futures
 import json
 
+from django.db import connections
+
 from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
 from packages.utils import get_or_create_package, parse_package_string
@@ -74,6 +76,7 @@ def process_alma_errata_serially(release, advisories):
 def process_alma_errata_concurrently(release, advisories):
     """ Process Alma Linux Errata concurrently
     """
+    connections.close_all()
     elen = len(advisories)
     pbar_start.send(sender=None, ptext=f'Processing {elen} Alma {release} Errata', plen=elen)
     i = 0

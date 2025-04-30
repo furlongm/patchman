@@ -21,6 +21,8 @@ import json
 from io import StringIO
 from urllib.parse import urlparse
 
+from django.db import connections
+
 from operatingsystems.models import OSRelease, OSVariant
 from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
@@ -87,6 +89,7 @@ def parse_usn_data_serially(advisories, accepted_releases):
 def parse_usn_data_concurrently(advisories, accepted_releases):
     """ Parse the Ubuntu USN data concurrently
     """
+    connections.close_all()
     elen = len(advisories)
     pbar_start.send(sender=None, ptext=f'Processing {elen} Ubuntu Errata', plen=elen)
     i = 0

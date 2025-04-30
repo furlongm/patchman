@@ -18,6 +18,7 @@ import json
 import concurrent.futures
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
+from django.db import connections
 from django.db.utils import OperationalError
 
 from operatingsystems.utils import get_or_create_osrelease
@@ -158,6 +159,7 @@ def process_rocky_errata_serially(advisories):
 def process_rocky_errata_concurrently(advisories):
     """ Process Rocky Linux errata concurrently
     """
+    connections.close_all()
     elen = len(advisories)
     pbar_start.send(sender=None, ptext=f'Processing {elen} Rocky Errata', plen=elen)
     i = 0

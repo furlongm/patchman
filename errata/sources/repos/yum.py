@@ -18,6 +18,8 @@ import concurrent.futures
 from io import BytesIO
 from defusedxml import ElementTree
 
+from django.db import connections
+
 from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
 from packages.utils import get_or_create_package
@@ -55,6 +57,7 @@ def extract_updateinfo_serially(updates, elen):
 def extract_updateinfo_concurrently(updates, elen):
     """ Parses updateinfo.xml and extracts package/errata information concurrently
     """
+    connections.close_all()
     pbar_start.send(sender=None, ptext=f'Extracting {elen} updateinfo Errata', plen=elen)
     i = 0
     with concurrent.futures.ProcessPoolExecutor(max_workers=100) as executor:
