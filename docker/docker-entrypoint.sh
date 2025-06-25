@@ -79,7 +79,7 @@ if [ -z "$(grep "SECRET_KEY" "$conf" | cut -d " " -f 3 | tr -d "'")" ]; then
 fi
 
 # Configure CACHES
-if [ "${USE_CACHE}" ]; then
+if "${USE_CACHE}"; then
     if [ -n "${REDIS_HOST}" ]; then
         redisHost="${REDIS_HOST}"
     else
@@ -120,7 +120,7 @@ if [ ! -f /var/lib/patchman/.firstrun ]; then
 fi
 
 # Starts Celery for for realtime processing of reports from clients
-if [ "${USE_CELERY}" ]; then
+if "${USE_CELERY}"; then
     if [ -n "${REDIS_HOST}" ]; then
         redisHost="${REDIS_HOST}"
     else
