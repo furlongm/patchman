@@ -8,7 +8,7 @@ ADMINS = (
 
 DATABASES = {
     'default': {
-#        'ENGINE': 'django.db.backends.sqlite3',  # noqa disabled until django 5.1 is in use, see https://blog.pecar.me/django-sqlite-dblock
+#        'ENGINE': 'django.db.backends.sqlite3',  # noqa - disabled until django 5.1 is in use, see https://blog.pecar.me/django-sqlite-dblock
         'ENGINE': 'patchman.sqlite3',
         'NAME': '/var/lib/patchman/db/patchman.db',
         'OPTIONS': {
@@ -40,6 +40,18 @@ MAX_MIRROR_FAILURES = 14
 
 # Number of days to wait before raising that a host has not reported
 DAYS_WITHOUT_REPORT = 14
+
+# list of errata sources to update, remove unwanted ones to improve performance
+ERRATA_OS_UPDATES = ['yum', 'rocky', 'alma', 'arch', 'ubuntu', 'debian']
+
+# list of Alma Linux releases to update
+ALMA_RELEASES = [8, 9]
+
+# list of Debian Linux releases to update
+DEBIAN_CODENAMES = ['bookworm', 'trixie']
+
+# list of Ubuntu Linux releases to update
+UBUNTU_CODENAMES = ['jammy', 'noble']
 
 # Whether to run patchman under the gunicorn web server
 RUN_GUNICORN = False
