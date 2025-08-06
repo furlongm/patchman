@@ -23,7 +23,7 @@ from arch.models import PackageArchitecture
 
 def get_or_create_module(name, stream, version, context, arch, repo):
     """ Get or create a module object
-        Returns the module and a boolean for created
+        Returns the module
     """
     created = False
     m_arch, c = PackageArchitecture.objects.get_or_create(name=arch)
@@ -46,7 +46,7 @@ def get_or_create_module(name, stream, version, context, arch, repo):
             arch=m_arch,
             repo=repo,
         )
-    return module, created
+    return module
 
 
 def get_matching_modules(name, stream, version, context, arch):

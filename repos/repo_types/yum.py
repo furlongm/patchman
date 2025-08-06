@@ -91,7 +91,7 @@ def extract_module_metadata(data, url, repo):
                 packages.add(package)
 
             from modules.utils import get_or_create_module
-            module, created = get_or_create_module(m_name, m_stream, m_version, m_context, arch, repo)
+            module = get_or_create_module(m_name, m_stream, m_version, m_context, arch, repo)
 
             package_ids = []
             for package in packages:
