@@ -29,3 +29,11 @@ jobs:
           tags: ${{vars.DOCKERHUB_USERNAME}}/${{vars.DOCKERHUB_CONTAINER}}:latest,${{vars.DOCKERHUB_USERNAME}}/${{vars.DOCKERHUB_CONTAINER}}:${{github.ref_name}}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Docker Hub Description
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{vars.DOCKERHUB_USERNAME}}/${{vars.DOCKERHUB_CONTAINER}}
+          readme-filepath: ./docker/README.md
