@@ -36,4 +36,4 @@ jobs:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           repository: ${{vars.DOCKERHUB_USERNAME}}/${{vars.DOCKERHUB_CONTAINER}}
-          readme-filepath: ./docker/README.md
+          readme-filepath: ./README.md
