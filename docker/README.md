@@ -1,9 +1,4 @@
-# Patchman
-
-Patchman is a Django-based patch status monitoring tool for linux systems. Patchman provides a web interface for monitoring the package updates available for Linux hosts.
-
 Source: https://github.com/ricardojeronimo/patchman
-
 Upstream: https://github.com/furlongm/patchman
 
 
@@ -27,7 +22,7 @@ This container is configured using environment variables. The following variable
 
 | Variable | Default Value | Description |
 | :--- | :--- | :--- |
-| `ADMIN_Name` | `Your Name` | Your name |
+| `ADMIN_NAME` | `Your Name` | Your name |
 | `ADMIN_EMAIL` | `you@example.com` | Your e-mail address |
 | `TIMEZONE` | `America/New_York` | Your timezone |
 | `DB_ENGINE` | `SQLite` | Database engine to be used. Choose between `MySQL` or `PostgreSQL`, leave empty to use default `SQLite` |
