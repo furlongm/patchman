@@ -20,6 +20,7 @@ import bz2
 import magic
 import zlib
 import lzma
+import os
 from datetime import datetime, timezone
 from enum import Enum
 from hashlib import md5, sha1, sha256, sha512
@@ -28,16 +29,22 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 from time import time
 from tqdm import tqdm
 
-from patchman.signals import error_message, info_message, debug_message
-
 from django.utils.timezone import make_aware
 from django.utils.dateparse import parse_datetime
 from django.conf import settings
 
+from patchman.signals import error_message, info_message, debug_message
 
 pbar = None
 verbose = None
 Checksum = Enum('Checksum', 'md5 sha sha1 sha256 sha512')
+
+http_proxy = os.getenv('http_proxy')
+https_proxy = os.getenv('https_proxy')
+proxies = {
+   'http': http_proxy,
+   'https': https_proxy,
+}
 
 
 def get_verbosity():
@@ -113,7 +120,7 @@ def get_url(url, headers={}, params={}):
     response = None
     try:
         debug_message.send(sender=None, text=f'Trying {url} headers:{headers} params:{params}')
-        response = requests.get(url, headers=headers, params=params, stream=True, timeout=30)
+        response = requests.get(url, headers=headers, params=params, stream=True, proxies=proxies, timeout=30)
         debug_message.send(sender=None, text=f'{response.status_code}: {response.headers}')
         if response.status_code in [403, 404]:
             return response
