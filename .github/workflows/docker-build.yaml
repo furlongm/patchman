@@ -31,7 +31,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Checkout for next job
-      - uses: actions/checkout@v4
+        uses: actions/checkout@v4
 
       - name: Docker Hub Description
         uses: peter-evans/dockerhub-description@v4
