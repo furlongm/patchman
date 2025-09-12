@@ -195,11 +195,11 @@ class PackageString(models.Model):
             rel = f'-{self.release}'
         else:
             rel = ''
-        if self.packagetype == self.GENTOO:
+        if self.packagetype == Package.GENTOO:
             return f'{self.category}/{self.name}-{epo}{self.version}{rel}-{self.arch}.{self.get_packagetype_display()}'
-        elif self.packagetype in [self.DEB, self.ARCH]:
+        elif self.packagetype in [Package.DEB, Package.ARCH]:
             return f'{self.name}_{epo}{self.version}{rel}_{self.arch}.{self.get_packagetype_display()}'
-        elif self.packagetype == self.RPM:
+        elif self.packagetype == Package.RPM:
             return f'{self.name}-{epo}{self.version}{rel}-{self.arch}.{self.get_packagetype_display()}'
         else:
             return f'{self.name}-{epo}{self.version}{rel}-{self.arch}.{self.get_packagetype_display()}'
