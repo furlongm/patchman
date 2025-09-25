@@ -97,6 +97,7 @@ LOCAL_APPS = [
     'security.apps.SecurityConfig',
     'reports.apps.ReportsConfig',
     'util.apps.UtilConfig',
+    'patchman.apps.PatchmanConfig',
 ]
 
 REST_FRAMEWORK = {
