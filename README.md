@@ -1,4 +1,6 @@
 # Patchman
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ffurlongm%2Fpatchman.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Ffurlongm%2Fpatchman?ref=badge_shield)
+
 
 
 ## Summary
@@ -202,3 +204,7 @@ Errata for CentOS can be downloaded from https://cefs.steve-meier.de/ .
 These errata are parsed and stored in the database. If a PackageUpdate
 contains a package that is a security update in the errata, then that update is
 marked as being a security update.
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ffurlongm%2Fpatchman.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Ffurlongm%2Fpatchman?ref=badge_large)
