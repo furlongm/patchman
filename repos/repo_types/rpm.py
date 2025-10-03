@@ -57,10 +57,12 @@ def refresh_rpm_repo_mirrors(repo, errata_only=False):
         which type of repo it is, then refreshes the mirrors
     """
     formats = [
+        'repodata/repomd.xml.zst',
         'repodata/repomd.xml.xz',
         'repodata/repomd.xml.bz2',
         'repodata/repomd.xml.gz',
         'repodata/repomd.xml',
+        'suse/repodata/repomd.xml.zst',
         'suse/repodata/repomd.xml.xz',
         'suse/repodata/repomd.xml.bz2',
         'suse/repodata/repomd.xml.gz',
