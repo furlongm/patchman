@@ -263,7 +263,7 @@ def get_accepted_debian_codenames():
     """ Get acceptable Debian OS codenames
         Can be overridden by specifying DEBIAN_CODENAMES in settings
     """
-    default_codenames = ['bookworm', 'bullseye']
+    default_codenames = ['bookworm', 'trixie']
     accepted_codenames = get_setting_of_type(
         setting_name='DEBIAN_CODENAMES',
         setting_type=list,
