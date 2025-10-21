@@ -21,7 +21,6 @@
     <div class="well well-sm">
       <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
         <tr><th class="col-sm-1">CVE ID</th><td>{{ cve.cve_id }}</td></tr>
-        <tr><th class="col-sm-1">Title</th><td>{{ cve.title }}</td></tr>
         <tr><th class="col-sm-1">Description</th><td>{{ cve.description }}</td></tr>
         <tr><th class="col-sm-1">Reserved</th><td>{{ cve.reserved_date|date|default_if_none:'' }}</td></tr>
         <tr><th class="col-sm-1">Rejected</th><td>{{ cve.rejected_date|date|default_if_none:'' }}</td></tr>

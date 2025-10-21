@@ -28,7 +28,7 @@ class CWESerializer(serializers.HyperlinkedModelSerializer):
 class CVESerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = CVE
-        fields = ('cve_id', 'title', 'description', 'cvss_score', 'cwe',
+        fields = ('cve_id', 'description', 'cvss_score', 'cwe',
                   'registered_date', 'published_date', 'updated_date')
 
 

@@ -21,6 +21,8 @@ from datetime import datetime
 from debian.deb822 import Dsc
 from io import StringIO
 
+from django.db import connections
+
 from operatingsystems.models import OSRelease
 from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
@@ -181,6 +183,7 @@ def create_debian_errata_serially(errata, accepted_codenames):
 def create_debian_errata_concurrently(errata, accepted_codenames):
     """ Create Debian Errata concurrently
     """
+    connections.close_all()
     elen = len(errata)
     pbar_start.send(sender=None, ptext=f'Processing {elen} Debian Errata', plen=elen)
     i = 0
@@ -303,14 +306,11 @@ def process_debian_erratum_fixed_packages(e, package_data):
     if not package_list:
         return
     fixed_packages = set()
-    for line in package_list.splitlines():
-        if not line:
+    for package in package_list:
+        if package.get('package-type') != 'deb':
             continue
-        line_parts = line.split()
-        if line_parts[1] != 'deb':
-            continue
-        name = line_parts[0]
-        arches = process_debian_dsc_arches(line_parts[4])
+        name = package.get('package')
+        arches = process_debian_dsc_arches(package.get('_other'))
         for arch in arches:
             fixed_package = get_or_create_package(name, epoch, ver, rel, arch, Package.DEB)
             fixed_packages.add(fixed_package)
