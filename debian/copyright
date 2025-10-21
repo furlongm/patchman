@@ -6,7 +6,7 @@ Source: https://github.com/furlongm/patchman
 Files: *
 Copyright: 2011-2012 VPAC http://www.vpac.org
            2013-2021 Marcus Furlong <furlongm@gmail.com>
-License: GPL-3.0
+License: GPL-3.0-only
  This package is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation; version 3 only.
