@@ -24,7 +24,7 @@ class Command(createsuperuser.Command):
             raise CommandError(
                 '--username is required if specifying --password')
 
-        super(Command, self).handle(*args, **options)
+        super().handle(*args, **options)
 
         if password:
             user = self.UserModel._default_manager.db_manager(
