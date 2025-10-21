@@ -34,6 +34,7 @@ from errata.utils import mark_errata_security_updates, enrich_errata, \
     scan_package_updates_for_affected_packages
 from errata.tasks import update_errata
 from hosts.models import Host
+from hosts.utils import clean_tags
 from modules.utils import clean_modules
 from packages.utils import clean_packages, clean_packageupdates, clean_packagenames
 from repos.models import Repository
@@ -362,6 +363,7 @@ def dbcheck(remove_duplicates=False):
     clean_repos()
     clean_modules()
     clean_packageupdates()
+    clean_tags()
 
 
 def collect_args():
