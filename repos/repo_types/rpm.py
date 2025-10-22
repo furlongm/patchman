@@ -69,7 +69,7 @@ def refresh_rpm_repo_mirrors(repo, errata_only=False):
     ]
     ts = get_datetime_now()
     enabled_mirrors = repo.mirror_set.filter(mirrorlist=False, refresh=True, enabled=True)
-    for i, mirror in enumerate(enabled_mirrors):
+    for mirror in enabled_mirrors:
         res = find_mirror_url(mirror.url, formats)
         if not res:
             mirror.fail()

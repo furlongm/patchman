@@ -44,7 +44,7 @@ router.register(r'package-name', package_views.PackageNameViewSet)
 router.register(r'package', package_views.PackageViewSet)
 router.register(r'package-update', package_views.PackageUpdateViewSet)
 router.register(r'cve', security_views.CVEViewSet)
-router.register(r'reference', security_views.ReferenceViewSet),
+router.register(r'reference', security_views.ReferenceViewSet)
 router.register(r'erratum', errata_views.ErratumViewSet)
 router.register(r'repo', repo_views.RepositoryViewSet)
 router.register(r'mirror', repo_views.MirrorViewSet)
