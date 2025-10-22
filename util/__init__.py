@@ -107,10 +107,14 @@ def fetch_content(response, text='', ljust=35):
     wait=wait_exponential(multiplier=1, min=1, max=10),
     reraise=False,
 )
-def get_url(url, headers={}, params={}):
+def get_url(url, headers=None, params=None):
     """ Perform a http GET on a URL. Return None on error.
     """
     response = None
+    if not headers:
+        headers = {}
+    if not params:
+        params = {}
     try:
         debug_message.send(sender=None, text=f'Trying {url} headers:{headers} params:{params}')
         response = requests.get(url, headers=headers, params=params, stream=True, timeout=30)
