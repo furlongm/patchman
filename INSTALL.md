@@ -4,19 +4,19 @@ The default installation uses sqlite3 for the django database. To configure
 mysql or postgresql instead, see the database configuration section.
 
 
-## Supported Install Options
-  - [Ubuntu 22.04](#ubuntu-2204-jammy)
+## Supported Server Installation Options
+  - [Ubuntu 24.04](#ubuntu-2404-noble)
   - [Debian 12](#debian-12-bookworm)
-  - [CentOS 9](#centos-9)
+  - [Rocky 10](#rocky-10)
   - [virtualenv + pip](#virtualenv--pip)
   - [Source](#source)
 
 
-### Ubuntu 22.04 (jammy)
+### Ubuntu 24.04 (noble)
 
 ```shell
 curl -sS https://repo.openbytes.ie/openbytes.gpg > /usr/share/keyrings/openbytes.gpg
-echo "deb [signed-by=/usr/share/keyrings/openbytes.gpg] https://repo.openbytes.ie/patchman/ubuntu jammy main" > /etc/apt/sources.list.d/patchman.list
+echo "deb [signed-by=/usr/share/keyrings/openbytes.gpg] https://repo.openbytes.ie/patchman/ubuntu noble main" > /etc/apt/sources.list.d/patchman.list
 apt update
 apt -y install python3-patchman patchman-client
 patchman-manage createsuperuser
@@ -26,22 +26,23 @@ patchman-manage createsuperuser
 
 ```shell
 curl -sS https://repo.openbytes.ie/openbytes.gpg > /usr/share/keyrings/openbytes.gpg
-echo "deb [signed-by=/usr/share/keyrings/openbytes.gpg] https://repo.openbytes.ie/patchman/debian bookworm main" > /etc/apt/sources.list.d/patchman.list
+echo "deb [signed-by=/usr/share/keyrings/openbytes.gpg] https://repo.openbytes.ie/patchman/debian bookworm-backports main" > /etc/apt/sources.list.d/patchman.list
+echo "deb http://deb.debian.org/debian bookworm-backports main" > /etc/apt/sources.list.d/backports.list
 apt update
-apt -y install python3-patchman patchman-client
+apt -y install -t bookworm-backports python3-patchman patchman-client
 patchman-manage createsuperuser
 ```
 
-### CentOS 9
+### Rocky 10
 
-This also applies to Rocky/Alma/RHEL
+This also applies to Alma, RHEL, etc.
 
 ```shell
 curl -sS https://repo.openbytes.ie/openbytes.gpg > /etc/pki/rpm-gpg/RPM-GPG-KEY-openbytes
 cat <<EOF >> /etc/yum.repos.d/openbytes.repo
 [openbytes]
 name=openbytes
-baseurl=https://repo.openbytes.ie/patchman/el9
+baseurl=https://repo.openbytes.ie/patchman/el10
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-openbytes
@@ -60,7 +61,7 @@ TBD - not working yet
 
 ```shell
 apt -y install gcc libxml2-dev libxslt1-dev virtualenv python3-dev zlib1g-dev  # (debian/ubuntu)
-dnf -y install gcc libxml2-devel libxslt-devel python3-virtualenv              # (centos/rocky/alma)
+dnf -y install gcc libxml2-devel libxslt-devel python3-virtualenv              # (rocky/alma/redhat)
 mkdir /srv/patchman
 cd /srv/patchman
 python3 -m venv .venv
@@ -74,7 +75,7 @@ gunicorn patchman.wsgi -b 0.0.0.0:80
 
 ### Source
 
-#### Ubuntu 22.04 (jammy)
+#### Ubuntu 24.04 (noble)
 
 1. Install dependencies
 
@@ -107,9 +108,9 @@ cp /srv/patchman/etc/patchman/local_settings.py /etc/patchman/
 
 # Configuration
 
-## Patchman Settings
+## Patchman Server Settings
 
-Modify `/etc/patchman/local_settings.py` to configure patchman.
+Modify `/etc/patchman/local_settings.py` to configure the patchman server.
 
 If installing from source or using virtualenv, the following settings should
 be configured:
@@ -119,28 +120,32 @@ be configured:
    * STATIC_ROOT - should point to `/srv/patchman/run/static` if installing from
      source
 
-## Patchman-client Settings
+The default settings for errata downloading may include operating systems that
+are not relevant to a given deployment. If this is the case, modify the
+`ERRATA_OS_UPDATES` setting in `/etc/patchman/local_settings.py`. Further
+distribution-specific settings are also available to only download errata
+for specific versions/codenames.
 
-The client comes with a default configuration. This configuration will attempt to upload the reports to a server at *patchman.example.com*. This configuration needs to be updated to connect to your own patchman installation.
+## Patchman Client Settings
 
-In `/etc/patchman/patchman-client.conf`, look for the following line(s):
+The client comes with a default configuration that will attempt to upload the
+reports to a server at *patchman.example.com*. This configuration needs to be
+updated to connect to the correct patchman server.
+
+Change the following lines in `/etc/patchman/patchman-client.conf`:
 
 ```
 # Patchman server
-server=https://patchman.example.com 
+server=https://patchman.example.com
 
 # Options to curl
 curl_options="--insecure --connect-timeout 60 --max-time 300"
 
-...
 ```
- * *server* needs to point the URL where your patchman server 
-is running
- * *--insecure* in the curl_options tells the client to ignore certificates, if you set them up correctly and are using patchman with "https:/...", you could remove this flag to increase security
-
-
-
-
+ * *server* needs to point the URL where the local patchman server is running
+ * *--insecure* in the curl options tells the client to ignore certificates.
+   If the patchman server is set up correctly with certificates this flag can
+   be removed to increase security.
 
 ## Configure Database
 
@@ -151,10 +156,13 @@ production deployments. MySQL or PostgreSQL are better choices.
 
 To configure the sqlite database backend:
 
-1. Create the database directory specified in the settings file:
+1. Create the database directory specified in the settings file, touch the
+database file and set the journal mode to WAL:
 
 ```shell
 mkdir -p /var/lib/patchman/db
+touch /var/lib/patchman/db/patchman.db
+sqlite3 /var/lib/patchman/db/patchman.db 'PRAGMA journal_mode=WAL;'
 ```
 
 2. Modify `/etc/patchman/local_settings.py` as follows:
@@ -163,7 +171,7 @@ mkdir -p /var/lib/patchman/db
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': '/var/lib/patchman/db/patchman.db'
+        'NAME': '/var/lib/patchman/db/patchman.db',
     }
 }
 ```
@@ -199,16 +207,16 @@ Query OK, 0 rows affected (0.00 sec)
 
 ```
 DATABASES = {
-   'default': {
-       'ENGINE': 'django.db.backends.mysql',
-       'NAME': 'patchman',
-       'USER': 'patchman',
-       'PASSWORD': 'changeme',
-       'HOST': '',
-       'PORT': '',
-       'STORAGE_ENGINE': 'INNODB',
-       'CHARSET' : 'utf8'
-   }
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'patchman',
+        'USER': 'patchman',
+        'PASSWORD': 'changeme',
+        'HOST': '',
+        'PORT': '',
+        'STORAGE_ENGINE': 'INNODB',
+        'CHARSET': 'utf8',
+    }
 }
 ```
 
@@ -250,15 +258,15 @@ GRANT
 
 ```
 DATABASES = {
-   'default': {
-       'ENGINE': 'django.db.backends.postgresql_psycopg2',
-       'NAME': 'patchman',
-       'USER': 'patchman',
-       'PASSWORD': 'changeme',
-       'HOST': '127.0.0.1',
-       'PORT': '',
-       'CHARSET' : 'utf8'
-   }
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'patchman',
+        'USER': 'patchman',
+        'PASSWORD': 'changeme',
+        'HOST': '127.0.0.1',
+        'PORT': '',
+        'CHARSET': 'utf8',
+    }
 }
 ```
 
@@ -273,8 +281,7 @@ After configuring a database backend, the django database should be synced:
 collect static files:
 
 ```shell
-patchman-manage makemigrations
-patchman-manage migrate --run-syncdb --fake-initial
+patchman-manage migrate --run-syncdb
 patchman-manage createsuperuser
 patchman-manage collectstatic
 ```
@@ -284,6 +291,27 @@ N.B. To run patchman-manage when installing from source, run `./manage.py`
 
 2. Restart the web server after syncing the database.
 
+
+### Migrate from sqlite to another database backend
+
+The prebuilt package installations use sqlite as the default database backend,
+but this is not recommended in production. To migrate from sqlite to another
+database backend, use the following procedure:
+
+1. Dump the sqlite database to a json file
+
+```shell
+patchman-manage dumpdata --exclude packages.Packagestring -e contenttypes -e auth.Permission --natural-foreign --natural-primary --indent 4 > patchman-db.json
+```
+
+2. Create the new database and add the new database settings to `/etc/patchman/local_settings.py`
+
+3. Sync the new database and load the existing data:
+
+```
+patchman-manage migrate --run-syncdb
+patchman-manage loaddata patchman-db.json
+```
 
 ## Configure Web Server
 
@@ -301,7 +329,7 @@ a2enconf patchman
 
 ```shell
 vi /etc/apache2/conf-available/patchman.conf
-service apache2 reload
+systemctl reload apache2
 ```
 
 3. If installing from source, allow apache access to the settings and to the sqlite db:
@@ -321,9 +349,10 @@ The django interface should be available at http://127.0.0.1/patchman/
 
 #### Daily cronjob on patchman server
 
-A daily cronjob on the patchman server should be run to process reports,
-perform database maintenance, check for upstream updates, and find updates for
-clients.
+A daily cronjob on the patchman server can be run to process reports, perform
+database maintenance, check for upstream updates, and find updates for clients.
+Alternatively, run celery as outlined below for finer granularity over the
+timing of these tasks and for increased concurrency.
 
 ```
 patchman -a
@@ -337,16 +366,17 @@ patchman-client
 
 ### Celery
 
-Install Celery for realtime processing of reports from clients:
+Install Celery for realtime processing of reports from clients and for periodic
+maintenance tasks. The celery configuation file is in `/etc/patchman/celery.conf`
 
 #### Ubuntu / Debian
 
 ```shell
 apt -y install python3-celery redis python3-redis python-celery-common
-C_FORCE_ROOT=1 celery -b redis://127.0.0.1:6379/0 -A patchman worker -l INFO -E
+/usr/bin/celery --broker redis://127.0.0.1:6379/0 --app patchman worker --loglevel info --beat --scheduler django_celery_beat.schedulers:DatabaseScheduler --task-events --pool threads
 ```
 
-#### CentOS / Rocky / Alma
+#### Rocky / Alma / RHEL
 
 Currently waiting on https://bugzilla.redhat.com/show_bug.cgi?id=2032543
 
@@ -355,21 +385,54 @@ dnf -y install python3-celery redis python3-redis
 systemctl restart redis
 semanage port -a -t http_port_t -p tcp 6379
 setsebool -P httpd_can_network_connect 1
-C_FORCE_ROOT=1 celery -b redis://127.0.0.1:6379/0 -A patchman worker -l INFO -E
+/usr/bin/celery --broker redis://127.0.0.1:6379/0 --app patchman worker --loglevel info --beat --scheduler django_celery_beat.schedulers:DatabaseScheduler --task-events --pool threads
 ```
 
-Add the last command to an initscript (e.g. /etc/rc.local) to make celery
-persistent over reboot.
+#### Persistence
 
-Enable celery by adding `USE_ASYNC_PROCESSING = True` to `/etc/patchman/local_settings.py`
+There is a systemd unit file for celery to make the service persistent over reboot:
 
-### Memcached
+`etc/systemd/system/patchman-celery.service`
 
-Memcached can optionally be run to reduce the load on the server.
+If installing from prebuilt packages, this should be enabled by default.
+
+
+### Caching
+
+Memcached or Redis can optionally be run to reduce the load on the server.
+Note that caching may result in the web interface showing results that are
+out of date with the database, so this is disabled by default.
+
+
+#### Redis
+
+Install Redis:
+
+```shell
+apt -y install redis python3-redis  # (debian/ubuntu)
+dnf -y install redis python3-redis  # (rocky/alma/redhat)
+systemctl restart redis/redis-server
+```
+
+and add the following to `/etc/patchman/local_settings.py`
+
+```
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379',
+        'TIMEOUT': 30,
+    }
+}
+```
+
+#### Memcacached
+
+Install Memcached
 
 ```shell
 apt -y install memcached python3-pymemcache  # (debian/ubuntu)
-dnf -y install memcached python3-pymemcache  # (centos/rocky/alma)
+dnf -y install memcached python3-pymemcache  # (rocky/alma/redhat)
 systemctl restart memcached
 ```
 
@@ -377,13 +440,14 @@ and add the following to `/etc/patchman/local_settings.py`
 
 ```
 CACHES = {
-   'default': {
-       'BACKEND': 'django.core.cache.backends.memcached.PyMemcacheCache',
-       'LOCATION': '127.0.0.1:11211',
+    'default': {
+        'BACKEND': 'django.core.cache.backends.memcached.PyMemcacheCache',
+        'LOCATION': '127.0.0.1:11211',
+        'TIMEOUT': 30,
         'OPTIONS': {
             'ignore_exc': True,
         },
-   }
+    }
 }
 ```
 
