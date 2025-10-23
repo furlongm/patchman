@@ -226,7 +226,7 @@ def extract_gentoo_overlay_ebuilds(t):
     """ Extract ebuilds from a Gentoo overlay tarball
     """
     extracted_ebuilds = {}
-    for root, dirs, files in os.walk(t):
+    for root, _, files in os.walk(t):
         for name in files:
             if fnmatch(name, '*.ebuild'):
                 package_name = root.replace(t + '/', '')
