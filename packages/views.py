@@ -62,9 +62,16 @@ def package_list(request):
     if 'affected_by_errata' in request.GET:
         affected_by_errata = request.GET['affected_by_errata'] == 'true'
         if affected_by_errata:
-            packages = packages.filter(erratum__isnull=False)
+            packages = packages.filter(affected_by_erratum__isnull=False)
         else:
-            packages = packages.filter(erratum__isnull=True)
+            packages = packages.filter(affected_by_erratum__isnull=True)
+
+    if 'provides_fix_in_erratum' in request.GET:
+        provides_fix_in_erratum = request.GET['provides_fix_in_erratum'] == 'true'
+        if provides_fix_in_erratum:
+            packages = packages.filter(provides_fix_in_erratum__isnull=False)
+        else:
+            packages = packages.filter(provides_fix_in_erratum__isnull=True)
 
     if 'installed_on_hosts' in request.GET:
         installed_on_hosts = request.GET['installed_on_hosts'] == 'true'
@@ -102,6 +109,8 @@ def package_list(request):
 
     filter_list = []
     filter_list.append(Filter(request, 'Affected by Errata', 'affected_by_errata', {'true': 'Yes', 'false': 'No'}))
+    filter_list.append(Filter(request, 'Provides Fix in Errata', 'provides_fix_in_erratum',
+                              {'true': 'Yes', 'false': 'No'}))
     filter_list.append(Filter(request, 'Installed on Hosts', 'installed_on_hosts', {'true': 'Yes', 'false': 'No'}))
     filter_list.append(Filter(request, 'Available in Repos', 'available_in_repos', {'true': 'Yes', 'false': 'No'}))
     filter_list.append(Filter(request, 'Package Type', 'packagetype', Package.PACKAGE_TYPES))
