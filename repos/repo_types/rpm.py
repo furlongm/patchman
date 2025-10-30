@@ -16,7 +16,7 @@
 
 from django.db.models import Q
 
-from patchman.signals import info_message, warning_message
+from util.logging import info_message, warning_message
 from repos.repo_types.yast import refresh_yast_repo
 from repos.repo_types.yum import refresh_yum_repo
 from repos.utils import check_for_metalinks, check_for_mirrorlists, find_mirror_url, get_max_mirrors, fetch_mirror_data
@@ -47,7 +47,7 @@ def max_mirrors_refreshed(repo, checksum, ts):
     have_checksum_and_ts = repo.mirror_set.filter(mirrors_q).count()
     if have_checksum_and_ts >= max_mirrors:
         text = f'{max_mirrors} Mirrors already have this checksum and timestamp, skipping further refreshes'
-        warning_message.send(sender=None, text=text)
+        warning_message(text=text)
         return True
     return False
 
@@ -87,11 +87,11 @@ def refresh_rpm_repo_mirrors(repo, errata_only=False):
 
         if mirror_url.endswith('content'):
             text = f'Found yast rpm Repo - {mirror_url}'
-            info_message.send(sender=None, text=text)
+            info_message(text=text)
             refresh_yast_repo(mirror, repo_data)
         else:
             text = f'Found yum rpm Repo - {mirror_url}'
-            info_message.send(sender=None, text=text)
+            info_message(text=text)
             refresh_yum_repo(mirror, repo_data, mirror_url, errata_only)
         if mirror.last_access_ok:
             mirror.timestamp = ts

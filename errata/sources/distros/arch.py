@@ -20,7 +20,8 @@ import json
 from django.db import connections
 
 from operatingsystems.utils import get_or_create_osrelease
-from patchman.signals import error_message, pbar_start, pbar_update
+from util.logging import error_message
+from patchman.signals import pbar_start, pbar_update
 from packages.models import Package
 from packages.utils import find_evr, get_matching_packages, get_or_create_package
 from util import get_url, fetch_content
@@ -99,7 +100,7 @@ def process_arch_erratum(advisory, osrelease):
         add_arch_erratum_references(e, advisory)
         add_arch_erratum_packages(e, advisory)
     except Exception as exc:
-        error_message.send(sender=None, text=exc)
+        error_message(text=exc)
 
 
 def add_arch_linux_osrelease():

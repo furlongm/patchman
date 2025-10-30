@@ -21,7 +21,8 @@ from django.db import connections
 from util import tz_aware_datetime
 from errata.models import Erratum
 from packages.models import PackageUpdate
-from patchman.signals import pbar_start, pbar_update, warning_message
+from util.logging import warning_message
+from patchman.signals import pbar_start, pbar_update
 
 
 def get_or_create_erratum(name, e_type, issue_date, synopsis):
@@ -36,16 +37,16 @@ def get_or_create_erratum(name, e_type, issue_date, synopsis):
         days_delta = abs(e.issue_date.date() - issue_date_tz.date()).days
         updated = False
         if e.e_type != e_type:
-            warning_message.send(sender=None, text=f'Updating {name} type `{e.e_type}` -> `{e_type}`')
+            warning_message(text=f'Updating {name} type `{e.e_type}` -> `{e_type}`')
             e.e_type = e_type
             updated = True
         if days_delta > 1:
             text = f'Updating {name} issue date `{e.issue_date.date()}` -> `{issue_date_tz.date()}`'
-            warning_message.send(sender=None, text=text)
+            warning_message(text=text)
             e.issue_date = issue_date_tz
             updated = True
         if e.synopsis != synopsis:
-            warning_message.send(sender=None, text=f'Updating {name} synopsis `{e.synopsis}` -> `{synopsis}`')
+            warning_message(text=f'Updating {name} synopsis `{e.synopsis}` -> `{synopsis}`')
             e.synopsis = synopsis
             updated = True
         if updated:

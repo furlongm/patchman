@@ -34,7 +34,7 @@ from modules.models import Module
 from operatingsystems.models import OSVariant
 from packages.models import Package, PackageUpdate
 from packages.utils import get_or_create_package_update
-from patchman.signals import info_message
+from util.logging import info_message
 from repos.models import Repository
 from repos.utils import find_best_repo
 
@@ -90,7 +90,7 @@ class Host(models.Model):
         text += f'Updated at   : {self.updated_at}\n'
         text += f'Host repos   : {self.host_repos_only}\n'
 
-        info_message.send(sender=None, text=text)
+        info_message(text=text)
 
     def get_absolute_url(self):
         return reverse('hosts:host_detail', args=[self.hostname])
@@ -114,13 +114,13 @@ class Host(models.Model):
         if self.check_dns:
             update_rdns(self)
             if self.hostname.lower() == self.reversedns.lower():
-                info_message.send(sender=None, text='Reverse DNS matches')
+                info_message(text='Reverse DNS matches')
             else:
                 text = 'Reverse DNS mismatch found: '
                 text += f'{self.hostname} != {self.reversedns}'
-                info_message.send(sender=None, text=text)
+                info_message(text=text)
         else:
-            info_message.send(sender=None, text='Reverse DNS check disabled')
+            info_message(text='Reverse DNS check disabled')
 
     def clean_reports(self):
         """ Remove all but the last 3 reports for a host
@@ -131,7 +131,7 @@ class Host(models.Model):
         for report in Report.objects.filter(host=self).order_by('-created')[3:]:
             report.delete()
         if rlen > 0:
-            info_message.send(sender=None, text=f'{self.hostname}: removed {rlen} old reports')
+            info_message(text=f'{self.hostname}: removed {rlen} old reports')
 
     def get_host_repo_packages(self):
         if self.host_repos_only:
@@ -163,7 +163,7 @@ class Host(models.Model):
                 security = True
         update = get_or_create_package_update(oldpackage=package, newpackage=highest_package, security=security)
         self.updates.add(update)
-        info_message.send(sender=None, text=f'{update}')
+        info_message(text=f'{update}')
         return update.id
 
     def find_updates(self):
