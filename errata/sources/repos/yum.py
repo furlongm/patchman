@@ -23,7 +23,8 @@ from django.db import connections
 from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
 from packages.utils import get_or_create_package
-from patchman.signals import pbar_start, pbar_update, error_message
+from util.logging import error_message
+from patchman.signals import pbar_start, pbar_update
 from security.models import Reference
 from util import extract, get_url
 
@@ -38,7 +39,7 @@ def extract_updateinfo(data, url, concurrent_processing=True):
         elen = root.__len__()
         updates = root.findall('update')
     except ElementTree.ParseError as e:
-        error_message.send(sender=None, text=f'Error parsing updateinfo file from {url} : {e}')
+        error_message(text=f'Error parsing updateinfo file from {url} : {e}')
     if concurrent_processing:
         extract_updateinfo_concurrently(updates, elen)
     else:

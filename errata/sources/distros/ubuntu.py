@@ -28,7 +28,8 @@ from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
 from packages.utils import get_or_create_package, parse_package_string, find_evr, get_matching_packages
 from util import get_url, fetch_content, get_sha256, bunzip2, get_setting_of_type
-from patchman.signals import error_message, pbar_start, pbar_update
+from util.logging import error_message
+from patchman.signals import pbar_start, pbar_update
 
 
 def update_ubuntu_errata(concurrent_processing=False):
@@ -45,7 +46,7 @@ def update_ubuntu_errata(concurrent_processing=False):
         else:
             e = 'Ubuntu USN DB checksum mismatch, skipping Ubuntu errata parsing\n'
             e += f'{actual_checksum} (actual) != {expected_checksum} (expected)'
-            error_message.send(sender=None, text=e)
+            error_message(text=e)
 
 
 def fetch_ubuntu_usn_db():
@@ -126,7 +127,7 @@ def process_usn(usn_id, advisory, accepted_releases):
         add_ubuntu_erratum_references(e, usn_id, advisory)
         add_ubuntu_erratum_packages(e, advisory)
     except Exception as exc:
-        error_message.send(sender=None, text=exc)
+        error_message(text=exc)
 
 
 def add_ubuntu_erratum_osreleases(e, affected_releases, accepted_releases):

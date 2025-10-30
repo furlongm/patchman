@@ -25,7 +25,7 @@ from packages.utils import find_evr, get_matching_packages
 from errata.managers import ErratumManager
 from security.models import CVE, Reference
 from security.utils import get_or_create_cve, get_or_create_reference
-from patchman.signals import error_message
+from util.logging import error_message
 from util import get_url
 
 
@@ -70,7 +70,7 @@ class Erratum(models.Model):
                     try:
                         affected_update.save()
                     except IntegrityError as e:
-                        error_message.send(sender=None, text=e)
+                        error_message(text=e)
                         # a version of this update already exists that is
                         # marked as a security update, so delete this one
                         affected_update.delete()
@@ -84,7 +84,7 @@ class Erratum(models.Model):
                     try:
                         affected_update.save()
                     except IntegrityError as e:
-                        error_message.send(sender=None, text=e)
+                        error_message(text=e)
                         # a version of this update already exists that is
                         # marked as a security update, so delete this one
                         affected_update.delete()
@@ -93,7 +93,7 @@ class Erratum(models.Model):
         osv_dev_url = f'https://api.osv.dev/v1/vulns/{self.name}'
         res = get_url(osv_dev_url)
         if res.status_code == 404:
-            error_message.send(sender=None, text=f'404 - Skipping {self.name} - {osv_dev_url}')
+            error_message(text=f'404 - Skipping {self.name} - {osv_dev_url}')
             return
         data = res.content
         osv_dev_json = json.loads(data)
@@ -102,7 +102,7 @@ class Erratum(models.Model):
     def parse_osv_dev_data(self, osv_dev_json):
         name = osv_dev_json.get('id')
         if name != self.name:
-            error_message.send(sender=None, text=f'Erratum name mismatch - {self.name} != {name}')
+            error_message(text=f'Erratum name mismatch - {self.name} != {name}')
             return
         related = osv_dev_json.get('related')
         if related:
@@ -155,7 +155,7 @@ class Erratum(models.Model):
         """ Add a CVE to an Erratum object
         """
         if not cve_id.startswith('CVE') or not cve_id.split('-')[1].isdigit():
-            error_message.send(sender=None, text=f'Not a CVE ID: {cve_id}')
+            error_message(text=f'Not a CVE ID: {cve_id}')
             return
         self.cves.add(get_or_create_cve(cve_id))
 

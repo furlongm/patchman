@@ -20,7 +20,7 @@ from django.db.models import Count
 
 from hosts.models import Host
 from util import get_datetime_now
-from patchman.signals import info_message
+from util.logging import info_message
 
 
 @shared_task
@@ -78,4 +78,4 @@ def find_all_host_updates_homogenous():
                 phost.updated_at = ts
                 phost.save()
                 updated_hosts.append(phost)
-                info_message.send(sender=None, text=f'Added the same updates to {phost}')
+                info_message(text=f'Added the same updates to {phost}')

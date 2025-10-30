@@ -22,7 +22,7 @@ from django.db import IntegrityError, transaction
 
 from arch.models import PackageArchitecture
 from packages.models import PackageName, Package, PackageUpdate, PackageCategory, PackageString
-from patchman.signals import error_message, info_message, warning_message
+from util.logging import error_message, info_message, warning_message
 
 
 def convert_package_to_packagestring(package):
@@ -141,7 +141,7 @@ def parse_redhat_package_string(pkg_str):
         name, epoch, ver, rel, dist, arch = m.groups()
     else:
         e = f'Error parsing package string: "{pkg_str}"'
-        error_message.send(sender=None, text=e)
+        error_message(text=e)
         return
     if dist:
         rel = f'{rel}.{dist}'
@@ -195,7 +195,7 @@ def get_or_create_package(name, epoch, version, release, arch, p_type):
             package = packages.first()
             # TODO this should handle gentoo package categories too, otherwise we may be deleting packages
             # that should be kept
-            warning_message.send(sender=None, text=f'Deleting duplicate packages: {packages.exclude(id=package.id)}')
+            warning_message(text=f'Deleting duplicate packages: {packages.exclude(id=package.id)}')
             packages.exclude(id=package.id).delete()
     return package
 
@@ -218,10 +218,10 @@ def get_or_create_package_update(oldpackage, newpackage, security):
     except MultipleObjectsReturned:
         e = 'Error: MultipleObjectsReturned when attempting to add package \n'
         e += f'update with oldpackage={oldpackage} | newpackage={newpackage}:'
-        error_message.send(sender=None, text=e)
+        error_message(text=e)
         updates = PackageUpdate.objects.filter(oldpackage=oldpackage, newpackage=newpackage)
         for update in updates:
-            error_message.send(sender=None, text=str(update))
+            error_message(text=str(update))
         return
     try:
         if update:
@@ -281,13 +281,13 @@ def clean_packageupdates():
     for update in package_updates:
         if update.host_set.count() == 0:
             text = f'Removing unused PackageUpdate {update}'
-            info_message.send(sender=None, text=text)
+            info_message(text=text)
             update.delete()
         for duplicate in package_updates:
             if update.oldpackage == duplicate.oldpackage and update.newpackage == duplicate.newpackage and \
                     update.security == duplicate.security and update.id != duplicate.id:
                 text = f'Removing duplicate PackageUpdate: {update}'
-                info_message.send(sender=None, text=text)
+                info_message(text=text)
                 for host in duplicate.host_set.all():
                     host.updates.remove(duplicate)
                     host.updates.add(update)
@@ -307,12 +307,12 @@ def clean_packages(remove_duplicates=False):
     )
     plen = packages.count()
     if plen == 0:
-        info_message.send(sender=None, text='No orphaned Packages found.')
+        info_message(text='No orphaned Packages found.')
     else:
-        info_message.send(sender=None, text=f'Removing {plen} orphaned Packages')
+        info_message(text=f'Removing {plen} orphaned Packages')
         packages.delete()
     if remove_duplicates:
-        info_message.send(sender=None, text='Checking for duplicate Packages...')
+        info_message(text='Checking for duplicate Packages...')
         for package in Package.objects.all():
             potential_duplicates = Package.objects.filter(
                 name=package.name,
@@ -326,7 +326,7 @@ def clean_packages(remove_duplicates=False):
             if potential_duplicates.count() > 1:
                 for dupe in potential_duplicates:
                     if dupe.id != package.id:
-                        info_message.send(sender=None, text=f'Removing duplicate Package {dupe}')
+                        info_message(text=f'Removing duplicate Package {dupe}')
                         dupe.delete()
 
 
@@ -336,7 +336,7 @@ def clean_packagenames():
     names = PackageName.objects.filter(package__isnull=True)
     nlen = names.count()
     if nlen == 0:
-        info_message.send(sender=None, text='No orphaned PackageNames found.')
+        info_message(text='No orphaned PackageNames found.')
     else:
-        info_message.send(sender=None, text=f'Removing {nlen} orphaned PackageNames')
+        info_message(text=f'Removing {nlen} orphaned PackageNames')
         names.delete()

@@ -26,7 +26,8 @@ from django.db.models import Q
 from packages.models import Package
 from packages.utils import convert_package_to_packagestring, convert_packagestring_to_package
 from util import get_url, fetch_content, response_is_valid, extract, get_checksum, Checksum, get_setting_of_type
-from patchman.signals import info_message, warning_message, error_message, debug_message, pbar_start, pbar_update
+from util.logging import info_message, warning_message, error_message, debug_message
+from patchman.signals import pbar_start, pbar_update
 
 
 def get_or_create_repo(r_name, r_arch, r_type, r_id=None):
@@ -77,7 +78,7 @@ def update_mirror_packages(mirror, packages):
             package = convert_packagestring_to_package(strpackage)
             mirror_package, c = MirrorPackage.objects.get_or_create(mirror=mirror, package=package)
         except Package.MultipleObjectsReturned:
-            error_message.send(sender=None, text=f'Duplicate Package found in {mirror}: {strpackage}')
+            error_message(text=f'Duplicate Package found in {mirror}: {strpackage}')
 
 
 def find_mirror_url(stored_mirror_url, formats):
@@ -89,7 +90,7 @@ def find_mirror_url(stored_mirror_url, formats):
             if mirror_url.endswith(f):
                 mirror_url = mirror_url[:-len(f)]
         mirror_url = f"{mirror_url.rstrip('/')}/{fmt}"
-        debug_message.send(sender=None, text=f'Checking for Mirror at {mirror_url}')
+        debug_message(text=f'Checking for Mirror at {mirror_url}')
         try:
             res = get_url(mirror_url)
         except RetryError:
@@ -133,7 +134,7 @@ def get_metalink_urls(url):
                                         if greatgreatgrandchild.attrib.get('protocol') in ['https', 'http']:
                                             metalink_urls.append(greatgreatgrandchild.text)
     except ElementTree.ParseError as e:
-        error_message.send(sender=None, text=f'Error parsing metalink {url}: {e}')
+        error_message(text=f'Error parsing metalink {url}: {e}')
     return metalink_urls
 
 
@@ -152,12 +153,12 @@ def get_mirrorlist_urls(url):
                 return
             mirror_urls = re.findall(r'^http[s]*://.*$|^ftp://.*$', data.decode('utf-8'), re.MULTILINE)
             if mirror_urls:
-                debug_message.send(sender=None, text=f'Found mirrorlist: {url}')
+                debug_message(text=f'Found mirrorlist: {url}')
                 return mirror_urls
             else:
-                debug_message.send(sender=None, text=f'Not a mirrorlist: {url}')
+                debug_message(text=f'Not a mirrorlist: {url}')
         except Exception as e:
-            error_message.send(sender=None, text=f'Error attempting to parse a mirrorlist: {e} {url}')
+            error_message(text=f'Error attempting to parse a mirrorlist: {e} {url}')
 
 
 def add_mirrors_from_urls(repo, mirror_urls):
@@ -172,7 +173,7 @@ def add_mirrors_from_urls(repo, mirror_urls):
         existing = repo.mirror_set.filter(q).count()
         if existing >= max_mirrors:
             text = f'{existing} Mirrors already exist (max={max_mirrors}), not adding more'
-            warning_message.send(sender=None, text=text)
+            warning_message(text=text)
             break
         from repos.models import Mirror
         # FIXME: maybe we should store the mirrorlist url with full path to repomd.xml?
@@ -180,7 +181,7 @@ def add_mirrors_from_urls(repo, mirror_urls):
         m, c = Mirror.objects.get_or_create(repo=repo, url=mirror_url.rstrip('/').replace('repodata/repomd.xml', ''))
         if c:
             text = f'Added Mirror - {mirror_url}'
-            info_message.send(sender=None, text=text)
+            info_message(text=text)
 
 
 def check_for_mirrorlists(repo):
@@ -193,7 +194,7 @@ def check_for_mirrorlists(repo):
             mirror.mirrorlist = True
             mirror.last_access_ok = True
             mirror.save()
-            info_message.send(sender=None, text=f'Found mirrorlist - {mirror.url}')
+            info_message(text=f'Found mirrorlist - {mirror.url}')
             add_mirrors_from_urls(repo, mirror_urls)
 
 
@@ -210,7 +211,7 @@ def check_for_metalinks(repo):
             mirror.mirrorlist = True
             mirror.last_access_ok = True
             mirror.save()
-            info_message.send(sender=None, text=f'Found metalink - {mirror.url}')
+            info_message(text=f'Found metalink - {mirror.url}')
             add_mirrors_from_urls(repo, mirror_urls)
 
 
@@ -249,9 +250,9 @@ def mirror_checksum_is_valid(computed, provided, mirror, metadata_type):
     """
     if not computed or computed != provided:
         text = f'Checksum failed for mirror {mirror.id}, not refreshing {metadata_type} metadata'
-        error_message.send(sender=None, text=text)
+        error_message(text=text)
         text = f'Found checksum:    {computed}\nExpected checksum: {provided}'
-        error_message.send(sender=None, text=text)
+        error_message(text=text)
         mirror.last_access_ok = False
         mirror.fail()
         return False
@@ -296,9 +297,9 @@ def clean_repos():
     repos = Repository.objects.filter(mirror__isnull=True)
     rlen = repos.count()
     if rlen == 0:
-        info_message.send(sender=None, text='No Repositories with zero Mirrors found.')
+        info_message(text='No Repositories with zero Mirrors found.')
     else:
-        info_message.send(sender=None, text=f'Removing {rlen} empty Repositories.')
+        info_message(text=f'Removing {rlen} empty Repositories.')
         repos.delete()
 
 
@@ -309,13 +310,13 @@ def remove_mirror_trailing_slashes():
     mirrors = Mirror.objects.filter(url__endswith='/')
     mlen = mirrors.count()
     if mlen == 0:
-        info_message.send(sender=None, text='No Mirrors with trailing slashes found.')
+        info_message(text='No Mirrors with trailing slashes found.')
     else:
-        info_message.send(sender=None, text=f'Removing trailing slashes from {mlen} Mirrors.')
+        info_message(text=f'Removing trailing slashes from {mlen} Mirrors.')
         for mirror in mirrors:
             mirror.url = mirror.url.rstrip('/')
             try:
                 mirror.save()
             except IntegrityError:
-                warning_message.send(sender=None, text=f'Deleting duplicate Mirror {mirror.id}: {mirror.url}')
+                warning_message(text=f'Deleting duplicate Mirror {mirror.id}: {mirror.url}')
                 mirror.delete()
