@@ -17,7 +17,8 @@
 import re
 
 from packages.models import PackageString
-from patchman.signals import pbar_start, pbar_update, info_message
+from util.logging import info_message
+from patchman.signals import pbar_start, pbar_update
 from repos.utils import fetch_mirror_data, update_mirror_packages
 from util import extract
 
@@ -65,5 +66,5 @@ def extract_yast_packages(data):
                                     packagetype='R')
             packages.add(package)
     else:
-        info_message.send(sender=None, text='No packages found in repo')
+        info_message(text='No packages found in repo')
     return packages

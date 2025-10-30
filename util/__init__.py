@@ -38,7 +38,7 @@ from django.utils.timezone import make_aware
 from django.utils.dateparse import parse_datetime
 from django.conf import settings
 
-from patchman.signals import error_message, info_message, debug_message
+from util.logging import error_message, info_message, debug_message
 
 pbar = None
 verbose = None
@@ -109,7 +109,7 @@ def fetch_content(response, text='', ljust=35):
                 data += chunk
             return data
         else:
-            info_message.send(sender=None, text=text)
+            info_message(text=text)
     return response.content
 
 
@@ -128,16 +128,16 @@ def get_url(url, headers=None, params=None):
     if not params:
         params = {}
     try:
-        debug_message.send(sender=None, text=f'Trying {url} headers:{headers} params:{params}')
+        debug_message(text=f'Trying {url} headers:{headers} params:{params}')
         response = requests.get(url, headers=headers, params=params, stream=True, proxies=proxies, timeout=30)
-        debug_message.send(sender=None, text=f'{response.status_code}: {response.headers}')
+        debug_message(text=f'{response.status_code}: {response.headers}')
         if response.status_code in [403, 404]:
             return response
         response.raise_for_status()
     except requests.exceptions.TooManyRedirects:
-        error_message.send(sender=None, text=f'Too many redirects - {url}')
+        error_message(text=f'Too many redirects - {url}')
     except ConnectionError:
-        error_message.send(sender=None, text=f'Connection error - {url}')
+        error_message(text=f'Connection error - {url}')
     return response
 
 
@@ -180,7 +180,7 @@ def gunzip(contents):
         wbits = zlib.MAX_WBITS | 32
         return zlib.decompress(contents, wbits)
     except zlib.error as e:
-        error_message.send(sender=None, text='gunzip: ' + str(e))
+        error_message(text='gunzip: ' + str(e))
 
 
 def bunzip2(contents):
@@ -191,10 +191,10 @@ def bunzip2(contents):
         return bzip2data
     except IOError as e:
         if e == 'invalid data stream':
-            error_message.send(sender=None, text='bunzip2: ' + e)
+            error_message(text='bunzip2: ' + e)
     except ValueError as e:
         if e == "couldn't find end of stream":
-            error_message.send(sender=None, text='bunzip2: ' + e)
+            error_message(text='bunzip2: ' + e)
 
 
 def unxz(contents):
@@ -204,7 +204,7 @@ def unxz(contents):
         xzdata = lzma.decompress(contents)
         return xzdata
     except lzma.LZMAError as e:
-        error_message.send(sender=None, text='lzma: ' + e)
+        error_message(text='lzma: ' + e)
 
 
 def unzstd(contents):
@@ -214,7 +214,7 @@ def unzstd(contents):
         zstddata = zstd.ZstdDecompressor().stream_reader(contents).read()
         return zstddata
     except zstd.ZstdError as e:
-        error_message.send(sender=None, text='zstd: ' + e)
+        error_message(text=f'zstd: {e}')
 
 
 def extract(data, fmt):
@@ -253,7 +253,7 @@ def get_checksum(data, checksum_type):
         checksum = get_md5(data)
     else:
         text = f'Unknown checksum type: {checksum_type}'
-        error_message.send(sender=None, text=text)
+        error_message(text=text)
     return checksum
 
 

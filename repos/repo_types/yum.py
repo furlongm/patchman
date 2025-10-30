@@ -22,7 +22,8 @@ from io import BytesIO
 from errata.sources.repos.yum import extract_updateinfo
 from packages.models import Package, PackageString
 from packages.utils import get_or_create_package, parse_package_string
-from patchman.signals import warning_message, error_message, pbar_start, pbar_update
+from util.logging import warning_message, error_message
+from patchman.signals import pbar_start, pbar_update
 from repos.utils import fetch_mirror_data, update_mirror_packages
 from util import extract
 
@@ -50,7 +51,7 @@ def get_repomd_url(mirror_url, data, url_type='primary'):
                         checksum = grandchild.text
                         checksum_type = grandchild.attrib.get('type')
     except ElementTree.ParseError as e:
-        error_message.send(sender=None, text=(f'Error parsing repomd from {mirror_url}: {e}'))
+        error_message(text=(f'Error parsing repomd from {mirror_url}: {e}'))
     if not location:
         return None, None, None
     url = str(mirror_url.rsplit('/', 2)[0]) + '/' + location
@@ -65,7 +66,7 @@ def extract_module_metadata(data, url, repo):
     try:
         modules_yaml = yaml.safe_load_all(extracted)
     except yaml.YAMLError as e:
-        error_message.send(sender=None, text=f'Error parsing modules.yaml: {e}')
+        error_message(text=f'Error parsing modules.yaml: {e}')
 
     mlen = len(re.findall(r'---', yaml.dump(extracted.decode())))
     pbar_start.send(sender=None, ptext=f'Extracting {mlen} Modules ', plen=mlen)
@@ -150,10 +151,10 @@ def extract_yum_packages(data, url):
                         i += 1
                     else:
                         text = f'Error parsing Package: {name} {epoch} {version} {release} {arch}'
-                        error_message.send(sender=None, text=text)
+                        error_message(text=text)
                 elem.clear()
     except ElementTree.ParseError as e:
-        error_message.send(sender=None, text=f'Error parsing yum primary.xml from {url}: {e}')
+        error_message(text=f'Error parsing yum primary.xml from {url}: {e}')
     return packages
 
 
@@ -162,7 +163,7 @@ def refresh_repomd_updateinfo(mirror, data, mirror_url):
     """
     url, checksum, checksum_type = get_repomd_url(mirror_url, data, url_type='updateinfo')
     if not url:
-        warning_message.send(sender=None, text=f'No Errata metadata found in {mirror_url}')
+        warning_message(text=f'No Errata metadata found in {mirror_url}')
         return
     data = fetch_mirror_data(
         mirror=mirror,
@@ -177,7 +178,7 @@ def refresh_repomd_updateinfo(mirror, data, mirror_url):
 
     if mirror.errata_checksum and mirror.errata_checksum == checksum:
         text = 'Mirror Errata checksum has not changed, skipping Erratum refresh'
-        warning_message.send(sender=None, text=text)
+        warning_message(text=text)
         return
     else:
         mirror.errata_checksum = checksum
@@ -191,7 +192,7 @@ def refresh_repomd_modules(mirror, data, mirror_url):
     """
     url, checksum, checksum_type = get_repomd_url(mirror_url, data, url_type='modules')
     if not url:
-        warning_message.send(sender=None, text=f'No Module metadata found in {mirror_url}')
+        warning_message(text=f'No Module metadata found in {mirror_url}')
         return
     data = fetch_mirror_data(
         mirror=mirror,
@@ -206,7 +207,7 @@ def refresh_repomd_modules(mirror, data, mirror_url):
 
     if mirror.modules_checksum and mirror.modules_checksum == checksum:
         text = 'Mirror Modules checksum has not changed, skipping Module refresh'
-        warning_message.send(sender=None, text=text)
+        warning_message(text=text)
         return
     else:
         mirror.modules_checksum = checksum
@@ -220,7 +221,7 @@ def refresh_repomd_primary(mirror, data, mirror_url):
     """
     url, checksum, checksum_type = get_repomd_url(mirror_url, data, url_type='primary')
     if not url:
-        warning_message.send(sender=None, text=f'No Package metadata found in {mirror_url}')
+        warning_message(text=f'No Package metadata found in {mirror_url}')
     data = fetch_mirror_data(
         mirror=mirror,
         url=url,
@@ -234,7 +235,7 @@ def refresh_repomd_primary(mirror, data, mirror_url):
 
     if mirror.packages_checksum and mirror.packages_checksum == checksum:
         text = 'Mirror Packages checksum has not changed, skipping Package refresh'
-        warning_message.send(sender=None, text=text)
+        warning_message(text=text)
         return
     else:
         mirror.packages_checksum = checksum

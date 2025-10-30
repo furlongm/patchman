@@ -26,7 +26,8 @@ from modules.utils import get_or_create_module
 from operatingsystems.utils import get_or_create_osrelease, get_or_create_osvariant
 from packages.models import Package, PackageCategory
 from packages.utils import find_evr, get_or_create_package, get_or_create_package_update, parse_package_string
-from patchman.signals import pbar_start, pbar_update, info_message
+from util.logging import info_message
+from patchman.signals import pbar_start, pbar_update
 from repos.models import Repository, Mirror, MirrorPackage
 from repos.utils import get_or_create_repo
 
@@ -93,7 +94,7 @@ def process_packages(report, host):
                 host.packages.add(package)
             else:
                 if pkg_str[0].lower() != 'gpg-pubkey':
-                    info_message.send(sender=None, text=f'No package returned for {pkg_str}')
+                    info_message(text=f'No package returned for {pkg_str}')
             pbar_update.send(sender=None, index=i + 1)
 
         for package in host.packages.all():
