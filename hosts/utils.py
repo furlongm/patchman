@@ -18,8 +18,9 @@
 from socket import gethostbyaddr, gaierror, herror
 
 from django.db import transaction, IntegrityError
+from taggit.models import Tag
 
-from patchman.signals import error_message
+from patchman.signals import error_message, info_message
 
 
 def update_rdns(host):
@@ -62,7 +63,7 @@ def get_or_create_host(report, arch, osvariant, domain):
             host.osvariant = osvariant
             host.domain = domain
             host.lastreport = report.created
-            host.tags = report.tags
+            host.tags.set(report.tags.split(','), clear=True)
             if report.reboot == 'True':
                 host.reboot_required = True
             else:
@@ -73,3 +74,17 @@ def get_or_create_host(report, arch, osvariant, domain):
     if host:
         host.check_rdns()
         return host
+
+
+def clean_tags():
+    """ Delete Tags that have no Host
+    """
+    tags = Tag.objects.filter(
+        host__isnull=True,
+    )
+    tlen = tags.count()
+    if tlen == 0:
+        info_message.send(sender=None, text='No orphaned Tags found.')
+    else:
+        info_message.send(sender=None, text=f'{tlen} orphaned Tags found.')
+        tags.delete()
