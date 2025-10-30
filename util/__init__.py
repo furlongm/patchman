@@ -21,6 +21,11 @@ import magic
 import zlib
 import lzma
 import os
+try:
+    # python 3.14+ - can also remove the dependency at that stage
+    from compression import zstd
+except ImportError:
+    import zstandard as zstd
 from datetime import datetime, timezone
 from enum import Enum
 from hashlib import md5, sha1, sha256, sha512
@@ -202,6 +207,16 @@ def unxz(contents):
         error_message.send(sender=None, text='lzma: ' + e)
 
 
+def unzstd(contents):
+    """ unzstd contents in memory and return the data
+    """
+    try:
+        zstddata = zstd.ZstdDecompressor().stream_reader(contents).read()
+        return zstddata
+    except zstd.ZstdError as e:
+        error_message.send(sender=None, text='zstd: ' + e)
+
+
 def extract(data, fmt):
     """ Extract the contents based on mimetype or file ending. Return the
         unmodified data if neither mimetype nor file ending matches, otherwise
@@ -214,6 +229,8 @@ def extract(data, fmt):
         m = magic.open(magic.MAGIC_MIME)
         m.load()
         mime = m.buffer(data).split(';')[0]
+    if mime == 'application/zstd' or fmt.endswith('zst'):
+        return unzstd(data)
     if mime == 'application/x-xz' or fmt.endswith('xz'):
         return unxz(data)
     elif mime == 'application/x-bzip2' or fmt.endswith('bz2'):

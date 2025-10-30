@@ -19,3 +19,4 @@ redis==6.4.0
 django-celery-beat==2.7.0
 tqdm==4.67.1
 cvss==3.4
+zstandard==0.25.0
