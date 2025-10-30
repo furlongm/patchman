@@ -71,7 +71,12 @@ def refresh_deb_repo(repo):
         are and then fetches and extracts packages from those files.
     """
 
-    formats = ['Packages.xz', 'Packages.bz2', 'Packages.gz', 'Packages']
+    formats = [
+        'Packages.xz',
+        'Packages.bz2',
+        'Packages.gz',
+        'Packages',
+    ]
 
     ts = get_datetime_now()
     enabled_mirrors = repo.mirror_set.filter(refresh=True, enabled=True)
