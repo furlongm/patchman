@@ -16,7 +16,10 @@
 
 from celery import shared_task
 
+from django.core.cache import cache
+
 from repos.models import Repository
+from util.logging import warning_message
 
 
 @shared_task
@@ -32,5 +35,15 @@ def refresh_repos(force=False):
     """ Refresh metadata for all enabled repos
     """
     repos = Repository.objects.filter(enabled=True)
-    for repo in repos:
-        refresh_repo.delay(repo.id, force)
+    lock_key = 'refresh_repos_lock'
+    # lock will expire after 1 day
+    lock_expire = 60 * 60 * 24
+
+    if cache.add(lock_key, 'true', lock_expire):
+        try:
+            for repo in repos:
+                refresh_repo.delay(repo.id, force)
+        finally:
+            cache.delete(lock_key)
+    else:
+        warning_message('Already refreshing repos, skipping task.')

@@ -44,21 +44,15 @@ DAYS_WITHOUT_REPORT = 14
 # Whether to run patchman under the gunicorn web server
 RUN_GUNICORN = False
 
+# Set the default timeout to e.g. 30 seconds to enable UI caching
+# Note that the UI results may be out of date for this amount of time
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379',
+        'TIMEOUT': 0,
     }
 }
-
-# Uncomment to enable redis caching for e.g. 30 seconds
-# Note that the UI results may be out of date for this amount of time
-# CACHES = {
-#     'default': {
-#         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-#         'LOCATION': 'redis://127.0.0.1:6379',
-#         'TIMEOUT': 30,
-#     }
-# }
 
 from datetime import timedelta        # noqa
 from celery.schedules import crontab  # noqa

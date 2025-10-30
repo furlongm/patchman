@@ -17,11 +17,12 @@
 
 from celery import shared_task
 
+from django.core.cache import cache
 from django.db.utils import OperationalError
 
 from hosts.models import Host
 from reports.models import Report
-from util.logging import info_message
+from util.logging import info_message, warning_message
 
 
 @shared_task(bind=True, autoretry_for=(OperationalError,), retry_backoff=True, retry_kwargs={'max_retries': 5})
@@ -29,7 +30,17 @@ def process_report(self, report_id):
     """ Task to process a single report
     """
     report = Report.objects.get(id=report_id)
-    report.process()
+    lock_key = f'process_report_lock_{report_id}'
+    # lock will expire after 1 hour
+    lock_expire = 60 * 60
+
+    if cache.add(lock_key, 'true', lock_expire):
+        try:
+            report.process()
+        finally:
+            cache.delete(lock_key)
+    else:
+        warning_message(f'Already processing report {report_id}, skipping task.')
 
 
 @shared_task
