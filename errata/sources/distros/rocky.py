@@ -25,7 +25,8 @@ from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
 from packages.utils import parse_package_string, get_or_create_package
 from patchman.signals import pbar_start, pbar_update
-from util import get_url, fetch_content, info_message, error_message
+from util import get_url, fetch_content
+from util.logging import info_message, error_message
 
 
 def update_rocky_errata(concurrent_processing=True):
@@ -50,16 +51,16 @@ def check_rocky_errata_endpoint_health(rocky_errata_api_host):
         health = json.loads(data)
         if health.get('status') == 'ok':
             s = f'Rocky Errata API healthcheck OK: {rocky_errata_healthcheck_url}'
-            info_message.send(sender=None, text=s)
+            info_message(text=s)
             return True
         else:
             s = f'Rocky Errata API healthcheck FAILED: {rocky_errata_healthcheck_url}'
-            error_message.send(sender=None, text=s)
+            error_message(text=s)
             return False
     except Exception as e:
         s = f'Rocky Errata API healthcheck exception occured: {rocky_errata_healthcheck_url}\n'
         s += str(e)
-        error_message.send(sender=None, text=s)
+        error_message(text=s)
         return False
 
 
@@ -194,7 +195,7 @@ def process_rocky_erratum(advisory):
         add_rocky_erratum_oses(e, advisory)
         add_rocky_erratum_packages(e, advisory)
     except Exception as exc:
-        error_message.send(sender=None, text=exc)
+        error_message(text=exc)
 
 
 def add_rocky_erratum_references(e, advisory):

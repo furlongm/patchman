@@ -21,7 +21,8 @@ from tqdm import tqdm
 from django.dispatch import receiver
 
 from util import create_pbar, update_pbar, get_verbosity
-from patchman.signals import pbar_start, pbar_update, info_message, warning_message, error_message, debug_message
+from patchman.signals import pbar_start, pbar_update, \
+    info_message_s, warning_message_s, error_message_s, debug_message_s
 
 from django.conf import settings
 
@@ -47,36 +48,36 @@ def pbar_update_receiver(**kwargs):
         update_pbar(index)
 
 
-@receiver(info_message)
-def print_info_message(sender=None, **kwargs):
-    """ Receiver to print an info message, no color
+@receiver(info_message_s)
+def print_info_message(**kwargs):
+    """ Receiver to handle an info message, no color
     """
     text = str(kwargs.get('text'))
     if get_verbosity():
         tqdm.write(Style.RESET_ALL + Fore.RESET + text)
 
 
-@receiver(warning_message)
+@receiver(warning_message_s)
 def print_warning_message(**kwargs):
-    """ Receiver to print a warning message in yellow text
+    """ Receiver to handle a warning message, yellow text
     """
     text = str(kwargs.get('text'))
     if get_verbosity():
         tqdm.write(Style.BRIGHT + Fore.YELLOW + text)
 
 
-@receiver(error_message)
+@receiver(error_message_s)
 def print_error_message(**kwargs):
-    """ Receiver to print an error message in red text
+    """ Receiver to handle an error message, red text
     """
     text = str(kwargs.get('text'))
     if text:
         tqdm.write(Style.BRIGHT + Fore.RED + text)
 
 
-@receiver(debug_message)
+@receiver(debug_message_s)
 def print_debug_message(**kwargs):
-    """ Receiver to print a debug message in blue, if verbose and DEBUG are set
+    """ Receiver to handle a debug message, blue text if verbose and DEBUG are set
     """
     text = str(kwargs.get('text'))
     if get_verbosity() and settings.DEBUG and text:

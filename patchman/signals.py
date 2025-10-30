@@ -19,7 +19,7 @@ from django.dispatch import Signal
 
 pbar_start = Signal()
 pbar_update = Signal()
-info_message = Signal()
-warning_message = Signal()
-error_message = Signal()
-debug_message = Signal()
+info_message_s = Signal()
+warning_message_s = Signal()
+error_message_s = Signal()
+debug_message_s = Signal()
