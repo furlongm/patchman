@@ -18,7 +18,9 @@ from celery import shared_task
 
 from arch.utils import clean_architectures
 from modules.utils import clean_modules
-from packages.utils import clean_packages, clean_packageupdates, clean_packagenames
+from packages.utils import (
+    clean_packagenames, clean_packages, clean_packageupdates,
+)
 from repos.utils import clean_repos, remove_mirror_trailing_slashes
 
 

@@ -104,7 +104,7 @@ class Report(models.Model):
             info_message(text=f'Report {self.id} has already been processed')
             return
 
-        from reports.utils import get_arch, get_os, get_domain
+        from reports.utils import get_arch, get_domain, get_os
         arch = get_arch(self.arch)
         osvariant = get_os(self.os, arch)
         domain = get_domain(self.domain)
@@ -113,7 +113,9 @@ class Report(models.Model):
         if verbose:
             info_message(text=f'Processing report {self.id} - {self.host}')
 
-        from reports.utils import process_packages, process_repos, process_updates, process_modules
+        from reports.utils import (
+            process_modules, process_packages, process_repos, process_updates,
+        )
         process_repos(report=self, host=host)
         process_modules(report=self, host=host)
         process_packages(report=self, host=host)

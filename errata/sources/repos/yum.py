@@ -16,17 +16,17 @@
 
 import concurrent.futures
 from io import BytesIO
-from defusedxml import ElementTree
 
+from defusedxml import ElementTree
 from django.db import connections
 
 from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
 from packages.utils import get_or_create_package
-from util.logging import error_message
 from patchman.signals import pbar_start, pbar_update
 from security.models import Reference
 from util import extract, get_url
+from util.logging import error_message
 
 
 def extract_updateinfo(data, url, concurrent_processing=True):

@@ -15,14 +15,17 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 import re
+
 from debian.deb822 import Packages
 from debian.debian_support import Version
 
 from packages.models import PackageString
-from util.logging import error_message, info_message, warning_message
 from patchman.signals import pbar_start, pbar_update
-from repos.utils import fetch_mirror_data, update_mirror_packages, find_mirror_url
-from util import get_datetime_now, get_checksum, Checksum, extract
+from repos.utils import (
+    fetch_mirror_data, find_mirror_url, update_mirror_packages,
+)
+from util import Checksum, extract, get_checksum, get_datetime_now
+from util.logging import error_message, info_message, warning_message
 
 
 def extract_deb_packages(data, url):

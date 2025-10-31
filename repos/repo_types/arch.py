@@ -18,10 +18,13 @@ import tarfile
 from io import BytesIO
 
 from packages.models import PackageString
-from util.logging import info_message, warning_message
 from patchman.signals import pbar_start, pbar_update
-from repos.utils import get_max_mirrors, fetch_mirror_data, find_mirror_url, update_mirror_packages
-from util import get_datetime_now, get_checksum, Checksum
+from repos.utils import (
+    fetch_mirror_data, find_mirror_url, get_max_mirrors,
+    update_mirror_packages,
+)
+from util import Checksum, get_checksum, get_datetime_now
+from util.logging import info_message, warning_message
 
 
 def refresh_arch_repo(repo):

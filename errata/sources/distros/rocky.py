@@ -14,19 +14,21 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-import json
 import concurrent.futures
-from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
+import json
 
 from django.db import connections
 from django.db.utils import OperationalError
+from tenacity import (
+    retry, retry_if_exception_type, stop_after_attempt, wait_exponential,
+)
 
 from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
-from packages.utils import parse_package_string, get_or_create_package
+from packages.utils import get_or_create_package, parse_package_string
 from patchman.signals import pbar_start, pbar_update
-from util import get_url, fetch_content
-from util.logging import info_message, error_message
+from util import fetch_content, get_url
+from util.logging import error_message, info_message
 
 
 def update_rocky_errata(concurrent_processing=True):

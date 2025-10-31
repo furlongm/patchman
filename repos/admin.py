@@ -16,7 +16,8 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from django.contrib import admin
-from repos.models import Repository, Mirror, MirrorPackage
+
+from repos.models import Mirror, MirrorPackage, Repository
 
 
 class MirrorAdmin(admin.ModelAdmin):

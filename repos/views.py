@@ -15,24 +15,27 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.shortcuts import get_object_or_404, render, redirect
-from django.http import HttpResponse
-from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.urls import reverse
-from django.db.models import Q
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import IntegrityError
-
+from django.db.models import Q
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from rest_framework import viewsets
 
-from util.filterspecs import Filter, FilterBar
-from hosts.models import HostRepo
-from repos.models import Repository, Mirror, MirrorPackage
-from operatingsystems.models import OSRelease
 from arch.models import MachineArchitecture
-from repos.forms import EditRepoForm, LinkRepoForm, CreateRepoForm, EditMirrorForm
-from repos.serializers import RepositorySerializer, MirrorSerializer, MirrorPackageSerializer
+from hosts.models import HostRepo
+from operatingsystems.models import OSRelease
+from repos.forms import (
+    CreateRepoForm, EditMirrorForm, EditRepoForm, LinkRepoForm,
+)
+from repos.models import Mirror, MirrorPackage, Repository
+from repos.serializers import (
+    MirrorPackageSerializer, MirrorSerializer, RepositorySerializer,
+)
+from util.filterspecs import Filter, FilterBar
 
 
 @login_required

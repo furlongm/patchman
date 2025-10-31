@@ -17,17 +17,24 @@
 
 import re
 from io import BytesIO
-from defusedxml import ElementTree
-from tenacity import RetryError
 
+from defusedxml import ElementTree
 from django.db import IntegrityError
 from django.db.models import Q
+from tenacity import RetryError
 
 from packages.models import Package
-from packages.utils import convert_package_to_packagestring, convert_packagestring_to_package
-from util import get_url, fetch_content, response_is_valid, extract, get_checksum, Checksum, get_setting_of_type
-from util.logging import info_message, warning_message, error_message, debug_message
+from packages.utils import (
+    convert_package_to_packagestring, convert_packagestring_to_package,
+)
 from patchman.signals import pbar_start, pbar_update
+from util import (
+    Checksum, extract, fetch_content, get_checksum, get_setting_of_type,
+    get_url, response_is_valid,
+)
+from util.logging import (
+    debug_message, error_message, info_message, warning_message,
+)
 
 
 def get_or_create_repo(r_name, r_arch, r_type, r_id=None):
@@ -176,6 +183,7 @@ def add_mirrors_from_urls(repo, mirror_urls):
             warning_message(text=text)
             break
         from repos.models import Mirror
+
         # FIXME: maybe we should store the mirrorlist url with full path to repomd.xml?
         # that is what metalink urls return now
         m, c = Mirror.objects.get_or_create(repo=repo, url=mirror_url.rstrip('/').replace('repodata/repomd.xml', ''))

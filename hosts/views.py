@@ -15,24 +15,23 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.shortcuts import get_object_or_404, render, redirect
-from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.urls import reverse
-from django.db.models import Q
 from django.contrib import messages
-
-from taggit.models import Tag
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from django.db.models import Q
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from rest_framework import viewsets
+from taggit.models import Tag
 
-from util.filterspecs import Filter, FilterBar
-from hosts.models import Host, HostRepo
-from domains.models import Domain
 from arch.models import MachineArchitecture
-from operatingsystems.models import OSVariant, OSRelease
-from reports.models import Report
+from domains.models import Domain
 from hosts.forms import EditHostForm
-from hosts.serializers import HostSerializer, HostRepoSerializer
+from hosts.models import Host, HostRepo
+from hosts.serializers import HostRepoSerializer, HostSerializer
+from operatingsystems.models import OSRelease, OSVariant
+from reports.models import Report
+from util.filterspecs import Filter, FilterBar
 
 
 @login_required

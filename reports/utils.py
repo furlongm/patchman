@@ -23,13 +23,18 @@ from arch.models import MachineArchitecture, PackageArchitecture
 from domains.models import Domain
 from hosts.models import HostRepo
 from modules.utils import get_or_create_module
-from operatingsystems.utils import get_or_create_osrelease, get_or_create_osvariant
+from operatingsystems.utils import (
+    get_or_create_osrelease, get_or_create_osvariant,
+)
 from packages.models import Package, PackageCategory
-from packages.utils import find_evr, get_or_create_package, get_or_create_package_update, parse_package_string
-from util.logging import info_message
+from packages.utils import (
+    find_evr, get_or_create_package, get_or_create_package_update,
+    parse_package_string,
+)
 from patchman.signals import pbar_start, pbar_update
-from repos.models import Repository, Mirror, MirrorPackage
+from repos.models import Mirror, MirrorPackage, Repository
 from repos.utils import get_or_create_repo
+from util.logging import info_message
 
 
 def process_repos(report, host):
