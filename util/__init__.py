@@ -15,30 +15,35 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-import requests
 import bz2
-import magic
-import zlib
 import lzma
 import os
+import zlib
+
+import magic
+import requests
+
 try:
     # python 3.14+ - can also remove the dependency at that stage
     from compression import zstd
 except ImportError:
     import zstandard as zstd
+
 from datetime import datetime, timezone
 from enum import Enum
 from hashlib import md5, sha1, sha256, sha512
-from requests.exceptions import HTTPError, Timeout, ConnectionError
-from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 from time import time
+
+from django.conf import settings
+from django.utils.dateparse import parse_datetime
+from django.utils.timezone import make_aware
+from requests.exceptions import ConnectionError, HTTPError, Timeout
+from tenacity import (
+    retry, retry_if_exception_type, stop_after_attempt, wait_exponential,
+)
 from tqdm import tqdm
 
-from django.utils.timezone import make_aware
-from django.utils.dateparse import parse_datetime
-from django.conf import settings
-
-from util.logging import error_message, info_message, debug_message
+from util.logging import debug_message, error_message, info_message
 
 pbar = None
 verbose = None

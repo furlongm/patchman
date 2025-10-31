@@ -17,16 +17,16 @@
 
 from datetime import datetime, timedelta
 
-from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.models import Site
 from django.db.models import F
+from django.shortcuts import render
 
 from hosts.models import Host
-from operatingsystems.models import OSVariant, OSRelease
-from repos.models import Repository, Mirror
+from operatingsystems.models import OSRelease, OSVariant
 from packages.models import Package
 from reports.models import Report
+from repos.models import Mirror, Repository
 from util import get_setting_of_type
 
 

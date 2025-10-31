@@ -15,19 +15,18 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from celery import shared_task
-
 from django.core.cache import cache
 
-from errata.sources.distros.arch import update_arch_errata
 from errata.sources.distros.alma import update_alma_errata
-from errata.sources.distros.debian import update_debian_errata
+from errata.sources.distros.arch import update_arch_errata
 from errata.sources.distros.centos import update_centos_errata
+from errata.sources.distros.debian import update_debian_errata
 from errata.sources.distros.rocky import update_rocky_errata
 from errata.sources.distros.ubuntu import update_ubuntu_errata
-from util.logging import error_message, warning_message
 from repos.models import Repository
 from security.tasks import update_cves, update_cwes
 from util import get_setting_of_type
+from util.logging import error_message, warning_message
 
 
 @shared_task

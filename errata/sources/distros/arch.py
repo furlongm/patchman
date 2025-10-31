@@ -20,11 +20,13 @@ import json
 from django.db import connections
 
 from operatingsystems.utils import get_or_create_osrelease
-from util.logging import error_message
-from patchman.signals import pbar_start, pbar_update
 from packages.models import Package
-from packages.utils import find_evr, get_matching_packages, get_or_create_package
-from util import get_url, fetch_content
+from packages.utils import (
+    find_evr, get_matching_packages, get_or_create_package,
+)
+from patchman.signals import pbar_start, pbar_update
+from util import fetch_content, get_url
+from util.logging import error_message
 
 
 def update_arch_errata(concurrent_processing=False):

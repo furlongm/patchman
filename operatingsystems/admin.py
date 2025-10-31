@@ -16,7 +16,8 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from django.contrib import admin
-from operatingsystems.models import OSVariant, OSRelease
+
+from operatingsystems.models import OSRelease, OSVariant
 
 
 class OSReleaseAdmin(admin.ModelAdmin):

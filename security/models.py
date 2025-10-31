@@ -16,14 +16,14 @@
 
 import json
 import re
-from cvss import CVSS2, CVSS3, CVSS4
 from time import sleep
 
+from cvss import CVSS2, CVSS3, CVSS4
 from django.db import models
 from django.urls import reverse
 
 from security.managers import CVEManager
-from util import get_url, fetch_content, tz_aware_datetime, error_message
+from util import error_message, fetch_content, get_url, tz_aware_datetime
 
 
 class Reference(models.Model):

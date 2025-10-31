@@ -14,22 +14,28 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-import git
 import os
 import shutil
 import tarfile
 import tempfile
-from defusedxml import ElementTree
 from fnmatch import fnmatch
 from io import BytesIO
 from pathlib import Path
 
+import git
+from defusedxml import ElementTree
+
 from packages.models import PackageString
 from packages.utils import find_evr
-from util.logging import info_message, warning_message, error_message
 from patchman.signals import pbar_start, pbar_update
-from repos.utils import add_mirrors_from_urls, mirror_checksum_is_valid, update_mirror_packages
-from util import extract, get_url, get_datetime_now, get_checksum, Checksum, fetch_content, response_is_valid
+from repos.utils import (
+    add_mirrors_from_urls, mirror_checksum_is_valid, update_mirror_packages,
+)
+from util import (
+    Checksum, extract, fetch_content, get_checksum, get_datetime_now, get_url,
+    response_is_valid,
+)
+from util.logging import error_message, info_message, warning_message
 
 
 def refresh_gentoo_main_repo(repo):

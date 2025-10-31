@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from arch.models import PackageArchitecture, MachineArchitecture
+from arch.models import MachineArchitecture, PackageArchitecture
 from util.logging import info_message
 
 

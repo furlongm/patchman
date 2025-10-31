@@ -15,17 +15,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.shortcuts import get_object_or_404, render
 from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import Q
-
+from django.shortcuts import get_object_or_404, render
 from rest_framework import viewsets
 
-from util.filterspecs import Filter, FilterBar
-from packages.models import PackageName, Package, PackageUpdate
 from arch.models import PackageArchitecture
-from packages.serializers import PackageNameSerializer, PackageSerializer, PackageUpdateSerializer
+from packages.models import Package, PackageName, PackageUpdate
+from packages.serializers import (
+    PackageNameSerializer, PackageSerializer, PackageUpdateSerializer,
+)
+from util.filterspecs import Filter, FilterBar
 
 
 @login_required

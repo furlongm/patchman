@@ -17,7 +17,8 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 import os
-from setuptools import setup, find_packages
+
+from setuptools import find_packages, setup
 
 with open('VERSION.txt', 'r', encoding='utf_8') as v:
     version = v.readline().strip()
