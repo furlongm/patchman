@@ -24,6 +24,7 @@ try:
     from version_utils.rpm import labelCompare
 except ImportError:
     from rpm import labelCompare
+
 from taggit.managers import TaggableManager
 
 from arch.models import MachineArchitecture
@@ -34,9 +35,9 @@ from modules.models import Module
 from operatingsystems.models import OSVariant
 from packages.models import Package, PackageUpdate
 from packages.utils import get_or_create_package_update
-from util.logging import info_message
 from repos.models import Repository
 from repos.utils import find_best_repo
+from util.logging import info_message
 
 
 class Host(models.Model):

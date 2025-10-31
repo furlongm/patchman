@@ -15,6 +15,7 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 import os
+
 from yum.plugins import TYPE_CORE
 
 requires_api_version = '2.1'

@@ -15,10 +15,10 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from django.db import IntegrityError
-from util.logging import error_message, info_message
 
-from modules.models import Module
 from arch.models import PackageArchitecture
+from modules.models import Module
+from util.logging import error_message, info_message
 
 
 def get_or_create_module(name, stream, version, context, arch, repo):

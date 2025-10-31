@@ -16,9 +16,10 @@
 
 from rest_framework import viewsets
 
-from arch.models import PackageArchitecture, MachineArchitecture
-from arch.serializers import PackageArchitectureSerializer, \
-    MachineArchitectureSerializer
+from arch.models import MachineArchitecture, PackageArchitecture
+from arch.serializers import (
+    MachineArchitectureSerializer, PackageArchitectureSerializer,
+)
 
 
 class PackageArchitectureViewSet(viewsets.ModelViewSet):

@@ -15,10 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.forms import ModelForm, ModelMultipleChoiceField
 from django.contrib.admin.widgets import FilteredSelectMultiple
+from django.forms import ModelForm, ModelMultipleChoiceField
 
-from operatingsystems.models import OSVariant, OSRelease
+from operatingsystems.models import OSRelease, OSVariant
 from repos.models import Repository
 
 

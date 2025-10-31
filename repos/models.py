@@ -20,13 +20,12 @@ from django.urls import reverse
 
 from arch.models import MachineArchitecture
 from packages.models import Package
-from util import get_setting_of_type
-
-from repos.repo_types.deb import refresh_deb_repo
-from repos.repo_types.rpm import refresh_rpm_repo, refresh_repo_errata
 from repos.repo_types.arch import refresh_arch_repo
+from repos.repo_types.deb import refresh_deb_repo
 from repos.repo_types.gentoo import refresh_gentoo_repo
-from util.logging import info_message, warning_message, error_message
+from repos.repo_types.rpm import refresh_repo_errata, refresh_rpm_repo
+from util import get_setting_of_type
+from util.logging import error_message, info_message, warning_message
 
 
 class Repository(models.Model):

@@ -15,14 +15,15 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 import re
+
 from defusedxml import ElementTree
 
 from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
-from packages.utils import parse_package_string, get_or_create_package
-from util.logging import error_message
+from packages.utils import get_or_create_package, parse_package_string
 from patchman.signals import pbar_start, pbar_update
-from util import bunzip2, get_url, fetch_content, get_sha1, get_setting_of_type
+from util import bunzip2, fetch_content, get_setting_of_type, get_sha1, get_url
+from util.logging import error_message
 
 
 def update_centos_errata():

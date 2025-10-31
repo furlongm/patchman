@@ -22,8 +22,8 @@ from django.db import connections
 from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
 from packages.utils import get_or_create_package, parse_package_string
-from util import get_url, fetch_content, get_setting_of_type
 from patchman.signals import pbar_start, pbar_update
+from util import fetch_content, get_setting_of_type, get_url
 
 
 def update_alma_errata(concurrent_processing=True):

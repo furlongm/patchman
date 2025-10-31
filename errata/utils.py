@@ -18,11 +18,11 @@ import concurrent.futures
 
 from django.db import connections
 
-from util import tz_aware_datetime
 from errata.models import Erratum
 from packages.models import PackageUpdate
-from util.logging import warning_message
 from patchman.signals import pbar_start, pbar_update
+from util import tz_aware_datetime
+from util.logging import warning_message
 
 
 def get_or_create_erratum(name, e_type, issue_date, synopsis):

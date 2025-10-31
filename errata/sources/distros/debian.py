@@ -18,18 +18,18 @@ import concurrent.futures
 import csv
 import re
 from datetime import datetime
-from debian.deb822 import Dsc
 from io import StringIO
 
+from debian.deb822 import Dsc
 from django.db import connections
 
 from operatingsystems.models import OSRelease
 from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
-from packages.utils import get_or_create_package, find_evr
-from util.logging import error_message, warning_message
+from packages.utils import find_evr, get_or_create_package
 from patchman.signals import pbar_start, pbar_update
-from util import get_url, fetch_content, get_setting_of_type, extract
+from util import extract, fetch_content, get_setting_of_type, get_url
+from util.logging import error_message, warning_message
 
 DSCs = {}
 
