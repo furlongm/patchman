@@ -15,8 +15,8 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from django.contrib import admin
-from security.models import CWE, CVSS, CVE, Reference
 
+from security.models import CVE, CVSS, CWE, Reference
 
 admin.site.register(CWE)
 admin.site.register(CVSS)

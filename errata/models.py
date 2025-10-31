@@ -16,17 +16,16 @@
 
 import json
 
-from django.db import models
+from django.db import IntegrityError, models
 from django.urls import reverse
-from django.db import IntegrityError
 
+from errata.managers import ErratumManager
 from packages.models import Package, PackageUpdate
 from packages.utils import find_evr, get_matching_packages
-from errata.managers import ErratumManager
 from security.models import CVE, Reference
 from security.utils import get_or_create_cve, get_or_create_reference
-from util.logging import error_message
 from util import get_url
+from util.logging import error_message
 
 
 class Erratum(models.Model):

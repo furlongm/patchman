@@ -16,7 +16,7 @@
 
 from rest_framework import serializers
 
-from repos.models import Repository, Mirror, MirrorPackage
+from repos.models import Mirror, MirrorPackage, Repository
 
 
 class RepositorySerializer(serializers.HyperlinkedModelSerializer):

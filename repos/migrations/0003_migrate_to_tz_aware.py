@@ -1,6 +1,7 @@
 from django.db import migrations
 from django.utils import timezone
 
+
 def make_datetimes_tz_aware(apps, schema_editor):
     Mirror = apps.get_model('repos', 'Mirror')
     for mirror in Mirror.objects.all():

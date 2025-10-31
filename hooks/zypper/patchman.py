@@ -18,8 +18,9 @@
 #
 # zypp system plugin for patchman
 
-import os
 import logging
+import os
+
 from zypp_plugin import Plugin
 
 

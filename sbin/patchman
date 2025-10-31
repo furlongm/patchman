@@ -17,32 +17,37 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 
+import argparse
 import os
 import sys
-import argparse
 
+from django import setup as django_setup
 from django.core.exceptions import MultipleObjectsReturned
 from django.db.models import Count
-from django import setup as django_setup
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')
 from django.conf import settings  # noqa
+
 django_setup()
 
 from arch.utils import clean_architectures
-from errata.utils import mark_errata_security_updates, enrich_errata, \
-    scan_package_updates_for_affected_packages
 from errata.tasks import update_errata
+from errata.utils import (
+    enrich_errata, mark_errata_security_updates,
+    scan_package_updates_for_affected_packages,
+)
 from hosts.models import Host
 from hosts.utils import clean_tags
 from modules.utils import clean_modules
-from packages.utils import clean_packages, clean_packageupdates, clean_packagenames
-from repos.models import Repository
-from repos.utils import clean_repos
+from packages.utils import (
+    clean_packagenames, clean_packages, clean_packageupdates,
+)
 from reports.models import Report
 from reports.tasks import clean_reports_with_no_hosts
+from repos.models import Repository
+from repos.utils import clean_repos
 from security.utils import update_cves, update_cwes
-from util import set_verbosity, get_datetime_now
+from util import get_datetime_now, set_verbosity
 from util.logging import info_message
 
 

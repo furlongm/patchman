@@ -14,12 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+
 from datetime import datetime
 
-from patchman.signals import info_message_s
-from patchman.signals import warning_message_s
-from patchman.signals import error_message_s
-from patchman.signals import debug_message_s
+from patchman.signals import (
+    debug_message_s, error_message_s, info_message_s, warning_message_s,
+)
 
 
 def info_message(text):

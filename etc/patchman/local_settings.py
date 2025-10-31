@@ -66,8 +66,10 @@ CACHES = {
     }
 }
 
-from datetime import timedelta        # noqa
+from datetime import timedelta  # noqa
+
 from celery.schedules import crontab  # noqa
+
 CELERY_BEAT_SCHEDULE = {
     'process_all_unprocessed_reports': {
         'task': 'reports.tasks.process_reports',

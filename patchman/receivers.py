@@ -15,16 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from colorama import init, Fore, Style
+from colorama import Fore, Style, init
+from django.conf import settings
+from django.dispatch import receiver
 from tqdm import tqdm
 
-from django.dispatch import receiver
-
-from util import create_pbar, update_pbar, get_verbosity
-from patchman.signals import pbar_start, pbar_update, \
-    info_message_s, warning_message_s, error_message_s, debug_message_s
-
-from django.conf import settings
+from patchman.signals import (
+    debug_message_s, error_message_s, info_message_s, pbar_start, pbar_update,
+    warning_message_s,
+)
+from util import create_pbar, get_verbosity, update_pbar
 
 init(autoreset=True)
 

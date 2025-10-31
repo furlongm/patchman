@@ -17,10 +17,10 @@
 import re
 
 from packages.models import PackageString
-from util.logging import info_message
 from patchman.signals import pbar_start, pbar_update
 from repos.utils import fetch_mirror_data, update_mirror_packages
 from util import extract
+from util.logging import info_message
 
 
 def refresh_yast_repo(mirror, data):

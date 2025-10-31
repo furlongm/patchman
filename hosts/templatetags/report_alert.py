@@ -17,9 +17,9 @@
 from datetime import timedelta
 
 from django.template import Library
-from django.utils.html import format_html
 from django.templatetags.static import static
 from django.utils import timezone
+from django.utils.html import format_html
 
 from util import get_setting_of_type
 

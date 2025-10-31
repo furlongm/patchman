@@ -16,8 +16,8 @@
 
 import concurrent.futures
 import csv
-import os
 import json
+import os
 from io import StringIO
 from urllib.parse import urlparse
 
@@ -26,10 +26,15 @@ from django.db import connections
 from operatingsystems.models import OSRelease, OSVariant
 from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
-from packages.utils import get_or_create_package, parse_package_string, find_evr, get_matching_packages
-from util import get_url, fetch_content, get_sha256, bunzip2, get_setting_of_type
-from util.logging import error_message
+from packages.utils import (
+    find_evr, get_matching_packages, get_or_create_package,
+    parse_package_string,
+)
 from patchman.signals import pbar_start, pbar_update
+from util import (
+    bunzip2, fetch_content, get_setting_of_type, get_sha256, get_url,
+)
+from util.logging import error_message
 
 
 def update_ubuntu_errata(concurrent_processing=False):

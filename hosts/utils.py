@@ -15,9 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from socket import gethostbyaddr, gaierror, herror
+from socket import gaierror, gethostbyaddr, herror
 
-from django.db import transaction, IntegrityError
+from django.db import IntegrityError, transaction
 from taggit.models import Tag
 
 from util.logging import error_message, info_message

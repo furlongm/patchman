@@ -16,6 +16,7 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from django.contrib import admin
+
 from hosts.models import Host, HostRepo
 
 

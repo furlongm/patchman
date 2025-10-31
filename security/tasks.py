@@ -15,7 +15,6 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from celery import shared_task
-
 from django.core.cache import cache
 
 from security.models import CVE, CWE

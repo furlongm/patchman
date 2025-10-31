@@ -15,17 +15,18 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/
 
 import re
+from io import BytesIO
+
 import yaml
 from defusedxml import ElementTree
-from io import BytesIO
 
 from errata.sources.repos.yum import extract_updateinfo
 from packages.models import Package, PackageString
 from packages.utils import get_or_create_package, parse_package_string
-from util.logging import warning_message, error_message
 from patchman.signals import pbar_start, pbar_update
 from repos.utils import fetch_mirror_data, update_mirror_packages
 from util import extract
+from util.logging import error_message, warning_message
 
 
 def get_repomd_url(mirror_url, data, url_type='primary'):

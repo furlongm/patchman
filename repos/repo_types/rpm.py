@@ -16,11 +16,14 @@
 
 from django.db.models import Q
 
-from util.logging import info_message, warning_message
 from repos.repo_types.yast import refresh_yast_repo
 from repos.repo_types.yum import refresh_yum_repo
-from repos.utils import check_for_metalinks, check_for_mirrorlists, find_mirror_url, get_max_mirrors, fetch_mirror_data
+from repos.utils import (
+    check_for_metalinks, check_for_mirrorlists, fetch_mirror_data,
+    find_mirror_url, get_max_mirrors,
+)
 from util import get_datetime_now
+from util.logging import info_message, warning_message
 
 
 def refresh_repo_errata(repo):

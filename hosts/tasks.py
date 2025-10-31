@@ -15,7 +15,6 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from celery import shared_task
-
 from django.db.models import Count
 
 from hosts.models import Host

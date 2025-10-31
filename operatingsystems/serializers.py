@@ -16,7 +16,7 @@
 
 from rest_framework import serializers
 
-from operatingsystems.models import OSVariant, OSRelease
+from operatingsystems.models import OSRelease, OSVariant
 
 
 class OSVariantSerializer(serializers.HyperlinkedModelSerializer):

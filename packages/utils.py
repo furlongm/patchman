@@ -21,7 +21,9 @@ from django.core.exceptions import MultipleObjectsReturned
 from django.db import IntegrityError, transaction
 
 from arch.models import PackageArchitecture
-from packages.models import PackageName, Package, PackageUpdate, PackageCategory, PackageString
+from packages.models import (
+    Package, PackageCategory, PackageName, PackageString, PackageUpdate,
+)
 from util.logging import error_message, info_message, warning_message
 
 
