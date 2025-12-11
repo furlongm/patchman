@@ -14,46 +14,50 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.db import IntegrityError
+from django.db import IntegrityError, DatabaseError, transaction
+from patchman.signals import error_message
 
-from arch.models import PackageArchitecture
 from modules.models import Module
-from util.logging import error_message, info_message
-
+from arch.models import PackageArchitecture
 
 def get_or_create_module(name, stream, version, context, arch, repo):
-    """ Get or create a module object
-        Returns the module
-    """
     created = False
-    m_arch, c = PackageArchitecture.objects.get_or_create(name=arch)
+    with transaction.atomic():
+        m_arch, _ = PackageArchitecture.objects.get_or_create(name=arch)
     try:
-        module, created = Module.objects.get_or_create(
-            name=name,
-            stream=stream,
-            version=version,
-            context=context,
-            arch=m_arch,
-            repo=repo,
-        )
+        with transaction.atomic():
+            module, created = Module.objects.get_or_create(
+                name=name,
+                stream=stream,
+                version=version,
+                context=context,
+                arch=m_arch,
+                # keep repo in create, but not in uniqueness filter
+                defaults={'repo': repo},
+            )
     except IntegrityError as e:
-        error_message(text=e)
+        error_message.send(sender=None, text=e)
+        # Lookup only on the unique fields
         module = Module.objects.get(
             name=name,
             stream=stream,
             version=version,
             context=context,
             arch=m_arch,
-            repo=repo,
         )
-    return module
+        created = False
+    except DatabaseError as e:
+        error_message.send(sender=None, text=e)
+        module = None
+    return module, created
 
 
 def get_matching_modules(name, stream, version, context, arch):
     """ Return modules that match name, stream, version, context, and arch,
         regardless of repo
     """
-    m_arch, c = PackageArchitecture.objects.get_or_create(name=arch)
+    with transaction.atomic():
+        m_arch, c = PackageArchitecture.objects.get_or_create(name=arch)
     modules = Module.objects.filter(
         name=name,
         stream=stream,
@@ -62,18 +66,3 @@ def get_matching_modules(name, stream, version, context, arch):
         arch=m_arch,
     )
     return modules
-
-
-def clean_modules():
-    """ Delete modules that have no host or no repo
-    """
-    modules = Module.objects.filter(
-        host__isnull=True,
-        repo__isnull=True,
-    )
-    mlen = modules.count()
-    if mlen == 0:
-        info_message(text='No orphaned Modules found.')
-    else:
-        info_message(text=f'{mlen} orphaned Modules found.')
-        modules.delete()
