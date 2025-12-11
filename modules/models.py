@@ -24,10 +24,18 @@ from repos.models import Repository
 
 class Module(models.Model):
 
-    name = models.CharField(max_length=255)
-    stream = models.CharField(max_length=255)
-    version = models.CharField(max_length=255)
-    context = models.CharField(max_length=255)
+#    name = models.CharField(max_length=255)
+#    stream = models.CharField(max_length=255)
+#    version = models.CharField(max_length=255)
+#    context = models.CharField(max_length=255)
+#    arch = models.ForeignKey(PackageArchitecture, on_delete=models.CASCADE)
+#    repo = models.ForeignKey(Repository, on_delete=models.CASCADE)
+#    packages = models.ManyToManyField(Package, blank=True)
+
+    name = models.CharField(max_length=150)
+    stream = models.CharField(max_length=150)
+    version = models.CharField(max_length=150)
+    context = models.CharField(max_length=150)
     arch = models.ForeignKey(PackageArchitecture, on_delete=models.CASCADE)
     repo = models.ForeignKey(Repository, on_delete=models.CASCADE)
     packages = models.ManyToManyField(Package, blank=True)
@@ -35,8 +43,9 @@ class Module(models.Model):
     class Meta:
         verbose_name = 'Module'
         verbose_name_plural = 'Modules'
-        unique_together = ['name', 'stream', 'version', 'context', 'arch']
-        ordering = ['name', 'stream']
+        #unique_together = ('name', 'stream', 'version', 'context', 'arch',)
+        unique_together = (("name", "stream", "version", "context"),)
+        ordering = ('name', 'stream',)
 
     def __str__(self):
         return f'{self.name}-{self.stream}-{self.version}-{self.version}-{self.context}'
