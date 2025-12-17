@@ -13,6 +13,7 @@ ALLOWED_HOSTS = ['127.0.0.1']
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.cache.UpdateCacheMiddleware',
+    'patchman.middleware.NeverCacheMiddleware',
     'django.middleware.http.ConditionalGetMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -109,6 +110,10 @@ REST_FRAMEWORK = {
 TAGGIT_CASE_INSENSITIVE = True
 
 CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    'queue_order_strategy': 'priority',
+}
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 
 LOGIN_REDIRECT_URL = '/patchman/'
 LOGOUT_REDIRECT_URL = '/patchman/login/'
