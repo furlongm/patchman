@@ -25,10 +25,9 @@ def get_or_create_module(name, stream, version, context, arch, repo):
     """ Get or create a module object
         Returns the module
     """
-    created = False
-    m_arch, c = PackageArchitecture.objects.get_or_create(name=arch)
+    m_arch, _ = PackageArchitecture.objects.get_or_create(name=arch)
     try:
-        module, created = Module.objects.get_or_create(
+        module, _ = Module.objects.get_or_create(
             name=name,
             stream=stream,
             version=version,

@@ -35,7 +35,7 @@ class Module(models.Model):
     class Meta:
         verbose_name = 'Module'
         verbose_name_plural = 'Modules'
-        unique_together = ['name', 'stream', 'version', 'context', 'arch']
+        unique_together = ['name', 'stream', 'version', 'context', 'arch', 'repo']
         ordering = ['name', 'stream']
 
     def __str__(self):
