@@ -24,7 +24,7 @@ from packages.utils import (
 from repos.utils import clean_repos, remove_mirror_trailing_slashes
 
 
-@shared_task
+@shared_task(priority=1)
 def clean_database(remove_duplicate_packages=False):
     """ Task to check the database and remove orphaned objects
         Runs all clean_* functions to check database consistency

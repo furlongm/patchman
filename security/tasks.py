@@ -21,15 +21,26 @@ from security.models import CVE, CWE
 from util.logging import warning_message
 
 
-@shared_task
+@shared_task(priority=3)
 def update_cve(cve_id):
     """ Task to update a CVE
     """
-    cve = CVE.objects.get(id=cve_id)
-    cve.fetch_cve_data()
+    cve_id_lock_key = f'update_cve_id_lock_{cve_id}'
+
+    # lock will expire after 1 week
+    lock_expire = 60 * 60 * 168
+
+    if cache.add(cve_id_lock_key, 'true', lock_expire):
+        try:
+            cve = CVE.objects.get(id=cve_id)
+            cve.fetch_cve_data()
+        finally:
+            cache.delete(cve_id_lock_key)
+    else:
+        warning_message(f'Already updating CVE {cve_id}, skipping task.')
 
 
-@shared_task
+@shared_task(priority=2)
 def update_cves():
     """ Task to update all CVEs
     """
@@ -47,15 +58,26 @@ def update_cves():
         warning_message('Already updating CVEs, skipping task.')
 
 
-@shared_task
+@shared_task(priority=3)
 def update_cwe(cwe_id):
     """ Task to update a CWE
     """
-    cwe = CWE.objects.get(id=cwe_id)
-    cwe.fetch_cwe_data()
+    cwe_id_lock_key = f'update_cwe_id_lock_{cwe_id}'
+
+    # lock will expire after 1 week
+    lock_expire = 60 * 60 * 168
+
+    if cache.add(cwe_id_lock_key, 'true', lock_expire):
+        try:
+            cwe = CWE.objects.get(id=cwe_id)
+            cwe.fetch_cwe_data()
+        finally:
+            cache.delete(cwe_id_lock_key)
+    else:
+        warning_message(f'Already updating CWE {cwe_id}, skipping task.')
 
 
-@shared_task
+@shared_task(priority=2)
 def update_cwes():
     """ Task to update all CWEs
     """
