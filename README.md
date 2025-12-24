@@ -31,20 +31,20 @@ time packages are installed or removed on a host.
 
 ## Installation
 
-See [the installation guide](https://github.com/furlongm/patchman/blob/master/INSTALL.md)
+See [the installation guide](https://github.com/furlongm/patchman/blob/main/INSTALL.md)
 for installation options.
 
 
 ## Usage
 
 The web interface contains a dashboard with items that need attention, and
-various pages to manipulate hosts, repositories, packages, operating systems and
-reports.
+various pages to manipulate and view hosts, repositories and mirrors, packages,
+operating system releases and variants, reports, errata and CVEs.
 
 To populate the database, simply run the client on some hosts:
 
 ```shell
-$ patchman-client -s http://patchman.example.org
+$ patchman-client -s http://patchman.example.com
 ```
 
 This should provide some initial data to work with.
@@ -56,69 +56,56 @@ the usage:
 
 ```shell
 $ sbin/patchman -h
-usage: patchman [-h] [-f] [-q] [-r] [-R REPO] [-lr] [-lh] [-u] [-A] [-H HOST]
-                [-p] [-c] [-d] [-n] [-a] [-D hostA hostB]
+usage: patchman [-h] [-f] [-q] [-r] [-R REPO] [-lr] [-lh] [-dh] [-u] [-A] [-shro | -uhro] [-sdns | -udns] [-H HOST] [-p] [-c] [-d] [-rd] [-n] [-a] [-D hostA hostB] [-e] [-E ERRATUM_TYPE] [-v] [--cve CVE] [--fetch-nist-data]
 
 Patchman CLI tool
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
-  -f, --force           Ignore stored checksums and force-refresh all mirrors
+  -f, --force           Ignore stored checksums and force-refresh all Mirrors
   -q, --quiet           Quiet mode (e.g. for cronjobs)
-  -r, --refresh-repos   Refresh repositories
-  -R REPO, --repo REPO  Only perform action on a specific repository (repo_id)
-  -lr, --list-repos     List all repositories
-  -lh, --list-hosts     List all hosts
-  -u, --host-updates    Find host updates
+  -r, --refresh-repos   Refresh Repositories
+  -R REPO, --repo REPO  Only perform action on a specific Repository (repo_id)
+  -lr, --list-repos     List all Repositories
+  -lh, --list-hosts     List all Hosts
+  -dh, --delete-hosts   Delete hosts, requires -H, matches substring patterns
+  -u, --host-updates    Find Host updates
   -A, --host-updates-alt
-                        Find host updates (alternative algorithm that may be
-                        faster when there are many homogeneous hosts)
-  -H HOST, --host HOST  Only perform action on a specific host (fqdn)
+                        Find Host updates (alternative algorithm that may be faster when there are many homogeneous hosts)
+  -shro, --set-host-repos-only
+                        Set host_repos_only, requires -H, matches substring patterns
+  -uhro, --unset-host-repos-only
+                        Unset host_repos_only, requires -H, matches substring patterns
+  -sdns, --set-check-dns
+                        Set check_dns, requires -H, matches substring patterns
+  -udns, --unset-check-dns
+                        Unset check_dns, requires -H, matches substring patterns
+  -H HOST, --host HOST  Only perform action on a specific Host (fqdn)
   -p, --process-reports
-                        Process pending reports
-  -c, --clean-reports   Remove all but the last three reports
+                        Process pending Reports
+  -c, --clean-reports   Remove all but the last three Reports
   -d, --dbcheck         Perform some sanity checks and clean unused db entries
-  -n, --dns-checks      Perform reverse DNS checks if enabled for that host
-  -a, --all             Convenience flag for -r -A -p -c -d -n
+  -rd, --remove-duplicates
+                        Remove duplicates during dbcheck - this may take some time
+  -n, --dns-checks      Perform reverse DNS checks if enabled for that Host
+  -a, --all             Convenience flag for -r -A -p -c -d -n -e
   -D hostA hostB, --diff hostA hostB
-                        Show differences between two hosts in diff-like output
-  -e, --errata          Download CentOS errata from https://cefs.steve-
-                        meier.de/
+                        Show differences between two Hosts in diff-like output
+  -e, --update-errata   Update Errata
+  -E ERRATUM_TYPE, --erratum-type ERRATUM_TYPE
+                        Only update the specified Erratum type (e.g. `yum`, `ubuntu`, `arch`)
+  -v, --update-cves     Update CVEs from https://cve.org
+  --cve CVE             Only update the specified CVE (e.g. CVE-2024-1234)
+  --fetch-nist-data, -nd
+                        Fetch NIST CVE data in addition to MITRE data (rate-limited to 1 API call every 6 seconds)
 ```
 
-## Dependencies
+### Client dependencies
 
-### Server-side dependencies
-
-
-```
-python3-django
-python3-django-tagging
-python3-django-extensions
-python3-django-bootstrap3
-python3-djangorestframework
-python3-debian
-python3-rpm
-python3-progressbar
-python3-lxml
-python3-defusedxml
-python3-requests
-python3-colorama
-python3-magic
-python3-humanize
-python3-yaml
-```
-
-The server can optionally make use of celery to asynchronously process the
-reports sent by hosts.
-
-
-### Client-side dependencies
-
-The client-side dependencies are kept to a minimum. `rpm` and `dpkg` are
+The client dependencies are kept to a minimum. `rpm` and `dpkg` are
 required to report packages, `yum`, `dnf`, `zypper` and/or `apt` are required
 to report repositories. These packages are normally installed by default on
-most systems.
+most systems. `which`, `mktemp`, `flock` and `curl` are also required.
 
 deb-based OS's do not always change the kernel version when a kernel update is
 installed, so the `update-notifier-common` package can optionally be installed
@@ -134,24 +121,26 @@ The default settings will be fine for most people but depending on your setup,
 there may be some initial work required to logically organise the data sent in
 the host reports. The following explanations may help in this case.
 
-There are a number of basic objects - Hosts, Repositories, Packages, Operating
-Systems and Reports. There are also Operating System Groups (which are optional)
-and Mirrors.
+There are a number of basic objects: Hosts, Repositories and Mirrors, Packages,
+Operating Systems Releases and Variants, Reports and Errata.
 
 ### Host
-A Host is a single host, e.g. test01.example.org.
+A Host is a single host, e.g. test-host-01.example.com.
 
-### Operating System
-A Host runs an Operating System, e.g. CentOS 7.7, Debian 10.1, Ubuntu 18.04
+### Operating System Releases and Variants
+A Host runs an Operating System Release, e.g. Rocky 10, Debian 13,
+Ubuntu 24.04. The particular version running is called a Operating System
+Variant. e.g. Debian 13.1, Ubuntu 24.04.4 and Variants are linked to a
+Release. For some OS's like Arch Linux, there are no Variants.
 
 ### Package
 A Package is a package that is either installed on a Host, or is available to
-download from a Repository mirror, e.g. `strace-4.8-11.el7.x86_64`,
-`grub2-tools-2.02-0.34.el7.centos.x86_64`, etc.
+download from a Repository mirror, e.g. `strace-4.8-11.el10.x86_64`,
+`grub2-tools-2.02-0.34.el10.rocky.x86_64`, etc.
 
 ### Mirror
-A Mirror is a collection of Packages available on the web, e.g. a `yum`, `yast`
-or `apt` repo.
+A Mirror is a collection of Packages available on the web, e.g. a `yum` or
+`apt` repo.
 
 ### Repository
 A Repository is a collection of Mirrors. Typically all the Mirrors will contain
@@ -160,45 +149,27 @@ their Mirrors together. For Debian-based hosts, you may need to link all
 Mirrors that form a Repository using the web interface. This may reduce the
 time required to find updates. Repositories can be marked as being security or
 non-security. This makes most sense with Debian and Ubuntu repositories where
-security updates are delivered via security repositories. For CentOS security
+security updates are delivered via security repositories. For rpm security
 updates, see the Erratum section below.
 
-### Report
-A Host creates a Report using `patchman-client`. This Report is sent to the
-Patchman server. The Report contains the Host's Operating System, and lists
-of the installed Packages and enabled Repositories on the Host. The Patchman
-server processes and records the list of Packages and Repositories contained in
-the Report.
-
-### Operating System Group (optional)
-An OSGroup is a collection of OS's. For example, an OSGroup named "Ubuntu 18.04"
-would be comprised of the following OS's:
-
-```
-Ubuntu 18.04.1
-Ubuntu 18.04.2
-Ubuntu 18.04.5
-```
-
-Likewise, an OSGroup named "CentOS 7" would be made up of the following OS's:
-
-```
-CentOS 7.5
-CentOS 7.7.1511
-```
-
-Repositories can be associated with an OSGroup, or with the Host itself. If the
-`use_host_repos variable` is set to True for a Host, then updates are found by
-looking only at the Repositories that belong to that Host. This is the default
-behaviour and does not require OSGroups to be configured.
+Repositories can be associated with an OS Release, or with the Host itself. If
+the `use_host_repos` variable is set to True for a Host, then updates are found
+by looking only at the Repositories that belong to that Host. This is the
+default behaviour.
 
 If `use_host_repos` is set to False, the update-finding process looks at the
-OSGroup that the Host's Operating System is in, and uses the OSGroup's
-Repositories to determine the applicable updates. This is useful in environments
-where many hosts are homogeneous (e.g. cloud/cluster environments).
+OS Release that the Hosts Operating System Variant is associated with, and
+uses that Releases Repositories to determine the applicable updates. This is
+useful in environments where many hosts are homogeneous.
+
+### Report
+Hosts create Reports using `patchman-client`. This Report is sent to the
+Patchman server. The Report contains the Hosts running kernel, Operating System,
+installed Packages and enabled Repositories. The Patchman server processes the
+Report records the information contained therein.
 
 ### Erratum
-Errata for CentOS can be downloaded from https://cefs.steve-meier.de/ .
-These errata are parsed and stored in the database. If a PackageUpdate
-contains a package that is a security update in the errata, then that update is
-marked as being a security update.
+Errata for many OS's can downloaded by the patchman server. These Errata are
+parsed and stored in the database. If a PackageUpdate contains a package that
+is a security update in an Erratum, then that update is marked as being a
+security update. CVE and CVSS data is used to complement this information.
