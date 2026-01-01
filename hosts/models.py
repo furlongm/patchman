@@ -86,7 +86,7 @@ class Host(models.Model):
         text += f'Packages     : {self.get_num_packages()}\n'
         text += f'Repos        : {self.get_num_repos()}\n'
         text += f'Updates      : {self.get_num_updates()}\n'
-        text += f'Tags         : {" ".join(self.tags.slugs())}\n'
+        text += f'Tags         : {" ".join(self.tags.names())}\n'
         text += f'Needs reboot : {self.reboot_required}\n'
         text += f'Updated at   : {self.updated_at}\n'
         text += f'Host repos   : {self.host_repos_only}\n'
