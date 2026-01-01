@@ -43,7 +43,7 @@ from packages.utils import (
     clean_packagenames, clean_packages, clean_packageupdates,
 )
 from reports.models import Report
-from reports.tasks import clean_reports_with_no_hosts
+from reports.tasks import remove_reports_with_no_hosts
 from repos.models import Repository
 from repos.utils import clean_repos
 from security.utils import update_cves, update_cwes
@@ -156,7 +156,7 @@ def clean_reports(hoststr=None):
         host.clean_reports()
 
     if not hoststr:
-        clean_reports_with_no_hosts()
+        remove_reports_with_no_hosts()
 
 
 def host_updates_alt(host=None):

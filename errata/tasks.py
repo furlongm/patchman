@@ -29,7 +29,7 @@ from util import get_setting_of_type
 from util.logging import error_message, warning_message
 
 
-@shared_task
+@shared_task(priority=1)
 def update_yum_repo_errata(repo_id=None, force=False):
     """ Update all yum repos errata
     """
@@ -41,7 +41,7 @@ def update_yum_repo_errata(repo_id=None, force=False):
             repo.refresh_errata(force)
 
 
-@shared_task
+@shared_task(priority=1)
 def update_errata(erratum_type=None, force=False, repo=None):
     """ Update all distros errata
     """
@@ -85,7 +85,7 @@ def update_errata(erratum_type=None, force=False, repo=None):
         warning_message('Already updating Errata, skipping task.')
 
 
-@shared_task
+@shared_task(priority=2)
 def update_errata_and_cves():
     """ Task to update all errata
     """
