@@ -36,7 +36,7 @@ def refresh_repo(repo_id, force=False):
         finally:
             cache.delete(repo_id_lock_key)
     else:
-        warning_message('Already refreshing repo {repo_id}, skipping task.')
+        warning_message(f'Already refreshing repo {repo_id}, skipping task.')
 
 
 @shared_task(priority=1)
