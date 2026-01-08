@@ -17,6 +17,7 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 import os
+import sys
 
 from setuptools import find_packages, setup
 
@@ -29,8 +30,14 @@ with open('README.md', 'r', encoding='utf_8') as r:
 with open('requirements.txt', 'r', encoding='utf_8') as rt:
     install_requires = rt.read().splitlines()
 
-
 data_files = []
+if 'bdist_rpm' in sys.argv:
+    data_files.append(
+        ('/usr/lib/systemd/system', [
+            'etc/systemd/system/patchman-celery-worker@.service',
+            'etc/systemd/system/patchman-celery-beat.service'
+        ])
+    )
 
 for dirpath, dirnames, filenames in os.walk('etc'):
     # Ignore dirnames that start with '.'
