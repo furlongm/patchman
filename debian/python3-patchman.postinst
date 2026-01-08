@@ -25,7 +25,36 @@ if [ "$1" = "configure" ] ; then
     chown -R www-data:www-data /var/lib/patchman
     adduser --system --group patchman-celery
     usermod -a -G www-data patchman-celery
+    chown root:patchman-celery /etc/patchman/celery.conf
+    chmod 640 /etc/patchman/celery.conf
     chmod g+w /var/lib/patchman /var/lib/patchman/db /var/lib/patchman/db/patchman.db
+
+    WORKER_COUNT=1
+    if [ -f /etc/patchman/celery.conf ]; then
+        . /etc/patchman/celery.conf
+        WORKER_COUNT=${CELERY_WORKER_COUNT:-1}
+    fi
+
+    if [ -d /run/systemd/system ]; then
+        systemctl daemon-reload >/dev/null || true
+        for i in $(seq 1 "${WORKER_COUNT}"); do
+            deb-systemd-helper enable "patchman-celery-worker@$i.service" >/dev/null || true
+            deb-systemd-invoke start "patchman-celery-worker@$i.service" >/dev/null || true
+        done
+
+        active_instances=$(systemctl list-units --type=service --state=active "patchman-celery-worker@*" --no-legend | awk '{print $1}')
+
+        for service in $active_instances; do
+            inst_num=$(echo "$service" | cut -d'@' -f2 | cut -d'.' -f1)
+            if [ "$inst_num" -gt "${WORKER_COUNT}" ]; then
+                deb-systemd-invoke stop "$service" >/dev/null || true
+                deb-systemd-helper disable "$service" >/dev/null || true
+            fi
+        done
+
+        deb-systemd-helper enable "patchman-celery-beat.service" >/dev/null || true
+        deb-systemd-invoke start "patchman-celery-beat.service" >/dev/null || true
+    fi
 
     echo
     echo "Remember to run 'patchman-manage createsuperuser' to create a user."
