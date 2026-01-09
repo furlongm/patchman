@@ -25,15 +25,13 @@ patchman-manage makemigrations
 patchman-manage migrate --run-syncdb --fake-initial
 sqlite3 /var/lib/patchman/db/patchman.db 'PRAGMA journal_mode=WAL;'
 
-adduser --system --group patchman-celery
-usermod -a -G apache patchman-celery
-chown root:patchman-celery /etc/patchman/celery.conf
+adduser --system --shell /sbin/nologin patchman
+usermod -a -G patchman apache
+chown root:patchman /etc/patchman/celery.conf
 chmod 640 /etc/patchman/celery.conf
-
-chown -R apache:apache /var/lib/patchman
+chown -R patchman:patchman /var/lib/patchman
 semanage fcontext -a -t httpd_sys_rw_content_t "/var/lib/patchman/db(/.*)?"
 restorecon -Rv /var/lib/patchman/db
-setsebool -P httpd_can_network_memcache 1
 setsebool -P httpd_can_network_connect 1
 
 WORKER_COUNT=1
