@@ -7,14 +7,18 @@ After=network-online.target
 Type=simple
 User=patchman-celery
 Group=patchman-celery
+Environment="REDIS_HOST=127.0.0.1"
+Environment="REDIS_PORT=6379"
+Environment="CELERY_POOL_TYPE=solo"
+Environment="CELERY_CONCURRENCY=1"
 EnvironmentFile=/etc/patchman/celery.conf
 ExecStart=/usr/bin/celery \
-    --broker redis://${REDIS_HOST:-127.0.0.1}:${REDIS_PORT:-6379}/0 \
+    --broker redis://${REDIS_HOST}:${REDIS_PORT}/0 \
     --app patchman \
     worker \
     --task-events \
-    --pool ${CELERY_POOL_TYPE:-solo} \
-    --concurrency ${CELERY_CONCURRENCY:-1} \
+    --pool ${CELERY_POOL_TYPE} \
+    --concurrency ${CELERY_CONCURRENCY} \
     --hostname patchman-celery-worker%i@%%h
 
 [Install]
