@@ -1,5 +1,5 @@
 Define patchman_pythonpath /srv/patchman/
-WSGIScriptAlias /patchman ${patchman_pythonpath}/patchman/wsgi.py
+WSGIScriptAlias /patchman ${patchman_pythonpath}/patchman/wsgi.py application-group=%{GLOBAL}
 WSGIPythonPath ${patchman_pythonpath}
 
 <Directory ${patchman_pythonpath}>
