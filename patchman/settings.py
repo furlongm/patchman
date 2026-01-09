@@ -13,7 +13,6 @@ ALLOWED_HOSTS = ['127.0.0.1']
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.cache.UpdateCacheMiddleware',
-    'patchman.middleware.NeverCacheMiddleware',
     'django.middleware.http.ConditionalGetMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
