@@ -5,8 +5,8 @@ After=network-online.target
 
 [Service]
 Type=simple
-User=patchman-celery
-Group=patchman-celery
+User=patchman
+Group=patchman
 Environment="REDIS_HOST=127.0.0.1"
 Environment="REDIS_PORT=6379"
 EnvironmentFile=/etc/patchman/celery.conf

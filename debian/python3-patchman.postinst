@@ -22,12 +22,12 @@ if [ "$1" = "configure" ] ; then
     patchman-manage migrate --run-syncdb --fake-initial
     sqlite3 /var/lib/patchman/db/patchman.db 'PRAGMA journal_mode=WAL;'
 
-    chown -R www-data:www-data /var/lib/patchman
-    adduser --system --group patchman-celery
-    usermod -a -G www-data patchman-celery
-    chown root:patchman-celery /etc/patchman/celery.conf
+    adduser --quiet --system --group patchman
+    adduser --quiet www-data patchman
+    chown root:patchman /etc/patchman/celery.conf
     chmod 640 /etc/patchman/celery.conf
     chmod g+w /var/lib/patchman /var/lib/patchman/db /var/lib/patchman/db/patchman.db
+    chown -R patchman:patchman /var/lib/patchman
 
     WORKER_COUNT=1
     if [ -f /etc/patchman/celery.conf ]; then
