@@ -84,7 +84,7 @@ def refresh_rpm_repo_mirrors(repo, errata_only=False):
         repo_data = fetch_mirror_data(
             mirror=mirror,
             url=mirror_url,
-            text='Fetching Repo data')
+            text='Fetching rpm Repo data')
         if not repo_data:
             continue
 

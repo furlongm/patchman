@@ -51,7 +51,7 @@ def refresh_arch_repo(repo):
         package_data = fetch_mirror_data(
             mirror=mirror,
             url=mirror_url,
-            text='Fetching Repo data')
+            text='Fetching Arch Repo data')
         if not package_data:
             continue
 
