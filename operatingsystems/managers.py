@@ -18,5 +18,5 @@ from django.db import models
 
 
 class OSReleaseManager(models.Manager):
-    def get_by_natural_key(self, name, codename):
-        return self.get(name=name, codename=codename)
+    def get_by_natural_key(self, name, codename, cpe_name):
+        return self.get(name=name, codename=codename, cpe_name=cpe_name)
