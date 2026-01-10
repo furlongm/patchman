@@ -125,6 +125,8 @@ class CVE(models.Model):
             score = cvss_score.base_score
         if not severity:
             severity = cvss_score.severities()[0]
+        if isinstance(severity, str):
+            severity = severity.capitalize()
         try:
             cvss, created = CVSS.objects.get_or_create(
                 version=version,
