@@ -155,7 +155,7 @@ def get_mirrorlist_urls(url):
         return
     if response_is_valid(res):
         try:
-            data = fetch_content(res, 'Fetching Repo data')
+            data = fetch_content(res, 'Fetching Repo data to check for mirrorlist')
             if data is None:
                 return
             mirror_urls = re.findall(r'^http[s]*://.*$|^ftp://.*$', data.decode('utf-8'), re.MULTILINE)

@@ -51,7 +51,7 @@ def refresh_gentoo_main_repo(repo):
             continue
 
         res = get_url(mirror.url + '.md5sum')
-        data = fetch_content(res, 'Fetching Repo checksum')
+        data = fetch_content(res, 'Fetching Gentoo Repo checksum')
         if data is None:
             mirror.fail()
             continue
@@ -72,7 +72,7 @@ def refresh_gentoo_main_repo(repo):
             mirror.fail()
             continue
 
-        data = fetch_content(res, 'Fetching Repo data')
+        data = fetch_content(res, 'Fetching Gentoo Repo data')
         if data is None:
             mirror.fail()
             continue

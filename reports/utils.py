@@ -34,7 +34,7 @@ from packages.utils import (
 from patchman.signals import pbar_start, pbar_update
 from repos.models import Mirror, MirrorPackage, Repository
 from repos.utils import get_or_create_repo
-from util.logging import info_message
+from util.logging import debug_message, info_message
 
 
 def process_repos(report, host):
@@ -47,6 +47,7 @@ def process_repos(report, host):
 
         pbar_start.send(sender=None, ptext=f'{host} Repos', plen=len(repos))
         for i, repo_str in enumerate(repos):
+            debug_message(f'Processing report {report.id} repo: {repo_str}')
             repo, priority = process_repo(repo_str, report.arch)
             if repo:
                 repo_ids.append(repo.id)
@@ -93,6 +94,7 @@ def process_packages(report, host):
         packages = parse_packages(report.packages)
         pbar_start.send(sender=None, ptext=f'{host} Packages', plen=len(packages))
         for i, pkg_str in enumerate(packages):
+            debug_message(f'Processing report {report.id} package: {pkg_str}')
             package = process_package(pkg_str, report.protocol)
             if package:
                 package_ids.append(package.id)

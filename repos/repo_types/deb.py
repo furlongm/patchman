@@ -95,7 +95,7 @@ def refresh_deb_repo(repo):
         package_data = fetch_mirror_data(
             mirror=mirror,
             url=mirror_url,
-            text='Fetching Repo data')
+            text='Fetching Debian Repo data')
         if not package_data:
             continue
 
