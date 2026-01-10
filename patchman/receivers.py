@@ -18,13 +18,13 @@
 from colorama import Fore, Style, init
 from django.conf import settings
 from django.dispatch import receiver
-from tqdm import tqdm
+from tqdm.contrib.logging import logging_redirect_tqdm
 
 from patchman.signals import (
     debug_message_s, error_message_s, info_message_s, pbar_start, pbar_update,
     warning_message_s,
 )
-from util import create_pbar, get_verbosity, update_pbar
+from util.logging import create_pbar, get_quiet_mode, logger, update_pbar
 
 init(autoreset=True)
 
@@ -53,8 +53,10 @@ def print_info_message(**kwargs):
     """ Receiver to handle an info message, no color
     """
     text = str(kwargs.get('text'))
-    if get_verbosity():
-        tqdm.write(Style.RESET_ALL + Fore.RESET + text)
+    if not get_quiet_mode():
+        with logging_redirect_tqdm(loggers=[logger]):
+            for line in text.splitlines():
+                logger.info(Style.RESET_ALL + Fore.RESET + line)
 
 
 @receiver(warning_message_s)
@@ -62,8 +64,9 @@ def print_warning_message(**kwargs):
     """ Receiver to handle a warning message, yellow text
     """
     text = str(kwargs.get('text'))
-    if get_verbosity():
-        tqdm.write(Style.BRIGHT + Fore.YELLOW + text)
+    if not get_quiet_mode():
+        with logging_redirect_tqdm():
+            logger.warning(Style.BRIGHT + Fore.YELLOW + text)
 
 
 @receiver(error_message_s)
@@ -72,13 +75,15 @@ def print_error_message(**kwargs):
     """
     text = str(kwargs.get('text'))
     if text:
-        tqdm.write(Style.BRIGHT + Fore.RED + text)
+        with logging_redirect_tqdm():
+            logger.error(Style.BRIGHT + Fore.RED + text)
 
 
 @receiver(debug_message_s)
 def print_debug_message(**kwargs):
-    """ Receiver to handle a debug message, blue text if verbose and DEBUG are set
+    """ Receiver to handle a debug message, blue text if DEBUG is set
     """
     text = str(kwargs.get('text'))
-    if get_verbosity() and settings.DEBUG and text:
-        tqdm.write(Style.BRIGHT + Fore.BLUE + text)
+    if settings.DEBUG and text:
+        with logging_redirect_tqdm(loggers=[logger]):
+            logger.debug(Style.BRIGHT + Fore.BLUE + text)

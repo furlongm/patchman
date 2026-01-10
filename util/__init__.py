@@ -41,12 +41,14 @@ from requests.exceptions import ConnectionError, HTTPError, Timeout
 from tenacity import (
     retry, retry_if_exception_type, stop_after_attempt, wait_exponential,
 )
-from tqdm import tqdm
 
-from util.logging import debug_message, error_message, info_message
+from util.logging import (
+    create_pbar, debug_message, error_message, info_message, quiet_mode,
+    update_pbar,
+)
 
 pbar = None
-verbose = None
+verbose = not quiet_mode
 Checksum = Enum('Checksum', 'md5 sha sha1 sha256 sha512')
 
 http_proxy = os.getenv('http_proxy')
@@ -55,40 +57,6 @@ proxies = {
    'http': http_proxy,
    'https': https_proxy,
 }
-
-
-def get_verbosity():
-    """ Get the global verbosity level
-    """
-    return verbose
-
-
-def set_verbosity(value):
-    """ Set the global verbosity level
-    """
-    global verbose
-    verbose = value
-
-
-def create_pbar(ptext, plength, ljust=35, **kwargs):
-    """ Create a global progress bar if global verbose is True
-    """
-    global pbar
-    if verbose and plength > 0:
-        jtext = str(ptext).ljust(ljust)
-        pbar = tqdm(total=plength, desc=jtext, position=0, leave=True, ascii=' >=')
-        return pbar
-
-
-def update_pbar(index, **kwargs):
-    """ Update the global progress bar if global verbose is True
-    """
-    global pbar
-    if verbose and pbar:
-        pbar.update(n=index-pbar.n)
-        if index >= pbar.total:
-            pbar.close()
-            pbar = None
 
 
 def fetch_content(response, text='', ljust=35):

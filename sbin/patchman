@@ -47,8 +47,8 @@ from reports.tasks import remove_reports_with_no_hosts
 from repos.models import Repository
 from repos.utils import clean_repos
 from security.utils import update_cves, update_cwes
-from util import get_datetime_now, set_verbosity
-from util.logging import info_message
+from util import get_datetime_now
+from util.logging import info_message, set_quiet_mode
 
 
 def get_host(host=None, action='Performing action'):
@@ -547,7 +547,7 @@ def main():
 
     parser = collect_args()
     args = parser.parse_args()
-    set_verbosity(not args.quiet)
+    set_quiet_mode(args.quiet)
     showhelp = process_args(args)
     if showhelp:
         parser.print_help()

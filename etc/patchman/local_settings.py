@@ -96,3 +96,20 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': timedelta(hours=24),
     },
 }
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+    },
+    'loggers': {
+        'urllib3': {'level': 'WARNING', 'handlers': ['console'], 'propagate': False},
+        'git': {'level': 'WARNING', 'handlers': ['console'], 'propagate': False},
+    }
+}
