@@ -1,0 +1,90 @@
+{% load bootstrap3 %}
+{% load common %}
+{# Include this in list templates that support bulk actions #}
+{# Required context: table, total_count, filter_params, bulk_actions (list of dicts with 'value' and 'label') #}
+
+<div class="well well-sm">
+  <div class="row">
+    <div class="col-sm-4" style="line-height: 30px;">
+      <label style="vertical-align: middle; margin-bottom: 0;">
+        <input type="checkbox" id="select-all-filtered" name="select_all_filtered" value="1" style="margin-right: 5px;">
+        Select all {{ total_count }} {{ table|verbose_name_plural }}
+      </label>
+      <input type="hidden" name="filter_params" value="{{ filter_params }}">
+    </div>
+    <div class="col-sm-4 text-center" style="line-height: 30px;">
+      <span id="selection-message" class="text-info" style="display:none; font-weight: bold;"></span>
+    </div>
+    <div class="col-sm-4 text-right">
+      <select name="action" class="form-control input-sm" style="width: auto; display: inline-block; vertical-align: middle;">
+        <option value="">-- Select Action --</option>
+        {% for action in bulk_actions %}
+        <option value="{{ action.value }}">{{ action.label }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn btn-primary btn-sm" style="vertical-align: middle;">
+        {% bootstrap_icon "cog" %} Apply
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    var objectNamePlural = '{{ table|verbose_name_plural }}';
+    var totalCount = {{ total_count }};
+
+    function updateSelectionMessage() {
+        var selectAllFiltered = $('#select-all-filtered').is(':checked');
+        var selectAllPage = $('#select-all-page').is(':checked');
+        var checkedCount = $('.bulk-checkbox:checked').length;
+        var $msg = $('#selection-message');
+
+        if (selectAllFiltered) {
+            $msg.text('All ' + totalCount + ' matching ' + objectNamePlural + ' selected').show();
+        } else if (selectAllPage) {
+            $msg.text('All ' + objectNamePlural + ' on this page selected').show();
+        } else if (checkedCount > 0) {
+            $msg.text(checkedCount + ' ' + objectNamePlural + ' selected').show();
+        } else {
+            $msg.hide();
+        }
+    }
+
+    $('#select-all-page').change(function() {
+        $('.bulk-checkbox').prop('checked', this.checked);
+        updateSelectionMessage();
+    });
+
+    $('#select-all-filtered').change(function() {
+        if (this.checked) {
+            $('#select-all-page').prop('checked', false).prop('disabled', true);
+            $('.bulk-checkbox').prop('checked', false).prop('disabled', true);
+        } else {
+            $('#select-all-page').prop('disabled', false);
+            $('.bulk-checkbox').prop('disabled', false);
+        }
+        updateSelectionMessage();
+    });
+
+    $(document).on('change', '.bulk-checkbox', function() {
+        $('#select-all-filtered').prop('checked', false);
+        // Uncheck select-all-page if any individual checkbox is unchecked
+        if (!this.checked) {
+            $('#select-all-page').prop('checked', false);
+        }
+        updateSelectionMessage();
+    });
+
+    $('#bulk-action-form').submit(function(e) {
+        var action = $('select[name="action"]').val();
+        var selectAll = $('#select-all-filtered').is(':checked');
+        var selectedCount = selectAll ? totalCount : $('.bulk-checkbox:checked').length;
+
+        if (action === '' || (!selectAll && selectedCount === 0)) {
+            // Let server-side validation handle these cases
+            return true;
+        }
+    });
+});
+</script>

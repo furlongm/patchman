@@ -23,6 +23,7 @@ app_name = 'hosts'
 
 urlpatterns = [
     path('', views.host_list, name='host_list'),
+    path('bulk_action/', views.host_bulk_action, name='host_bulk_action'),
     path('<str:hostname>/', views.host_detail, name='host_detail'),
     path('<str:hostname>/delete/', views.host_delete, name='host_delete'),
     path('<str:hostname>/edit/', views.host_edit, name='host_edit'),

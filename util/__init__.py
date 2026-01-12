@@ -33,6 +33,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from hashlib import md5, sha1, sha256, sha512
 from time import time
+from urllib.parse import parse_qs, urlencode
 
 from django.conf import settings
 from django.utils.dateparse import parse_datetime
@@ -57,6 +58,14 @@ proxies = {
    'http': http_proxy,
    'https': https_proxy,
 }
+
+
+def sanitize_filter_params(filter_params):
+    """Sanitize filter_params to prevent query string injection."""
+    if not filter_params:
+        return ''
+    parsed = parse_qs(filter_params)
+    return urlencode(parsed, doseq=True)
 
 
 def fetch_content(response, text='', ljust=35):

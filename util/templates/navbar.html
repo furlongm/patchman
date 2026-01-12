@@ -10,31 +10,46 @@
         </div>
         <div class="collapse navbar-collapse" id="myNavbar">
           <ul class="nav navbar-nav">
-            <li class="{% if '/dashboard' in request.path %}active{% endif %}"><a href="{% url 'util:dashboard' %}">Dashboard</a></li>
             <li class="{% if '/hosts' in request.path %}active{% endif %}">    <a href="{% url 'hosts:host_list' %}">Hosts</a></li>
-            <li class="{% if '/repos' in request.path %}active{% endif %}">    <a href="{% url 'repos:repo_list' %}">Repositories</a></li>
+            <li class="dropdown {% if '/repos' in request.path or '/mirrors' in request.path %}active{% endif %}">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#">Repositories <span class="caret"></span></a>
+              <ul class="dropdown-menu">
+                <li><a href="{% url 'repos:repo_list' %}">Repositories</a></li>
+                <li><a href="{% url 'repos:mirror_list' %}">Mirrors</a></li>
+              </ul>
+            </li>
             <li class="{% if '/packages' in request.path %}active{% endif %}"> <a href="{% url 'packages:package_name_list' %}">Packages</a></li>
             <li class="{% if '/errata' in request.path %}active{% endif %}">   <a href="{% url 'errata:erratum_list' %}">Errata</a></li>
-            <li class="{% if '/cves' in request.path %}active{% endif %}">     <a href="{% url 'security:cve_list' %}">CVEs</a></li>
+            <li class="dropdown {% if '/cves' in request.path or '/cwes' in request.path or '/references' in request.path or '/security' in request.path %}active{% endif %}">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#">Security <span class="caret"></span></a>
+              <ul class="dropdown-menu">
+                <li><a href="{% url 'security:cve_list' %}">CVEs</a></li>
+                <li><a href="{% url 'security:cwe_list' %}">CWEs</a></li>
+                <li><a href="{% url 'errata:erratum_list' %}?e_type=security">Security Errata</a></li>
+                <li><a href="{% url 'security:reference_list' %}">Security References</a></li>
+              </ul>
+            </li>
             <li class="{% if '/os' in request.path %}active{% endif %}">       <a href="{% url 'operatingsystems:osrelease_list' %}">Operating Systems</a></li>
             <li class="{% if '/reports' in request.path %}active{% endif %}">  <a href="{% url 'reports:report_list' %}">Reports</a></li>
-            {% if user.is_superuser %}
-              <li><a href="{% url 'admin:index' %}">Django Admin</a></li>
+            <li class="{% if '/dashboard' in request.path %}active{% endif %}"><a href="{% url 'util:dashboard' %}">Issues{% if issues_count %} <span class="badge">{{ issues_count }}</span>{% endif %}</a></li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            {% if user.is_authenticated %}
+              <li class="dropdown">
+                <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                  {% if user.first_name %}{{ user.first_name }}{% else %}{{ user }}{% endif %} <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu">
+                  {% if user.is_superuser %}
+                    <li><a href="{% url 'admin:index' %}">Django Admin</a></li>
+                  {% endif %}
+                  <li><a href="{% url 'logout' %}">Log out</a></li>
+                </ul>
+              </li>
+            {% else %}
+              <li><a href="{% url 'login' %}">Log In</a></li>
             {% endif %}
           </ul>
-          <div class="pull-right navbar-text">
-            {% if user.is_authenticated %}
-              {% if user.first_name %}
-                Welcome, {{ user.first_name }}
-              {% else %}
-                Welcome, {{ user }}
-              {% endif %}
-              / <a href="{% url 'logout' %}">Log out</a>
-            {% else %}
-              Welcome, Guest
-              / <a href="{% url 'login' %}">Log In</a>
-            {% endif %}
-          </div>
         </div>
       </div>
     </nav>

@@ -17,10 +17,10 @@
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django_tables2 import RequestConfig
 from rest_framework import viewsets
 
 from hosts.models import Host
@@ -31,11 +31,56 @@ from operatingsystems.models import OSRelease, OSVariant
 from operatingsystems.serializers import (
     OSReleaseSerializer, OSVariantSerializer,
 )
+from operatingsystems.tables import OSReleaseTable, OSVariantTable
+from util import sanitize_filter_params
+
+
+def _get_filtered_osvariants(filter_params):
+    """Helper to reconstruct filtered queryset from filter params."""
+    from urllib.parse import parse_qs
+    params = parse_qs(filter_params)
+
+    osvariants = OSVariant.objects.select_related()
+
+    if 'osrelease_id' in params:
+        osvariants = osvariants.filter(osrelease=params['osrelease_id'][0])
+    if 'search' in params:
+        terms = params['search'][0].lower()
+        query = Q()
+        for term in terms.split(' '):
+            q = Q(name__icontains=term)
+            query = query & q
+        osvariants = osvariants.filter(query)
+
+    return osvariants
+
+
+def _get_filtered_osreleases(filter_params):
+    """Helper to reconstruct filtered queryset from filter params."""
+    from urllib.parse import parse_qs
+    params = parse_qs(filter_params)
+
+    osreleases = OSRelease.objects.select_related()
+
+    if 'erratum_id' in params:
+        osreleases = osreleases.filter(erratum=params['erratum_id'][0])
+    if 'search' in params:
+        terms = params['search'][0].lower()
+        query = Q()
+        for term in terms.split(' '):
+            q = Q(name__icontains=term)
+            query = query & q
+        osreleases = osreleases.filter(query)
+
+    return osreleases
 
 
 @login_required
 def osvariant_list(request):
-    osvariants = OSVariant.objects.select_related()
+    osvariants = OSVariant.objects.select_related().annotate(
+        hosts_count=Count('host'),
+        repos_count=Count('osrelease__repos'),
+    )
 
     if 'osrelease_id' in request.GET:
         osvariants = osvariants.filter(osrelease=request.GET['osrelease_id'])
@@ -50,23 +95,24 @@ def osvariant_list(request):
     else:
         terms = ''
 
-    page_no = request.GET.get('page')
-    paginator = Paginator(osvariants, 50)
-
-    try:
-        page = paginator.page(page_no)
-    except PageNotAnInteger:
-        page = paginator.page(1)
-    except EmptyPage:
-        page = paginator.page(paginator.num_pages)
-
     nohost_osvariants = OSVariant.objects.filter(host__isnull=True).exists()
+
+    table = OSVariantTable(osvariants)
+    RequestConfig(request, paginate={'per_page': 50}).configure(table)
+
+    filter_params = sanitize_filter_params(request.GET.urlencode())
+    bulk_actions = [
+        {'value': 'delete', 'label': 'Delete'},
+    ]
 
     return render(request,
                   'operatingsystems/osvariant_list.html',
-                  {'page': page,
+                  {'table': table,
                    'terms': terms,
-                   'nohost_osvariants': nohost_osvariants})
+                   'nohost_osvariants': nohost_osvariants,
+                   'total_count': osvariants.count(),
+                   'filter_params': filter_params,
+                   'bulk_actions': bulk_actions})
 
 
 @login_required
@@ -151,20 +197,21 @@ def osrelease_list(request):
     else:
         terms = ''
 
-    page_no = request.GET.get('page')
-    paginator = Paginator(osreleases, 50)
+    table = OSReleaseTable(osreleases)
+    RequestConfig(request, paginate={'per_page': 50}).configure(table)
 
-    try:
-        page = paginator.page(page_no)
-    except PageNotAnInteger:
-        page = paginator.page(1)
-    except EmptyPage:
-        page = paginator.page(paginator.num_pages)
+    filter_params = sanitize_filter_params(request.GET.urlencode())
+    bulk_actions = [
+        {'value': 'delete', 'label': 'Delete'},
+    ]
 
     return render(request,
                   'operatingsystems/osrelease_list.html',
-                  {'page': page,
-                   'terms': terms})
+                  {'table': table,
+                   'terms': terms,
+                   'total_count': osreleases.count(),
+                   'filter_params': filter_params,
+                   'bulk_actions': bulk_actions})
 
 
 @login_required
@@ -212,6 +259,88 @@ def osrelease_delete(request, osrelease_id):
 @login_required
 def os_landing(request):
     return render(request, 'operatingsystems/os_landing.html')
+
+
+@login_required
+def osvariant_bulk_action(request):
+    """Handle bulk actions on OS variants."""
+    if request.method != 'POST':
+        return redirect('operatingsystems:osvariant_list')
+
+    action = request.POST.get('action', '')
+    select_all_filtered = request.POST.get('select_all_filtered') == '1'
+    filter_params = request.POST.get('filter_params', '')
+
+    if not action:
+        messages.warning(request, 'Please select an action')
+        if filter_params:
+            return redirect(f"{reverse('operatingsystems:osvariant_list')}?{filter_params}")
+        return redirect('operatingsystems:osvariant_list')
+
+    if select_all_filtered:
+        osvariants = _get_filtered_osvariants(filter_params)
+    else:
+        selected_ids = request.POST.getlist('selected_ids')
+        if not selected_ids:
+            messages.warning(request, 'No OS Variants selected')
+            if filter_params:
+                return redirect(f"{reverse('operatingsystems:osvariant_list')}?{filter_params}")
+            return redirect('operatingsystems:osvariant_list')
+        osvariants = OSVariant.objects.filter(id__in=selected_ids)
+
+    count = osvariants.count()
+    name = OSVariant._meta.verbose_name if count == 1 else OSVariant._meta.verbose_name_plural
+
+    if action == 'delete':
+        osvariants.delete()
+        messages.success(request, f'Deleted {count} {name}')
+    else:
+        messages.warning(request, 'Invalid action')
+
+    if filter_params:
+        return redirect(f"{reverse('operatingsystems:osvariant_list')}?{filter_params}")
+    return redirect('operatingsystems:osvariant_list')
+
+
+@login_required
+def osrelease_bulk_action(request):
+    """Handle bulk actions on OS releases."""
+    if request.method != 'POST':
+        return redirect('operatingsystems:osrelease_list')
+
+    action = request.POST.get('action', '')
+    select_all_filtered = request.POST.get('select_all_filtered') == '1'
+    filter_params = request.POST.get('filter_params', '')
+
+    if not action:
+        messages.warning(request, 'Please select an action')
+        if filter_params:
+            return redirect(f"{reverse('operatingsystems:osrelease_list')}?{filter_params}")
+        return redirect('operatingsystems:osrelease_list')
+
+    if select_all_filtered:
+        osreleases = _get_filtered_osreleases(filter_params)
+    else:
+        selected_ids = request.POST.getlist('selected_ids')
+        if not selected_ids:
+            messages.warning(request, 'No OS Releases selected')
+            if filter_params:
+                return redirect(f"{reverse('operatingsystems:osrelease_list')}?{filter_params}")
+            return redirect('operatingsystems:osrelease_list')
+        osreleases = OSRelease.objects.filter(id__in=selected_ids)
+
+    count = osreleases.count()
+    name = OSRelease._meta.verbose_name if count == 1 else OSRelease._meta.verbose_name_plural
+
+    if action == 'delete':
+        osreleases.delete()
+        messages.success(request, f'Deleted {count} {name}')
+    else:
+        messages.warning(request, 'Invalid action')
+
+    if filter_params:
+        return redirect(f"{reverse('operatingsystems:osrelease_list')}?{filter_params}")
+    return redirect('operatingsystems:osrelease_list')
 
 
 class OSVariantViewSet(viewsets.ModelViewSet):

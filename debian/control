@@ -20,7 +20,8 @@ Depends: ${misc:Depends}, python3 (>= 3.11), python3-django (>= 4.2),
  python3-requests, python3-colorama, python3-magic, python3-humanize,
  python3-yaml, libapache2-mod-wsgi-py3, apache2, sqlite3,
  celery, python3-celery, python3-django-celery-beat, redis-server,
- python3-redis, python3-git, python3-django-taggit, python3-zstandard
+ python3-redis, python3-git, python3-django-taggit, python3-zstandard,
+ python3-django-tables2
 Suggests: python3-mysqldb, python3-psycopg2, python3-pymemcache, memcached
 Description: Django-based patch status monitoring tool for linux systems.
  .

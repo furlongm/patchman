@@ -1,24 +1,14 @@
 {% extends "base.html" %}
 
-{% load common bootstrap3 static %}
+{% load common bootstrap3 static django_tables2 %}
 
 {% block content %}
 
 <div class="row">
-  <div class="col-sm-10">
+  <div class="{% if filter_bar %}col-sm-10{% else %}col-sm-12{% endif %}">
     {% get_querydict request as querydict %}
     {% searchform terms querydict %}
-    {% gen_table page.object_list table_template %}
-    <div class="centered">
-      {% object_count page %}
-    </div>
-    <div class="centered">
-      {% get_querystring request as querystring %}
-      {% bootstrap_pagination page size='small' extra=querystring %}
-    </div>
-    <div class="centered">
-      Page {{ page.number }} of {{ page.paginator.num_pages }}
-    </div>
+    {% render_table table %}
   </div>
 
   {% if filter_bar %}

@@ -1,10 +1,10 @@
 {% extends "repos/mirror_list.html" %}
 
-{% load common bootstrap3 %}
+{% load common bootstrap3 django_tables2 %}
 
 {% block content %}
 
-{% gen_table page.object_list 'repos/mirror_edit_repo.html' %}
+{% render_table table %}
 
 {% if user.is_authenticated and perms.is_admin %}
   {% if link_form and create_form %}
