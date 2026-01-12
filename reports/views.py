@@ -17,19 +17,44 @@
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import Q
 from django.db.utils import OperationalError
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
+from django_tables2 import RequestConfig
 from tenacity import (
     retry, retry_if_exception_type, stop_after_attempt, wait_exponential,
 )
 
 from reports.models import Report
+from reports.tables import ReportTable
+from util import sanitize_filter_params
 from util.filterspecs import Filter, FilterBar
+
+
+def _get_filtered_reports(filter_params):
+    """Helper to reconstruct filtered queryset from filter params."""
+    from urllib.parse import parse_qs
+    params = parse_qs(filter_params)
+
+    reports = Report.objects.select_related()
+
+    if 'host_id' in params:
+        reports = reports.filter(hostname=params['host_id'][0])
+    if 'processed' in params:
+        processed = params['processed'][0] == 'true'
+        reports = reports.filter(processed=processed)
+    if 'search' in params:
+        terms = params['search'][0].lower()
+        query = Q()
+        for term in terms.split(' '):
+            q = Q(host__icontains=term)
+            query = query & q
+        reports = reports.filter(query)
+
+    return reports
 
 
 @retry(
@@ -96,25 +121,27 @@ def report_list(request):
     else:
         terms = ''
 
-    page_no = request.GET.get('page')
-    paginator = Paginator(reports, 50)
-
-    try:
-        page = paginator.page(page_no)
-    except PageNotAnInteger:
-        page = paginator.page(1)
-    except EmptyPage:
-        page = paginator.page(paginator.num_pages)
-
     filter_list = []
     filter_list.append(Filter(request, 'Processed', 'processed', {'true': 'Yes', 'false': 'No'}))
     filter_bar = FilterBar(request, filter_list)
 
+    table = ReportTable(reports)
+    RequestConfig(request, paginate={'per_page': 50}).configure(table)
+
+    filter_params = sanitize_filter_params(request.GET.urlencode())
+    bulk_actions = [
+        {'value': 'process', 'label': 'Process'},
+        {'value': 'delete', 'label': 'Delete'},
+    ]
+
     return render(request,
                   'reports/report_list.html',
-                  {'page': page,
+                  {'table': table,
                    'filter_bar': filter_bar,
-                   'terms': terms})
+                   'terms': terms,
+                   'total_count': reports.count(),
+                   'filter_params': filter_params,
+                   'bulk_actions': bulk_actions})
 
 
 @login_required
@@ -158,3 +185,51 @@ def report_delete(request, report_id):
     return render(request,
                   'reports/report_delete.html',
                   {'report': report})
+
+
+@login_required
+def report_bulk_action(request):
+    """Handle bulk actions on reports."""
+    if request.method != 'POST':
+        return redirect('reports:report_list')
+
+    action = request.POST.get('action', '')
+    select_all_filtered = request.POST.get('select_all_filtered') == '1'
+    filter_params = request.POST.get('filter_params', '')
+
+    if not action:
+        messages.warning(request, 'Please select an action')
+        if filter_params:
+            return redirect(f"{reverse('reports:report_list')}?{filter_params}")
+        return redirect('reports:report_list')
+
+    if select_all_filtered:
+        reports = _get_filtered_reports(filter_params)
+    else:
+        selected_ids = request.POST.getlist('selected_ids')
+        if not selected_ids:
+            messages.warning(request, 'No reports selected')
+            if filter_params:
+                return redirect(f"{reverse('reports:report_list')}?{filter_params}")
+            return redirect('reports:report_list')
+        reports = Report.objects.filter(id__in=selected_ids)
+
+    count = reports.count()
+    name = Report._meta.verbose_name if count == 1 else Report._meta.verbose_name_plural
+
+    if action == 'process':
+        from reports.tasks import process_report
+        for report in reports:
+            report.processed = False
+            report.save()
+            process_report.delay(report.id)
+        messages.success(request, f'Queued {count} {name} for processing')
+    elif action == 'delete':
+        reports.delete()
+        messages.success(request, f'Deleted {count} {name}')
+    else:
+        messages.warning(request, 'Invalid action')
+
+    if filter_params:
+        return redirect(f"{reverse('reports:report_list')}?{filter_params}")
+    return redirect('reports:report_list')

@@ -15,9 +15,9 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from django.contrib.auth.decorators import login_required
-from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, render
+from django_tables2 import RequestConfig
 from rest_framework import viewsets
 
 from operatingsystems.models import OSRelease
@@ -26,6 +26,7 @@ from security.models import CVE, CWE, Reference
 from security.serializers import (
     CVESerializer, CWESerializer, ReferenceSerializer,
 )
+from security.tables import CVETable, CWETable, ReferenceTable
 from util.filterspecs import Filter, FilterBar
 
 
@@ -45,19 +46,12 @@ def cwe_list(request):
     else:
         terms = ''
 
-    page_no = request.GET.get('page')
-    paginator = Paginator(cwes, 50)
-
-    try:
-        page = paginator.page(page_no)
-    except PageNotAnInteger:
-        page = paginator.page(1)
-    except EmptyPage:
-        page = paginator.page(paginator.num_pages)
+    table = CWETable(cwes)
+    RequestConfig(request, paginate={'per_page': 50}).configure(table)
 
     return render(request,
                   'security/cwe_list.html',
-                  {'page': page,
+                  {'table': table,
                    'terms': terms})
 
 
@@ -95,19 +89,12 @@ def cve_list(request):
     else:
         terms = ''
 
-    page_no = request.GET.get('page')
-    paginator = Paginator(cves, 50)
-
-    try:
-        page = paginator.page(page_no)
-    except PageNotAnInteger:
-        page = paginator.page(1)
-    except EmptyPage:
-        page = paginator.page(paginator.num_pages)
+    table = CVETable(cves)
+    RequestConfig(request, paginate={'per_page': 50}).configure(table)
 
     return render(request,
                   'security/cve_list.html',
-                  {'page': page,
+                  {'table': table,
                    'terms': terms})
 
 
@@ -148,24 +135,17 @@ def reference_list(request):
     else:
         terms = ''
 
-    page_no = request.GET.get('page')
-    paginator = Paginator(refs, 50)
-
-    try:
-        page = paginator.page(page_no)
-    except PageNotAnInteger:
-        page = paginator.page(1)
-    except EmptyPage:
-        page = paginator.page(paginator.num_pages)
-
     filter_list = []
     filter_list.append(Filter(request, 'Reference Type', 'ref_type',
                               Reference.objects.values_list('ref_type', flat=True).distinct()))
     filter_bar = FilterBar(request, filter_list)
 
+    table = ReferenceTable(refs)
+    RequestConfig(request, paginate={'per_page': 50}).configure(table)
+
     return render(request,
                   'security/reference_list.html',
-                  {'page': page,
+                  {'table': table,
                    'filter_bar': filter_bar,
                    'terms': terms})
 

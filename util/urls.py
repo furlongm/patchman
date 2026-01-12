@@ -23,6 +23,6 @@ from util import views
 app_name = 'util'
 
 urlpatterns = [
-    path('', RedirectView.as_view(pattern_name='util:dashboard', permanent=True)),  # noqa
+    path('', RedirectView.as_view(pattern_name='hosts:host_list', permanent=True)),  # noqa
     path('dashboard/', views.dashboard, name='dashboard'),
 ]

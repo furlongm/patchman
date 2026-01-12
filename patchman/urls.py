@@ -1,7 +1,7 @@
 # Copyright 2012 VPAC, http://www.vpac.org
 # Copyright 2013-2021 Marcus Furlong <furlongm@gmail.com>
 #
-# This file is part of patchman
+# This file is part of Patchman.
 #
 # Patchman is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

@@ -23,6 +23,7 @@ app_name = 'repos'
 
 urlpatterns = [
     path('', views.repo_list, name='repo_list'),
+    path('bulk_action/', views.repo_bulk_action, name='repo_bulk_action'),
     path('<int:repo_id>/', views.repo_detail, name='repo_detail'),
     path('<int:repo_id>/toggle_enabled/', views.repo_toggle_enabled, name='repo_toggle_enabled'),
     path('<int:repo_id>/toggle_security/', views.repo_toggle_security, name='repo_toggle_security'),
@@ -30,6 +31,7 @@ urlpatterns = [
     path('<int:repo_id>/delete/', views.repo_delete, name='repo_delete'),
     path('<int:repo_id>/refresh/', views.repo_refresh, name='repo_refresh'),
     path('mirrors/', views.mirror_list, name='mirror_list'),
+    path('mirrors/bulk_action/', views.mirror_bulk_action, name='mirror_bulk_action'),
     path('mirrors/mirror/<int:mirror_id>/', views.mirror_detail, name='mirror_detail'),
     path('mirrors/mirror/<int:mirror_id>/edit/', views.mirror_edit, name='mirror_edit'),
     path('mirrors/mirror/<int:mirror_id>/delete/', views.mirror_delete, name='mirror_delete'),

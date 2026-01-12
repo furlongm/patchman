@@ -15,13 +15,14 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from django.contrib.auth.decorators import login_required
-from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, render
+from django_tables2 import RequestConfig
 from rest_framework import viewsets
 
 from errata.models import Erratum
 from errata.serializers import ErratumSerializer
+from errata.tables import ErratumTable
 from operatingsystems.models import OSRelease
 from util.filterspecs import Filter, FilterBar
 
@@ -61,16 +62,6 @@ def erratum_list(request):
     else:
         terms = ''
 
-    page_no = request.GET.get('page')
-    paginator = Paginator(errata, 50)
-
-    try:
-        page = paginator.page(page_no)
-    except PageNotAnInteger:
-        page = paginator.page(1)
-    except EmptyPage:
-        page = paginator.page(paginator.num_pages)
-
     filter_list = []
     filter_list.append(Filter(request, 'Erratum Type', 'e_type',
                               Erratum.objects.values_list('e_type', flat=True).distinct()))
@@ -78,9 +69,12 @@ def erratum_list(request):
                               OSRelease.objects.filter(erratum__in=errata)))
     filter_bar = FilterBar(request, filter_list)
 
+    table = ErratumTable(errata)
+    RequestConfig(request, paginate={'per_page': 50}).configure(table)
+
     return render(request,
                   'errata/erratum_list.html',
-                  {'page': page,
+                  {'table': table,
                    'filter_bar': filter_bar,
                    'terms': terms})
 

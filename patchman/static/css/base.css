@@ -9,5 +9,21 @@
 .label-brick { font-size: 12px; font-weight: normal; margin-bottom: 3px; padding-top: 5px; border-radius: 4px; height:25px; border-style:solid; border-width:thin; border-color: #222; white-space: normal; display: inline-block; }
 .breadcrumb { font-size: 12px; background-color: #222; border-radius: 0; margin-bottom: 3px; }
 .navbar { margin-bottom: 0; padding-bottom: 0; border-radius: 0; }
+.navbar-inverse .dropdown-menu { background-color: #222; }
+.navbar-inverse .dropdown-menu > li > a { color: #9d9d9d; }
+.navbar-inverse .dropdown-menu > li > a:hover { background-color: #333; color: #fff; }
 .well-sm { margin-bottom: 0; }
 .centered { text-align: center; }
+th.min-width-col, td.min-width-col { width: 1%; white-space: nowrap; padding: 5px !important; }
+.table td { vertical-align: bottom !important; }
+
+/* Center pagination controls produced by django-tables2 without centering table cell contents */
+.django-tables2 .pagination {
+  text-align: center;
+}
+/* Ensure pagination lists are centered and horizontally aligned in all contexts */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

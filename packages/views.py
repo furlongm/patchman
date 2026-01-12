@@ -16,9 +16,9 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from django.contrib.auth.decorators import login_required
-from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, render
+from django_tables2 import RequestConfig
 from rest_framework import viewsets
 
 from arch.models import PackageArchitecture
@@ -26,6 +26,7 @@ from packages.models import Package, PackageName, PackageUpdate
 from packages.serializers import (
     PackageNameSerializer, PackageSerializer, PackageUpdateSerializer,
 )
+from packages.tables import PackageNameTable, PackageTable
 from util.filterspecs import Filter, FilterBar
 
 
@@ -98,16 +99,6 @@ def package_list(request):
     else:
         terms = ''
 
-    page_no = request.GET.get('page')
-    paginator = Paginator(packages, 50)
-
-    try:
-        page = paginator.page(page_no)
-    except PageNotAnInteger:
-        page = paginator.page(1)
-    except EmptyPage:
-        page = paginator.page(paginator.num_pages)
-
     filter_list = []
     filter_list.append(Filter(request, 'Affected by Errata', 'affected_by_errata', {'true': 'Yes', 'false': 'No'}))
     filter_list.append(Filter(request, 'Provides Fix in Errata', 'provides_fix_in_erratum',
@@ -118,9 +109,12 @@ def package_list(request):
     filter_list.append(Filter(request, 'Architecture', 'arch_id', PackageArchitecture.objects.all()))
     filter_bar = FilterBar(request, filter_list)
 
+    table = PackageTable(packages)
+    RequestConfig(request, paginate={'per_page': 50}).configure(table)
+
     return render(request,
                   'packages/package_list.html',
-                  {'page': page,
+                  {'table': table,
                    'filter_bar': filter_bar,
                    'terms': terms})
 
@@ -145,27 +139,19 @@ def package_name_list(request):
     else:
         terms = ''
 
-    page_no = request.GET.get('page')
-    paginator = Paginator(packages, 50)
-
-    try:
-        page = paginator.page(page_no)
-    except PageNotAnInteger:
-        page = paginator.page(1)
-    except EmptyPage:
-        page = paginator.page(paginator.num_pages)
-
     filter_list = []
     filter_list.append(Filter(request, 'Package Type', 'packagetype', Package.PACKAGE_TYPES))
     filter_list.append(Filter(request, 'Architecture', 'arch_id', PackageArchitecture.objects.all()))
     filter_bar = FilterBar(request, filter_list)
 
+    table = PackageNameTable(packages)
+    RequestConfig(request, paginate={'per_page': 50}).configure(table)
+
     return render(request,
                   'packages/package_name_list.html',
-                  {'page': page,
+                  {'table': table,
                    'filter_bar': filter_bar,
-                   'terms': terms,
-                   'table_template': 'packages/package_name_table.html'})
+                   'terms': terms})
 
 
 @login_required
