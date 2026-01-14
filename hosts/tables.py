@@ -41,6 +41,10 @@ OSVARIANT_TEMPLATE = (
     '<a href="{{ record.osvariant.get_absolute_url }}">{{ record.osvariant }}</a>'
     '{% endif %}'
 )
+PACKAGES_TEMPLATE = (
+    '<a href="{% url \'packages:package_list\' %}?host={{ record.hostname }}">'
+    '{{ record.packages_count }}</a>'
+)
 LASTREPORT_TEMPLATE = (
     '{% load report_alert %}'
     '{{ record.lastreport }} {% report_alert record.lastreport %}'
@@ -87,13 +91,19 @@ class HostTable(BaseTable):
         OSVARIANT_TEMPLATE,
         order_by='osvariant__name',
         verbose_name='OS Variant',
-        attrs={'th': {'class': 'col-sm-2'}, 'td': {'class': 'col-sm-2'}},
+        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1'}},
+    )
+    packages_installed = tables.TemplateColumn(
+        PACKAGES_TEMPLATE,
+        order_by='packages_count',
+        verbose_name='Packages',
+        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1 centered'}},
     )
     lastreport = tables.TemplateColumn(
         LASTREPORT_TEMPLATE,
         order_by='lastreport',
         verbose_name='Last Report',
-        attrs={'th': {'class': 'col-sm-2'}, 'td': {'class': 'col-sm-2'}},
+        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1'}},
     )
     reboot_required = tables.TemplateColumn(
         REBOOT_TEMPLATE,
@@ -105,6 +115,6 @@ class HostTable(BaseTable):
     class Meta(BaseTable.Meta):
         model = Host
         fields = (
-            'selection', 'hostname', 'sec_updates', 'bug_updates', 'affected_errata',
-            'kernel', 'osvariant', 'lastreport', 'reboot_required',
+            'selection', 'hostname', 'packages_installed', 'sec_updates', 'bug_updates',
+            'affected_errata', 'kernel', 'osvariant', 'lastreport', 'reboot_required',
         )

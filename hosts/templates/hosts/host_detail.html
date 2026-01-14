@@ -12,10 +12,9 @@
 
 <ul class="nav nav-tabs">
   <li class="active"><a data-toggle="tab" href="#host_details">Details</a></li>
-  <li><a data-toggle="tab" href="#host_updates">Updates Available</a></li>
+  <li><a data-toggle="tab" href="#host_packages">Packages / Updates</a></li>
   <li><a data-toggle="tab" href="#host_repos">Repos</a></li>
   <li><a data-toggle="tab" href="#host_modules">Modules</a></li>
-  <li><a data-toggle="tab" href="#host_packages">Packages</a></li>
 </ul>
 
 <div class="tab-content">
@@ -41,18 +40,18 @@
         <tr><th>Updated</th><td> {{ host.updated_at }} </td></tr>
         <tr><th>Last Report</th><td> {{ host.lastreport }} </td></tr>
         <tr><th>Packages Installed</th><td> <a href="{% url 'packages:package_list' %}?host={{ host }}">{{ host.packages.count}}</a> </td></tr>
-        <tr><th>Updates Available</th><td> <a data-toggle="tab" href="{{ host.get_absolute_url }}#host_updates">{{ host.updates.count }}</a> </td></tr>
+        <tr><th>Updates Available</th><td> <a href="#host_packages" id="updates-link">{{ host.updates.count }}</a> </td></tr>
         <tr><th>Errata</th><td><a href="{% url 'errata:erratum_list' %}?host={{ host.hostname }}">{{ host.errata.count }}<a/></td>
         <tr><th>Reboot Required</th><td> {{ host.reboot_required }} </td></tr>
         <tr><th>Repos In Use</th><td>{% if host.host_repos_only %}Host Repos{% else %}Host and OS Release Repos{% endif %}</td></tr>
         <tr>
           <th>Last 3 reports</th>
           <td>
-          {% for report in reports %}
-            <span class="label label-brick {% cycle 'bg-info' 'bg-success' %}">
-              <a href="{{ report.get_absolute_url}}">{{ report.created }} </a>
-            </span>
-          {% endfor %}
+            <ul class="package-list">
+              {% for report in reports %}
+                <li><a href="{{ report.get_absolute_url}}">{{ report.created }}</a></li>
+              {% endfor %}
+            </ul>
           </td>
         </tr>
       </table>
@@ -64,30 +63,38 @@
     </div>
   </div>
 
-  <div class="tab-pane fade in" id="host_updates">
+  <div class="tab-pane fade in" id="host_packages">
     <div class="well well-sm">
-      <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+      <div class="form-inline" style="margin-bottom: 10px;">
+        <label class="checkbox-inline">
+          <input type="checkbox" id="updates-only"> Show only packages with updates
+        </label>
+      </div>
+      <table class="table table-striped table-bordered table-hover table-condensed table-responsive" id="packages-table" style="table-layout: fixed;">
         <thead>
           <tr>
-            <th></th><th>Installed</th><th>Available</th>
+            <th class="min-width-col" style="width: 30px;"></th><th style="width: 50%;">Installed Package</th><th style="width: 50%;">Update Available</th>
           </tr>
         </thead>
         <tbody>
-        {% for update in host.updates.select_related %}
-          <tr>
-            <td>
-            {% if update.security %}
-              <span class="secupdate">
-            {% else %}
-              <span class="bugupdate">
+        {% for package in packages_with_updates %}
+          <tr data-has-update="{{ package.update|yesno:'yes,no' }}">
+            <td class="min-width-col centered">
+            {% if package.update %}
+              {% if package.update.security %}
+                <span class="glyphicon glyphicon-flag" style="color: #cc0000;" title="Security Update"></span>
+              {% else %}
+                <span class="glyphicon glyphicon-flag" style="color: #ff9933;" title="Bugfix Update"></span>
+              {% endif %}
             {% endif %}
-              &nbsp;</span>
             </td>
             <td>
-              <a href="{{ update.oldpackage.name.get_absolute_url }}"> {{ update.oldpackage }} </a>
+              <a href="{{ package.name.get_absolute_url }}">{{ package }}</a>
             </td>
             <td>
-              <a href="{{ update.newpackage.name.get_absolute_url }}"> {{ update.newpackage }} </a>
+            {% if package.update %}
+              <a href="{{ package.update.newpackage.name.get_absolute_url }}">{{ package.update.newpackage }}</a>
+            {% endif %}
             </td>
           </tr>
         {% endfor %}
@@ -141,21 +148,27 @@
       {% gen_table host.modules.all %}
     </div>
   </div>
-
-  <div class="tab-pane fade in" id="host_packages">
-    <div class="well well-sm">
-      <button class="btn btn-primary btn-sm" data-toggle="collapse" data-target="#packages">Show/Hide Installed Packages</button>
-      <div id="packages" class="collapse">
-        <div class="well well-sm">
-          {% for package in host.packages.select_related %}
-            <span class="label label-brick {% cycle 'bg-info' 'bg-success' %}">
-              <a href="{{ package.name.get_absolute_url }}"> {{ package }} </a>
-            </span>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-  </div>
 </div>
+
+<script>
+$(document).ready(function() {
+    $('#updates-only').change(function() {
+        var showUpdatesOnly = $(this).is(':checked');
+        $('#packages-table tbody tr').each(function() {
+            if (showUpdatesOnly && $(this).data('has-update') !== 'yes') {
+                $(this).hide();
+            } else {
+                $(this).show();
+            }
+        });
+    });
+
+    $('#updates-link').click(function(e) {
+        e.preventDefault();
+        $('a[href="#host_packages"]').tab('show');
+        $('#updates-only').prop('checked', true).trigger('change');
+    });
+});
+</script>
 
 {% endblock %}

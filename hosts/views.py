@@ -76,9 +76,10 @@ def _get_filtered_hosts(filter_params):
 @login_required
 def host_list(request):
     hosts = Host.objects.select_related().annotate(
-        sec_updates_count=Count('updates', filter=Q(updates__security=True)),
-        bug_updates_count=Count('updates', filter=Q(updates__security=False)),
-        errata_count=Count('errata'),
+        sec_updates_count=Count('updates', filter=Q(updates__security=True), distinct=True),
+        bug_updates_count=Count('updates', filter=Q(updates__security=False), distinct=True),
+        errata_count=Count('errata', distinct=True),
+        packages_count=Count('packages', distinct=True),
     )
 
     if 'domain_id' in request.GET:
@@ -156,11 +157,20 @@ def host_detail(request, hostname):
     host = get_object_or_404(Host, hostname=hostname)
     reports = Report.objects.filter(host=hostname).order_by('-created')[:3]
     hostrepos = HostRepo.objects.filter(host=host)
+
+    # Build packages list with update info
+    updates_by_package = {u.oldpackage_id: u for u in host.updates.select_related()}
+    packages_with_updates = []
+    for package in host.packages.select_related('name', 'arch').order_by('name__name'):
+        package.update = updates_by_package.get(package.id)
+        packages_with_updates.append(package)
+
     return render(request,
                   'hosts/host_detail.html',
                   {'host': host,
                    'reports': reports,
-                   'hostrepos': hostrepos})
+                   'hostrepos': hostrepos,
+                   'packages_with_updates': packages_with_updates})
 
 
 @login_required

@@ -5,8 +5,6 @@
 .panel-body { padding: 5px; font-size: 12px; }
 .panel { margin-bottom: 5px; font-size: 12px; }
 .panel-heading { padding: 5px; font-size: 13px; }
-.brick { border-radius: 5px; margin: 3px 3px; padding: 2px 5px; height: 25px; border-style:solid; border-width:thin; }
-.label-brick { font-size: 12px; font-weight: normal; margin-bottom: 3px; padding-top: 5px; border-radius: 4px; height:25px; border-style:solid; border-width:thin; border-color: #222; white-space: normal; display: inline-block; }
 .breadcrumb { font-size: 12px; background-color: #222; border-radius: 0; margin-bottom: 3px; }
 .navbar { margin-bottom: 0; padding-bottom: 0; border-radius: 0; }
 .navbar-inverse .dropdown-menu { background-color: #222; }
@@ -17,6 +15,10 @@
 th.min-width-col, td.min-width-col { width: 1%; white-space: nowrap; padding: 5px !important; }
 .table td { vertical-align: bottom !important; }
 .select2-results__options { max-height: 400px !important; }
+.package-list { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; padding: 10px; margin: 0; }
+.package-list li { padding: 4px 8px; white-space: nowrap; border: 1px solid #ddd; border-radius: 4px; }
+.package-list li:nth-child(odd) { background: #f0f7ff; }
+.package-list li:nth-child(even) { background: #f5f0ff; }
 
 /* Center pagination controls produced by django-tables2 without centering table cell contents */
 .django-tables2 .pagination {

@@ -61,24 +61,20 @@
   </div>
   <div class="tab-pane fade in" id="erratum_affected_packages">
     <div class="well well-sm">
-      <div class="well well-sm">
+      <ul class="package-list">
         {% for package in erratum.affected_packages.all %}
-          <span class="label label-brick {% cycle 'bg-info' 'bg-success' %}">
-            <a href="{{ package.get_absolute_url }}"> {{ package }} </a>
-          </span>
+          <li><a href="{{ package.get_absolute_url }}">{{ package }}</a></li>
         {% endfor %}
-      </div>
+      </ul>
     </div>
   </div>
   <div class="tab-pane fade in" id="erratum_fixed_packages">
     <div class="well well-sm">
-      <div class="well well-sm">
+      <ul class="package-list">
         {% for package in erratum.fixed_packages.all %}
-          <span class="label label-brick {% cycle 'bg-info' 'bg-success' %}">
-            <a href="{{ package.get_absolute_url }}"> {{ package }} </a>
-          </span>
+          <li><a href="{{ package.get_absolute_url }}">{{ package }}</a></li>
         {% endfor %}
-      </div>
+      </ul>
     </div>
   </div>
 </div>
