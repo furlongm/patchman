@@ -12,23 +12,21 @@
     {% block extrahead %}{% endblock %}
   </head>
   <body>
-    <div>
+    <div class="sidebar-layout">
       {% include "navbar.html" with user=user %}
-      <ul class="breadcrumb">
-        {% block breadcrumbs %}
-          <li class="active"><a href="{% url 'util:dashboard' %}">Home</a></li>
-        {% endblock %}
-      </ul>
-      {% bootstrap_messages %}
-      <div class="well well-sm">
-        <div class="panel panel-default">
-          <div class="panel-heading">
-            <strong>{% block content_title %}{% endblock %}</strong>
+      <div class="main-content">
+        <ul class="breadcrumb">
+          {% block breadcrumbs %}
+          {% endblock %}
+        </ul>
+        {% bootstrap_messages %}
+        <div class="well well-sm">
+          <div class="panel panel-default">
+            <div class="panel-body">
+              {% block content %}{{ content }}{% endblock %}
+            </div>
+            {% block footer %}{% endblock %}
           </div>
-          <div class="panel-body">
-            {% block content %}{{ content }}{% endblock %}
-          </div>
-          {% block footer %}{% endblock %}
         </div>
       </div>
     </div>
