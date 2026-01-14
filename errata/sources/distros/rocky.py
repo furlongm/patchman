@@ -203,8 +203,8 @@ def process_rocky_erratum(advisory):
 def add_rocky_erratum_references(e, advisory):
     """ Add Rocky Linux errata references
     """
-    e.add_reference('Rocky Advisory', 'https://apollo.build.resf.org/{e.name}')
-    e.add_reference('Rocky Advisory', 'https://errata.rockylinux.org/{e.name}')
+    e.add_reference('Rocky Advisory', f'https://apollo.build.resf.org/{e.name}')
+    e.add_reference('Rocky Advisory', f'https://errata.rockylinux.org/{e.name}')
     advisory_cves = advisory.get('cves')
     for a_cve in advisory_cves:
         cve_id = a_cve.get('cve')
