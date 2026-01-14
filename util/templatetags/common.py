@@ -15,11 +15,12 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 import importlib
-from datetime import datetime, timedelta
+from datetime import timedelta
 from urllib.parse import urlencode
 
 from django.template import Library
 from django.template.loader import get_template
+from django.utils import timezone
 from django.utils.html import format_html
 from django_tables2 import RequestConfig
 from humanize import naturaltime
@@ -132,7 +133,7 @@ def reports_timedelta():
         setting_type=int,
         default=14,
     )
-    return naturaltime(datetime.now() - timedelta(days=days))
+    return naturaltime(timezone.now() - timedelta(days=days))
 
 
 @register.simple_tag
