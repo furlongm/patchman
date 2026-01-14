@@ -4,6 +4,10 @@
 
 {% block page_title %}Patchman Dashboard{% endblock %}
 
+{% block breadcrumbs %}
+  <li class="active"><a href="{% url 'util:dashboard' %}">Issues</a></li>
+{% endblock %}
+
 {% block content_title %} Issues Dashboard for {{ site.name }} {% endblock %}
 
 {% block content %}
