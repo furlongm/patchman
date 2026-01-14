@@ -27,10 +27,7 @@ CVE_LINKS_TEMPLATE = (
     '&nbsp;&nbsp;'
     '<a href="https://osv.dev/vulnerability/{{ record.cve_id }}">osv.dev {% bootstrap_icon "link" %}</a>'
 )
-CVE_DESCRIPTION_TEMPLATE = (
-    '<span class="expandable-text" data-full-text="{{ record.description }}">'
-    '{{ record.description|truncatechars:60 }}</span>'
-)
+CVE_DESCRIPTION_TEMPLATE = '<span class="expandable-text">{{ record.description }}</span>'
 CVSS_SCORES_TEMPLATE = '{% for score in record.cvss_scores.all %} {{ score.score }} {% endfor %}'
 CWES_TEMPLATE = '{% for cwe in record.cwes.all %} {{ cwe.cwe_id }} {% endfor %}'
 CVE_ERRATA_TEMPLATE = (
@@ -40,10 +37,7 @@ CVE_ERRATA_TEMPLATE = (
 
 # CWETable templates
 CWE_ID_TEMPLATE = '<a href="{{ record.get_absolute_url }}">{{ record.cwe_id }}</a>'
-CWE_DESCRIPTION_TEMPLATE = (
-    '<span class="expandable-text" data-full-text="{{ record.description }}">'
-    '{{ record.description|truncatechars:120 }}</span>'
-)
+CWE_DESCRIPTION_TEMPLATE = '<span class="expandable-text">{{ record.description }}</span>'
 CWE_CVES_TEMPLATE = (
     '<a href="{% url \'security:cve_list\' %}?cwe_id={{ record.cwe_id }}">'
     '{{ record.cve_set.count }}</a>'
@@ -68,13 +62,13 @@ class CVETable(BaseTable):
         CVE_LINKS_TEMPLATE,
         orderable=False,
         verbose_name='Links',
-        attrs={'th': {'class': 'col-sm-2'}, 'td': {'class': 'col-sm-2'}},
+        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1'}},
     )
     cve_description = tables.TemplateColumn(
         CVE_DESCRIPTION_TEMPLATE,
         orderable=False,
         verbose_name='Description',
-        attrs={'th': {'class': 'col-sm-3'}, 'td': {'class': 'col-sm-3'}},
+        attrs={'th': {'class': 'col-sm-3'}, 'td': {'class': 'col-sm-3 truncate-cell'}},
     )
     cvss_scores = tables.TemplateColumn(
         CVSS_SCORES_TEMPLATE,
@@ -92,25 +86,25 @@ class CVETable(BaseTable):
         order_by='reserved_date',
         verbose_name='Reserved',
         default='',
-        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1'}},
+        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1 centered'}},
     )
     rejected_date = tables.DateColumn(
         order_by='rejected_date',
         verbose_name='Rejected',
         default='',
-        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1'}},
+        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1 centered'}},
     )
     published_date = tables.DateColumn(
         order_by='published_date',
         verbose_name='Published',
         default='',
-        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1'}},
+        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1 centered'}},
     )
     updated_date = tables.DateColumn(
         order_by='updated_date',
         verbose_name='Updated',
         default='',
-        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1'}},
+        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1 centered'}},
     )
     cve_errata = tables.TemplateColumn(
         CVE_ERRATA_TEMPLATE,
@@ -145,13 +139,13 @@ class CWETable(BaseTable):
         CWE_DESCRIPTION_TEMPLATE,
         orderable=False,
         verbose_name='Description',
-        attrs={'th': {'class': 'col-sm-6'}, 'td': {'class': 'col-sm-6'}},
+        attrs={'th': {'class': 'col-sm-6'}, 'td': {'class': 'col-sm-6 truncate-cell'}},
     )
     cwe_cves = tables.TemplateColumn(
         CWE_CVES_TEMPLATE,
         orderable=False,
         verbose_name='CVEs',
-        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1'}},
+        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1 centered'}},
     )
 
     class Meta(BaseTable.Meta):
@@ -169,13 +163,13 @@ class ReferenceTable(BaseTable):
         REFERENCE_URL_TEMPLATE,
         orderable=False,
         verbose_name='URL',
-        attrs={'th': {'class': 'col-sm-10'}, 'td': {'class': 'col-sm-10'}},
+        attrs={'th': {'class': 'col-sm-8'}, 'td': {'class': 'col-sm-8'}},
     )
     linked_errata = tables.TemplateColumn(
         LINKED_ERRATA_TEMPLATE,
         orderable=False,
         verbose_name='Linked Errata',
-        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1'}},
+        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1 centered'}},
     )
 
     class Meta(BaseTable.Meta):

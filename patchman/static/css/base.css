@@ -19,6 +19,10 @@ th.min-width-col, td.min-width-col { width: 1%; white-space: nowrap; padding: 5p
 .package-list li { padding: 4px 8px; white-space: nowrap; border: 1px solid #ddd; border-radius: 4px; }
 .package-list li:nth-child(odd) { background: #f0f7ff; }
 .package-list li:nth-child(even) { background: #f5f0ff; }
+td.truncate-cell { max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+td.truncate-cell a { display: block; overflow: hidden; text-overflow: ellipsis; }
+.expandable-text { cursor: pointer; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.expandable-text.expanded { white-space: normal; overflow: visible; }
 
 /* Center pagination controls produced by django-tables2 without centering table cell contents */
 .django-tables2 .pagination {
