@@ -82,20 +82,20 @@
   </div>
   <div class="tab-pane fade" id="cve_affected_packages">
     <div class="well well-sm">
-      {% for package in affected_packages %}
-        <span class="label label-brick {% cycle 'bg-info' 'bg-success' %}">
-          <a href="{{ package.get_absolute_url }}">{{ package }}</a>
-        </span>
-      {% endfor %}
+      <ul class="package-list">
+        {% for package in affected_packages %}
+          <li><a href="{{ package.get_absolute_url }}">{{ package }}</a></li>
+        {% endfor %}
+      </ul>
     </div>
   </div>
   <div class="tab-pane fade" id="cve_fixed_packages">
     <div class="well well-sm">
-      {% for package in fixed_packages %}
-        <span class="label label-brick {% cycle 'bg-info' 'bg-success' %}">
-          <a href="{{ package.get_absolute_url }}">{{ package }}</a>
-        </span>
-      {% endfor %}
+      <ul class="package-list">
+        {% for package in fixed_packages %}
+          <li><a href="{{ package.get_absolute_url }}">{{ package }}</a></li>
+        {% endfor %}
+      </ul>
     </div>
   </div>
 </div>
