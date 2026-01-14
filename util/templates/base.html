@@ -9,6 +9,7 @@
     <link rel="stylesheet" type="text/css" href="{% static 'css/base.css' %}" />
     <title>{% block page_title %}{% endblock %}</title>
     <script type="text/javascript" src="{% static 'js/expandable-text.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/sidebar.js' %}"></script>
     {% block extrahead %}{% endblock %}
   </head>
   <body>
@@ -16,6 +17,11 @@
       {% include "navbar.html" with user=user %}
       <div class="main-content">
         <ul class="breadcrumb">
+          <li class="sidebar-toggle-container">
+            <button class="sidebar-toggle" title="Toggle sidebar">
+              <span class="glyphicon glyphicon-menu-left"></span>
+            </button>
+          </li>
           {% block breadcrumbs %}
           {% endblock %}
         </ul>

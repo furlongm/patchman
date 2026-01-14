@@ -6,6 +6,7 @@
 .panel { margin-bottom: 5px; font-size: 12px; }
 .panel-heading { padding: 5px; font-size: 13px; }
 .breadcrumb { font-size: 14px; background-color: #222; border-radius: 0; margin-bottom: 3px; position: sticky; top: 0; z-index: 100; }
+.breadcrumb > li:nth-child(2):before { content: none; }
 .navbar { margin-bottom: 0; padding-bottom: 0; border-radius: 0; }
 .navbar-inverse .dropdown-menu { background-color: #222; }
 .navbar-inverse .dropdown-menu > li > a { color: #9d9d9d; }
@@ -26,12 +27,16 @@ td.truncate-cell a { display: block; overflow: hidden; text-overflow: ellipsis; 
 
 /* Sidebar layout */
 .sidebar-layout { display: flex; min-height: 100vh; }
-.sidebar-nav { width: 200px; background-color: #222; display: flex; flex-direction: column; position: fixed; height: 100vh; }
+.sidebar-nav { width: 200px; background-color: #222; display: flex; flex-direction: column; position: fixed; height: 100vh; overflow: hidden; }
 .sidebar-header { padding: 15px; border-bottom: 1px solid #333; }
-.sidebar-brand { color: #9d9d9d; font-size: 18px; font-weight: bold; text-decoration: none; }
+.sidebar-brand { color: #9d9d9d; font-size: 18px; font-weight: bold; text-decoration: none; white-space: nowrap; }
 .sidebar-brand:hover { color: #fff; text-decoration: none; }
-.sidebar-menu { list-style: none; padding: 0; margin: 0; }
-.sidebar-menu li a { display: block; padding: 10px 15px; color: #9d9d9d; text-decoration: none; font-size: 14px; }
+.sidebar-toggle { background: none; border: none; color: #666; cursor: pointer; padding: 0 10px 0 0; font-size: 14px; }
+.sidebar-toggle:hover { color: #333; }
+.sidebar-toggle .glyphicon { transition: transform 0.2s; }
+.sidebar-toggle-container { list-style: none; display: flex; align-items: center; }
+.sidebar-menu { list-style: none; padding: 0; margin: 0; overflow-y: auto; overflow-x: hidden; }
+.sidebar-menu li a { display: block; padding: 10px 15px; color: #9d9d9d; text-decoration: none; font-size: 14px; white-space: nowrap; }
 .sidebar-menu li a:hover { background-color: #333; color: #fff; }
 .sidebar-menu li.active > a { background-color: #333; color: #fff; }
 .sidebar-menu .submenu { list-style: none; padding: 0; margin: 0; display: none; background-color: #1a1a1a; }
@@ -41,6 +46,11 @@ td.truncate-cell a { display: block; overflow: hidden; text-overflow: ellipsis; 
 .sidebar-menu .has-submenu.open > a .caret { transform: rotate(180deg); }
 .sidebar-bottom { margin-top: auto; border-top: 1px solid #333; }
 .main-content { margin-left: 200px; flex: 1; }
+
+/* Collapsed sidebar */
+.sidebar-nav.collapsed { width: 0; }
+.sidebar-layout.collapsed .main-content { margin-left: 0; }
+.sidebar-layout.collapsed .sidebar-toggle .glyphicon { transform: rotate(180deg); }
 
 /* Center pagination controls produced by django-tables2 without centering table cell contents */
 .django-tables2 .pagination {
