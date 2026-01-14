@@ -12,7 +12,7 @@
                     {% for column in table.columns %}
                         <th {{ column.attrs.th.as_html }}>
                             {% if column.orderable %}
-                                <a href="{% querystring table.prefixed_order_by_field=column.order_by_alias.next %}">{{ column.header }}{% if column.is_ordered %}{% if column.order_by_alias.is_descending %} <span class="glyphicon glyphicon-chevron-down"></span>{% else %} <span class="glyphicon glyphicon-chevron-up"></span>{% endif %}{% endif %}</a>
+                            <a href="{% querystring table.prefixed_order_by_field=column.order_by_alias.next %}">{{ column.header }}{% if column.is_ordered %}{% if column.order_by_alias.is_descending %} <span class="glyphicon glyphicon-triangle-bottom"></span>{% else %} <span class="glyphicon glyphicon-triangle-top"></span>{% endif %}{% endif %}</a>
                             {% else %}
                                 {{ column.header|safe }}
                             {% endif %}
