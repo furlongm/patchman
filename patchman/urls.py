@@ -56,6 +56,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),  # noqa
+    path('select2/', include('django_select2.urls')),
     path('', include('util.urls', namespace='util')),
     path('errata/', include('errata.urls', namespace='errata')),
     path('reports/', include('reports.urls', namespace='reports')),

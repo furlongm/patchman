@@ -16,6 +16,7 @@
 .centered { text-align: center; }
 th.min-width-col, td.min-width-col { width: 1%; white-space: nowrap; padding: 5px !important; }
 .table td { vertical-align: bottom !important; }
+.select2-results__options { max-height: 400px !important; }
 
 /* Center pagination controls produced by django-tables2 without centering table cell contents */
 .django-tables2 .pagination {
