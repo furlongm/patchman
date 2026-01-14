@@ -15,26 +15,35 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.forms import (
     Form, ModelChoiceField, ModelForm, ModelMultipleChoiceField, TextInput,
     ValidationError,
 )
+from django_select2.forms import ModelSelect2MultipleWidget
 
 from repos.models import Mirror, Repository
 
 
-class EditRepoForm(ModelForm):
-    class Media:
-        css = {
-            'all': ('admin/css/widgets.css',)
-        }
+class MirrorSelect2Widget(ModelSelect2MultipleWidget):
+    model = Mirror
+    search_fields = ['url__icontains', 'repo__name__icontains']
+    max_results = 50
 
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('attrs', {})
+        kwargs['attrs'].setdefault('data-minimum-input-length', 0)
+        super().__init__(*args, **kwargs)
+
+    def label_from_instance(self, obj):
+        return f"{obj.repo.name} - {obj.url}"
+
+
+class EditRepoForm(ModelForm):
     mirrors = ModelMultipleChoiceField(
         queryset=Mirror.objects.select_related(),
         required=False,
-        label=None,
-        widget=FilteredSelectMultiple('Mirrors', is_stacked=False))
+        widget=MirrorSelect2Widget(attrs={'style': 'width: 100%'}),
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

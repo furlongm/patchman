@@ -81,6 +81,7 @@ THIRD_PARTY_APPS = [
     'taggit',
     'bootstrap3',
     'django_tables2',
+    'django_select2',
     'rest_framework',
     'django_filters',
     'celery',
