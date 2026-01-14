@@ -55,7 +55,7 @@ class ErratumTable(BaseTable):
         ERRATUM_NAME_TEMPLATE,
         order_by='name',
         verbose_name='ID',
-        attrs={'th': {'class': 'col-sm-2'}, 'td': {'class': 'col-sm-2'}},
+        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1'}},
     )
     e_type = tables.Column(
         order_by='e_type',
@@ -65,7 +65,7 @@ class ErratumTable(BaseTable):
     issue_date = tables.DateColumn(
         order_by='issue_date',
         verbose_name='Published Date',
-        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1'}},
+        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1 centered'}},
     )
     synopsis = tables.Column(
         orderable=False,
@@ -76,31 +76,31 @@ class ErratumTable(BaseTable):
         PACKAGES_AFFECTED_TEMPLATE,
         orderable=False,
         verbose_name='Packages Affected',
-        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1'}},
+        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1 centered'}},
     )
     packages_fixed = tables.TemplateColumn(
         PACKAGES_FIXED_TEMPLATE,
         orderable=False,
         verbose_name='Packages Fixed',
-        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1'}},
+        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1 centered'}},
     )
     osreleases = tables.TemplateColumn(
         OSRELEASES_TEMPLATE,
         orderable=False,
         verbose_name='OS Releases Affected',
-        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1'}},
+        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1 centered'}},
     )
     erratum_cves = tables.TemplateColumn(
         ERRATUM_CVES_TEMPLATE,
         orderable=False,
         verbose_name='CVEs',
-        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1'}},
+        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1 centered'}},
     )
     references = tables.TemplateColumn(
         REFERENCES_TEMPLATE,
         orderable=False,
         verbose_name='References',
-        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1'}},
+        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1 centered'}},
     )
 
     class Meta(BaseTable.Meta):

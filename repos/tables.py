@@ -32,7 +32,7 @@ AUTH_REQUIRED_TEMPLATE = '{% if record.auth_required %}Yes{% else %}No{% endif %
 # MirrorTable templates
 MIRROR_CHECKBOX_TEMPLATE = '<input type="checkbox" name="selected_ids" value="{{ record.id }}" class="bulk-checkbox">'
 MIRROR_ID_TEMPLATE = '<a href="{{ record.get_absolute_url }}">{{ record.id }}</a>'
-MIRROR_URL_TEMPLATE = '<a href="{{ record.url }}">{{ record.url|truncatechars:25 }}</a>'
+MIRROR_URL_TEMPLATE = '<a href="{{ record.url }}" class="truncate-url">{{ record.url }}</a>'
 MIRROR_PACKAGES_TEMPLATE = (
     '{% if not record.mirrorlist %}'
     '<a href="{% url \'packages:package_list\' %}?mirror_id={{ record.id }}">'
@@ -113,7 +113,7 @@ class MirrorTable(BaseTable):
         MIRROR_URL_TEMPLATE,
         orderable=False,
         verbose_name='URL',
-        attrs={'th': {'class': 'col-sm-2'}, 'td': {'class': 'col-sm-2'}},
+        attrs={'th': {'class': 'col-sm-2'}, 'td': {'class': 'col-sm-2 truncate-cell'}},
     )
     mirror_packages = tables.TemplateColumn(
         MIRROR_PACKAGES_TEMPLATE,
