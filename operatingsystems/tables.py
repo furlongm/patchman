@@ -87,25 +87,25 @@ class OSReleaseTable(BaseTable):
         OSRELEASE_REPOS_TEMPLATE,
         verbose_name='Repos',
         orderable=False,
-        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1'}},
+        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1 centered'}},
     )
     osvariants = tables.TemplateColumn(
         OSVARIANTS_TEMPLATE,
         verbose_name='OS Variants',
         orderable=False,
-        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1'}},
+        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1 centered'}},
     )
     osrelease_hosts = tables.TemplateColumn(
         OSRELEASE_HOSTS_TEMPLATE,
         verbose_name='Hosts',
         orderable=False,
-        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1'}},
+        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1 centered'}},
     )
     osrelease_errata = tables.TemplateColumn(
         OSRELEASE_ERRATA_TEMPLATE,
         verbose_name='Errata',
         orderable=False,
-        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1'}},
+        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1 centered'}},
     )
 
     class Meta(BaseTable.Meta):
@@ -144,7 +144,7 @@ class OSVariantTable(BaseTable):
         OSVARIANT_HOSTS_TEMPLATE,
         verbose_name='Hosts',
         order_by='hosts_count',
-        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1'}},
+        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1 centered'}},
     )
     osrelease = tables.TemplateColumn(
         OSVARIANT_OSRELEASE_TEMPLATE,
@@ -156,7 +156,7 @@ class OSVariantTable(BaseTable):
         REPOS_OSRELEASE_TEMPLATE,
         verbose_name='Repos (OS Release)',
         order_by='repos_count',
-        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1'}},
+        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1 centered'}},
     )
 
     class Meta(BaseTable.Meta):

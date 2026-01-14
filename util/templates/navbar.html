@@ -29,7 +29,13 @@
                 <li><a href="{% url 'security:reference_list' %}">Security References</a></li>
               </ul>
             </li>
-            <li class="{% if '/os' in request.path %}active{% endif %}">       <a href="{% url 'operatingsystems:osrelease_list' %}">Operating Systems</a></li>
+            <li class="dropdown {% if '/os' in request.path %}active{% endif %}">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#">Operating Systems <span class="caret"></span></a>
+              <ul class="dropdown-menu">
+                <li><a href="{% url 'operatingsystems:osrelease_list' %}">OS Releases</a></li>
+                <li><a href="{% url 'operatingsystems:osvariant_list' %}">OS Variants</a></li>
+              </ul>
+            </li>
             <li class="{% if '/reports' in request.path %}active{% endif %}">  <a href="{% url 'reports:report_list' %}">Reports</a></li>
             <li class="{% if '/dashboard' in request.path %}active{% endif %}"><a href="{% url 'util:dashboard' %}">Issues{% if issues_count %} <span class="badge">{{ issues_count }}</span>{% endif %}</a></li>
           </ul>
