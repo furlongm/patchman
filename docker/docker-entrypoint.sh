@@ -92,17 +92,16 @@ if "${USE_CACHE}"; then
         redisPort="6379"
     fi
 
-    # Comment DummyCache Block
-    sed -i '47,51 {/^#/ ! s/\(.*\)/#\1/}' "$conf"
-
-    # Uncomment RedisCache Block
-    sed -i '55,61 {s/^# //}' "$conf"
-
-    sed -i "58 {s/127.0.0.1:6379/$redisHost:$redisPort/}" "$conf" 
+    # Change RedisCache LOCATION
+    sed -i "62 {s/127.0.0.1:6379/$redisHost:$redisPort/}" "$conf"
 
     if [ -n "${CACHE_TIMEOUT}" ]; then
-        sed -i "59 {s/30/${CACHE_TIMEOUT}/}" "$conf" 
+        sed -i "67 {s/0/${CACHE_TIMEOUT}/}" "$conf"
     fi
+else
+    # Change RedisCache to DummyCache to avoid ConnectionError and comment LOCATION
+    sed -i '61 {s/redis.RedisCache/dummy.DummyCache/}' "$conf"
+    sed -i '62 {/^#/ ! s/\(.*\)/#\1/}' "$conf"
 fi
 
 # Sync database on container first start
