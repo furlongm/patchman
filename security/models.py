@@ -16,14 +16,14 @@
 
 import json
 import re
-from cvss import CVSS2, CVSS3, CVSS4
 from time import sleep
 
+from cvss import CVSS2, CVSS3, CVSS4
 from django.db import models
 from django.urls import reverse
 
 from security.managers import CVEManager
-from util import get_url, fetch_content, tz_aware_datetime, error_message
+from util import error_message, fetch_content, get_url, tz_aware_datetime
 
 
 class Reference(models.Model):
@@ -125,6 +125,8 @@ class CVE(models.Model):
             score = cvss_score.base_score
         if not severity:
             severity = cvss_score.severities()[0]
+        if isinstance(severity, str):
+            severity = severity.capitalize()
         try:
             cvss, created = CVSS.objects.get_or_create(
                 version=version,
@@ -152,7 +154,7 @@ class CVE(models.Model):
         mitre_cve_url = f'https://cveawg.mitre.org/api/cve/{self.cve_id}'
         res = get_url(mitre_cve_url)
         if res.status_code == 404:
-            error_message.send(sender=None, text=f'404 - Skipping {self.cve_id} - {mitre_cve_url}')
+            error_message(text=f'404 - Skipping {self.cve_id} - {mitre_cve_url}')
             return
         data = fetch_content(res, f'Fetching {self.cve_id} MITRE data')
         cve_json = json.loads(data)
@@ -162,7 +164,7 @@ class CVE(models.Model):
         osv_dev_cve_url = f'https://api.osv.dev/v1/vulns/{self.cve_id}'
         res = get_url(osv_dev_cve_url)
         if res.status_code == 404:
-            error_message.send(sender=None, text=f'404 - Skipping {self.cve_id} - {osv_dev_cve_url}')
+            error_message(text=f'404 - Skipping {self.cve_id} - {osv_dev_cve_url}')
             return
         data = fetch_content(res, f'Fetching {self.cve_id} OSV data')
         cve_json = json.loads(data)
@@ -186,7 +188,7 @@ class CVE(models.Model):
         res = get_url(nist_cve_url)
         data = fetch_content(res, f'Fetching {self.cve_id} NIST data')
         if res.status_code == 404:
-            error_message.send(sender=None, text=f'404 - Skipping {self.cve_id} - {nist_cve_url}')
+            error_message(text=f'404 - Skipping {self.cve_id} - {nist_cve_url}')
         cve_json = json.loads(data)
         self.parse_nist_cve_data(cve_json)
 
@@ -197,7 +199,7 @@ class CVE(models.Model):
             cve = vulnerability.get('cve')
             cve_id = cve.get('id')
             if cve_id != self.cve_id:
-                error_message.send(sender=None, text=f'CVE ID mismatch - {self.cve_id} != {cve_id}')
+                error_message(text=f'CVE ID mismatch - {self.cve_id} != {cve_id}')
                 return
             metrics = cve.get('metrics')
             for metric, score_data in metrics.items():

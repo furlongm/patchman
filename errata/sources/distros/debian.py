@@ -18,17 +18,18 @@ import concurrent.futures
 import csv
 import re
 from datetime import datetime
-from debian.deb822 import Dsc
 from io import StringIO
 
+from debian.deb822 import Dsc
 from django.db import connections
 
 from operatingsystems.models import OSRelease
 from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
-from packages.utils import get_or_create_package, find_evr
-from patchman.signals import error_message, pbar_start, pbar_update, warning_message
-from util import get_url, fetch_content, get_setting_of_type, extract
+from packages.utils import find_evr, get_or_create_package
+from patchman.signals import pbar_start, pbar_update
+from util import extract, fetch_content, get_setting_of_type, get_url
+from util.logging import error_message, warning_message
 
 DSCs = {}
 
@@ -217,7 +218,7 @@ def process_debian_erratum(erratum, accepted_codenames):
             for package in packages:
                 process_debian_erratum_fixed_packages(e, package)
     except Exception as exc:
-        error_message.send(sender=None, text=exc)
+        error_message(text=exc)
 
 
 def parse_debian_erratum_package(line, accepted_codenames):
@@ -249,7 +250,7 @@ def fetch_debian_dsc_package_list(package, version):
     """ Fetch the package list from a DSC file for a given source package/version
     """
     if not DSCs.get(package) or not DSCs[package].get(version):
-        warning_message.send(sender=None, text=f'No DSC found for {package} {version}')
+        warning_message(text=f'No DSC found for {package} {version}')
         return
     source_url = DSCs[package][version]['url']
     res = get_url(source_url)
@@ -263,7 +264,7 @@ def get_accepted_debian_codenames():
     """ Get acceptable Debian OS codenames
         Can be overridden by specifying DEBIAN_CODENAMES in settings
     """
-    default_codenames = ['bookworm', 'bullseye']
+    default_codenames = ['bookworm', 'trixie']
     accepted_codenames = get_setting_of_type(
         setting_name='DEBIAN_CODENAMES',
         setting_type=list,

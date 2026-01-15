@@ -15,20 +15,19 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from django.db import IntegrityError
-from patchman.signals import error_message, info_message
 
-from modules.models import Module
 from arch.models import PackageArchitecture
+from modules.models import Module
+from util.logging import error_message, info_message
 
 
 def get_or_create_module(name, stream, version, context, arch, repo):
     """ Get or create a module object
         Returns the module
     """
-    created = False
-    m_arch, c = PackageArchitecture.objects.get_or_create(name=arch)
+    m_arch, _ = PackageArchitecture.objects.get_or_create(name=arch)
     try:
-        module, created = Module.objects.get_or_create(
+        module, _ = Module.objects.get_or_create(
             name=name,
             stream=stream,
             version=version,
@@ -37,7 +36,7 @@ def get_or_create_module(name, stream, version, context, arch, repo):
             repo=repo,
         )
     except IntegrityError as e:
-        error_message.send(sender=None, text=e)
+        error_message(text=e)
         module = Module.objects.get(
             name=name,
             stream=stream,
@@ -73,7 +72,7 @@ def clean_modules():
     )
     mlen = modules.count()
     if mlen == 0:
-        info_message.send(sender=None, text='No orphaned Modules found.')
+        info_message(text='No orphaned Modules found.')
     else:
-        info_message.send(sender=None, text=f'{mlen} orphaned Modules found.')
+        info_message(text=f'{mlen} orphaned Modules found.')
         modules.delete()

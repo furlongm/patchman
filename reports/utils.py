@@ -23,12 +23,18 @@ from arch.models import MachineArchitecture, PackageArchitecture
 from domains.models import Domain
 from hosts.models import HostRepo
 from modules.utils import get_or_create_module
-from operatingsystems.utils import get_or_create_osrelease, get_or_create_osvariant
+from operatingsystems.utils import (
+    get_or_create_osrelease, get_or_create_osvariant,
+)
 from packages.models import Package, PackageCategory
-from packages.utils import find_evr, get_or_create_package, get_or_create_package_update, parse_package_string
-from patchman.signals import pbar_start, pbar_update, info_message
-from repos.models import Repository, Mirror, MirrorPackage
+from packages.utils import (
+    find_evr, get_or_create_package, get_or_create_package_update,
+    parse_package_string,
+)
+from patchman.signals import pbar_start, pbar_update
+from repos.models import Mirror, MirrorPackage, Repository
 from repos.utils import get_or_create_repo
+from util.logging import debug_message, info_message
 
 
 def process_repos(report, host):
@@ -41,6 +47,7 @@ def process_repos(report, host):
 
         pbar_start.send(sender=None, ptext=f'{host} Repos', plen=len(repos))
         for i, repo_str in enumerate(repos):
+            debug_message(f'Processing report {report.id} repo: {repo_str}')
             repo, priority = process_repo(repo_str, report.arch)
             if repo:
                 repo_ids.append(repo.id)
@@ -87,13 +94,14 @@ def process_packages(report, host):
         packages = parse_packages(report.packages)
         pbar_start.send(sender=None, ptext=f'{host} Packages', plen=len(packages))
         for i, pkg_str in enumerate(packages):
+            debug_message(f'Processing report {report.id} package: {pkg_str}')
             package = process_package(pkg_str, report.protocol)
             if package:
                 package_ids.append(package.id)
                 host.packages.add(package)
             else:
                 if pkg_str[0].lower() != 'gpg-pubkey':
-                    info_message.send(sender=None, text=f'No package returned for {pkg_str}')
+                    info_message(text=f'No package returned for {pkg_str}')
             pbar_update.send(sender=None, index=i + 1)
 
         for package in host.packages.all():

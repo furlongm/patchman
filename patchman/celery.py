@@ -15,10 +15,11 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 import os
+
 from celery import Celery
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')  # noqa
-from django.conf import settings   # noqa
+from django.conf import settings  # noqa
 
 app = Celery('patchman')
 app.config_from_object('django.conf:settings', namespace='CELERY')

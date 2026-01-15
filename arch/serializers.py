@@ -16,7 +16,7 @@
 
 from rest_framework import serializers
 
-from arch.models import PackageArchitecture, MachineArchitecture
+from arch.models import MachineArchitecture, PackageArchitecture
 
 
 class PackageArchitectureSerializer(serializers.HyperlinkedModelSerializer):

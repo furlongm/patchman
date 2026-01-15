@@ -17,32 +17,38 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 
+import argparse
 import os
 import sys
-import argparse
 
+from django import setup as django_setup
 from django.core.exceptions import MultipleObjectsReturned
 from django.db.models import Count
-from django import setup as django_setup
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')
 from django.conf import settings  # noqa
+
 django_setup()
 
 from arch.utils import clean_architectures
-from errata.utils import mark_errata_security_updates, enrich_errata, \
-    scan_package_updates_for_affected_packages
 from errata.tasks import update_errata
+from errata.utils import (
+    enrich_errata, mark_errata_security_updates,
+    scan_package_updates_for_affected_packages,
+)
 from hosts.models import Host
+from hosts.utils import clean_tags
 from modules.utils import clean_modules
-from packages.utils import clean_packages, clean_packageupdates, clean_packagenames
+from packages.utils import (
+    clean_packagenames, clean_packages, clean_packageupdates,
+)
+from reports.models import Report
+from reports.tasks import remove_reports_with_no_hosts
 from repos.models import Repository
 from repos.utils import clean_repos
-from reports.models import Report
-from reports.tasks import clean_reports_with_no_hosts
 from security.utils import update_cves, update_cwes
-from util import set_verbosity, get_datetime_now
-from patchman.signals import info_message
+from util import get_datetime_now
+from util.logging import info_message, set_quiet_mode
 
 
 def get_host(host=None, action='Performing action'):
@@ -63,7 +69,7 @@ def get_host(host=None, action='Performing action'):
         matches = Host.objects.filter(hostname__startswith=host).count()
         text = f'{matches} Hosts match hostname "{host}"'
 
-    info_message.send(sender=None, text=text)
+    info_message(text=text)
     return host_obj
 
 
@@ -83,7 +89,7 @@ def get_hosts(hosts=None, action='Performing action'):
                     host_objs.append(host_obj)
     else:
         text = f'{action} for all Hosts\n'
-        info_message.send(sender=None, text=text)
+        info_message(text=text)
         host_objs = Host.objects.all()
 
     return host_objs
@@ -106,7 +112,7 @@ def get_repos(repo=None, action='Performing action', only_enabled=False):
         else:
             repos = Repository.objects.all()
 
-    info_message.send(sender=None, text=text)
+    info_message(text=text)
     return repos
 
 
@@ -117,9 +123,9 @@ def refresh_repos(repo=None, force=False):
     repos = get_repos(repo, 'Refreshing metadata', True)
     for repo in repos:
         text = f'Repository {repo.id} : {repo}'
-        info_message.send(sender=None, text=text)
+        info_message(text=text)
         repo.refresh(force)
-        info_message.send(sender=None, text='')
+        info_message(text='')
 
 
 def list_repos(repos=None):
@@ -150,7 +156,7 @@ def clean_reports(hoststr=None):
         host.clean_reports()
 
     if not hoststr:
-        clean_reports_with_no_hosts()
+        remove_reports_with_no_hosts()
 
 
 def host_updates_alt(host=None):
@@ -160,10 +166,10 @@ def host_updates_alt(host=None):
     hosts = get_hosts(host, 'Finding updates')
     ts = get_datetime_now()
     for host in hosts:
-        info_message.send(sender=None, text=str(host))
+        info_message(text=str(host))
         if host not in updated_hosts:
             host.find_updates()
-            info_message.send(sender=None, text='')
+            info_message(text='')
             host.updated_at = ts
             host.save()
 
@@ -199,10 +205,10 @@ def host_updates_alt(host=None):
                 phost.save()
                 updated_hosts.append(phost)
                 text = f'Added the same updates to {phost}'
-                info_message.send(sender=None, text=text)
+                info_message(text=text)
         else:
             text = 'Updates already added in this run'
-            info_message.send(sender=None, text=text)
+            info_message(text=text)
 
 
 def host_updates(host=None):
@@ -210,9 +216,9 @@ def host_updates(host=None):
     """
     hosts = get_hosts(host, 'Finding updates')
     for host in hosts:
-        info_message.send(sender=None, text=str(host))
+        info_message(text=str(host))
         host.find_updates()
-        info_message.send(sender=None, text='')
+        info_message(text='')
 
 
 def diff_hosts(hosts):
@@ -235,47 +241,47 @@ def diff_hosts(hosts):
     repo_diff_AB = reposA.difference(reposB)
     repo_diff_BA = reposB.difference(reposA)
 
-    info_message.send(sender=None, text=f'+ {hostA.hostname}')
-    info_message.send(sender=None, text=f'- {hostB.hostname}')
+    info_message(text=f'+ {hostA.hostname}')
+    info_message(text=f'- {hostB.hostname}')
 
     if hostA.os != hostB.os:
-        info_message.send(sender=None, text='\nOperating Systems')
-        info_message.send(sender=None, text=f'+ {hostA.os}')
-        info_message.send(sender=None, text=f'- {hostB.os}')
+        info_message(text='\nOperating Systems')
+        info_message(text=f'+ {hostA.os}')
+        info_message(text=f'- {hostB.os}')
     else:
-        info_message.send(sender=None, text='\nNo OS differences')
+        info_message(text='\nNo OS differences')
 
     if hostA.arch != hostB.arch:
-        info_message.send(sender=None, text='\nArchitecture')
-        info_message.send(sender=None, text=f'+ {hostA.arch}')
-        info_message.send(sender=None, text=f'- {hostB.arch}')
+        info_message(text='\nArchitecture')
+        info_message(text=f'+ {hostA.arch}')
+        info_message(text=f'- {hostB.arch}')
     else:
-        info_message.send(sender=None, text='\nNo Architecture differences')
+        info_message(text='\nNo Architecture differences')
 
     if hostA.kernel != hostB.kernel:
-        info_message.send(sender=None, text='\nKernels')
-        info_message.send(sender=None, text=f'+ {hostA.kernel}')
-        info_message.send(sender=None, text=f'- {hostB.kernel}')
+        info_message(text='\nKernels')
+        info_message(text=f'+ {hostA.kernel}')
+        info_message(text=f'- {hostB.kernel}')
     else:
-        info_message.send(sender=None, text='\nNo Kernel differences')
+        info_message(text='\nNo Kernel differences')
 
     if len(package_diff_AB) != 0 or len(package_diff_BA) != 0:
-        info_message.send(sender=None, text='\nPackages')
+        info_message(text='\nPackages')
         for package in package_diff_AB:
-            info_message.send(sender=None, text=f'+ {package}')
+            info_message(text=f'+ {package}')
         for package in package_diff_BA:
-            info_message.send(sender=None, text=f'- {package}')
+            info_message(text=f'- {package}')
     else:
-        info_message.send(sender=None, text='\nNo Package differences')
+        info_message(text='\nNo Package differences')
 
     if len(repo_diff_AB) != 0 or len(repo_diff_BA) != 0:
-        info_message.send(sender=None, text='\nRepositories')
+        info_message(text='\nRepositories')
         for repo in repo_diff_AB:
-            info_message.send(sender=None, text=f'+ {repo}')
+            info_message(text=f'+ {repo}')
         for repo in repo_diff_BA:
-            info_message.send(sender=None, text=f'- {repo}')
+            info_message(text=f'- {repo}')
     else:
-        info_message.send(sender=None, text='\nNo Repo differences')
+        info_message(text='\nNo Repo differences')
 
 
 def delete_hosts(hosts=None):
@@ -285,7 +291,7 @@ def delete_hosts(hosts=None):
         matching_hosts = get_hosts(hosts)
         for host in matching_hosts:
             text = f'Deleting host: {host.hostname}:'
-            info_message.send(sender=None, text=text)
+            info_message(text=text)
             host.delete()
 
 
@@ -299,7 +305,7 @@ def toggle_host_hro(hosts=None, host_repos_only=True):
     if hosts:
         matching_hosts = get_hosts(hosts, f'{toggle} host_repos_only')
         for host in matching_hosts:
-            info_message.send(sender=None, text=str(host))
+            info_message(text=str(host))
             host.host_repos_only = host_repos_only
             host.save()
 
@@ -314,7 +320,7 @@ def toggle_host_check_dns(hosts=None, check_dns=True):
     if hosts:
         matching_hosts = get_hosts(hosts, f'{toggle} check_dns')
         for host in matching_hosts:
-            info_message.send(sender=None, text=str(host))
+            info_message(text=str(host))
             host.check_dns = check_dns
             host.save()
 
@@ -346,7 +352,7 @@ def process_reports(host=None, force=False):
         text = 'Processing Reports for all Hosts'
         reports = Report.objects.filter(processed=force).order_by('created')
 
-    info_message.send(sender=None, text=text)
+    info_message(text=text)
 
     for report in reports:
         report.process(find_updates=False)
@@ -362,6 +368,7 @@ def dbcheck(remove_duplicates=False):
     clean_repos()
     clean_modules()
     clean_packageupdates()
+    clean_tags()
 
 
 def collect_args():
@@ -540,7 +547,7 @@ def main():
 
     parser = collect_args()
     args = parser.parse_args()
-    set_verbosity(not args.quiet)
+    set_quiet_mode(args.quiet)
     showhelp = process_args(args)
     if showhelp:
         parser.print_help()

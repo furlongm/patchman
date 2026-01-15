@@ -15,20 +15,21 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
-
-from django.http import HttpResponse, Http404
-from django.views.decorators.csrf import csrf_exempt
-from django.shortcuts import get_object_or_404, render, redirect
-from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.urls import reverse
-from django.db.models import Q
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from django.db.models import Q
 from django.db.utils import OperationalError
+from django.http import Http404, HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
+from tenacity import (
+    retry, retry_if_exception_type, stop_after_attempt, wait_exponential,
+)
 
-from util.filterspecs import Filter, FilterBar
 from reports.models import Report
+from util.filterspecs import Filter, FilterBar
 
 
 @retry(

@@ -14,8 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from arch.models import PackageArchitecture, MachineArchitecture
-from patchman.signals import info_message
+from arch.models import MachineArchitecture, PackageArchitecture
+from util.logging import info_message
 
 
 def clean_package_architectures():
@@ -24,9 +24,9 @@ def clean_package_architectures():
     parches = PackageArchitecture.objects.filter(package__isnull=True)
     plen = parches.count()
     if plen == 0:
-        info_message.send(sender=None, text='No orphaned PackageArchitectures found.')
+        info_message(text='No orphaned PackageArchitectures found.')
     else:
-        info_message.send(sender=None, text=f'Removing {plen} orphaned PackageArchitectures')
+        info_message(text=f'Removing {plen} orphaned PackageArchitectures')
         parches.delete()
 
 
@@ -39,9 +39,9 @@ def clean_machine_architectures():
     )
     mlen = marches.count()
     if mlen == 0:
-        info_message.send(sender=None, text='No orphaned MachineArchitectures found.')
+        info_message(text='No orphaned MachineArchitectures found.')
     else:
-        info_message.send(sender=None, text=f'Removing {mlen} orphaned MachineArchitectures')
+        info_message(text=f'Removing {mlen} orphaned MachineArchitectures')
         marches.delete()
 
 

@@ -1,6 +1,7 @@
 from django.db import migrations
 from django.utils import timezone
 
+
 def make_datetimes_tz_aware(apps, schema_editor):
     Host = apps.get_model('hosts', 'Host')
     for host in Host.objects.all():

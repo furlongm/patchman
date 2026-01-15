@@ -15,12 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with  If not, see <http://www.gnu.org/licenses/>
 
-from django.conf.urls import include, handler404, handler500  # noqa
 from django.conf import settings
+from django.conf.urls import handler404, handler500, include  # noqa
 from django.contrib import admin
 from django.urls import path
 from django.views import static
-
 from rest_framework import routers
 
 from arch import views as arch_views
@@ -44,7 +43,7 @@ router.register(r'package-name', package_views.PackageNameViewSet)
 router.register(r'package', package_views.PackageViewSet)
 router.register(r'package-update', package_views.PackageUpdateViewSet)
 router.register(r'cve', security_views.CVEViewSet)
-router.register(r'reference', security_views.ReferenceViewSet),
+router.register(r'reference', security_views.ReferenceViewSet)
 router.register(r'erratum', errata_views.ErratumViewSet)
 router.register(r'repo', repo_views.RepositoryViewSet)
 router.register(r'mirror', repo_views.MirrorViewSet)

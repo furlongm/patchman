@@ -20,13 +20,12 @@ from django.urls import reverse
 
 from arch.models import MachineArchitecture
 from packages.models import Package
-from util import get_setting_of_type
-
-from repos.repo_types.deb import refresh_deb_repo
-from repos.repo_types.rpm import refresh_rpm_repo, refresh_repo_errata
 from repos.repo_types.arch import refresh_arch_repo
+from repos.repo_types.deb import refresh_deb_repo
 from repos.repo_types.gentoo import refresh_gentoo_repo
-from patchman.signals import info_message, warning_message, error_message
+from repos.repo_types.rpm import refresh_repo_errata, refresh_rpm_repo
+from util import get_setting_of_type
+from util.logging import error_message, info_message, warning_message
 
 
 class Repository(models.Model):
@@ -72,7 +71,7 @@ class Repository(models.Model):
         text += f'arch: {self.arch}\n'
         text += 'Mirrors:'
 
-        info_message.send(sender=None, text=text)
+        info_message(text=text)
 
         for mirror in self.mirror_set.all():
             mirror.show()
@@ -99,10 +98,10 @@ class Repository(models.Model):
                 refresh_gentoo_repo(self)
             else:
                 text = f'Error: unknown repo type for repo {self.id}: {self.repotype}'
-                error_message.send(sender=None, text=text)
+                error_message(text=text)
         else:
             text = 'Repo requires authentication, not updating'
-            warning_message.send(sender=None, text=text)
+            warning_message(text=text)
 
     def refresh_errata(self, force=False):
         """ Refresh errata metadata for all of a repos mirrors
@@ -168,7 +167,7 @@ class Mirror(models.Model):
         text = f' {self.id} : {self.url}\n'
         text += ' last updated: '
         text += f'{self.timestamp}    checksum: {self.packages_checksum}\n'
-        info_message.send(sender=None, text=text)
+        info_message(text=text)
 
     def fail(self):
         """ Records that the mirror has failed
@@ -178,10 +177,10 @@ class Mirror(models.Model):
         """
         if self.repo.auth_required:
             text = f'Mirror requires authentication, not updating - {self.url}'
-            warning_message.send(sender=None, text=text)
+            warning_message(text=text)
             return
         text = f'No usable mirror found at {self.url}'
-        error_message.send(sender=None, text=text)
+        error_message(text=text)
         default_max_mirror_failures = 28
         max_mirror_failures = get_setting_of_type(
             setting_name='MAX_MIRROR_FAILURES',
@@ -191,11 +190,11 @@ class Mirror(models.Model):
         self.fail_count = self.fail_count + 1
         if max_mirror_failures == -1:
             text = f'Mirror has failed {self.fail_count} times, but MAX_MIRROR_FAILURES=-1, not disabling refresh'
-            error_message.send(sender=None, text=text)
+            error_message(text=text)
         elif self.fail_count > max_mirror_failures:
             self.refresh = False
             text = f'Mirror has failed {self.fail_count} times (max={max_mirror_failures}), disabling refresh'
-            error_message.send(sender=None, text=text)
+            error_message(text=text)
         self.last_access_ok = False
         self.save()
 

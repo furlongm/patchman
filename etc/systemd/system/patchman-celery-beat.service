@@ -1,0 +1,21 @@
+[Unit]
+Description=Patchman Celery Beat Scheduler Service
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=patchman
+Group=patchman
+Environment="REDIS_HOST=127.0.0.1"
+Environment="REDIS_PORT=6379"
+EnvironmentFile=/etc/patchman/celery.conf
+ExecStart=/usr/bin/celery \
+    --broker redis://${REDIS_HOST}:${REDIS_PORT}/0 \
+    --app patchman \
+    beat \
+    --loglevel info \
+    --scheduler django_celery_beat.schedulers:DatabaseScheduler
+
+[Install]
+WantedBy=multi-user.target

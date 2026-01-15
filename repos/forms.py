@@ -15,10 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.forms import ModelForm, ModelMultipleChoiceField, TextInput, Form, ModelChoiceField, ValidationError
 from django.contrib.admin.widgets import FilteredSelectMultiple
+from django.forms import (
+    Form, ModelChoiceField, ModelForm, ModelMultipleChoiceField, TextInput,
+    ValidationError,
+)
 
-from repos.models import Repository, Mirror
+from repos.models import Mirror, Repository
 
 
 class EditRepoForm(ModelForm):

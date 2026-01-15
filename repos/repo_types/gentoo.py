@@ -14,21 +14,28 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-import git
 import os
 import shutil
 import tarfile
 import tempfile
-from defusedxml import ElementTree
 from fnmatch import fnmatch
 from io import BytesIO
 from pathlib import Path
 
+import git
+from defusedxml import ElementTree
+
 from packages.models import PackageString
 from packages.utils import find_evr
-from patchman.signals import info_message, warning_message, error_message, pbar_start, pbar_update
-from repos.utils import add_mirrors_from_urls, mirror_checksum_is_valid, update_mirror_packages
-from util import extract, get_url, get_datetime_now, get_checksum, Checksum, fetch_content, response_is_valid
+from patchman.signals import pbar_start, pbar_update
+from repos.utils import (
+    add_mirrors_from_urls, mirror_checksum_is_valid, update_mirror_packages,
+)
+from util import (
+    Checksum, extract, fetch_content, get_checksum, get_datetime_now, get_url,
+    response_is_valid,
+)
+from util.logging import error_message, info_message, warning_message
 
 
 def refresh_gentoo_main_repo(repo):
@@ -44,7 +51,7 @@ def refresh_gentoo_main_repo(repo):
             continue
 
         res = get_url(mirror.url + '.md5sum')
-        data = fetch_content(res, 'Fetching Repo checksum')
+        data = fetch_content(res, 'Fetching Gentoo Repo checksum')
         if data is None:
             mirror.fail()
             continue
@@ -56,7 +63,7 @@ def refresh_gentoo_main_repo(repo):
 
         if mirror.packages_checksum == checksum:
             text = 'Mirror checksum has not changed, not refreshing Package metadata'
-            warning_message.send(sender=None, text=text)
+            warning_message(text=text)
             continue
 
         res = get_url(mirror.url)
@@ -65,12 +72,12 @@ def refresh_gentoo_main_repo(repo):
             mirror.fail()
             continue
 
-        data = fetch_content(res, 'Fetching Repo data')
+        data = fetch_content(res, 'Fetching Gentoo Repo data')
         if data is None:
             mirror.fail()
             continue
         extracted = extract(data, mirror.url)
-        info_message.send(sender=None, text=f'Found Gentoo Repo - {mirror.url}')
+        info_message(text=f'Found Gentoo Repo - {mirror.url}')
 
         computed_checksum = get_checksum(data, Checksum.md5)
         if not mirror_checksum_is_valid(computed_checksum, checksum, mirror, 'package'):
@@ -165,7 +172,7 @@ def get_gentoo_overlay_mirrors(repo_name):
                         if element.text.startswith('http'):
                             mirrors.append(element.text)
     except ElementTree.ParseError as e:
-        error_message.send(sender=None, text=f'Error parsing {gentoo_overlays_url}: {e}')
+        error_message(text=f'Error parsing {gentoo_overlays_url}: {e}')
     return mirrors
 
 
@@ -199,7 +206,7 @@ def get_gentoo_mirror_urls():
                             if element.get('protocol') == 'http':
                                 mirrors[name]['urls'].append(element.text)
     except ElementTree.ParseError as e:
-        error_message.send(sender=None, text=f'Error parsing {gentoo_distfiles_url}: {e}')
+        error_message(text=f'Error parsing {gentoo_distfiles_url}: {e}')
     mirror_urls = []
     # for now, ignore region data and choose MAX_MIRRORS mirrors at random
     for _, v in mirrors.items():
@@ -226,7 +233,7 @@ def extract_gentoo_overlay_ebuilds(t):
     """ Extract ebuilds from a Gentoo overlay tarball
     """
     extracted_ebuilds = {}
-    for root, dirs, files in os.walk(t):
+    for root, _, files in os.walk(t):
         for name in files:
             if fnmatch(name, '*.ebuild'):
                 package_name = root.replace(t + '/', '')
@@ -274,7 +281,7 @@ def extract_gentoo_packages_from_ebuilds(extracted_ebuilds):
             )
             packages.add(package)
     plen = len(packages)
-    info_message.send(sender=None, text=f'Extracted {plen} Packages', plen=plen)
+    info_message(text=f'Extracted {plen} Packages', plen=plen)
     return packages
 
 
@@ -282,7 +289,7 @@ def extract_gentoo_overlay_packages(mirror):
     """ Extract packages from gentoo overlay repo
     """
     t = tempfile.mkdtemp()
-    info_message.send(sender=None, text=f'Extracting Gentoo packages from {mirror.url}')
+    info_message(text=f'Extracting Gentoo packages from {mirror.url}')
     git.Repo.clone_from(mirror.url, t, depth=1)
     packages = set()
     extracted_ebuilds = extract_gentoo_overlay_ebuilds(t)

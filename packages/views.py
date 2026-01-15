@@ -15,17 +15,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.shortcuts import get_object_or_404, render
 from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import Q
-
+from django.shortcuts import get_object_or_404, render
 from rest_framework import viewsets
 
-from util.filterspecs import Filter, FilterBar
-from packages.models import PackageName, Package, PackageUpdate
 from arch.models import PackageArchitecture
-from packages.serializers import PackageNameSerializer, PackageSerializer, PackageUpdateSerializer
+from packages.models import Package, PackageName, PackageUpdate
+from packages.serializers import (
+    PackageNameSerializer, PackageSerializer, PackageUpdateSerializer,
+)
+from util.filterspecs import Filter, FilterBar
 
 
 @login_required
@@ -62,9 +63,16 @@ def package_list(request):
     if 'affected_by_errata' in request.GET:
         affected_by_errata = request.GET['affected_by_errata'] == 'true'
         if affected_by_errata:
-            packages = packages.filter(erratum__isnull=False)
+            packages = packages.filter(affected_by_erratum__isnull=False)
         else:
-            packages = packages.filter(erratum__isnull=True)
+            packages = packages.filter(affected_by_erratum__isnull=True)
+
+    if 'provides_fix_in_erratum' in request.GET:
+        provides_fix_in_erratum = request.GET['provides_fix_in_erratum'] == 'true'
+        if provides_fix_in_erratum:
+            packages = packages.filter(provides_fix_in_erratum__isnull=False)
+        else:
+            packages = packages.filter(provides_fix_in_erratum__isnull=True)
 
     if 'installed_on_hosts' in request.GET:
         installed_on_hosts = request.GET['installed_on_hosts'] == 'true'
@@ -102,6 +110,8 @@ def package_list(request):
 
     filter_list = []
     filter_list.append(Filter(request, 'Affected by Errata', 'affected_by_errata', {'true': 'Yes', 'false': 'No'}))
+    filter_list.append(Filter(request, 'Provides Fix in Errata', 'provides_fix_in_erratum',
+                              {'true': 'Yes', 'false': 'No'}))
     filter_list.append(Filter(request, 'Installed on Hosts', 'installed_on_hosts', {'true': 'Yes', 'false': 'No'}))
     filter_list.append(Filter(request, 'Available in Repos', 'available_in_repos', {'true': 'Yes', 'false': 'No'}))
     filter_list.append(Filter(request, 'Package Type', 'packagetype', Package.PACKAGE_TYPES))

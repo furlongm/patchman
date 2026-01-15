@@ -15,15 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from colorama import init, Fore, Style
-from tqdm import tqdm
-
-from django.dispatch import receiver
-
-from util import create_pbar, update_pbar, get_verbosity
-from patchman.signals import pbar_start, pbar_update, info_message, warning_message, error_message, debug_message
-
+from colorama import Fore, Style, init
 from django.conf import settings
+from django.dispatch import receiver
+from tqdm.contrib.logging import logging_redirect_tqdm
+
+from patchman.signals import (
+    debug_message_s, error_message_s, info_message_s, pbar_start, pbar_update,
+    warning_message_s,
+)
+from util.logging import create_pbar, get_quiet_mode, logger, update_pbar
 
 init(autoreset=True)
 
@@ -47,37 +48,42 @@ def pbar_update_receiver(**kwargs):
         update_pbar(index)
 
 
-@receiver(info_message)
-def print_info_message(sender=None, **kwargs):
-    """ Receiver to print an info message, no color
+@receiver(info_message_s)
+def print_info_message(**kwargs):
+    """ Receiver to handle an info message, no color
     """
     text = str(kwargs.get('text'))
-    if get_verbosity():
-        tqdm.write(Style.RESET_ALL + Fore.RESET + text)
+    if not get_quiet_mode():
+        with logging_redirect_tqdm(loggers=[logger]):
+            for line in text.splitlines():
+                logger.info(Style.RESET_ALL + Fore.RESET + line)
 
 
-@receiver(warning_message)
+@receiver(warning_message_s)
 def print_warning_message(**kwargs):
-    """ Receiver to print a warning message in yellow text
+    """ Receiver to handle a warning message, yellow text
     """
     text = str(kwargs.get('text'))
-    if get_verbosity():
-        tqdm.write(Style.BRIGHT + Fore.YELLOW + text)
+    if not get_quiet_mode():
+        with logging_redirect_tqdm():
+            logger.warning(Style.BRIGHT + Fore.YELLOW + text)
 
 
-@receiver(error_message)
+@receiver(error_message_s)
 def print_error_message(**kwargs):
-    """ Receiver to print an error message in red text
+    """ Receiver to handle an error message, red text
     """
     text = str(kwargs.get('text'))
     if text:
-        tqdm.write(Style.BRIGHT + Fore.RED + text)
+        with logging_redirect_tqdm():
+            logger.error(Style.BRIGHT + Fore.RED + text)
 
 
-@receiver(debug_message)
+@receiver(debug_message_s)
 def print_debug_message(**kwargs):
-    """ Receiver to print a debug message in blue, if verbose and DEBUG are set
+    """ Receiver to handle a debug message, blue text if DEBUG is set
     """
     text = str(kwargs.get('text'))
-    if get_verbosity() and settings.DEBUG and text:
-        tqdm.write(Style.BRIGHT + Fore.BLUE + text)
+    if settings.DEBUG and text:
+        with logging_redirect_tqdm(loggers=[logger]):
+            logger.debug(Style.BRIGHT + Fore.BLUE + text)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright 2013-2021 Marcus Furlong <furlongm@gmail.com>
+# Copyright 2013-2025 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of Patchman.
 #
@@ -17,7 +17,9 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 import os
-from setuptools import setup, find_packages
+import sys
+
+from setuptools import find_packages, setup
 
 with open('VERSION.txt', 'r', encoding='utf_8') as v:
     version = v.readline().strip()
@@ -28,8 +30,14 @@ with open('README.md', 'r', encoding='utf_8') as r:
 with open('requirements.txt', 'r', encoding='utf_8') as rt:
     install_requires = rt.read().splitlines()
 
-
 data_files = []
+if 'bdist_rpm' in sys.argv:
+    data_files.append(
+        ('/usr/lib/systemd/system', [
+            'etc/systemd/system/patchman-celery-worker@.service',
+            'etc/systemd/system/patchman-celery-beat.service'
+        ])
+    )
 
 for dirpath, dirnames, filenames in os.walk('etc'):
     # Ignore dirnames that start with '.'

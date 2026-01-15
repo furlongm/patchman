@@ -15,11 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from socket import gethostbyaddr, gaierror, herror
+from socket import gaierror, gethostbyaddr, herror
 
-from django.db import transaction, IntegrityError
+from django.db import IntegrityError, transaction
+from taggit.models import Tag
 
-from patchman.signals import error_message
+from util.logging import error_message, info_message
 
 
 def update_rdns(host):
@@ -62,14 +63,28 @@ def get_or_create_host(report, arch, osvariant, domain):
             host.osvariant = osvariant
             host.domain = domain
             host.lastreport = report.created
-            host.tags = report.tags
+            host.tags.set(report.tags.split(','), clear=True)
             if report.reboot == 'True':
                 host.reboot_required = True
             else:
                 host.reboot_required = False
             host.save()
     except IntegrityError as e:
-        error_message.send(sender=None, text=e)
+        error_message(text=e)
     if host:
         host.check_rdns()
         return host
+
+
+def clean_tags():
+    """ Delete Tags that have no Host
+    """
+    tags = Tag.objects.filter(
+        host__isnull=True,
+    )
+    tlen = tags.count()
+    if tlen == 0:
+        info_message(text='No orphaned Tags found.')
+    else:
+        info_message(text=f'{tlen} orphaned Tags found.')
+        tags.delete()

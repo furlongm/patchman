@@ -15,13 +15,17 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 import re
+
 from debian.deb822 import Packages
 from debian.debian_support import Version
 
 from packages.models import PackageString
-from patchman.signals import error_message, pbar_start, pbar_update, info_message, warning_message
-from repos.utils import fetch_mirror_data, update_mirror_packages, find_mirror_url
-from util import get_datetime_now, get_checksum, Checksum, extract
+from patchman.signals import pbar_start, pbar_update
+from repos.utils import (
+    fetch_mirror_data, find_mirror_url, update_mirror_packages,
+)
+from util import Checksum, extract, get_checksum, get_datetime_now
+from util.logging import error_message, info_message, warning_message
 
 
 def extract_deb_packages(data, url):
@@ -30,7 +34,7 @@ def extract_deb_packages(data, url):
     try:
         extracted = extract(data, url).decode('utf-8')
     except UnicodeDecodeError as e:
-        error_message.send(sender=None, text=f'Skipping {url} : {e}')
+        error_message(text=f'Skipping {url} : {e}')
         return
     package_re = re.compile('^Package: ', re.M)
     plen = len(package_re.findall(extracted))
@@ -61,7 +65,7 @@ def extract_deb_packages(data, url):
                                     packagetype='D')
             packages.add(package)
     else:
-        info_message.send(sender=None, text='No packages found in repo')
+        info_message(text='No packages found in repo')
     return packages
 
 
@@ -71,7 +75,12 @@ def refresh_deb_repo(repo):
         are and then fetches and extracts packages from those files.
     """
 
-    formats = ['Packages.xz', 'Packages.bz2', 'Packages.gz', 'Packages']
+    formats = [
+        'Packages.xz',
+        'Packages.bz2',
+        'Packages.gz',
+        'Packages',
+    ]
 
     ts = get_datetime_now()
     enabled_mirrors = repo.mirror_set.filter(refresh=True, enabled=True)
@@ -81,19 +90,19 @@ def refresh_deb_repo(repo):
             continue
         mirror_url = res.url
         text = f'Found deb Repo - {mirror_url}'
-        info_message.send(sender=None, text=text)
+        info_message(text=text)
 
         package_data = fetch_mirror_data(
             mirror=mirror,
             url=mirror_url,
-            text='Fetching Repo data')
+            text='Fetching Debian Repo data')
         if not package_data:
             continue
 
         computed_checksum = get_checksum(package_data, Checksum.sha1)
         if mirror.packages_checksum == computed_checksum:
             text = 'Mirror checksum has not changed, not refreshing Package metadata'
-            warning_message.send(sender=None, text=text)
+            warning_message(text=text)
             continue
         else:
             mirror.packages_checksum = computed_checksum

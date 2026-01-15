@@ -19,7 +19,7 @@ from django.db import models
 from django.urls import reverse
 
 from hosts.utils import get_or_create_host
-from patchman.signals import error_message, info_message
+from util.logging import error_message, info_message
 
 
 class Report(models.Model):
@@ -97,23 +97,25 @@ class Report(models.Model):
         """ Process a report and extract os, arch, domain, packages, repos etc
         """
         if not self.os or not self.kernel or not self.arch:
-            error_message.send(sender=None, text=f'Error: OS, kernel or arch not sent with report {self.id}')
+            error_message(text=f'Error: OS, kernel or arch not sent with report {self.id}')
             return
 
         if self.processed:
-            info_message.send(sender=None, text=f'Report {self.id} has already been processed')
+            info_message(text=f'Report {self.id} has already been processed')
             return
 
-        from reports.utils import get_arch, get_os, get_domain
+        from reports.utils import get_arch, get_domain, get_os
         arch = get_arch(self.arch)
         osvariant = get_os(self.os, arch)
         domain = get_domain(self.domain)
         host = get_or_create_host(self, arch, osvariant, domain)
 
         if verbose:
-            info_message.send(sender=None, text=f'Processing report {self.id} - {self.host}')
+            info_message(text=f'Processing report {self.id} - {self.host}')
 
-        from reports.utils import process_packages, process_repos, process_updates, process_modules
+        from reports.utils import (
+            process_modules, process_packages, process_repos, process_updates,
+        )
         process_repos(report=self, host=host)
         process_modules(report=self, host=host)
         process_packages(report=self, host=host)
@@ -124,5 +126,5 @@ class Report(models.Model):
 
         if find_updates:
             if verbose:
-                info_message.send(sender=None, text=f'Finding updates for report {self.id} - {self.host}')
+                info_message(text=f'Finding updates for report {self.id} - {self.host}')
             host.find_updates()

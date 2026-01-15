@@ -15,63 +15,48 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-import requests
 import bz2
-import magic
-import zlib
 import lzma
+import os
+import zlib
+
+import magic
+import requests
+
+try:
+    # python 3.14+ - can also remove the dependency at that stage
+    from compression import zstd
+except ImportError:
+    import zstandard as zstd
+
 from datetime import datetime, timezone
 from enum import Enum
 from hashlib import md5, sha1, sha256, sha512
-from requests.exceptions import HTTPError, Timeout, ConnectionError
-from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 from time import time
-from tqdm import tqdm
 
-from patchman.signals import error_message, info_message, debug_message
-
-from django.utils.timezone import make_aware
-from django.utils.dateparse import parse_datetime
 from django.conf import settings
+from django.utils.dateparse import parse_datetime
+from django.utils.timezone import make_aware
+from requests.exceptions import ConnectionError, HTTPError, Timeout
+from tenacity import (
+    retry, retry_if_exception_type, stop_after_attempt, wait_exponential,
+)
 
+from util.logging import (
+    create_pbar, debug_message, error_message, info_message, quiet_mode,
+    update_pbar,
+)
 
 pbar = None
-verbose = None
+verbose = not quiet_mode
 Checksum = Enum('Checksum', 'md5 sha sha1 sha256 sha512')
 
-
-def get_verbosity():
-    """ Get the global verbosity level
-    """
-    return verbose
-
-
-def set_verbosity(value):
-    """ Set the global verbosity level
-    """
-    global verbose
-    verbose = value
-
-
-def create_pbar(ptext, plength, ljust=35, **kwargs):
-    """ Create a global progress bar if global verbose is True
-    """
-    global pbar
-    if verbose and plength > 0:
-        jtext = str(ptext).ljust(ljust)
-        pbar = tqdm(total=plength, desc=jtext, position=0, leave=True, ascii=' >=')
-        return pbar
-
-
-def update_pbar(index, **kwargs):
-    """ Update the global progress bar if global verbose is True
-    """
-    global pbar
-    if verbose and pbar:
-        pbar.update(n=index-pbar.n)
-        if index >= pbar.total:
-            pbar.close()
-            pbar = None
+http_proxy = os.getenv('http_proxy')
+https_proxy = os.getenv('https_proxy')
+proxies = {
+   'http': http_proxy,
+   'https': https_proxy,
+}
 
 
 def fetch_content(response, text='', ljust=35):
@@ -97,7 +82,7 @@ def fetch_content(response, text='', ljust=35):
                 data += chunk
             return data
         else:
-            info_message.send(sender=None, text=text)
+            info_message(text=text)
     return response.content
 
 
@@ -107,21 +92,25 @@ def fetch_content(response, text='', ljust=35):
     wait=wait_exponential(multiplier=1, min=1, max=10),
     reraise=False,
 )
-def get_url(url, headers={}, params={}):
+def get_url(url, headers=None, params=None):
     """ Perform a http GET on a URL. Return None on error.
     """
     response = None
+    if not headers:
+        headers = {}
+    if not params:
+        params = {}
     try:
-        debug_message.send(sender=None, text=f'Trying {url} headers:{headers} params:{params}')
-        response = requests.get(url, headers=headers, params=params, stream=True, timeout=30)
-        debug_message.send(sender=None, text=f'{response.status_code}: {response.headers}')
+        debug_message(text=f'Trying {url} headers:{headers} params:{params}')
+        response = requests.get(url, headers=headers, params=params, stream=True, proxies=proxies, timeout=30)
+        debug_message(text=f'{response.status_code}: {response.headers}')
         if response.status_code in [403, 404]:
             return response
         response.raise_for_status()
     except requests.exceptions.TooManyRedirects:
-        error_message.send(sender=None, text=f'Too many redirects - {url}')
+        error_message(text=f'Too many redirects - {url}')
     except ConnectionError:
-        error_message.send(sender=None, text=f'Connection error - {url}')
+        error_message(text=f'Connection error - {url}')
     return response
 
 
@@ -164,7 +153,7 @@ def gunzip(contents):
         wbits = zlib.MAX_WBITS | 32
         return zlib.decompress(contents, wbits)
     except zlib.error as e:
-        error_message.send(sender=None, text='gunzip: ' + str(e))
+        error_message(text='gunzip: ' + str(e))
 
 
 def bunzip2(contents):
@@ -175,10 +164,10 @@ def bunzip2(contents):
         return bzip2data
     except IOError as e:
         if e == 'invalid data stream':
-            error_message.send(sender=None, text='bunzip2: ' + e)
+            error_message(text='bunzip2: ' + e)
     except ValueError as e:
         if e == "couldn't find end of stream":
-            error_message.send(sender=None, text='bunzip2: ' + e)
+            error_message(text='bunzip2: ' + e)
 
 
 def unxz(contents):
@@ -188,7 +177,17 @@ def unxz(contents):
         xzdata = lzma.decompress(contents)
         return xzdata
     except lzma.LZMAError as e:
-        error_message.send(sender=None, text='lzma: ' + e)
+        error_message(text='lzma: ' + e)
+
+
+def unzstd(contents):
+    """ unzstd contents in memory and return the data
+    """
+    try:
+        zstddata = zstd.ZstdDecompressor().stream_reader(contents).read()
+        return zstddata
+    except zstd.ZstdError as e:
+        error_message(text=f'zstd: {e}')
 
 
 def extract(data, fmt):
@@ -203,6 +202,8 @@ def extract(data, fmt):
         m = magic.open(magic.MAGIC_MIME)
         m.load()
         mime = m.buffer(data).split(';')[0]
+    if mime == 'application/zstd' or fmt.endswith('zst'):
+        return unzstd(data)
     if mime == 'application/x-xz' or fmt.endswith('xz'):
         return unxz(data)
     elif mime == 'application/x-bzip2' or fmt.endswith('bz2'):
@@ -225,7 +226,7 @@ def get_checksum(data, checksum_type):
         checksum = get_md5(data)
     else:
         text = f'Unknown checksum type: {checksum_type}'
-        error_message.send(sender=None, text=text)
+        error_message(text=text)
     return checksum
 
 

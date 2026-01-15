@@ -28,6 +28,10 @@ jobs:
           pip install flake8
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           flake8 . --count --max-line-length=120 --show-source --statistics
+      - name: Check isort
+        run: |
+          pip install isort
+          isort --check --profile=django .
       - name: Set secret key
         run: ./sbin/patchman-set-secret-key
       - name: Test with django

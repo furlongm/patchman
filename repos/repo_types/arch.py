@@ -18,9 +18,13 @@ import tarfile
 from io import BytesIO
 
 from packages.models import PackageString
-from patchman.signals import info_message, warning_message, pbar_start, pbar_update
-from repos.utils import get_max_mirrors, fetch_mirror_data, find_mirror_url, update_mirror_packages
-from util import get_datetime_now, get_checksum, Checksum
+from patchman.signals import pbar_start, pbar_update
+from repos.utils import (
+    fetch_mirror_data, find_mirror_url, get_max_mirrors,
+    update_mirror_packages,
+)
+from util import Checksum, get_checksum, get_datetime_now
+from util.logging import info_message, warning_message
 
 
 def refresh_arch_repo(repo):
@@ -34,7 +38,7 @@ def refresh_arch_repo(repo):
     for i, mirror in enumerate(enabled_mirrors):
         if i >= max_mirrors:
             text = f'{max_mirrors} Mirrors already refreshed (max={max_mirrors}), skipping further refreshes'
-            warning_message.send(sender=None, text=text)
+            warning_message(text=text)
             break
 
         res = find_mirror_url(mirror.url, [fname])
@@ -42,19 +46,19 @@ def refresh_arch_repo(repo):
             continue
         mirror_url = res.url
         text = f'Found Arch Repo - {mirror_url}'
-        info_message.send(sender=None, text=text)
+        info_message(text=text)
 
         package_data = fetch_mirror_data(
             mirror=mirror,
             url=mirror_url,
-            text='Fetching Repo data')
+            text='Fetching Arch Repo data')
         if not package_data:
             continue
 
         computed_checksum = get_checksum(package_data, Checksum.sha1)
         if mirror.packages_checksum == computed_checksum:
             text = 'Mirror checksum has not changed, not refreshing Package metadata'
-            warning_message.send(sender=None, text=text)
+            warning_message(text=text)
             continue
         else:
             mirror.packages_checksum = computed_checksum
@@ -111,5 +115,5 @@ def extract_arch_packages(data):
                                         packagetype='A')
                 packages.add(package)
     else:
-        info_message.send(sender=None, text='No Packages found in Repo')
+        info_message(text='No Packages found in Repo')
     return packages

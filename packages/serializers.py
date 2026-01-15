@@ -16,7 +16,7 @@
 
 from rest_framework import serializers
 
-from packages.models import PackageName, Package, PackageUpdate
+from packages.models import Package, PackageName, PackageUpdate
 
 
 class PackageNameSerializer(serializers.HyperlinkedModelSerializer):

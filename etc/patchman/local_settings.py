@@ -41,27 +41,35 @@ MAX_MIRROR_FAILURES = 14
 # Number of days to wait before raising that a host has not reported
 DAYS_WITHOUT_REPORT = 14
 
+# list of errata sources to update, remove unwanted ones to improve performance
+ERRATA_OS_UPDATES = ['yum', 'rocky', 'alma', 'arch', 'ubuntu', 'debian']
+
+# list of Alma Linux releases to update
+ALMA_RELEASES = [8, 9, 10]
+
+# list of Debian Linux releases to update
+DEBIAN_CODENAMES = ['bookworm', 'trixie']
+
+# list of Ubuntu Linux releases to update
+UBUNTU_CODENAMES = ['jammy', 'noble']
+
 # Whether to run patchman under the gunicorn web server
 RUN_GUNICORN = False
 
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379',
     }
 }
-
-# Uncomment to enable redis caching for e.g. 30 seconds
+# Set the default timeout to e.g. 30 seconds to enable UI caching
 # Note that the UI results may be out of date for this amount of time
-# CACHES = {
-#     'default': {
-#         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-#         'LOCATION': 'redis://127.0.0.1:6379',
-#         'TIMEOUT': 30,
-#     }
-# }
+CACHE_MIDDLEWARE_SECONDS = 0
 
-from datetime import timedelta        # noqa
+from datetime import timedelta  # noqa
+
 from celery.schedules import crontab  # noqa
+
 CELERY_BEAT_SCHEDULE = {
     'process_all_unprocessed_reports': {
         'task': 'reports.tasks.process_reports',
@@ -87,4 +95,21 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'hosts.tasks.find_all_host_updates_homogenous',
         'schedule': timedelta(hours=24),
     },
+}
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+    },
+    'loggers': {
+        'urllib3': {'level': 'WARNING', 'handlers': ['console'], 'propagate': False},
+        'git': {'level': 'WARNING', 'handlers': ['console'], 'propagate': False},
+    }
 }
