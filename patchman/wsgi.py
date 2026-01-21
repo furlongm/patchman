@@ -15,7 +15,6 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 import os
-
 from django.core.wsgi import get_wsgi_application
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')  # noqa
