@@ -63,25 +63,25 @@ class HostTable(BaseTable):
         HOSTNAME_TEMPLATE,
         order_by='hostname',
         verbose_name='Hostname',
-        attrs={'th': {'class': 'col-sm-3'}, 'td': {'class': 'col-sm-3'}},
+        attrs={'th': {'class': 'col-sm-2'}, 'td': {'class': 'col-sm-2'}},
     )
     sec_updates = tables.TemplateColumn(
         SEC_UPDATES_TEMPLATE,
         order_by='sec_updates_count',
         verbose_name='Security Updates',
-        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1 centered'}},
+        attrs={'th': {'class': 'min-width-col'}, 'td': {'class': 'min-width-col centered'}},
     )
     bug_updates = tables.TemplateColumn(
         BUG_UPDATES_TEMPLATE,
         order_by='bug_updates_count',
         verbose_name='Bugfix Updates',
-        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1 centered'}},
+        attrs={'th': {'class': 'min-width-col'}, 'td': {'class': 'min-width-col centered'}},
     )
     affected_errata = tables.TemplateColumn(
         AFFECTED_ERRATA_TEMPLATE,
         order_by='errata_count',
         verbose_name='Affected by Errata',
-        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1 centered'}},
+        attrs={'th': {'class': 'min-width-col'}, 'td': {'class': 'min-width-col centered'}},
     )
     kernel = tables.Column(
         verbose_name='Running Kernel',
@@ -91,25 +91,25 @@ class HostTable(BaseTable):
         OSVARIANT_TEMPLATE,
         order_by='osvariant__name',
         verbose_name='OS Variant',
-        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1'}},
+        attrs={'th': {'class': 'col-sm-2'}, 'td': {'class': 'col-sm-2'}},
     )
     packages_installed = tables.TemplateColumn(
         PACKAGES_TEMPLATE,
         order_by='packages_count',
         verbose_name='Packages',
-        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1 centered'}},
+        attrs={'th': {'class': 'min-width-col'}, 'td': {'class': 'min-width-col centered'}},
     )
     lastreport = tables.TemplateColumn(
         LASTREPORT_TEMPLATE,
         order_by='lastreport',
         verbose_name='Last Report',
-        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1'}},
+        attrs={'th': {'class': 'col-sm-2'}, 'td': {'class': 'col-sm-2'}},
     )
     reboot_required = tables.TemplateColumn(
         REBOOT_TEMPLATE,
         order_by='reboot_required',
         verbose_name='Reboot Status',
-        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1 centered'}},
+        attrs={'th': {'class': 'min-width-col'}, 'td': {'class': 'min-width-col centered'}},
     )
 
     class Meta(BaseTable.Meta):

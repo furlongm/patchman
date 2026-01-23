@@ -148,7 +148,7 @@ class MirrorTable(BaseTable):
     timestamp = tables.Column(
         order_by='timestamp',
         verbose_name='Timestamp',
-        attrs={'th': {'class': 'col-sm-2'}, 'td': {'class': 'col-sm-2'}},
+        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1'}},
     )
     checksum = tables.TemplateColumn(
         CHECKSUM_TEMPLATE,
