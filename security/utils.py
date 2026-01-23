@@ -17,6 +17,7 @@
 from urllib.parse import urlparse
 
 from security.models import CVE, CWE, Reference
+from util.logging import warning_message
 
 
 def get_cve_reference(cve_id):
@@ -111,22 +112,32 @@ def fixup_reference(ref):
     url = fixup_bugzilla_url(url)
     url = fixup_rhn_url(url)
     if url.hostname == 'access.redhat.com':
-        if 'l1d-cache-eviction-and-vector-register-sampling' in url.path or \
-                'security/vulnerabilities/speculativeexecution' in url.path or \
-                'security/vulnerabilities/stackguard' in url.path:
-            ref_type = 'Link'
-        elif 'security/cve' in url.path:
+        processed = False
+        old_ref = url.path.split('/')[-1]
+        if 'security/cve' in url.path:
             return
-        else:
-            old_ref = url.path.split('/')[-1]
+        elif url.path.startswith('/solutions/') or url.path.startswith('/articles/'):
+            ref_type = 'Link'
+            processed = True
+        elif url.path.startswith('/security/vulnerabilities/'):
+            if old_ref.isdigit() or old_ref.isalpha():
+                ref_type = 'Link'
+                processed = True
+            elif old_ref.startswith('cve'):
+                ref_type = 'Link'
+                processed = True
+        if not processed:
             refs = old_ref.split('-')
             if ':' not in url.path:
                 try:
-                    new_ref = f'{refs[0]}-{refs[1]}:{refs[2]}'
+                    if refs[0].upper() == 'RHSB':
+                        new_ref = f'{refs[0]}-{refs[1]}-{refs[2]}'
+                    else:
+                        new_ref = f'{refs[0]}-{refs[1]}:{refs[2]}'
                     path = url.path.replace(old_ref, new_ref)
                     url = url._replace(path=path)
                 except IndexError:
-                    pass
+                    warning_message(f'Unable to process reference URL: {url}')
             ref_type = refs[0].upper()
     final_url = url.geturl()
     if final_url in ['https://launchpad.net/bugs/', 'https://launchpad.net/bugs/XXXXXX']:
