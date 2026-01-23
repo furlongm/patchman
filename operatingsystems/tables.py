@@ -131,6 +131,7 @@ class OSVariantTable(BaseTable):
     )
     osvariant_arch = tables.Column(
         accessor='arch__name',
+        default='',
         verbose_name='Architecture',
         attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1'}},
     )
