@@ -18,7 +18,6 @@ import importlib
 from datetime import timedelta
 from urllib.parse import urlencode
 
-from django.core.paginator import Paginator
 from django.template import Library
 from django.template.loader import get_template
 from django.utils import timezone
