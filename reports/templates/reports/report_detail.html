@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% load bootstrap3 %}
+{% load bootstrap3 common %}
 
 {% block page_title %}Report - {{ report }} {% endblock %}
 
@@ -39,7 +39,7 @@
         <tr><th>Tags</th><td> {{ report.tags }} </td></tr>
         <tr><th>Client Protocol</th><td> {{ report.protocol }} </td></tr>
         <tr><th>User Agent</th><td> {{ report.useragent }} </td></tr>
-        <tr><th>Has Been Processed?</th><td> {{ report.processed }} </td></tr>
+        <tr><th>Has Been Processed?</th><td> {% yes_no_img report.processed %} </td></tr>
       </table>
       {% if user.is_authenticated and perms.is_admin %}
         <a class="btn btn-primary btn-sm" role="button" href="{% url 'reports:report_delete' report.id %}">{% bootstrap_icon "trash" %} Delete this Report</a>

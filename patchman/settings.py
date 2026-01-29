@@ -48,6 +48,7 @@ TEMPLATES = [
                 'django.template.context_processors.static',
                 'django.template.context_processors.tz',
                 'django.contrib.messages.context_processors.messages',
+                'util.context_processors.issues_count',
             ],
             'debug': DEBUG,
         },
@@ -79,6 +80,8 @@ THIRD_PARTY_APPS = [
     'django_extensions',
     'taggit',
     'bootstrap3',
+    'django_tables2',
+    'django_select2',
     'rest_framework',
     'django_filters',
     'celery',
@@ -107,6 +110,8 @@ REST_FRAMEWORK = {
 }
 
 TAGGIT_CASE_INSENSITIVE = True
+
+DJANGO_TABLES2_TEMPLATE = 'table.html'
 
 CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
 CELERY_BROKER_TRANSPORT_OPTIONS = {

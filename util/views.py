@@ -15,12 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.models import Site
 from django.db.models import F
 from django.shortcuts import render
+from django.utils import timezone
 
 from hosts.models import Host
 from operatingsystems.models import OSRelease, OSVariant
@@ -50,7 +51,7 @@ def dashboard(request):
         setting_type=int,
         default=14,
     )
-    last_report_delta = datetime.now() - timedelta(days=days)
+    last_report_delta = timezone.now() - timedelta(days=days)
     stale_hosts = hosts.filter(lastreport__lt=last_report_delta)
     norepo_hosts = hosts.filter(repos__isnull=True, osvariant__osrelease__repos__isnull=True)  # noqa
     reboot_hosts = hosts.filter(reboot_required=True)

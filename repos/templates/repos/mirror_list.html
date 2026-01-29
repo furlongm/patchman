@@ -1,7 +1,26 @@
-{% extends "objectlist.html" %}
+{% extends "base.html" %}
+{% load django_tables2 common %}
 
 {% block page_title %}Mirrors{% endblock %}
 
 {% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'repos:repo_list' %}">Repositories</a></li><li class="active"><a href="{% url 'repos:mirror_list' %}">Mirrors</a></li>{% endblock %}
 
 {% block content_title %} Mirrors {% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-sm-12">
+    {% get_querydict request as querydict %}
+    {% searchform terms querydict %}
+
+    <form id="bulk-action-form" method="post" action="{% url 'repos:mirror_bulk_action' %}">
+        {% csrf_token %}
+        <input type="hidden" name="filter_params" value="{{ filter_params }}">
+
+        {% include "bulk_actions.html" %}
+
+        {% render_table table %}
+    </form>
+  </div>
+</div>
+{% endblock %}

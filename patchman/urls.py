@@ -1,7 +1,7 @@
 # Copyright 2012 VPAC, http://www.vpac.org
 # Copyright 2013-2021 Marcus Furlong <furlongm@gmail.com>
 #
-# This file is part of patchman
+# This file is part of Patchman.
 #
 # Patchman is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -56,6 +56,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),  # noqa
+    path('select2/', include('django_select2.urls')),
     path('', include('util.urls', namespace='util')),
     path('errata/', include('errata.urls', namespace='errata')),
     path('reports/', include('reports.urls', namespace='reports')),

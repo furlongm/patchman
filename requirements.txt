@@ -20,3 +20,5 @@ django-celery-beat==2.7.0
 tqdm==4.67.1
 cvss==3.4
 zstandard==0.25.0
+django-tables2==2.8.0
+django-select2==8.4.1

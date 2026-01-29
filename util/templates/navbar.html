@@ -1,40 +1,50 @@
-    <nav class="navbar navbar-inverse">
-      <div class="container-fluid">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="https://github.com/furlongm/patchman">Patchman</a>
-        </div>
-        <div class="collapse navbar-collapse" id="myNavbar">
-          <ul class="nav navbar-nav">
-            <li class="{% if '/dashboard' in request.path %}active{% endif %}"><a href="{% url 'util:dashboard' %}">Dashboard</a></li>
-            <li class="{% if '/hosts' in request.path %}active{% endif %}">    <a href="{% url 'hosts:host_list' %}">Hosts</a></li>
-            <li class="{% if '/repos' in request.path %}active{% endif %}">    <a href="{% url 'repos:repo_list' %}">Repositories</a></li>
-            <li class="{% if '/packages' in request.path %}active{% endif %}"> <a href="{% url 'packages:package_name_list' %}">Packages</a></li>
-            <li class="{% if '/errata' in request.path %}active{% endif %}">   <a href="{% url 'errata:erratum_list' %}">Errata</a></li>
-            <li class="{% if '/cves' in request.path %}active{% endif %}">     <a href="{% url 'security:cve_list' %}">CVEs</a></li>
-            <li class="{% if '/os' in request.path %}active{% endif %}">       <a href="{% url 'operatingsystems:osrelease_list' %}">Operating Systems</a></li>
-            <li class="{% if '/reports' in request.path %}active{% endif %}">  <a href="{% url 'reports:report_list' %}">Reports</a></li>
-            {% if user.is_superuser %}
-              <li><a href="{% url 'admin:index' %}">Django Admin</a></li>
-            {% endif %}
-          </ul>
-          <div class="pull-right navbar-text">
-            {% if user.is_authenticated %}
-              {% if user.first_name %}
-                Welcome, {{ user.first_name }}
-              {% else %}
-                Welcome, {{ user }}
-              {% endif %}
-              / <a href="{% url 'logout' %}">Log out</a>
-            {% else %}
-              Welcome, Guest
-              / <a href="{% url 'login' %}">Log In</a>
-            {% endif %}
-          </div>
-        </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-header">
+        <a class="sidebar-brand" href="https://github.com/furlongm/patchman">Patchman</a>
       </div>
+      <ul class="sidebar-menu">
+        <li class="{% if '/hosts' in request.path %}active{% endif %}"><a href="{% url 'hosts:host_list' %}">Hosts</a></li>
+        <li class="has-submenu open {% if '/repos' in request.path or '/mirrors' in request.path %}active{% endif %}">
+          <a href="#">Repositories <span class="caret"></span></a>
+          <ul class="submenu">
+            <li><a href="{% url 'repos:repo_list' %}">Repositories</a></li>
+            <li><a href="{% url 'repos:mirror_list' %}">Mirrors</a></li>
+          </ul>
+        </li>
+        <li class="{% if '/packages' in request.path %}active{% endif %}"><a href="{% url 'packages:package_name_list' %}">Packages</a></li>
+        <li class="{% if '/errata' in request.path %}active{% endif %}"><a href="{% url 'errata:erratum_list' %}">Errata</a></li>
+        <li class="has-submenu open {% if '/cves' in request.path or '/cwes' in request.path or '/references' in request.path or '/security' in request.path %}active{% endif %}">
+          <a href="#">Security <span class="caret"></span></a>
+          <ul class="submenu">
+            <li><a href="{% url 'security:cve_list' %}">CVEs</a></li>
+            <li><a href="{% url 'security:cwe_list' %}">CWEs</a></li>
+            <li><a href="{% url 'errata:erratum_list' %}?e_type=security">Security Errata</a></li>
+            <li><a href="{% url 'security:reference_list' %}">Security References</a></li>
+          </ul>
+        </li>
+        <li class="has-submenu open {% if '/os' in request.path %}active{% endif %}">
+          <a href="#">Operating Systems <span class="caret"></span></a>
+          <ul class="submenu">
+            <li><a href="{% url 'operatingsystems:osrelease_list' %}">OS Releases</a></li>
+            <li><a href="{% url 'operatingsystems:osvariant_list' %}">OS Variants</a></li>
+          </ul>
+        </li>
+        <li class="{% if '/reports' in request.path %}active{% endif %}"><a href="{% url 'reports:report_list' %}">Reports</a></li>
+        <li class="{% if '/dashboard' in request.path %}active{% endif %}"><a href="{% url 'util:dashboard' %}">Issues{% if issues_count %} <span class="badge">{{ issues_count }}</span>{% endif %}</a></li>
+      </ul>
+      <ul class="sidebar-menu sidebar-bottom">
+        {% if user.is_authenticated %}
+          <li class="has-submenu open">
+            <a href="#">Logged in as {% if user.first_name %}{{ user.first_name }}{% else %}{{ user }}{% endif %} <span class="caret"></span></a>
+            <ul class="submenu">
+              {% if user.is_superuser %}
+                <li><a href="{% url 'admin:index' %}">Django Admin</a></li>
+              {% endif %}
+              <li><a href="{% url 'logout' %}">Log out</a></li>
+            </ul>
+          </li>
+        {% else %}
+          <li><a href="{% url 'login' %}">Log In</a></li>
+        {% endif %}
+      </ul>
     </nav>

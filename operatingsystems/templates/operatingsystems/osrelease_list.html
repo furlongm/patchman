@@ -1,7 +1,26 @@
-{% extends "objectlist.html" %}
+{% extends "base.html" %}
+{% load django_tables2 common %}
 
 {% block page_title %}OS Releases{% endblock %}
 
 {% block breadcrumbs %} {{ block.super }} <li><a href="{% url 'operatingsystems:os_landing' %}">Operating Systems</a></li><li class="active"><a href="{% url 'operatingsystems:osrelease_list' %}">OS Releases</a></li>{% endblock %}
 
 {% block content_title %} OS Releases {% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-sm-12">
+    {% get_querydict request as querydict %}
+    {% searchform terms querydict %}
+
+    <form id="bulk-action-form" method="post" action="{% url 'operatingsystems:osrelease_bulk_action' %}">
+        {% csrf_token %}
+        <input type="hidden" name="filter_params" value="{{ filter_params }}">
+
+        {% include "bulk_actions.html" %}
+
+        {% render_table table %}
+    </form>
+  </div>
+</div>
+{% endblock %}

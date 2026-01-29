@@ -4,7 +4,11 @@
 
 {% block page_title %}Patchman Dashboard{% endblock %}
 
-{% block content_title %} Patch Management Dashboard for {{ site.name }} {% endblock %}
+{% block breadcrumbs %}
+  <li class="active"><a href="{% url 'util:dashboard' %}">Issues</a></li>
+{% endblock %}
+
+{% block content_title %} Issues Dashboard for {{ site.name }} {% endblock %}
 
 {% block content %}
 
@@ -189,11 +193,11 @@
   <div class="well well-sm">
     <button class="btn btn-sm" data-toggle="collapse" data-target="#possible_mirrors"><span class="badge">{{ count }}</span> Sets of Mirrors have the same checksum and are not linked</button>
       <div class="collapse" id="possible_mirrors">
-        {% for checksum in possible_mirrors %}
-        <span class="label label-brick {% cycle 'bg-info' 'bg-success' %}">
-          <a href="{% url 'repos:mirror_list' %}?checksum={{ checksum }}">{{ checksum }}</a>
-        </span>
-        {% endfor %}
+        <ul class="package-list">
+          {% for checksum in possible_mirrors %}
+            <li><a href="{% url 'repos:mirror_list' %}?checksum={{ checksum }}">{{ checksum }}</a></li>
+          {% endfor %}
+        </ul>
       </div>
   </div>
   {% endif %}
@@ -204,13 +208,11 @@
   <div class="well well-sm">
     <button class="btn btn-sm" data-toggle="collapse" data-target="#norepo_packages"><span class="badge">{{ count }}</span> Installed Packages are not from any Repository</button>
       <div class="collapse" id="norepo_packages">
-        <div class="well">
+        <ul class="package-list">
           {% for package in norepo_packages %}
-            <span class="label label-brick {% cycle 'bg-info' 'bg-success' %}">
-              <a href="{{ package.get_absolute_url }}">{{ package }}</a>
-            </span>
+            <li><a href="{{ package.get_absolute_url }}">{{ package }}</a></li>
           {% endfor %}
-        </div>
+        </ul>
      </div>
   </div>
   {% endif %}
@@ -221,11 +223,11 @@
   <div class="well well-sm">
     <button class="btn btn-sm" data-toggle="collapse" data-target="#orphaned_packages"><span class="badge">{{ count }}</span> Packages are orphaned (not from any Repository, not installed on any Host)</button>
       <div class="collapse" id="orphaned_packages">
-        {% for package in orphaned_packages %}
-          <span class="label label-brick {% cycle 'bg-info' 'bg-success' %}">
-            <a href="{{ package.get_absolute_url }}">{{ package }}</a>
-          </span>
-        {% endfor %}
+        <ul class="package-list">
+          {% for package in orphaned_packages %}
+            <li><a href="{{ package.get_absolute_url }}">{{ package }}</a></li>
+          {% endfor %}
+        </ul>
      </div>
   </div>
   {% endif %}
