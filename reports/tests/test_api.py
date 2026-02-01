@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+from django.contrib.auth.models import User
 from django.test import TestCase, override_settings
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -32,6 +33,39 @@ class ReportAPITests(APITestCase):
 
     def setUp(self):
         self.url = '/api/report/'
+        self.user = User.objects.create_user(
+            username='testuser', password='testpass'
+        )
+        self.client.force_authenticate(user=self.user)
+
+    def test_list_reports(self):
+        """Test listing all reports."""
+        # Create a report first
+        Report.objects.create(
+            host='testhost.example.com',
+            domain='example.com',
+            kernel='5.15.0',
+            arch='x86_64',
+            os='Ubuntu 22.04',
+            protocol='2',
+        )
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+
+    def test_retrieve_report(self):
+        """Test retrieving a single report."""
+        report = Report.objects.create(
+            host='testhost.example.com',
+            domain='example.com',
+            kernel='5.15.0',
+            arch='x86_64',
+            os='Ubuntu 22.04',
+            protocol='2',
+        )
+        response = self.client.get(f'{self.url}{report.id}/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['host'], 'testhost.example.com')
 
     def test_upload_minimal_report(self):
         """Test uploading a minimal valid report."""

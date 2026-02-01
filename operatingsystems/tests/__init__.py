@@ -13,26 +13,3 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
-
-from rest_framework import serializers
-
-from security.models import CVE, CWE, Reference
-
-
-class CWESerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = CWE
-        fields = ('cwe_id', 'name', 'description')
-
-
-class CVESerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = CVE
-        fields = ('cve_id', 'description', 'cvss_scores', 'cwes',
-                  'reserved_date', 'published_date', 'updated_date')
-
-
-class ReferenceSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = Reference
-        fields = ('id', 'ref_type', 'url')

@@ -89,3 +89,15 @@ class ReportUploadSerializer(serializers.Serializer):
         if value != 2:
             raise serializers.ValidationError('This endpoint only accepts protocol 2')
         return value
+
+
+class ReportSerializer(serializers.HyperlinkedModelSerializer):
+    """Serializer for reading Report model instances."""
+
+    class Meta:
+        from reports.models import Report
+        model = Report
+        fields = (
+            'id', 'host', 'domain', 'tags', 'kernel', 'arch', 'os',
+            'report_ip', 'protocol', 'useragent', 'processed', 'created'
+        )

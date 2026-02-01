@@ -22,4 +22,4 @@ from errata.models import Erratum
 class ErratumSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Erratum
-        fields = ('id', 'name', 'e_type', 'issue_date', 'synopsis', 'cves', 'releases', 'references')
+        fields = ('id', 'name', 'e_type', 'issue_date', 'synopsis', 'cves', 'osreleases', 'references')
