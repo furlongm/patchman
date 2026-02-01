@@ -120,6 +120,9 @@ required to report packages, `yum`, `dnf`, `zypper` and/or `apt` are required
 to report repositories. These packages are normally installed by default on
 most systems.
 
+For Protocol 2 (JSON-based reports), `jq` is required. If `jq` is not available,
+the client will automatically fall back to Protocol 1 (text-based reports).
+
 deb-based OS's do not always change the kernel version when a kernel update is
 installed, so the `update-notifier-common` package can optionally be installed
 to enable this functionality. rpm-based OS's can tell if a reboot is required

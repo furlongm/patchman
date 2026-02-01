@@ -140,6 +140,93 @@ is running
 
 
 
+## Report Protocols
+
+Patchman supports two report protocols:
+
+### Protocol 1 (Text)
+The original form-based protocol. Uses multipart form data to upload package
+and repository information. No additional dependencies required on the client.
+
+### Protocol 2 (JSON)
+A JSON-based REST API. Provides better error handling, structured validation,
+and easier debugging. Requires `jq` on the client.
+
+To use Protocol 2, update your `patchman-client.conf`:
+
+```shell
+protocol=2
+```
+
+Or use the `-p 2` command line option:
+
+```shell
+$ patchman-client -s http://patchman.example.org -p 2
+```
+
+
+## API Key Authentication
+
+For Protocol 2, API key authentication is available using
+[djangorestframework-api-key](https://florimondmanca.github.io/djangorestframework-api-key/).
+Keys are hashed in the database and cannot be retrieved after creation.
+
+### Server-side setup
+
+1. Run migrations (first time only):
+
+```shell
+$ patchman-manage migrate
+```
+
+2. Create an API key:
+
+```shell
+$ patchman-manage create_api_key "clients"
+Created API key: clients
+
+  Key: abc123...
+
+Add this to your patchman-client.conf:
+  api_key=abc123...
+
+Save this key as it cannot be retrieved later.
+```
+
+3. List existing keys:
+
+```shell
+$ patchman-manage list_api_keys
+```
+
+4. Revoke a key:
+
+```shell
+$ patchman-manage revoke_api_key <prefix-or-name>
+```
+
+5. To require API keys for all Protocol 2 uploads, set in `local_settings.py`:
+
+```python
+REQUIRE_API_KEY = True
+```
+
+API keys can also be managed via the Django admin interface.
+
+### Client-side setup
+
+Add the API key to `patchman-client.conf`:
+
+```shell
+protocol=2
+api_key=abc123...
+```
+
+Or use the `-k` command line option:
+
+```shell
+$ patchman-client -s http://patchman.example.org -p 2 -k abc123...
+```
 
 
 ## Configure Database

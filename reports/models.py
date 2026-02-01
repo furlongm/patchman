@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+import json
+
 from django.db import models
 from django.urls import reverse
 
@@ -52,6 +54,91 @@ class Report(models.Model):
 
     def get_absolute_url(self):
         return reverse('reports:report_detail', args=[str(self.id)])
+
+    @property
+    def packages_parsed(self):
+        """Parse packages JSON for Protocol 2 reports."""
+        if self.protocol == '2' and self.packages:
+            try:
+                return json.loads(self.packages)
+            except json.JSONDecodeError:
+                return []
+        return []
+
+    @property
+    def repos_parsed(self):
+        """Parse repos JSON for Protocol 2 reports."""
+        if self.protocol == '2' and self.repos:
+            try:
+                return json.loads(self.repos)
+            except json.JSONDecodeError:
+                return []
+        return []
+
+    @property
+    def modules_parsed(self):
+        """Parse modules JSON for Protocol 2 reports."""
+        if self.protocol == '2' and self.modules:
+            try:
+                return json.loads(self.modules)
+            except json.JSONDecodeError:
+                return []
+        return []
+
+    @property
+    def sec_updates_parsed(self):
+        """Parse security updates JSON for Protocol 2 reports."""
+        if self.protocol == '2' and self.sec_updates:
+            try:
+                return json.loads(self.sec_updates)
+            except json.JSONDecodeError:
+                return []
+        return []
+
+    @property
+    def bug_updates_parsed(self):
+        """Parse bug updates JSON for Protocol 2 reports."""
+        if self.protocol == '2' and self.bug_updates:
+            try:
+                return json.loads(self.bug_updates)
+            except json.JSONDecodeError:
+                return []
+        return []
+
+    @property
+    def has_packages(self):
+        """Check if report has packages data."""
+        if self.protocol == '2':
+            return bool(self.packages_parsed)
+        return bool(self.packages and self.packages.strip())
+
+    @property
+    def has_repos(self):
+        """Check if report has repos data."""
+        if self.protocol == '2':
+            return bool(self.repos_parsed)
+        return bool(self.repos and self.repos.strip())
+
+    @property
+    def has_modules(self):
+        """Check if report has modules data."""
+        if self.protocol == '2':
+            return bool(self.modules_parsed)
+        return bool(self.modules and self.modules.strip())
+
+    @property
+    def has_sec_updates(self):
+        """Check if report has security updates."""
+        if self.protocol == '2':
+            return bool(self.sec_updates_parsed)
+        return bool(self.sec_updates and self.sec_updates.strip())
+
+    @property
+    def has_bug_updates(self):
+        """Check if report has bug updates."""
+        if self.protocol == '2':
+            return bool(self.bug_updates_parsed)
+        return bool(self.bug_updates and self.bug_updates.strip())
 
     def parse(self, data, meta):
         """ Parse a report and save the object
@@ -113,13 +200,34 @@ class Report(models.Model):
         if verbose:
             info_message(text=f'Processing report {self.id} - {self.host}')
 
-        from reports.utils import (
-            process_modules, process_packages, process_repos, process_updates,
-        )
-        process_repos(report=self, host=host)
-        process_modules(report=self, host=host)
-        process_packages(report=self, host=host)
-        process_updates(report=self, host=host)
+        if self.protocol == '2':
+            # Protocol 2: JSON data
+            import json
+
+            from reports.utils import (
+                process_modules_json, process_packages_json,
+                process_repos_json, process_updates_json,
+            )
+            packages_json = json.loads(self.packages) if self.packages else []
+            repos_json = json.loads(self.repos) if self.repos else []
+            modules_json = json.loads(self.modules) if self.modules else []
+            sec_updates_json = json.loads(self.sec_updates) if self.sec_updates else []
+            bug_updates_json = json.loads(self.bug_updates) if self.bug_updates else []
+
+            process_repos_json(repos_json, host, self.arch)
+            process_modules_json(modules_json, host)
+            process_packages_json(packages_json, host)
+            process_updates_json(sec_updates_json, bug_updates_json, host)
+        else:
+            # Protocol 1: Text data
+            from reports.utils import (
+                process_modules, process_packages, process_repos,
+                process_updates,
+            )
+            process_repos(report=self, host=host)
+            process_modules(report=self, host=host)
+            process_packages(report=self, host=host)
+            process_updates(report=self, host=host)
 
         self.processed = True
         self.save()

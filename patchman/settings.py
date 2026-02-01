@@ -100,14 +100,23 @@ LOCAL_APPS = [
     'security.apps.SecurityConfig',
     'reports.apps.ReportsConfig',
     'util.apps.UtilConfig',
+    'rest_framework_api_key',
 ]
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'],  # noqa
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ],
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],        # noqa
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',            # noqa
     'PAGE_SIZE': 100,
 }
+
+# API Key authentication settings
+# Set to False to allow unauthenticated protocol 2 report uploads
+REQUIRE_API_KEY = True
 
 TAGGIT_CASE_INSENSITIVE = True
 
