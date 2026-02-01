@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% load bootstrap3 common %}
+{% load bootstrap3 common django_tables2 %}
 
 {% block page_title %}Report - {{ report }} {% endblock %}
 
@@ -12,17 +12,21 @@
 
 <ul class="nav nav-tabs">
   <li class="active"><a data-toggle="tab" href="#report_details">Details</a></li>
-  <li><a data-toggle="tab" href="#report_repos">Repositories</a></li>
-  {% if report.modules %}
+  {% if report.has_repos %}
+    <li><a data-toggle="tab" href="#report_repos">Repositories</a></li>
+  {% endif %}
+  {% if report.has_modules %}
     <li><a data-toggle="tab" href="#report_modules">Modules</a></li>
   {% endif %}
-  {% if report.sec_updates %}
+  {% if report.has_sec_updates %}
     <li><a data-toggle="tab" href="#report_secupdates">Security Updates</a></li>
   {% endif %}
-  {% if report.bug_updates %}
+  {% if report.has_bug_updates %}
     <li><a data-toggle="tab" href="#report_bugupdates">Bugfix Updates</a></li>
   {% endif %}
-  <li><a data-toggle="tab" href="#report_packages">Packages</a></li>
+  {% if report.has_packages %}
+    <li><a data-toggle="tab" href="#report_packages">Packages</a></li>
+  {% endif %}
 </ul>
 
 <div class="tab-content">
@@ -48,71 +52,95 @@
     </div>
   </div>
 
-  <div class="tab-pane fade in" id="report_repos">
-    <div class="well well-sm">
-      <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
-        {% for repo in report.repos.splitlines %}
-          <tr>
-            <td> {{ repo }} </td>
-          </tr>
-        {% endfor %}
-      </table>
+  {% if report.has_repos %}
+    <div class="tab-pane fade in" id="report_repos">
+      <div class="well well-sm">
+        {% if repos_table %}
+          {% render_table repos_table %}
+        {% else %}
+          <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+            {% for repo in report.repos.splitlines %}
+              <tr>
+                <td> {{ repo }} </td>
+              </tr>
+            {% endfor %}
+          </table>
+        {% endif %}
+      </div>
     </div>
-  </div>
+  {% endif %}
 
-  {% if report.modules %}
+  {% if report.has_modules %}
     <div class="tab-pane fade in" id="report_modules">
       <div class="well well-sm">
-        <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
-          {% for module in report.modules.splitlines %}
-            <tr>
-              <td> {{ module }} </td>
-            </tr>
-          {% endfor %}
-        </table>
+        {% if modules_table %}
+          {% render_table modules_table %}
+        {% else %}
+          <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+            {% for module in report.modules.splitlines %}
+              <tr>
+                <td> {{ module }} </td>
+              </tr>
+            {% endfor %}
+          </table>
+        {% endif %}
       </div>
     </div>
   {% endif %}
 
-  {% if report.sec_updates %}
+  {% if report.has_sec_updates %}
     <div class="tab-pane fade in" id="report_secupdates">
       <div class="well well-sm">
-        <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
-          {% for update in report.sec_updates.splitlines %}
-            <tr>
-              <td> {{ update }} </td>
-            </tr>
-          {% endfor %}
-        </table>
+        {% if sec_updates_table %}
+          {% render_table sec_updates_table %}
+        {% else %}
+          <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+            {% for update in report.sec_updates.splitlines %}
+              <tr>
+                <td> {{ update }} </td>
+              </tr>
+            {% endfor %}
+          </table>
+        {% endif %}
       </div>
     </div>
   {% endif %}
 
-  {% if report.bug_updates %}
+  {% if report.has_bug_updates %}
     <div class="tab-pane fade in" id="report_bugupdates">
       <div class="well well-sm">
-        <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
-          {% for update in report.bug_updates.splitlines %}
-            <tr>
-              <td> {{ update }} </td>
-            </tr>
-          {% endfor %}
-        </table>
+        {% if bug_updates_table %}
+          {% render_table bug_updates_table %}
+        {% else %}
+          <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+            {% for update in report.bug_updates.splitlines %}
+              <tr>
+                <td> {{ update }} </td>
+              </tr>
+            {% endfor %}
+          </table>
+        {% endif %}
       </div>
     </div>
   {% endif %}
 
-  <div class="tab-pane fade in" id="report_packages">
-    <div class="well well-sm">
-      <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
-        {% for package in report.packages.splitlines %}
-          <tr>
-            <td> {{ package }} </td>
-          </tr>
-        {% endfor %}
-      </table>
+  {% if report.has_packages %}
+    <div class="tab-pane fade in" id="report_packages">
+      <div class="well well-sm">
+        {% if packages_table %}
+          {% render_table packages_table %}
+        {% else %}
+          <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
+            {% for package in report.packages.splitlines %}
+              <tr>
+                <td> {{ package }} </td>
+              </tr>
+            {% endfor %}
+          </table>
+        {% endif %}
+      </div>
     </div>
-  </div>
+  {% endif %}
 </div>
 
 {% endblock %}

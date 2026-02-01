@@ -12,9 +12,10 @@ report=false
 local_updates=false
 repo_check=true
 tags=''
+api_key=''
 
 usage() {
-    echo "${0} [-v] [-d] [-n] [-u] [-r] [-s SERVER] [-c FILE] [-t TAGS] [-h HOSTNAME]"
+    echo "${0} [-v] [-d] [-n] [-u] [-r] [-s SERVER] [-c FILE] [-t TAGS] [-h HOSTNAME] [-p PROTOCOL] [-k API_KEY]"
     echo "-v: verbose output (default is silent)"
     echo "-d: debug output"
     echo "-n: no repo check (required when used as an apt or yum plugin)"
@@ -24,13 +25,15 @@ usage() {
     echo "-c FILE: config file location (default is /etc/patchman/patchman-client.conf)"
     echo "-t TAGS: comma-separated list of tags, e.g. -t www,dev"
     echo "-h HOSTNAME: specify the hostname of the local host"
+    echo "-p PROTOCOL: protocol version (1 or 2, default is 1)"
+    echo "-k API_KEY: API key for protocol 2 authentication"
     echo
     echo "Command line options override config file options."
     exit 0
 }
 
 parseopts() {
-    while getopts "vdnurs:c:t:h:" opt; do
+    while getopts "vdnurs:c:t:h:p:k:" opt; do
         case ${opt} in
         v)
             verbose=true
@@ -60,6 +63,12 @@ parseopts() {
         h)
             cli_hostname=${OPTARG}
             ;;
+        p)
+            cli_protocol=${OPTARG}
+            ;;
+        k)
+            cli_api_key=${OPTARG}
+            ;;
         *)
             usage
             ;;
@@ -74,6 +83,14 @@ cleanup() {
         echo "Debug: not deleting ${tmpfile_sec} (security updates)"
         echo "Debug: not deleting ${tmpfile_bug} (updates)"
         echo "Debug: not deleting ${tmpfile_mod} (modules)"
+        if [ ! -z "${tmpfile_packages_json}" ] ; then
+            echo "Debug: not deleting ${tmpfile_packages_json} (packages json)"
+            echo "Debug: not deleting ${tmpfile_repos_json} (repos json)"
+            echo "Debug: not deleting ${tmpfile_modules_json} (modules json)"
+            echo "Debug: not deleting ${tmpfile_sec_json} (security updates json)"
+            echo "Debug: not deleting ${tmpfile_bug_json} (bug updates json)"
+            echo "Debug: not deleting ${tmpfile_report_json} (full report json)"
+        fi
     elif ${verbose} && ! ${debug} ; then
         echo "Deleting ${tmpfile_pkg}"
         echo "Deleting ${tmpfile_rep}"
@@ -87,6 +104,12 @@ cleanup() {
         rm -fr "${tmpfile_sec}"
         rm -fr "${tmpfile_bug}"
         rm -fr "${tmpfile_mod}"
+        rm -fr "${tmpfile_packages_json}"
+        rm -fr "${tmpfile_repos_json}"
+        rm -fr "${tmpfile_modules_json}"
+        rm -fr "${tmpfile_sec_json}"
+        rm -fr "${tmpfile_bug_json}"
+        rm -fr "${tmpfile_report_json}"
     fi
     flock -u 200
     rm -fr "${lock_dir}/patchman.lock"
@@ -130,6 +153,14 @@ check_conf() {
         tags="${cli_tags}"
     fi
 
+    if [ ! -z "${cli_protocol}" ] ; then
+        protocol=${cli_protocol}
+    fi
+
+    if [ ! -z "${cli_api_key}" ] ; then
+        api_key=${cli_api_key}
+    fi
+
     if [ -z "${hostname}" ] && [ -z "${cli_hostname}" ] ; then
         get_hostname
     else
@@ -140,6 +171,14 @@ check_conf() {
 
     check_booleans
 
+    # Check if protocol 2 is requested but jq is not available
+    if [ "${protocol}" == "2" ] ; then
+        if ! check_command_exists jq ; then
+            echo "Warning: jq not found, falling back to protocol 1"
+            protocol=1
+        fi
+    fi
+
     if ${verbose} ; then
         echo "Patchman configuration seems OK:"
         if [ -f ${conf} ] ; then
@@ -148,6 +187,10 @@ check_conf() {
         echo "Patchman Server: ${server}"
         echo "Hostname: ${hostname}"
         echo "Tags: ${tags}"
+        echo "Protocol: ${protocol}"
+        if [ ! -z "${api_key}" ] ; then
+            echo "API Key: ${api_key:0:12}..."
+        fi
         for var in report local_updates repo_check verbose debug ; do
             eval val=\$${var}
             echo "${var}: ${val}"
@@ -642,6 +685,302 @@ reboot_required() {
     fi
 }
 
+build_packages_json() {
+    # Convert packages file to JSON array, writing to temp file
+    local outfile="${1}"
+    echo "[" > "${outfile}"
+    local first=true
+    while IFS= read -r line ; do
+        if [ -z "${line}" ] ; then
+            continue
+        fi
+        # Parse: 'name' 'epoch' 'version' 'release' 'arch' 'type' ['category'] ['repo']
+        # Extract quoted fields properly
+        local parts=()
+        while IFS= read -r part ; do
+            parts+=("${part}")
+        done < <(echo "${line}" | grep -oP "'[^']*'" | tr -d "'")
+
+        local name="${parts[0]:-}"
+        local epoch="${parts[1]:-}"
+        local version="${parts[2]:-}"
+        local release="${parts[3]:-}"
+        local arch="${parts[4]:-}"
+        local ptype="${parts[5]:-}"
+        local category="${parts[6]:-}"
+        local repo="${parts[7]:-}"
+
+        # Skip packages without a valid type
+        if [ -z "${ptype}" ] ; then
+            continue
+        fi
+
+        # Skip gpg-pubkey entries (they're not real packages)
+        if [ "${name}" == "gpg-pubkey" ] ; then
+            continue
+        fi
+
+        if ! ${first} ; then
+            echo "," >> "${outfile}"
+        fi
+        first=false
+
+        jq -n -c \
+            --arg name "${name}" \
+            --arg epoch "${epoch}" \
+            --arg version "${version}" \
+            --arg release "${release}" \
+            --arg arch "${arch}" \
+            --arg type "${ptype}" \
+            --arg category "${category}" \
+            --arg repo "${repo}" \
+            '{name: $name, epoch: $epoch, version: $version, release: $release, arch: $arch, type: $type, category: $category, repo: $repo}' >> "${outfile}"
+    done < "${tmpfile_pkg}"
+    echo "]" >> "${outfile}"
+}
+
+build_repos_json() {
+    # Convert repos file to JSON array, writing to temp file
+    local outfile="${1}"
+    echo "[" > "${outfile}"
+    local first=true
+    while IFS= read -r line ; do
+        if [ -z "${line}" ] ; then
+            continue
+        fi
+        # Parse: 'type' 'name' 'id' 'priority' 'url1' ['url2' ...]
+        local parts=()
+        while IFS= read -r part ; do
+            parts+=("${part}")
+        done < <(echo "${line}" | grep -oP "'[^']*'" | tr -d "'")
+
+        local rtype="${parts[0]}"
+        local name="${parts[1]}"
+        local rid="${parts[2]}"
+        local priority="${parts[3]}"
+
+        # Collect URLs (all remaining parts)
+        local urls_json="["
+        local url_first=true
+        for ((i=4; i<${#parts[@]}; i++)); do
+            if ! ${url_first} ; then
+                urls_json="${urls_json},"
+            fi
+            url_first=false
+            urls_json="${urls_json}\"${parts[i]}\""
+        done
+        urls_json="${urls_json}]"
+
+        if ! ${first} ; then
+            echo "," >> "${outfile}"
+        fi
+        first=false
+
+        jq -n -c \
+            --arg type "${rtype}" \
+            --arg name "${name}" \
+            --arg id "${rid}" \
+            --argjson priority "${priority:-0}" \
+            --argjson urls "${urls_json}" \
+            '{type: $type, name: $name, id: $id, priority: $priority, urls: $urls}' >> "${outfile}"
+    done < "${tmpfile_rep}"
+    echo "]" >> "${outfile}"
+}
+
+build_modules_json() {
+    # Convert modules file to JSON array, writing to temp file
+    local outfile="${1}"
+    echo "[" > "${outfile}"
+    local first=true
+    while IFS= read -r line ; do
+        if [ -z "${line}" ] ; then
+            continue
+        fi
+        # Parse: 'name' 'stream' 'version' 'context' 'arch' 'repo' ['pkg1' 'pkg2' ...]
+        local parts=()
+        while IFS= read -r part ; do
+            parts+=("${part}")
+        done < <(echo "${line}" | grep -oP "'[^']*'" | tr -d "'")
+
+        local name="${parts[0]}"
+        local stream="${parts[1]}"
+        local version="${parts[2]}"
+        local context="${parts[3]}"
+        local arch="${parts[4]}"
+        local repo="${parts[5]}"
+
+        # Collect packages (all remaining parts)
+        local pkgs_json="["
+        local pkg_first=true
+        for ((i=6; i<${#parts[@]}; i++)); do
+            if ! ${pkg_first} ; then
+                pkgs_json="${pkgs_json},"
+            fi
+            pkg_first=false
+            pkgs_json="${pkgs_json}\"${parts[i]}\""
+        done
+        pkgs_json="${pkgs_json}]"
+
+        if ! ${first} ; then
+            echo "," >> "${outfile}"
+        fi
+        first=false
+
+        jq -n -c \
+            --arg name "${name}" \
+            --arg stream "${stream}" \
+            --arg version "${version}" \
+            --arg context "${context}" \
+            --arg arch "${arch}" \
+            --arg repo "${repo}" \
+            --argjson packages "${pkgs_json}" \
+            '{name: $name, stream: $stream, version: $version, context: $context, arch: $arch, repo: $repo, packages: $packages}' >> "${outfile}"
+    done < "${tmpfile_mod}"
+    echo "]" >> "${outfile}"
+}
+
+build_updates_json() {
+    # Convert updates file to JSON array, writing to temp file
+    local updates_file="${1}"
+    local outfile="${2}"
+    echo "[" > "${outfile}"
+    local first=true
+    while IFS= read -r line ; do
+        if [ -z "${line}" ] ; then
+            continue
+        fi
+        # Parse: name.arch version repo
+        local parts=(${line})
+        local name_arch="${parts[0]}"
+        local version="${parts[1]}"
+        local repo="${parts[2]}"
+
+        # Split name.arch
+        local name="${name_arch%.*}"
+        local arch="${name_arch##*.}"
+
+        if ! ${first} ; then
+            echo "," >> "${outfile}"
+        fi
+        first=false
+
+        jq -n -c \
+            --arg name "${name}" \
+            --arg version "${version}" \
+            --arg arch "${arch}" \
+            --arg repo "${repo}" \
+            '{name: $name, version: $version, arch: $arch, repo: $repo}' >> "${outfile}"
+    done < "${updates_file}"
+    echo "]" >> "${outfile}"
+}
+
+build_json_report() {
+    # Build complete JSON report using temp files
+    # Temp files are created by post_json_data before calling this function
+
+    build_packages_json "${tmpfile_packages_json}"
+    build_repos_json "${tmpfile_repos_json}"
+    build_modules_json "${tmpfile_modules_json}"
+    build_updates_json "${tmpfile_sec}" "${tmpfile_sec_json}"
+    build_updates_json "${tmpfile_bug}" "${tmpfile_bug_json}"
+
+    # Convert tags to JSON array
+    local tags_json="[]"
+    if [ ! -z "${tags}" ] && [ "${tags}" != "Default" ] ; then
+        tags_json=$(echo "${tags}" | tr ',' '\n' | jq -R . | jq -s .)
+    fi
+
+    # Convert reboot to boolean
+    local reboot_bool="false"
+    if [ "${reboot}" == "True" ] ; then
+        reboot_bool="true"
+    fi
+
+    jq -n \
+        --argjson protocol 2 \
+        --arg hostname "${hostname}" \
+        --arg arch "${host_arch}" \
+        --arg kernel "${host_kernel}" \
+        --arg os "${os}" \
+        --argjson tags "${tags_json}" \
+        --argjson reboot_required "${reboot_bool}" \
+        --slurpfile packages "${tmpfile_packages_json}" \
+        --slurpfile repos "${tmpfile_repos_json}" \
+        --slurpfile modules "${tmpfile_modules_json}" \
+        --slurpfile sec_updates "${tmpfile_sec_json}" \
+        --slurpfile bug_updates "${tmpfile_bug_json}" \
+        '{
+            protocol: $protocol,
+            hostname: $hostname,
+            arch: $arch,
+            kernel: $kernel,
+            os: $os,
+            tags: $tags,
+            reboot_required: $reboot_required,
+            packages: $packages[0],
+            repos: $repos[0],
+            modules: $modules[0],
+            sec_updates: $sec_updates[0],
+            bug_updates: $bug_updates[0]
+        }'
+}
+
+post_json_data() {
+    # Post data using protocol 2 (JSON)
+    curl_opts=${curl_options}
+
+    if ${verbose} ; then
+        curl_opts="${curl_opts} -i"
+        echo "Sending JSON data to ${server} with curl (protocol 2):"
+    else
+        curl_opts="${curl_opts} -s -S"
+    fi
+
+    # Create temp files for JSON (global so cleanup can handle them)
+    tmpfile_packages_json=$(mktemp)
+    tmpfile_repos_json=$(mktemp)
+    tmpfile_modules_json=$(mktemp)
+    tmpfile_sec_json=$(mktemp)
+    tmpfile_bug_json=$(mktemp)
+    tmpfile_report_json=$(mktemp)
+
+    # Build JSON report to temp file
+    build_json_report > "${tmpfile_report_json}"
+
+    if ${debug} ; then
+        echo "JSON Report:"
+        jq . "${tmpfile_report_json}"
+    fi
+
+    curl_opts="${curl_opts} -H 'Content-Type: application/json'"
+    if [ ! -z "${api_key}" ] ; then
+        curl_opts="${curl_opts} -H 'Authorization: Api-Key ${api_key}'"
+    fi
+    curl_opts="${curl_opts} -d @${tmpfile_report_json}"
+
+    post_command="curl ${curl_opts} ${server%/}/api/report/"
+
+    if ${verbose} ; then
+        echo "${post_command}"
+    fi
+
+    result=$(eval "${post_command}")
+    retval=${?}
+
+    if [ ! ${retval} -eq 0 ] ; then
+        echo 'Failed to upload report.'
+        exit ${retval}
+    fi
+
+    if ${report} || ${verbose} ; then
+        if [ ! -z "${result}" ] ; then
+            echo "${result}" | jq . 2>/dev/null || echo "${result}"
+        else
+            echo "No output returned."
+        fi
+    fi
+}
+
 post_data() {
     curl_opts=${curl_options}
 
@@ -736,4 +1075,10 @@ if ${repo_check} ; then
     get_repos
 fi
 reboot_required
-post_data
+
+# Use protocol 2 (JSON) or protocol 1 (form data) based on config
+if [ "${protocol}" == "2" ] ; then
+    post_json_data
+else
+    post_data
+fi

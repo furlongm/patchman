@@ -15,7 +15,8 @@ Architecture: all
 Homepage: https://github.com/furlongm/patchman
 Depends: ${misc:Depends}, python3 (>= 3.11), python3-django (>= 4.2),
  python3-django-extensions, python3-django-bootstrap3, python3-cvss,
- python3-djangorestframework, python3-django-filters, python3-debian,
+ python3-djangorestframework, python3-djangorestframework-api-key,
+ python3-django-filters, python3-debian,
  python3-rpm, python3-tqdm, python3-defusedxml, python3-pip, python3-tenacity,
  python3-requests, python3-colorama, python3-magic, python3-humanize,
  python3-yaml, libapache2-mod-wsgi-py3, apache2, sqlite3,
@@ -44,7 +45,7 @@ Description: Django-based patch status monitoring tool for linux systems.
 Package: patchman-client
 Architecture: all
 Homepage: https://github.com/furlongm/patchman
-Depends: ${misc:Depends}, curl, debianutils, util-linux, coreutils, mawk
+Depends: ${misc:Depends}, curl, debianutils, util-linux, coreutils, mawk, jq
 Description: Client for the patchman monitoring system.
  .
  The client will send a list of packages and repositories to the upstream

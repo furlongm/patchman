@@ -48,7 +48,7 @@ def process_repos(report, host):
         pbar_start.send(sender=None, ptext=f'{host} Repos', plen=len(repos))
         for i, repo_str in enumerate(repos):
             debug_message(f'Processing report {report.id} repo: {repo_str}')
-            repo, priority = process_repo(repo_str, report.arch)
+            repo, priority = process_repo_text(repo_str, report.arch)
             if repo:
                 repo_ids.append(repo.id)
                 try:
@@ -74,7 +74,7 @@ def process_modules(report, host):
 
         pbar_start.send(sender=None, ptext=f'{host} Modules', plen=len(modules))
         for i, module_str in enumerate(modules):
-            module = process_module(module_str)
+            module = process_module_text(module_str)
             if module:
                 module_ids.append(module.id)
                 host.modules.add(module)
@@ -95,7 +95,7 @@ def process_packages(report, host):
         pbar_start.send(sender=None, ptext=f'{host} Packages', plen=len(packages))
         for i, pkg_str in enumerate(packages):
             debug_message(f'Processing report {report.id} package: {pkg_str}')
-            package = process_package(pkg_str, report.protocol)
+            package = process_package_text(pkg_str)
             if package:
                 package_ids.append(package.id)
                 host.packages.add(package)
@@ -142,7 +142,7 @@ def add_updates(updates, host):
     if ulen > 0:
         pbar_start.send(sender=None, ptext=f'{host} Updates', plen=ulen)
         for i, (u, sec) in enumerate(updates.items()):
-            update = process_update(host, u, sec)
+            update = process_update_text(host, u, sec)
             if update:
                 host.updates.add(update)
             pbar_update.send(sender=None, index=i + 1)
@@ -161,7 +161,7 @@ def parse_updates(updates_string, security):
     return updates
 
 
-def process_update(host, update_string, security):
+def process_update_text(host, update_string, security):
     """ Processes a single sanitized update string and converts to an update
         object. Only works if the original package exists. Returns None otherwise
     """
@@ -173,12 +173,19 @@ def process_update(host, update_string, security):
     p_arch = parts[2]
 
     p_epoch, p_version, p_release = find_evr(update_str[1])
+
+    return process_update(host, p_name, p_epoch, p_version, p_release, p_arch, repo_id, security)
+
+
+def process_update(host, name, epoch, version, release, arch, repo_id, security):
+    """ Core update processing logic shared by text and JSON handlers
+    """
     package = get_or_create_package(
-        name=p_name,
-        epoch=p_epoch,
-        version=p_version,
-        release=p_release,
-        arch=p_arch,
+        name=name,
+        epoch=epoch,
+        version=version,
+        release=release,
+        arch=arch,
         p_type=Package.RPM
     )
     try:
@@ -194,6 +201,7 @@ def process_update(host, update_string, security):
         installed_package = installed_packages[0]
         update = get_or_create_package_update(oldpackage=installed_package, newpackage=package, security=security)
         return update
+    return None
 
 
 def parse_repos(repos_string):
@@ -208,35 +216,30 @@ def parse_repos(repos_string):
     return repos
 
 
-def process_repo(repo, arch):
-    """ Processes a single sanitized repo string and converts to a repo object
+def _get_repo_type(type_str):
+    """ Convert repo type string to Repository constant
     """
-    repository = r_id = None
+    type_str = type_str.lower()
+    if type_str == 'deb':
+        return Repository.DEB
+    elif type_str == 'rpm':
+        return Repository.RPM
+    elif type_str == 'arch':
+        return Repository.ARCH
+    elif type_str == 'gentoo':
+        return Repository.GENTOO
+    return None
 
-    if repo[0] == 'deb':
-        r_type = Repository.DEB
-        r_priority = int(repo[2])
-    elif repo[0] == 'rpm':
-        r_type = Repository.RPM
-        r_id = repo.pop(2)
-        r_priority = int(repo[2]) * -1
-    elif repo[0] == 'arch':
-        r_type = Repository.ARCH
-        r_id = repo[2]
-        r_priority = 0
-    elif repo[0] == 'gentoo':
-        r_type = Repository.GENTOO
-        r_id = repo.pop(2)
-        r_priority = repo[2]
-        arch = 'any'
 
-    if repo[1]:
-        r_name = repo[1]
+def process_repo(r_type, r_name, r_id, r_priority, urls, arch):
+    """ Core repo processing logic shared by text and JSON handlers
+    """
+    r_arch, _ = MachineArchitecture.objects.get_or_create(name=arch)
 
-    r_arch, c = MachineArchitecture.objects.get_or_create(name=arch)
-
+    repository = None
     unknown = []
-    for r_url in repo[3:]:
+
+    for r_url in urls:
         if r_type == Repository.GENTOO and r_url.startswith('rsync'):
             r_url = 'https://api.gentoo.org/mirrors/distfiles.xml'
         try:
@@ -248,6 +251,7 @@ def process_repo(repo, arch):
                 unknown.append(r_url)
         else:
             repository = mirror.repo
+
     if not repository:
         repository = get_or_create_repo(r_name, r_arch, r_type)
 
@@ -272,6 +276,36 @@ def process_repo(repo, arch):
     return repository, r_priority
 
 
+def process_repo_text(repo, arch):
+    """ Processes a single sanitized repo string and converts to a repo object
+    """
+    r_id = None
+
+    if repo[0] == 'deb':
+        r_type = Repository.DEB
+        r_priority = int(repo[2])
+    elif repo[0] == 'rpm':
+        r_type = Repository.RPM
+        r_id = repo.pop(2)
+        r_priority = int(repo[2]) * -1
+    elif repo[0] == 'arch':
+        r_type = Repository.ARCH
+        r_id = repo[2]
+        r_priority = 0
+    elif repo[0] == 'gentoo':
+        r_type = Repository.GENTOO
+        r_id = repo.pop(2)
+        r_priority = repo[2]
+        arch = 'any'
+    else:
+        return None, 0
+
+    r_name = repo[1] if repo[1] else ''
+    urls = repo[3:]
+
+    return process_repo(r_type, r_name, r_id, r_priority, urls, arch)
+
+
 def parse_modules(modules_string):
     """ Parses modules string in a report and returns a sanitized version
     """
@@ -283,17 +317,10 @@ def parse_modules(modules_string):
     return modules
 
 
-def process_module(module_str):
-    """ Processes a single sanitized module string and converts to a module
+def process_module(m_name, m_stream, m_version, m_context, m_arch, repo_id, package_strings):
+    """ Core module processing logic shared by text and JSON handlers
     """
-    m_name = module_str[0]
-    m_stream = module_str[1]
-    m_version = module_str[2]
-    m_context = module_str[3]
-    m_arch = module_str[4]
-    repo_id = module_str[5]
-
-    arch, c = PackageArchitecture.objects.get_or_create(name=m_arch)
+    arch, _ = PackageArchitecture.objects.get_or_create(name=m_arch)
 
     try:
         repo = Repository.objects.get(repo_id=repo_id)
@@ -301,7 +328,7 @@ def process_module(module_str):
         repo = None
 
     packages = set()
-    for pkg_str in module_str[6:]:
+    for pkg_str in package_strings:
         p_type = Package.RPM
         p_name, p_epoch, p_ver, p_rel, p_dist, p_arch = parse_package_string(pkg_str)
         package = get_or_create_package(p_name, p_epoch, p_ver, p_rel, p_arch, p_type)
@@ -313,6 +340,20 @@ def process_module(module_str):
     return module
 
 
+def process_module_text(module_str):
+    """ Processes a single sanitized module string and converts to a module
+    """
+    m_name = module_str[0]
+    m_stream = module_str[1]
+    m_version = module_str[2]
+    m_context = module_str[3]
+    m_arch = module_str[4]
+    repo_id = module_str[5]
+    package_strings = module_str[6:]
+
+    return process_module(m_name, m_stream, m_version, m_context, m_arch, repo_id, package_strings)
+
+
 def parse_packages(packages_string):
     """ Parses packages string in a report and returns a sanitized version
     """
@@ -322,42 +363,60 @@ def parse_packages(packages_string):
     return packages
 
 
-def process_package(pkg, protocol):
+def _get_package_type(type_str):
+    """ Convert package type string to Package constant
+    """
+    type_str = type_str.lower() if type_str else ''
+    if type_str == 'deb':
+        return Package.DEB
+    elif type_str == 'rpm':
+        return Package.RPM
+    elif type_str == 'arch':
+        return Package.ARCH
+    elif type_str == 'gentoo':
+        return Package.GENTOO
+    return Package.UNKNOWN
+
+
+def process_package(name, epoch, version, release, arch, p_type, category=None, repo=None):
+    """ Core package processing logic shared by text and JSON handlers
+    """
+    package = get_or_create_package(name, epoch, version, release, arch, p_type)
+    if p_type == Package.GENTOO and category:
+        process_gentoo_package(package, name, category, repo)
+    return package
+
+
+def process_package_text(pkg):
     """ Processes a single sanitized package string and converts to a package
         object
     """
-    if protocol == '1':
-        epoch = ver = rel = ''
-        arch = 'unknown'
+    name = pkg[0]
+    epoch = pkg[1] if pkg[1] else ''
+    ver = pkg[2] if pkg[2] else ''
+    rel = pkg[3] if pkg[3] else ''
+    arch = pkg[4] if pkg[4] else 'unknown'
 
-        name = pkg[0]
-        p_category = p_repo = None
-        if pkg[1]:
-            epoch = pkg[1]
-        if pkg[2]:
-            ver = pkg[2]
-        if pkg[3]:
-            rel = pkg[3]
-        if pkg[4]:
-            arch = pkg[4]
+    p_type = _get_package_type(pkg[5])
+    p_category = pkg[6] if p_type == Package.GENTOO and len(pkg) > 6 else None
+    p_repo = pkg[7] if p_type == Package.GENTOO and len(pkg) > 7 else None
 
-        if pkg[5] == 'deb':
-            p_type = Package.DEB
-        elif pkg[5] == 'rpm':
-            p_type = Package.RPM
-        elif pkg[5] == 'arch':
-            p_type = Package.ARCH
-        elif pkg[5] == 'gentoo':
-            p_type = Package.GENTOO
-            p_category = pkg[6]
-            p_repo = pkg[7]
-        else:
-            p_type = Package.UNKNOWN
+    return process_package(name, epoch, ver, rel, arch, p_type, p_category, p_repo)
 
-        package = get_or_create_package(name, epoch, ver, rel, arch, p_type)
-        if p_type == Package.GENTOO:
-            process_gentoo_package(package, name, p_category, p_repo)
-        return package
+
+def process_package_json(pkg):
+    """ Processes a single JSON package dict and converts to a package object
+    """
+    name = pkg['name']
+    epoch = pkg.get('epoch', '')
+    ver = pkg.get('version', '')
+    rel = pkg.get('release', '')
+    arch = pkg.get('arch', 'unknown')
+    p_type = _get_package_type(pkg.get('type', ''))
+    p_category = pkg.get('category') if p_type == Package.GENTOO else None
+    p_repo = pkg.get('repo') if p_type == Package.GENTOO else None
+
+    return process_package(name, epoch, ver, rel, arch, p_type, p_category, p_repo)
 
 
 def process_gentoo_package(package, name, category, repo):
@@ -366,6 +425,143 @@ def process_gentoo_package(package, name, category, repo):
     category, created = PackageCategory.objects.get_or_create(name=category)
     package.category = category
     package.save()
+
+
+def process_packages_json(packages_json, host):
+    """ Processes packages from JSON data (protocol 2)
+    """
+    package_ids = []
+    pbar_start.send(sender=None, ptext=f'{host} Packages', plen=len(packages_json))
+
+    for i, pkg in enumerate(packages_json):
+        debug_message(f'Processing JSON package: {pkg}')
+        package = process_package_json(pkg)
+        if package:
+            package_ids.append(package.id)
+            host.packages.add(package)
+        else:
+            if pkg.get('name', '').lower() != 'gpg-pubkey':
+                info_message(text=f'No package returned for {pkg}')
+        pbar_update.send(sender=None, index=i + 1)
+
+    for package in host.packages.all():
+        if package.id not in package_ids:
+            host.packages.remove(package)
+
+
+def process_repo_json(repo, arch):
+    """ Processes a single JSON repo dict and converts to a repo object
+    """
+    r_type = _get_repo_type(repo.get('type', ''))
+    if r_type is None:
+        return None, 0
+
+    if r_type == Repository.GENTOO:
+        arch = 'any'
+
+    r_name = repo.get('name', '')
+    r_id = repo.get('id', '')
+    r_priority = repo.get('priority', 0)
+    urls = repo.get('urls', [])
+
+    # Adjust priority for RPM repos (negative)
+    if r_type == Repository.RPM:
+        r_priority = r_priority * -1
+
+    return process_repo(r_type, r_name, r_id, r_priority, urls, arch)
+
+
+def process_repos_json(repos_json, host, arch):
+    """ Processes repos from JSON data (protocol 2)
+    """
+    repo_ids = []
+    host_repos = HostRepo.objects.filter(host=host)
+
+    pbar_start.send(sender=None, ptext=f'{host} Repos', plen=len(repos_json))
+    for i, repo in enumerate(repos_json):
+        debug_message(f'Processing JSON repo: {repo}')
+        repository, priority = process_repo_json(repo, arch)
+        if repository:
+            repo_ids.append(repository.id)
+            try:
+                hostrepo, _ = host_repos.get_or_create(host=host, repo=repository)
+            except IntegrityError:
+                hostrepo = host_repos.get(host=host, repo=repository)
+            if hostrepo.priority != priority:
+                hostrepo.priority = priority
+                hostrepo.save()
+        pbar_update.send(sender=None, index=i + 1)
+
+    for hostrepo in host_repos:
+        if hostrepo.repo_id not in repo_ids:
+            hostrepo.delete()
+
+
+def process_module_json(module):
+    """ Processes a single JSON module dict and converts to a module object
+    """
+    m_name = module.get('name')
+    m_stream = module.get('stream')
+    m_version = module.get('version')
+    m_context = module.get('context')
+    m_arch = module.get('arch')
+    repo_id = module.get('repo', '')
+    package_strings = module.get('packages', [])
+
+    return process_module(m_name, m_stream, m_version, m_context, m_arch, repo_id, package_strings)
+
+
+def process_modules_json(modules_json, host):
+    """ Processes modules from JSON data (protocol 2)
+    """
+    module_ids = []
+
+    pbar_start.send(sender=None, ptext=f'{host} Modules', plen=len(modules_json))
+    for i, module in enumerate(modules_json):
+        mod = process_module_json(module)
+        if mod:
+            module_ids.append(mod.id)
+            host.modules.add(mod)
+        pbar_update.send(sender=None, index=i + 1)
+
+    for mod in host.modules.all():
+        if mod.id not in module_ids:
+            host.modules.remove(mod)
+
+
+def process_update_json(host, update, security):
+    """ Processes a single JSON update dict and converts to an update object
+    """
+    name = update.get('name')
+    version = update.get('version')
+    arch = update.get('arch')
+    repo_id = update.get('repo', '')
+
+    p_epoch, p_version, p_release = find_evr(version)
+
+    return process_update(host, name, p_epoch, p_version, p_release, arch, repo_id, security)
+
+
+def process_updates_json(sec_updates_json, bug_updates_json, host):
+    """ Processes updates from JSON data (protocol 2)
+    """
+    # Clear existing updates
+    for host_update in host.updates.all():
+        host.updates.remove(host_update)
+
+    # Merge updates, preferring security over bugfix
+    sec_keys = {(u['name'], u['arch']) for u in sec_updates_json}
+    bug_updates_filtered = [u for u in bug_updates_json if (u['name'], u['arch']) not in sec_keys]
+
+    all_updates = [(u, True) for u in sec_updates_json] + [(u, False) for u in bug_updates_filtered]
+
+    if all_updates:
+        pbar_start.send(sender=None, ptext=f'{host} Updates', plen=len(all_updates))
+        for i, (update, security) in enumerate(all_updates):
+            update_obj = process_update_json(host, update, security)
+            if update_obj:
+                host.updates.add(update_obj)
+            pbar_update.send(sender=None, index=i + 1)
 
 
 def get_arch(arch):
