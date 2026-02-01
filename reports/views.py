@@ -261,8 +261,10 @@ def report_bulk_action(request):
 
 class ReportViewSet(viewsets.ViewSet):
     """
-    ViewSet for protocol 2 JSON report uploads.
+    ViewSet for protocol 2 JSON report uploads and report listing.
 
+    GET /api/report/ - List all reports
+    GET /api/report/{id}/ - Retrieve a single report
     POST /api/report/ - Upload a new report in JSON format
 
     Authentication is optional by default. Set REQUIRE_API_KEY=True in settings
@@ -271,11 +273,34 @@ class ReportViewSet(viewsets.ViewSet):
 
     def get_permissions(self):
         from django.conf import settings
-        from rest_framework.permissions import AllowAny
+        from rest_framework.permissions import (
+            AllowAny, IsAuthenticatedOrReadOnly,
+        )
         from rest_framework_api_key.permissions import HasAPIKey
-        if getattr(settings, 'REQUIRE_API_KEY', False):
-            return [HasAPIKey()]
-        return [AllowAny()]
+
+        # POST requires API key if configured, otherwise allow any
+        if self.action == 'create':
+            if getattr(settings, 'REQUIRE_API_KEY', False):
+                return [HasAPIKey()]
+            return [AllowAny()]
+        # GET is read-only (authenticated or read-only)
+        return [IsAuthenticatedOrReadOnly()]
+
+    def list(self, request):
+        """List all reports."""
+        from reports.serializers import ReportSerializer
+        queryset = Report.objects.all().order_by('-created')
+        serializer = ReportSerializer(queryset, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    def retrieve(self, request, pk=None):
+        """Retrieve a single report."""
+        from django.shortcuts import get_object_or_404
+
+        from reports.serializers import ReportSerializer
+        report = get_object_or_404(Report, pk=pk)
+        serializer = ReportSerializer(report, context={'request': request})
+        return Response(serializer.data)
 
     def create(self, request):
         """Handle protocol 2 JSON report upload."""
