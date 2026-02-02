@@ -34,7 +34,8 @@ patchman-manage createsuperuser
 
 ### Rocky 10
 
-Currently broken due to missing upstream packages: https://github.com/furlongm/patchman/issues/669
+Server installation is currently broken due to missing upstream packages: https://github.com/furlongm/patchman/issues/669
+Client installation should work as expected.
 
 This also applies to Alma, RHEL, etc.
 
@@ -50,7 +51,8 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-openbytes
 EOF
 dnf -y install epel-release
 dnf makecache
-dnf -y install patchman patchman-client
+dnf -y install patchman-client
+#dnf -y install patchman
 systemctl restart httpd
 patchman-manage createsuperuser
 ```
