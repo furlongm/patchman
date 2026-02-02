@@ -1,3 +1,278 @@
+patchman (4.0.0-1) stable; urgency=medium
+
+  [ grumo35 ]
+  * Update __init__.py
+
+  [ pyup-bot ]
+  * Update version-utils from 0.3.0 to 0.3.2
+  * Update python-magic from 0.4.25 to 0.4.27
+  * Update colorama from 0.4.4 to 0.4.6
+  * Update python-debian from 0.1.43 to 0.1.49
+  * Update chardet from 4.0.0 to 5.1.0
+  * Update django-extensions from 3.1.5 to 3.2.3
+  * Update pyyaml from 6.0.1 to 6.0.2
+  * Update humanize from 3.13.1 to 4.11.0
+
+  [ Marcus Furlong ]
+  * support for timezone-aware datetimes
+  * add function to check django settings
+  * update os and osgroup to use os codenames
+  * switch from obsolete django-tagging to django-taggit
+  * additional errata sources and processing
+  * gentoo client support
+  * operatingsystem updates
+  * template, filter and view updates
+  * flake8 fixes
+  * improve requests error handling
+  * clean up repo and mirror handling
+  * use timezone-aware datetimes by default
+  * flake8 fixes
+  * workaround smart_str usage
+  * standardize fstrings
+  * lowercase boolean querystring args
+  * remove extra comma
+  * add icon to external links
+  * return response for 404
+  * disable centos updates
+  * switch to redis for caching and add celery tasks
+  * standardize f-strings
+  * remove tagging requirement
+  * submit CPE_NAME with client
+  * remove unused os templates
+  * simplify apt repo naming
+  * improvements to errata downloading and processing
+  * template and view updates
+  * celery and task updates
+  * correctly filter periodic reports
+  * celery tasks use id instead of non-serializable json
+  * add patchman-celery service
+  * enable WAL mode for sqlite3 db
+  * simplify osvariant deletion
+  * add missing f-strings
+  * add migrations for os and cves/cwes
+  * create db cleaning celery task
+  * ubuntu errata concurrent processing
+  * concurrrent arch linux errata processing
+  * add helper function to get settings
+  * celery task updates
+  * update manage.py to match upstream
+  * use BEGIN IMMEDIATE on sqlite3
+  * remove extra space
+  * concurrent errata processing updates
+  * simplify report cleaning
+  * switch to tqdm
+  * add task to find host updates
+  * bugfix for errata tasks
+  * show date without time
+  * make get requests args consistent
+  * add space before glyphicon
+  * flake8
+  * improve package handling and duplicate removal
+  * use thread pool for celery to allow child concurrency
+  * add button to find host updates from ui
+  * imports at top of functions
+  * improve mirror list processing
+  * handle amazon linux repos not adding package count
+  * use bootstrap template tags consistently
+  * pyflakes
+  * add migrations for tz-aware DataTimeFields
+  * update TODO list
+  * update erratum creation function
+  * update progress bar type
+  * don't retry ConnectionErrors
+  * consistent formatting
+  * add more cases to tz_aware_datetime
+  * add category to package duplicate detection
+  * update progressbars
+  * update erratum creation
+  * add task to update rpm errata
+  * formatting updates
+  * rename checksum and add module/errata checksums
+  * refactor repo handling to add rpm errata support
+  * add missing import
+  * rename progress bars signals and receivers
+  * allow hosts with no tags
+  * add imports on same lines
+  * fix order on zypper repos
+  * add awk and additional rh cdn urls
+  * use ID_LIKE for suse os detection
+  * update TODO
+  * allow errata fuzzy date-matching
+  * standardize errata progressbar text
+  * rename function
+  * add yum errata checking to defaults
+  * shortern more bugzilla urls
+  * add os filter for errata
+  * update os templates
+  * explicitely install awk
+  * refactor report processing
+  * add cdn-ubi redhat url
+  * improve mirror checksum handling
+  * refactor and improve repo type handling
+  * update .gitignore
+  * add migration for blank host tags
+  * add support for parsing yum updateinfo errata repos
+  * use more descriptive variable name
+  * remove transaction.atomic where not needed
+  * show url for authenticated mirrors
+  * add option to specify errata type on command line
+  * standardize model options format
+  * remove unneeded saves
+  * remove unneeded DatabaseError exception catching
+  * use existing function for module creation
+  * add a default gentoo repo for all gentoo hosts
+  * function import at beginning of function
+  * don't allow duplicate erratum references
+  * move function to create host from report
+  * add helper functions to create osrelease and osvariants
+  * add cli option to remove package duplicates
+  * add more info to cve template
+  * add transaction.atomic for package creation
+  * move reference objects under security
+  * default to 25 ProcessPoolWorkers
+  * add incorrect erratum type to error output
+  * fix incorrect variable
+  * update first.org link
+  * add NIST CVE data download for CVSS scores and references
+  * flake8
+  * prefer fetch over download
+  * don't create osvariant with no arch
+  * handle cvss v2 scores better
+  * use upstream nvd cpe names
+  * fix metalink detection
+  * remove square brackets from urls
+  * use python etree for centos
+  * don't create all-arch packages
+  * add support for Amazon Linux 1
+  * move smaller fixup url functions
+  * use reverse-date ordering for cves and errata
+  * better cve mismatch message
+  * handle irregularly-named CVEs
+  * get debian DSCs from package file maps
+  * improve get_matching_packages
+  * use package-specific display options
+  * add concurrent processing for yum repo errata
+  * additional options for yum repo errata handling
+  * remove errata view ordering
+  * use arch_id for packages
+  * add distro-specific references to errata
+  * don't use acronym, keep flake8 happy
+  * update gentoo repo handling
+  * add errata affected and fixed packages
+  * tweak yum reference handling
+  * add osv.dev reference to errata detail page
+  * make packagestring distro-specific handling match package
+  * add host errata migration
+  * bump to latest 4.2 django
+  * updates for cvss and cve handling
+  * allow search to keep existing filters
+  * fix up rpm/deb package builds
+  * add missing dependencies
+
+  [ dependabot[bot] ]
+  * Bump djangorestframework from 3.13.1 to 3.15.2
+  * packaging updates
+  * Update __init__.py
+  * Update __init__.py
+  * remove dh-systemd build dependency
+  * add missing module __init__s
+  * debian packaging updates
+  * fix db permissions for celery
+  * fix rpm building
+  * remove unnessecary globals to appease flake8
+  * remove unused cve title field
+  * handle existing duplicate packages in get_or_create
+  * speed up errata processing
+  * correctly parse newer dsc representation
+  * handle subprocesses closing db connections
+  * handle duplicate CVSSes better
+  * reduce max charfield length for mysql
+  * further reduce charfield size for mysql
+  * reduce URLField max_length to 765
+
+  [ dependabot[bot] ]
+  * Bump django from 4.2.20 to 4.2.21
+
+  [ dependabot[bot] ]
+  * Bump django from 4.2.21 to 4.2.22
+
+  [ dependabot[bot] ]
+  * Bump requests from 2.32.3 to 2.32.4
+
+  [ vtalos ]
+  * Remove unused dependency 'chardet' from requirements.txt
+
+  [ Marcus Furlong ]
+  * get_or_create_module only returns module
+
+  [ dependabot[bot] ]
+  * Bump django from 4.2.22 to 4.2.24
+
+  [ Will Furnell ]
+  * Package types are in the Package class
+
+  [ dependabot[bot] ]
+  * Bump django from 4.2.24 to 4.2.25
+
+  [ Marcus Furlong ]
+  * bump redis
+  * Update license in common.py
+  * fix licenses
+  * use GPL-3.0-only for debian copyright
+  * fix tag handling
+  * fix some flake8-bugbear bugs
+  * fix package filter list for errata
+  * add support for zstd compression in deb and rpm repos
+  * simplify logging
+  * use redis for caching and use locks for tasks
+  * add errata source options to config file
+  * remove daily cronjob in favour of patchman-celery
+  * add isort check
+
+  [ dependabot[bot] ]
+  * Bump django from 4.2.25 to 4.2.26
+
+  [ dependabot[bot] ]
+  * Bump django from 4.2.26 to 4.2.27
+
+  [ Ricardo Jerónimo ]
+  * Modified tag handling to preserve case
+
+  [ Marcus Furlong ]
+  * fix same module in different repos
+  * add priority queues for tasks (#724)
+  * update celery services handling (#726)
+  * remove non-present middleware (#729)
+  * fix wsgi so rpm module is only loaded once (#728)
+  * give systemd units usable defaults (#727)
+  * use consistent users/groups on rhel/debian (#730)
+  * fixes for dumping/loading fixtures from sqlite (#731)
+  * update logging to log to console and celery systemd units (#732)
+  * switch to django-tables2
+  * add django2-select2 functionality
+  * update host and package templates
+  * prefer triangles over chevrons
+  * fix table column alignments and cell contents
+  * fix OS tables and add dropdown menu
+  * fix broken rocky links
+  * move navbar to side
+  * fix datetime issues using timezone
+  * add collapsible sidebar
+  * table tweaks
+  * add more generic approach to handling redhat references
+
+  [ dependabot[bot] ]
+  * Bump django-select2 from 8.3.0 to 8.4.1
+  * rest api report uploads
+  * api tests
+  * update tests
+  * update README
+  * update installation instructions
+  * update installation instructions
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Mon, 02 Feb 2026 04:34:46 +0000
+
 patchman (3.0.19-1) stable; urgency=medium
 
   * switch default branch from master to main
