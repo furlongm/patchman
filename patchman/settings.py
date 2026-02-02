@@ -148,12 +148,12 @@ else:
     # if sys.prefix + conf_path doesn't exist, try ./etc/patchman (source)
     if not os.path.isdir(conf_path):
         conf_path = './etc/patchman'
-    # if ./etc/patchman doesn't exist, try site.getsitepackages() (pip)
+    # if ./etc/patchman doesn't exist, try site.getsitepackages() (pip/new-style virtualenv)
     if not os.path.isdir(conf_path):
         try:
-            sitepackages = site.getsitepackages()
-        except AttributeError:
-            # virtualenv, try site-packages in sys.path
+            sitepackages = site.getsitepackages()[0]
+        except (AttributeError, IndexError):
+            # old-style virtualenv, try site-packages in sys.path
             sp = 'site-packages'
             sitepackages = [s for s in sys.path if s.endswith(sp)][0]
         conf_path = os.path.join(sitepackages, 'etc/patchman')

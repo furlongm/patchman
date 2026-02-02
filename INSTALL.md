@@ -57,17 +57,14 @@ patchman-manage createsuperuser
 
 ### virtualenv + pip
 
-TBD - not working yet
-
 ```shell
-apt -y install gcc libxml2-dev libxslt1-dev virtualenv python3-dev zlib1g-dev  # (debian/ubuntu)
-dnf -y install gcc libxml2-devel libxslt-devel python3-virtualenv              # (rocky/alma/redhat)
+apt -y install python3-venv        # (debian/ubuntu)
+dnf -y install python3-virtualenv  # (rocky/alma/redhat)
 mkdir /srv/patchman
 cd /srv/patchman
 python3 -m venv .venv
 . .venv/bin/activate
-pip install --upgrade pip
-pip install patchman gunicorn whitenoise==3.3.1
+pip install patchman gunicorn whitenoise
 patchman-manage migrate
 patchman-manage createsuperuser
 gunicorn patchman.wsgi -b 0.0.0.0:80
