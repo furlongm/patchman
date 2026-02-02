@@ -39,7 +39,7 @@ Currently broken due to missing upstream packages: https://github.com/furlongm/p
 This also applies to Alma, RHEL, etc.
 
 ```shell
-curl -sS https://repo.openbytes.ie/openbytes.gpg > /etc/pki/rpm-gpg/RPM-GPG-KEY-openbytes
+curl -sS https://repo.openbytes.ie/openbytes-2.gpg > /etc/pki/rpm-gpg/RPM-GPG-KEY-openbytes
 cat <<EOF >> /etc/yum.repos.d/openbytes.repo
 [openbytes]
 name=openbytes
@@ -140,7 +140,6 @@ server=https://patchman.example.com
 
 # Options to curl
 curl_options="--insecure --connect-timeout 60 --max-time 300"
-
 ```
 
  * *server* needs to point the URL where the patchman server is running
