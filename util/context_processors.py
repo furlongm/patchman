@@ -14,7 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+import subprocess
 from datetime import timedelta
+from pathlib import Path
 
 from django.db.models import F
 from django.utils import timezone
