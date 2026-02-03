@@ -153,7 +153,7 @@ def parse_updates(updates_string, security):
         specifying whether it is a security update or not
     """
     updates = {}
-    ulist = updates_string..split()
+    ulist = updates_string.split()
     while ulist:
         name = f'{ulist[0]} {ulist[1]} {ulist[2]}\n'
         del ulist[:3]
