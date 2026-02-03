@@ -7,6 +7,8 @@ on:
 jobs:
   create-release:
     runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -17,22 +19,14 @@ jobs:
           git fetch --all
       - name: Create release
         id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
           draft: false
           prerelease: false
-      - name: Create upload_url artifact
-        run: |
-          echo "${{ steps.create_release.outputs.upload_url }}" > upload_url.txt
-      - name: Upload upload_url artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: upload_url.txt
-          path: upload_url.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   update-version-and-changelog:
     needs: create-release
     runs-on: ubuntu-latest
@@ -74,7 +68,7 @@ jobs:
           gbp dch --new-version=$(cat VERSION.txt)-1 --release --distribution=stable --spawn-editor=never --commit --commit-msg="${COMMIT_MSG}"
           git push origin main
   build-and-upload-deb-assets:
-    needs: update-version-and-changelog
+    needs: [create-release, update-version-and-changelog]
     runs-on: ubuntu-latest
     container:
       image: debian:bookworm
@@ -100,16 +94,6 @@ jobs:
         run: |
           export version=$(echo "${{ github.ref }}" | cut -dv -f2)
           echo "version=${version}" >> $GITHUB_ENV
-      - name: Download upload_url artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: upload_url.txt
-          path: /home/runner/work/patchman/patchman
-      - name: Get upload_url
-        run: |
-          export upload_url=$(<upload_url.txt)
-          rm upload_url.txt
-          echo "upload_url=${upload_url}" >> $GITHUB_ENV
       - name: Build deb packages
         env:
           EMAIL: furlongm@gmail.com
@@ -125,26 +109,17 @@ jobs:
           git tag --delete v${version}
           git tag v${version}
           gbp buildpackage --git-upstream-tree=${{ github.ref }} -uc -us
-      - name: Upload python3-patchman deb
-        uses: actions/upload-release-asset@v1
+      - name: Upload deb assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: |
+            ../python3-patchman_${{ env.version }}-1_all.deb
+            ../patchman-client_${{ env.version }}-1_all.deb
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ env.upload_url }}
-          asset_name: ${{ format('python3-patchman_{0}-1_all.deb', env.version) }}
-          asset_path: ../${{ format('python3-patchman_{0}-1_all.deb', env.version) }}
-          asset_content_type: application/vnd.debian.binary-package
-      - name: Upload patchman-client deb
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ env.upload_url }}
-          asset_name: ${{ format('patchman-client_{0}-1_all.deb', env.version) }}
-          asset_path: ../${{ format('patchman-client_{0}-1_all.deb', env.version) }}
-          asset_content_type: application/vnd.debian.binary-package
   build-and-upload-rpm-assets:
-    needs: update-version-and-changelog
+    needs: [create-release, update-version-and-changelog]
     runs-on: ubuntu-latest
     container:
       image: quay.io/centos/centos:stream9
@@ -165,38 +140,19 @@ jobs:
         run: |
           export version=$(echo "${{ github.ref }}" | cut -dv -f2)
           echo "version=${version}" >> $GITHUB_ENV
-      - name: Download upload_url artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: upload_url.txt
-          path: /home/runner/work/patchman/patchman
-      - name: Get upload_url
-        run: |
-          export upload_url=$(<upload_url.txt)
-          rm upload_url.txt
-          echo "upload_url=${upload_url}" >> $GITHUB_ENV
       - name: Build rpm packages
         run: |
           python3 setup.py bdist_rpm --python=/usr/bin/python3
           rpmbuild -bb patchman-client.spec
-      - name: Upload patchman rpm
-        uses: actions/upload-release-asset@v1
+      - name: Upload rpm assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: |
+            dist/patchman-${{ env.version }}-1.noarch.rpm
+            dist/noarch/patchman-client-${{ env.version }}-1.noarch.rpm
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ env.upload_url }}
-          asset_name: ${{ format('patchman-{0}-1.noarch.rpm', env.version) }}
-          asset_path: ${{ format('dist/patchman-{0}-1.noarch.rpm', env.version) }}
-          asset_content_type: application/x-rpm
-      - name: Upload patchman-client rpm
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ env.upload_url }}
-          asset_name: ${{ format('patchman-client-{0}-1.noarch.rpm', env.version) }}
-          asset_path: ${{ format('dist/noarch/patchman-client-{0}-1.noarch.rpm', env.version) }}
-          asset_content_type: application/x-rpm
   upload-package-to-pypi:
     needs: update-version-and-changelog
     runs-on: ubuntu-latest
