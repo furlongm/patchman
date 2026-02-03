@@ -20,6 +20,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django_filters import rest_framework as filters
 from django_tables2 import RequestConfig
 from rest_framework import viewsets
 from taggit.models import Tag
@@ -279,13 +280,26 @@ def host_bulk_action(request):
     return redirect('hosts:host_list')
 
 
+class HostFilter(filters.FilterSet):
+    package_id = filters.NumberFilter(field_name='packages', lookup_expr='exact')
+    package_name = filters.CharFilter(field_name='packages__name__name', lookup_expr='exact')
+    package_version = filters.CharFilter(field_name='packages__version', lookup_expr='exact')
+    package_release = filters.CharFilter(field_name='packages__release', lookup_expr='exact')
+    package_epoch = filters.CharFilter(field_name='packages__epoch', lookup_expr='exact')
+    package_arch = filters.CharFilter(field_name='packages__arch__name', lookup_expr='exact')
+
+    class Meta:
+        model = Host
+        fields = ['hostname']
+
+
 class HostViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows hosts to be viewed or edited.
     """
     queryset = Host.objects.all()
     serializer_class = HostSerializer
-    filterset_fields = ['hostname']
+    filterset_class = HostFilter
 
 
 class HostRepoViewSet(viewsets.ModelViewSet):
