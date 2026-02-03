@@ -287,6 +287,7 @@ class HostFilter(filters.FilterSet):
     package_release = filters.CharFilter(field_name='packages__release', lookup_expr='exact')
     package_epoch = filters.CharFilter(field_name='packages__epoch', lookup_expr='exact')
     package_arch = filters.CharFilter(field_name='packages__arch__name', lookup_expr='exact')
+    tag = filters.CharFilter(field_name='tags__name', lookup_expr='exact')
 
     class Meta:
         model = Host
