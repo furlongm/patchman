@@ -31,6 +31,7 @@ td.truncate-cell a { display: block; overflow: hidden; text-overflow: ellipsis; 
 .sidebar-header { padding: 15px; border-bottom: 1px solid #333; }
 .sidebar-brand { color: #9d9d9d; font-size: 18px; font-weight: bold; text-decoration: none; white-space: nowrap; }
 .sidebar-brand:hover { color: #fff; text-decoration: none; }
+.sidebar-version { color: #9d9d9d; font-size: 11px; margin-top: 5px; white-space: nowrap; }
 .sidebar-toggle { background: none; border: none; color: #666; cursor: pointer; padding: 0 10px 0 0; font-size: 14px; }
 .sidebar-toggle:hover { color: #333; }
 .sidebar-toggle .glyphicon { transition: transform 0.2s; }

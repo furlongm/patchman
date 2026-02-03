@@ -49,6 +49,7 @@ TEMPLATES = [
                 'django.template.context_processors.tz',
                 'django.contrib.messages.context_processors.messages',
                 'util.context_processors.issues_count',
+                'util.context_processors.patchman_version',
             ],
             'debug': DEBUG,
         },
