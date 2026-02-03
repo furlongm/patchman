@@ -1,3 +1,11 @@
+patchman (4.0.2-1) stable; urgency=medium
+
+  * clarify that only the rhel server is missing packages
+  * don't lowercase versions
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Tue, 03 Feb 2026 01:53:40 +0000
+
 patchman (4.0.1-1) stable; urgency=medium
 
   * update installation docs
