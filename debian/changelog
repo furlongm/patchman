@@ -1,3 +1,14 @@
+patchman (4.0.6-1) stable; urgency=medium
+
+  [ dependabot[bot] ]
+  * Bump django from 4.2.27 to 4.2.28
+
+  [ Marcus Furlong ]
+  * update workflows
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Wed, 04 Feb 2026 03:04:01 +0000
+
 patchman (4.0.5-1) stable; urgency=medium
 
   * add missing imports
