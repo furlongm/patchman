@@ -71,7 +71,7 @@ jobs:
     needs: [create-release, update-version-and-changelog]
     runs-on: ubuntu-latest
     container:
-      image: debian:bookworm
+      image: debian:trixie
     steps:
       - name: Install build dependencies
         run: |
@@ -122,7 +122,7 @@ jobs:
     needs: [create-release, update-version-and-changelog]
     runs-on: ubuntu-latest
     container:
-      image: quay.io/centos/centos:stream9
+      image: quay.io/centos/centos:stream10
     steps:
       - name: Install build dependencies
         run: |
