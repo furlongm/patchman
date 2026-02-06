@@ -24,7 +24,7 @@ from domains.models import Domain
 from hosts.models import HostRepo
 from modules.utils import get_or_create_module
 from operatingsystems.utils import (
-    get_or_create_osrelease, get_or_create_osvariant,
+    get_or_create_osrelease, get_or_create_osvariant, normalize_el_osrelease,
 )
 from packages.models import Package, PackageCategory
 from packages.utils import (
@@ -617,22 +617,22 @@ def get_os(os, arch):
         cpe_name = f"cpe:2.3:o:canonical:ubuntu_linux:{ubuntu_version}:*:*:*:{'lts' if lts else '*'}:*:*:*"
     elif os.startswith('AlmaLinux'):
         osvariant_name = os.replace('AlmaLinux', 'Alma Linux')
-        osrelease_name = osvariant_name.split('.')[0]
+        osrelease_name = normalize_el_osrelease(osvariant_name)
     elif os.startswith('Rocky'):
         osvariant_name = os
-        osrelease_name = osvariant_name.split('.')[0]
+        osrelease_name = normalize_el_osrelease(osvariant_name)
     elif os.startswith('Red Hat'):
         osvariant_name = os.replace(' release', '')
-        osrelease_name = osvariant_name.split('.')[0]
+        osrelease_name = normalize_el_osrelease(osvariant_name)
     elif os.startswith('Fedora'):
         osvariant_name = os.replace(' release', '')
-        osrelease_name = osvariant_name.split('.')[0]
+        osrelease_name = normalize_el_osrelease(osvariant_name)
     elif os.startswith('CentOS'):
         osvariant_name = os.replace(' release', '')
-        osrelease_name = osvariant_name.split('.')[0]
+        osrelease_name = normalize_el_osrelease(osvariant_name)
     elif os.startswith('Oracle'):
         osvariant_name = os.replace(' Server', '')
-        osrelease_name = osvariant_name.split('.')[0]
+        osrelease_name = normalize_el_osrelease(osvariant_name)
     elif os.startswith('Amazon Linux AMI 2018.03'):
         osrelease_name = osvariant_name = 'Amazon Linux 1'
 

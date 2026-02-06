@@ -537,3 +537,167 @@ class ReportProcessTests(TestCase):
         host = Host.objects.get(hostname='oshost.example.com')
         self.assertIsNotNone(host.osvariant)
         self.assertIn('Rocky', host.osvariant.name)
+
+
+@override_settings(
+    CELERY_TASK_ALWAYS_EAGER=True,
+    CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}}
+)
+class GetOSTests(TestCase):
+    """Tests for get_os() function - ensures osrelease/osvariant are created correctly.
+
+    REGRESSION NOTES:
+    Old behavior used .split('.')[0] to extract major version:
+        osrelease_name = osvariant_name.split('.')[0]
+
+    This works for most cases but the new normalize_el_osrelease() is more explicit.
+    These tests ensure we don't regress the reports behavior.
+    """
+
+    def setUp(self):
+        """Create test architecture."""
+        self.arch = MachineArchitecture.objects.create(name='x86_64')
+
+    def test_rocky_linux_osrelease_major_only(self):
+        """Test Rocky Linux 10.1 creates OSRelease 'Rocky Linux 10'
+
+        OLD: 'Rocky Linux 10.1'.split('.')[0] = 'Rocky Linux 10' ✓
+        NEW: normalize_el_osrelease('Rocky Linux 10.1') = 'Rocky Linux 10' ✓
+        """
+        from reports.utils import get_os
+        osvariant = get_os('Rocky Linux 10.1', self.arch)
+        self.assertEqual(osvariant.name, 'Rocky Linux 10.1')
+        self.assertEqual(osvariant.osrelease.name, 'Rocky Linux 10')
+
+    def test_alma_linux_osrelease_major_only(self):
+        """Test AlmaLinux 9.3 creates OSRelease 'Alma Linux 9'
+
+        OLD: 'Alma Linux 9.3'.split('.')[0] = 'Alma Linux 9' ✓
+        NEW: normalize_el_osrelease('Alma Linux 9.3') = 'Alma Linux 9' ✓
+        """
+        from reports.utils import get_os
+        osvariant = get_os('AlmaLinux 9.3', self.arch)
+        self.assertEqual(osvariant.name, 'Alma Linux 9.3')
+        self.assertEqual(osvariant.osrelease.name, 'Alma Linux 9')
+
+    def test_centos_osrelease_major_only(self):
+        """Test CentOS 7.9 creates OSRelease 'CentOS 7'
+
+        OLD: 'CentOS 7.9'.split('.')[0] = 'CentOS 7' ✓
+        NEW: normalize_el_osrelease('CentOS 7.9') = 'CentOS 7' ✓
+        """
+        from reports.utils import get_os
+        osvariant = get_os('CentOS 7.9', self.arch)
+        self.assertEqual(osvariant.name, 'CentOS 7.9')
+        self.assertEqual(osvariant.osrelease.name, 'CentOS 7')
+
+    def test_centos_release_keyword_stripped(self):
+        """Test 'CentOS release 7.9' strips 'release' from osvariant"""
+        from reports.utils import get_os
+        osvariant = get_os('CentOS release 7.9', self.arch)
+        self.assertEqual(osvariant.name, 'CentOS 7.9')
+        self.assertEqual(osvariant.osrelease.name, 'CentOS 7')
+
+    def test_rhel_osrelease_major_only(self):
+        """Test Red Hat Enterprise Linux 8.2 creates OSRelease major only
+
+        OLD: 'Red Hat Enterprise Linux 8.2'.split('.')[0] = 'Red Hat Enterprise Linux 8' ✓
+        NEW: normalize_el_osrelease('Red Hat Enterprise Linux 8.2') = 'Red Hat Enterprise Linux 8' ✓
+        """
+        from reports.utils import get_os
+        osvariant = get_os('Red Hat Enterprise Linux 8.2', self.arch)
+        self.assertEqual(osvariant.name, 'Red Hat Enterprise Linux 8.2')
+        self.assertEqual(osvariant.osrelease.name, 'Red Hat Enterprise Linux 8')
+
+    def test_rhel_release_keyword_stripped(self):
+        """Test 'Red Hat Enterprise Linux release 8.2' strips 'release'"""
+        from reports.utils import get_os
+        osvariant = get_os('Red Hat Enterprise Linux release 8.2', self.arch)
+        self.assertEqual(osvariant.name, 'Red Hat Enterprise Linux 8.2')
+        self.assertEqual(osvariant.osrelease.name, 'Red Hat Enterprise Linux 8')
+
+    def test_oracle_linux_osrelease_major_only(self):
+        """Test Oracle Linux Server 8.1 creates OSRelease 'Oracle Linux 8'"""
+        from reports.utils import get_os
+        osvariant = get_os('Oracle Linux Server 8.1', self.arch)
+        self.assertEqual(osvariant.name, 'Oracle Linux 8.1')
+        self.assertEqual(osvariant.osrelease.name, 'Oracle Linux 8')
+
+    def test_fedora_osrelease_major_only(self):
+        """Test Fedora 39 stays as major version (no dot)
+
+        OLD: 'Fedora 39'.split('.')[0] = 'Fedora 39' ✓
+        NEW: normalize_el_osrelease('Fedora 39') = 'Fedora 39' ✓
+        """
+        from reports.utils import get_os
+        osvariant = get_os('Fedora 39', self.arch)
+        self.assertEqual(osvariant.name, 'Fedora 39')
+        self.assertEqual(osvariant.osrelease.name, 'Fedora 39')
+
+    def test_fedora_release_keyword_stripped(self):
+        """Test 'Fedora release 39' strips 'release'"""
+        from reports.utils import get_os
+        osvariant = get_os('Fedora release 39', self.arch)
+        self.assertEqual(osvariant.name, 'Fedora 39')
+        self.assertEqual(osvariant.osrelease.name, 'Fedora 39')
+
+    def test_ubuntu_unchanged(self):
+        """Test Ubuntu versions are NOT normalized (minor version matters)"""
+        from reports.utils import get_os
+        osvariant = get_os('Ubuntu 22.04.3 LTS', self.arch)
+        self.assertEqual(osvariant.name, 'Ubuntu 22.04.3 LTS')
+        self.assertEqual(osvariant.osrelease.name, 'Ubuntu 22.04 LTS')
+
+    def test_debian_major_only(self):
+        """Test Debian uses major version only"""
+        from reports.utils import get_os
+        osvariant = get_os('Debian 12.0', self.arch)
+        self.assertEqual(osvariant.name, 'Debian 12.0')
+        self.assertEqual(osvariant.osrelease.name, 'Debian 12')
+
+    def test_rocky_with_cpe(self):
+        """Test Rocky Linux with CPE in brackets"""
+        from reports.utils import get_os
+        osvariant = get_os('Rocky Linux 10.1 [cpe:/o:rocky:rocky:10]', self.arch)
+        self.assertEqual(osvariant.name, 'Rocky Linux 10.1')
+        self.assertEqual(osvariant.osrelease.name, 'Rocky Linux 10')
+        self.assertEqual(osvariant.osrelease.cpe_name, 'cpe:/o:rocky:rocky:10')
+
+    def test_rocky_with_codename(self):
+        """Test Rocky Linux with codename in parentheses"""
+        from reports.utils import get_os
+        osvariant = get_os('Rocky Linux 10.1 (Red Quartz)', self.arch)
+        self.assertEqual(osvariant.name, 'Rocky Linux 10.1')
+        self.assertEqual(osvariant.osrelease.name, 'Rocky Linux 10')
+        self.assertEqual(osvariant.osrelease.codename, 'Red Quartz')
+
+    def test_rocky_with_cpe_and_codename(self):
+        """Test Rocky Linux with both CPE and codename"""
+        from reports.utils import get_os
+        osvariant = get_os('Rocky Linux 10.1 (Red Quartz) [cpe:/o:rocky:rocky:10]', self.arch)
+        self.assertEqual(osvariant.name, 'Rocky Linux 10.1')
+        self.assertEqual(osvariant.osrelease.name, 'Rocky Linux 10')
+        self.assertEqual(osvariant.osrelease.codename, 'Red Quartz')
+        self.assertEqual(osvariant.osrelease.cpe_name, 'cpe:/o:rocky:rocky:10')
+
+    def test_amazon_linux_ami(self):
+        """Test Amazon Linux AMI 2018.03 normalizes to Amazon Linux 1"""
+        from reports.utils import get_os
+        osvariant = get_os('Amazon Linux AMI 2018.03', self.arch)
+        self.assertEqual(osvariant.name, 'Amazon Linux 1')
+        self.assertEqual(osvariant.osrelease.name, 'Amazon Linux 1')
+
+    def test_centos_stream(self):
+        """Test CentOS Stream 10 stays unchanged (no minor version)"""
+        from reports.utils import get_os
+        osvariant = get_os('CentOS Stream 10', self.arch)
+        self.assertEqual(osvariant.name, 'CentOS Stream 10')
+        # CentOS Stream starts with 'CentOS' so it goes through that path
+        self.assertEqual(osvariant.osrelease.name, 'CentOS Stream 10')
+
+    def test_major_version_only_unchanged(self):
+        """Test that already-major-version names don't get mangled"""
+        from reports.utils import get_os
+        osvariant = get_os('Rocky Linux 10', self.arch)
+        self.assertEqual(osvariant.name, 'Rocky Linux 10')
+        self.assertEqual(osvariant.osrelease.name, 'Rocky Linux 10')
