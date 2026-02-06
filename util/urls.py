@@ -27,3 +27,9 @@ urlpatterns = [
     path('dashboard/', views.dashboard, name='dashboard'),
     path('issues/', views.issues, name='issues'),
 ]
+
+# Certificate enrollment API endpoints
+cert_urlpatterns = [
+    path('enroll/', views.EnrollView.as_view(), name='cert-enroll'),
+    path('renew/', views.RenewView.as_view(), name='cert-renew'),
+]

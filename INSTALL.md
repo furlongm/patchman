@@ -527,6 +527,220 @@ $ patchman-client -s http://patchman.example.com -p 2 -k abc123...
 ```
 
 
+## Client Certificate Authentication (mTLS)
+
+Patchman supports mutual TLS (mTLS) authentication using client certificates.
+This provides stronger security than API keys by cryptographically verifying
+client identity.
+
+### Overview
+
+- **CA-agnostic design**: Supports step-ca (recommended) or HashiCorp Vault
+- **Automated enrollment**: Clients can obtain certificates using one-time tokens
+- **Auto-renewal**: Clients automatically renew certificates before expiry
+- **Fail-secure**: If mTLS is configured, it must work (no silent fallback)
+- **Backward compatible**: All mTLS features are optional
+
+### Prerequisites
+
+Install step-ca (recommended) or configure HashiCorp Vault PKI.
+
+**Smallstep CA (step-ca):**
+
+```shell
+# Debian/Ubuntu
+curl -sL https://packages.smallstep.com/stable/debian/step-ca.gpg | gpg --dearmor > /usr/share/keyrings/smallstep.gpg
+echo "deb [signed-by=/usr/share/keyrings/smallstep.gpg] https://packages.smallstep.com/stable/debian any main" > /etc/apt/sources.list.d/smallstep.list
+apt update && apt install step-ca step-cli
+
+# RHEL/Rocky/Alma
+dnf config-manager --add-repo https://packages.smallstep.com/stable/fedora/packages.smallstep.com.repo
+dnf install step-ca step-cli
+```
+
+Initialize your CA:
+
+```shell
+step ca init --name "Patchman CA" --provisioner patchman --address ":8443"
+```
+
+### Server Configuration
+
+1. Add mTLS settings to `/etc/patchman/local_settings.py`:
+
+```python
+# Require client certificates for /api/report/ endpoint
+REQUIRE_CLIENT_CERT = True
+
+# Header names (set by web server)
+CLIENT_CERT_CN_HEADER = 'HTTP_X_SSL_CLIENT_CN'
+CLIENT_CERT_VERIFY_HEADER = 'HTTP_X_SSL_CLIENT_VERIFY'
+
+# PKI provider for certificate enrollment
+PKI_PROVIDER = 'util.pki.StepCAProvider'
+PKI_PROVIDER_CONFIG = {
+    'ca_url': 'https://ca.example.com:8443',
+    'provisioner': 'patchman',
+    'provisioner_password_file': '/etc/patchman/ca-password',
+    'root_cert': '/etc/patchman/ca-root.crt',
+}
+
+# Certificate validity settings
+CERT_VALIDITY_DAYS = 365
+CERT_RENEW_THRESHOLD_DAYS = 30
+```
+
+2. Configure your web server to request and pass client certificates:
+
+**Apache:**
+
+```apache
+SSLVerifyClient optional
+SSLVerifyDepth 2
+SSLCACertificateFile /etc/patchman/ca-root.crt
+SSLOptions +StdEnvVars
+
+RequestHeader set X-SSL-Client-CN "%{SSL_CLIENT_S_DN_CN}s"
+RequestHeader set X-SSL-Client-Verify "%{SSL_CLIENT_VERIFY}s"
+```
+
+**nginx:**
+
+```nginx
+ssl_client_certificate /etc/patchman/ca-root.crt;
+ssl_verify_client optional;
+
+location / {
+    proxy_set_header X-SSL-Client-CN $ssl_client_s_dn_cn;
+    proxy_set_header X-SSL-Client-Verify $ssl_client_verify;
+    proxy_pass http://127.0.0.1:8000;
+}
+```
+
+3. Add the middleware to `MIDDLEWARE` in settings (if not already present):
+
+```python
+MIDDLEWARE = [
+    # ... other middleware ...
+    'util.middleware.ClientCertMiddleware',
+]
+```
+
+4. Run migrations:
+
+```shell
+patchman-manage migrate
+```
+
+### Enrolling Clients
+
+1. Create an enrollment token on the server:
+
+```shell
+# Single host
+$ patchman-manage create_enrollment_token --hostname "host1.example.com"
+Created enrollment token for pattern: host1.example.com
+Token: enroll_abc123...
+Expires: 2026-02-07 03:00:00 UTC
+
+# Wildcard pattern
+$ patchman-manage create_enrollment_token --hostname "*.example.com" --expires 72h
+
+# Single-use token
+$ patchman-manage create_enrollment_token --hostname "newhost.example.com" --single-use
+```
+
+2. On the client, run enrollment:
+
+```shell
+# Python client
+$ patchman-client.py --enroll --token enroll_abc123... -s https://patchman.example.com
+
+# This will:
+# - Generate a private key and CSR
+# - Submit CSR to server
+# - Receive signed certificate
+# - Save to /etc/patchman/client.crt and /etc/patchman/client.key
+```
+
+3. Configure the client to use the certificate:
+
+```shell
+# /etc/patchman/patchman-client.conf
+server=https://patchman.example.com
+client_cert=/etc/patchman/client.crt
+client_key=/etc/patchman/client.key
+```
+
+### Managing Certificates
+
+List enrolled certificates:
+
+```shell
+$ patchman-manage list_certificates
+host1.example.com  Serial: ABC123  Expires: 2027-02-06  Valid
+host2.example.com  Serial: DEF456  Expires: 2027-02-06  Valid
+oldhost.example.com  Serial: GHI789  Expires: 2026-01-01  Expired
+```
+
+Revoke a certificate:
+
+```shell
+$ patchman-manage revoke_certificate host1.example.com
+Revoked certificate for host1.example.com
+```
+
+List enrollment tokens:
+
+```shell
+$ patchman-manage list_enrollment_tokens
+```
+
+### Auto-Renewal
+
+The Python client automatically checks certificate expiry on each run. If the
+certificate expires within the threshold (default 30 days), it will renew
+before submitting the report.
+
+To adjust the threshold:
+
+```shell
+# In patchman-client.conf
+cert_renew_threshold=30
+
+# Or disable auto-renewal
+$ patchman-client.py --no-renew
+```
+
+### Bash Client
+
+The bash client supports mTLS but not automatic enrollment:
+
+```shell
+# Use existing certificate
+$ patchman-client --cert /etc/patchman/client.crt --key /etc/patchman/client.key
+
+# Or in config file
+client_cert=/etc/patchman/client.crt
+client_key=/etc/patchman/client.key
+```
+
+### Using Vault Instead of step-ca
+
+To use HashiCorp Vault PKI instead:
+
+```python
+# /etc/patchman/local_settings.py
+PKI_PROVIDER = 'util.pki.VaultProvider'
+PKI_PROVIDER_CONFIG = {
+    'vault_addr': 'https://vault.example.com:8200',
+    'vault_token': 's.xxxxx',  # Or use VAULT_TOKEN env var
+    'pki_mount': 'pki',
+    'pki_role': 'patchman-client',
+}
+```
+
+
 # Test Installation
 
 To test the installation, run the client locally on the patchman server:
