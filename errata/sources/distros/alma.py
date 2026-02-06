@@ -110,7 +110,9 @@ def process_alma_erratum(release, advisory):
 def add_alma_erratum_osreleases(e, release):
     """ Update OS Release for Alma Linux errata
     """
-    osrelease = get_or_create_osrelease(name=f'Alma Linux {release}')
+    from operatingsystems.utils import normalize_el_osrelease
+    osrelease_name = normalize_el_osrelease(f'Alma Linux {release}')
+    osrelease = get_or_create_osrelease(name=osrelease_name)
     e.osreleases.add(osrelease)
 
 

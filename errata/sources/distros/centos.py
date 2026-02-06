@@ -117,13 +117,14 @@ def add_centos_erratum_references(e, references):
 def parse_centos_errata_children(e, children):
     """ Parse errata children to obtain architecture, release and packages
     """
+    from operatingsystems.utils import normalize_el_osrelease
     fixed_packages = set()
     for c in children:
         if c.tag == 'os_arch':
             pass
         elif c.tag == 'os_release':
             if accepted_centos_release([c.text]):
-                osrelease_name = f'CentOS {c.text}'
+                osrelease_name = normalize_el_osrelease(f'CentOS {c.text}')
                 osrelease = get_or_create_osrelease(name=osrelease_name)
                 e.osreleases.add(osrelease)
         elif c.tag == 'packages':
