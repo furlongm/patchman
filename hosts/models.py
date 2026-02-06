@@ -352,6 +352,7 @@ class HostRepo(models.Model):
 
     class Meta:
         unique_together = ['host', 'repo']
+        ordering = ['host', 'repo']
 
     def __str__(self):
         return f'{self.host}-{self.repo}'

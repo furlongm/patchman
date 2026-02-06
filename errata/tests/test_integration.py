@@ -15,6 +15,7 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from django.test import TestCase, override_settings
+from django.utils import timezone
 
 from errata.models import Erratum
 from operatingsystems.models import OSRelease
@@ -37,7 +38,7 @@ class ErrataIntegrationTests(TestCase):
             name='RHSA-2024:1234',
             e_type='Security Advisory',
             synopsis='Important: curl security update',
-            issue_date='2024-03-15',
+            issue_date=timezone.now(),
         )
         erratum.cves.add(cve1, cve2)
 
@@ -54,7 +55,7 @@ class ErrataIntegrationTests(TestCase):
             name='RHSA-2024:1235',
             e_type='Security Advisory',
             synopsis='Important: openssl security update',
-            issue_date='2024-03-16',
+            issue_date=timezone.now(),
         )
         erratum.osreleases.add(osrelease1, osrelease2)
 
@@ -66,7 +67,7 @@ class ErrataIntegrationTests(TestCase):
             name='RHSA-2024:1236',
             e_type='Bug Fix',
             synopsis='Bug fix: httpd update',
-            issue_date='2024-03-17',
+            issue_date=timezone.now(),
         )
 
         # Verify erratum can store package references

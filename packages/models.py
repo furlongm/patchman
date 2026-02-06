@@ -227,6 +227,7 @@ class PackageUpdate(models.Model):
 
     class Meta:
         unique_together = ['oldpackage', 'newpackage', 'security']
+        ordering = ['oldpackage', 'newpackage']
 
     def __str__(self):
         if self.security:

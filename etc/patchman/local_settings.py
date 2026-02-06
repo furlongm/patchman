@@ -111,5 +111,7 @@ LOGGING = {
     'loggers': {
         'urllib3': {'level': 'WARNING', 'handlers': ['console'], 'propagate': False},
         'git': {'level': 'WARNING', 'handlers': ['console'], 'propagate': False},
+        'version_utils': {'level': 'WARNING', 'handlers': ['console'], 'propagate': False},
+        'celery': {'level': 'WARNING', 'handlers': ['console'], 'propagate': False},
     }
 }
