@@ -115,3 +115,35 @@ LOGGING = {
         'celery': {'level': 'WARNING', 'handlers': ['console'], 'propagate': False},
     }
 }
+
+# =============================================================================
+# Client Certificate Authentication (mTLS) - Optional
+# =============================================================================
+# See INSTALL.md for full setup instructions
+
+# Enable mTLS requirement for report endpoints
+# REQUIRE_CLIENT_CERT = True
+
+# Require client cert CN to match report hostname
+# CLIENT_CERT_STRICT_HOSTNAME = True
+
+# =============================================================================
+# PKI Provider Configuration (for certificate enrollment)
+# =============================================================================
+# Configure step-ca for certificate enrollment:
+# PKI_PROVIDER = 'util.pki.StepCAProvider'
+# PKI_PROVIDER_CONFIG = {
+#     'ca_url': 'https://ca.example.com:9000',
+#     'provisioner': 'patchman',
+#     'provisioner_password_file': '/etc/patchman/step-ca-password',
+#     'root_cert': '/etc/patchman/ca.crt',
+# }
+
+# Or configure Vault PKI:
+# PKI_PROVIDER = 'util.pki.VaultProvider'
+# PKI_PROVIDER_CONFIG = {
+#     'vault_addr': 'https://vault.example.com:8200',
+#     'vault_token_file': '/etc/patchman/vault-token',
+#     'pki_path': 'pki',
+#     'pki_role': 'patchman-client',
+# }

@@ -15,9 +15,11 @@ repo_check=true
 dry_run=false
 tags=''
 api_key=''
+client_cert=''
+client_key=''
 
 usage() {
-    echo "${0} [-v] [-d] [-n] [-u] [-y] [-r] [-s SERVER] [-c FILE] [-t TAGS] [-H HOSTNAME] [-p PROTOCOL] [-k API_KEY]"
+    echo "${0} [-v] [-d] [-n] [-u] [-y] [-r] [-s SERVER] [-c FILE] [-t TAGS] [-H HOSTNAME] [-p PROTOCOL] [-k API_KEY] [--cert CERT] [--key KEY]"
     echo "-v: verbose output (default is silent)"
     echo "-d: debug output"
     echo "-n: no repo check (required when used as an apt or yum plugin)"
@@ -30,12 +32,46 @@ usage() {
     echo "-p PROTOCOL: protocol version (1 or 2, default is 1)"
     echo "-k API_KEY: API key for protocol 2 authentication"
     echo "-y: dry run (collect data but do not submit)"
+    echo "--cert CERT: client certificate file for mTLS"
+    echo "--key KEY: client key file for mTLS (optional if combined with cert)"
     echo
     echo "Command line options override config file options."
     exit 0
 }
 
 parseopts() {
+    # Handle long options first (--cert, --key)
+    args=()
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --cert)
+                cli_client_cert="$2"
+                shift 2
+                ;;
+            --cert=*)
+                cli_client_cert="${1#*=}"
+                shift
+                ;;
+            --key)
+                cli_client_key="$2"
+                shift 2
+                ;;
+            --key=*)
+                cli_client_key="${1#*=}"
+                shift
+                ;;
+            --help)
+                usage
+                ;;
+            *)
+                args+=("$1")
+                shift
+                ;;
+        esac
+    done
+    set -- "${args[@]}"
+    OPTIND=1
+
     while getopts "vdnuyrs:c:t:h:H:p:k:" opt; do
         case ${opt} in
         v)
@@ -178,6 +214,26 @@ check_conf() {
         api_key=${cli_api_key}
     fi
 
+    if [ ! -z "${cli_client_cert}" ] ; then
+        client_cert=${cli_client_cert}
+    fi
+
+    if [ ! -z "${cli_client_key}" ] ; then
+        client_key=${cli_client_key}
+    fi
+
+    # Validate client cert if configured
+    if [ ! -z "${client_cert}" ] ; then
+        if [ ! -f "${client_cert}" ] ; then
+            echo "Error: Client certificate not found: ${client_cert}"
+            exit 1
+        fi
+        if [ ! -z "${client_key}" ] && [ ! -f "${client_key}" ] ; then
+            echo "Error: Client key not found: ${client_key}"
+            exit 1
+        fi
+    fi
+
     if [ -z "${hostname}" ] && [ -z "${cli_hostname}" ] ; then
         get_hostname
     else
@@ -207,6 +263,12 @@ check_conf() {
         echo "Protocol: ${protocol}"
         if [ ! -z "${api_key}" ] ; then
             echo "API Key: ${api_key:0:12}..."
+        fi
+        if [ ! -z "${client_cert}" ] ; then
+            echo "Client Certificate: ${client_cert}"
+            if [ ! -z "${client_key}" ] ; then
+                echo "Client Key: ${client_key}"
+            fi
         fi
         for var in report local_updates repo_check dry_run verbose debug ; do
             eval val=\$${var}
@@ -1017,6 +1079,13 @@ post_json_data() {
     if [ ! -z "${api_key}" ] ; then
         curl_opts="${curl_opts} -H 'Authorization: Api-Key ${api_key}'"
     fi
+    # Add client certificate for mTLS
+    if [ ! -z "${client_cert}" ] ; then
+        curl_opts="${curl_opts} --cert ${client_cert}"
+        if [ ! -z "${client_key}" ] ; then
+            curl_opts="${curl_opts} --key ${client_key}"
+        fi
+    fi
     curl_opts="${curl_opts} -d @${tmpfile_report_json}"
 
     post_command="curl ${curl_opts} ${server%/}/api/report/"
@@ -1071,6 +1140,13 @@ post_data() {
     curl_opts="${curl_opts} -F bug_updates=\<${tmpfile_bug}"
     curl_opts="${curl_opts} -F modules=\<${tmpfile_mod}"
     curl_opts="${curl_opts} -F reboot=\"${reboot}\""
+    # Add client certificate for mTLS
+    if [ ! -z "${client_cert}" ] ; then
+        curl_opts="${curl_opts} --cert ${client_cert}"
+        if [ ! -z "${client_key}" ] ; then
+            curl_opts="${curl_opts} --key ${client_key}"
+        fi
+    fi
     post_command="curl ${curl_opts} ${server%/}/reports/upload/"
 
     if ${verbose} ; then

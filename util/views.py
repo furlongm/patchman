@@ -15,13 +15,19 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+import logging
 from datetime import timedelta
 
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.models import Site
 from django.db.models import F
 from django.shortcuts import render
 from django.utils import timezone
+from rest_framework import status
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from hosts.models import Host
 from operatingsystems.models import OSRelease, OSVariant
@@ -29,6 +35,223 @@ from packages.models import Package
 from reports.models import Report
 from repos.models import Mirror, Repository
 from util import get_setting_of_type
+from util.models import ClientCertificate, EnrollmentToken
+from util.pki import PKIError, get_pki_provider
+from util.serializers import (
+    EnrollRequestSerializer, EnrollResponseSerializer,
+    RenewRequestSerializer, RenewResponseSerializer,
+)
+
+logger = logging.getLogger(__name__)
+
+
+class EnrollView(APIView):
+    """Exchange enrollment token for signed certificate."""
+
+    permission_classes = [AllowAny]  # Token is the auth
+
+    def post(self, request):
+        serializer = EnrollRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        token_str = serializer.validated_data['token']
+        csr_pem = serializer.validated_data['csr']
+        hostname = serializer.validated_data['hostname']
+
+        # Check if PKI provider is configured
+        provider = get_pki_provider()
+        if not provider:
+            return Response(
+                {'error': 'Certificate enrollment not configured on this server'},
+                status=status.HTTP_501_NOT_IMPLEMENTED,
+            )
+
+        if not provider.is_available():
+            return Response(
+                {'error': 'PKI provider is not available'},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        # Validate token
+        try:
+            token = EnrollmentToken.objects.get(token=token_str)
+        except EnrollmentToken.DoesNotExist:
+            logger.warning(f'Invalid enrollment token attempted for {hostname}')
+            return Response(
+                {'error': 'Invalid enrollment token'},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        if not token.is_valid:
+            logger.warning(f'Expired/used token attempted for {hostname}')
+            return Response(
+                {'error': 'Token expired or already used'},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        if not token.matches_hostname(hostname):
+            logger.warning(
+                f'Hostname {hostname} not allowed for token {token.token[:20]}...'
+            )
+            return Response(
+                {'error': f'Hostname {hostname} not allowed for this token'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # Validate CSR
+        csr_valid, csr_error = self._validate_csr(csr_pem, hostname)
+        if not csr_valid:
+            return Response(
+                {'error': csr_error},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Sign CSR
+        validity_days = getattr(settings, 'CERT_VALIDITY_DAYS', 365)
+        try:
+            cert_pem, serial = provider.sign_csr(csr_pem, hostname, validity_days)
+        except PKIError as e:
+            logger.error(f'Certificate signing failed for {hostname}: {e}')
+            return Response(
+                {'error': f'Certificate signing failed: {e}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        # Record certificate
+        ClientCertificate.objects.create(
+            hostname=hostname,
+            serial_number=serial,
+            expires_at=timezone.now() + timedelta(days=validity_days),
+            enrollment_token=token,
+        )
+
+        # Mark token as used
+        if token.single_use:
+            token.mark_used(hostname)
+
+        logger.info(f'Issued certificate for {hostname} (serial: {serial})')
+
+        response_data = {
+            'certificate': cert_pem,
+            'serial_number': serial,
+            'expires_in_days': validity_days,
+        }
+        return Response(EnrollResponseSerializer(response_data).data)
+
+    def _validate_csr(self, csr_pem, hostname):
+        """Validate CSR format and CN."""
+        try:
+            from cryptography import x509
+            csr = x509.load_pem_x509_csr(csr_pem.encode())
+
+            # Verify CSR CN matches requested hostname
+            cn_attrs = csr.subject.get_attributes_for_oid(x509.oid.NameOID.COMMON_NAME)
+            if cn_attrs and cn_attrs[0].value != hostname:
+                return False, 'CSR common name does not match hostname'
+
+            return True, None
+
+        except ImportError:
+            # cryptography not available, skip validation
+            logger.warning('cryptography not available, skipping CSR validation')
+            return True, None
+        except Exception as e:
+            return False, f'Invalid CSR: {e}'
+
+
+class RenewView(APIView):
+    """Renew client certificate using existing cert for auth."""
+
+    permission_classes = [AllowAny]  # Existing cert is the auth
+
+    def post(self, request):
+        # Must have valid client cert
+        if not getattr(request, 'client_cert_verified', False):
+            return Response(
+                {'error': 'Valid client certificate required for renewal'},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        hostname = getattr(request, 'client_cert_cn', '')
+        if not hostname:
+            return Response(
+                {'error': 'Client certificate CN not found'},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        serializer = RenewRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        csr_pem = serializer.validated_data['csr']
+
+        # Check if PKI provider is configured
+        provider = get_pki_provider()
+        if not provider:
+            return Response(
+                {'error': 'Certificate enrollment not configured on this server'},
+                status=status.HTTP_501_NOT_IMPLEMENTED,
+            )
+
+        if not provider.is_available():
+            return Response(
+                {'error': 'PKI provider is not available'},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        # Validate CSR CN matches current cert CN
+        csr_valid, csr_error = self._validate_csr(csr_pem, hostname)
+        if not csr_valid:
+            return Response(
+                {'error': csr_error},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Sign CSR
+        validity_days = getattr(settings, 'CERT_VALIDITY_DAYS', 365)
+        try:
+            cert_pem, serial = provider.sign_csr(csr_pem, hostname, validity_days)
+        except PKIError as e:
+            logger.error(f'Certificate renewal failed for {hostname}: {e}')
+            return Response(
+                {'error': f'Certificate signing failed: {e}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        # Record new certificate
+        ClientCertificate.objects.create(
+            hostname=hostname,
+            serial_number=serial,
+            expires_at=timezone.now() + timedelta(days=validity_days),
+        )
+
+        logger.info(f'Renewed certificate for {hostname} (serial: {serial})')
+
+        response_data = {
+            'certificate': cert_pem,
+            'serial_number': serial,
+            'expires_in_days': validity_days,
+        }
+        return Response(RenewResponseSerializer(response_data).data)
+
+    def _validate_csr(self, csr_pem, hostname):
+        """Validate CSR format and CN."""
+        try:
+            from cryptography import x509
+            csr = x509.load_pem_x509_csr(csr_pem.encode())
+
+            cn_attrs = csr.subject.get_attributes_for_oid(x509.oid.NameOID.COMMON_NAME)
+            if cn_attrs and cn_attrs[0].value != hostname:
+                return False, 'CSR hostname must match current certificate'
+
+            return True, None
+
+        except ImportError:
+            logger.warning('cryptography not available, skipping CSR validation')
+            return True, None
+        except Exception as e:
+            return False, f'Invalid CSR: {e}'
 
 
 @login_required

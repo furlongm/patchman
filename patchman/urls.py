@@ -31,6 +31,7 @@ from reports import views as report_views
 from repos import views as repo_views
 from security import views as security_views
 from util.api import StatsView
+from util.urls import cert_urlpatterns
 
 router = routers.DefaultRouter()
 router.register(r'package-architecture', arch_views.PackageArchitectureViewSet)
@@ -59,6 +60,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
     path('api/stats/', StatsView.as_view(), name='api-stats'),
+    path('api/cert/', include(cert_urlpatterns)),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),  # noqa
     path('select2/', include('django_select2.urls')),
     path('', include('util.urls', namespace='util')),
