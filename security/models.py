@@ -33,6 +33,7 @@ class Reference(models.Model):
 
     class Meta:
         unique_together = ['ref_type', 'url']
+        ordering = ['ref_type', 'url']
 
     def __str__(self):
         return self.url
@@ -43,6 +44,9 @@ class CWE(models.Model):
     cwe_id = models.CharField(max_length=255, unique=True)
     name = models.CharField(max_length=255, blank=True, null=True)
     description = models.TextField(blank=True, default='')
+
+    class Meta:
+        ordering = ['cwe_id']
 
     def __str__(self):
         return f'{self.cwe_id} - {self.name}'

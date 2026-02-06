@@ -56,6 +56,7 @@ class Repository(models.Model):
     class Meta:
         verbose_name_plural = 'Repository'
         verbose_name_plural = 'Repositories'
+        ordering = ['name']
 
     def __str__(self):
         return self.name
@@ -154,6 +155,7 @@ class Mirror(models.Model):
     class Meta:
         verbose_name_plural = 'Mirror'
         verbose_name_plural = 'Mirrors'
+        ordering = ['url']
 
     def __str__(self):
         return self.url
@@ -203,3 +205,6 @@ class MirrorPackage(models.Model):
     mirror = models.ForeignKey(Mirror, on_delete=models.CASCADE)
     package = models.ForeignKey(Package, on_delete=models.CASCADE)
     enabled = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['mirror', 'package']
