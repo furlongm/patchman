@@ -210,12 +210,7 @@ check_booleans() {
 }
 
 check_command_exists() {
-    cmd=$(/usr/bin/which ${1} 2>/dev/null)
-    if [ ! -z "${cmd}" ] && [ -x "${cmd}" ] ; then
-        return 0
-    else
-        return 1
-    fi
+    command -v "${1}" >/dev/null 2>&1
 }
 
 check_for_modularity() {
@@ -514,6 +509,8 @@ get_repos() {
             full_id=$(echo ${i} | cut -d \' -f 2)
             id=$(echo ${i} | cut -d \' -f 2 | cut -d \/ -f 1)
             name=$(echo ${i} | cut -d \' -f 4)
+            # Strip " - arch arch" suffix pattern to avoid duplicates like "EPEL - x86_64 x86_64"
+            name=$(echo "${name}" | sed -e "s/ - ${host_arch} ${host_arch}$/ ${host_arch}/")
             if [ "${priorities}" != "" ] ; then
                 priority=$(echo "${priorities}" | grep "'${name}'" | sed -e "s/priority=\(.*\) '${name}'/\1/")
             fi
@@ -748,7 +745,7 @@ build_repos_json() {
         if [ -z "${line}" ] ; then
             continue
         fi
-        # Parse: 'type' 'name' 'id' 'priority' 'url1' ['url2' ...]
+        # Parse quoted fields from line
         local parts=()
         while IFS= read -r part ; do
             parts+=("${part}")
@@ -756,13 +753,26 @@ build_repos_json() {
 
         local rtype="${parts[0]}"
         local name="${parts[1]}"
-        local rid="${parts[2]}"
-        local priority="${parts[3]}"
+        local rid=""
+        local priority=""
+        local url_start=0
+
+        # APT repos have 4 fields: 'type' 'name' 'priority' 'url'
+        # Other repos have 5+ fields: 'type' 'name' 'id' 'priority' 'url1' ...
+        if [ "${rtype}" == "deb" ] ; then
+            rid=""
+            priority="${parts[2]}"
+            url_start=3
+        else
+            rid="${parts[2]}"
+            priority="${parts[3]}"
+            url_start=4
+        fi
 
         # Collect URLs (all remaining parts)
         local urls_json="["
         local url_first=true
-        for ((i=4; i<${#parts[@]}; i++)); do
+        for ((i=${url_start}; i<${#parts[@]}; i++)); do
             if ! ${url_first} ; then
                 urls_json="${urls_json},"
             fi
@@ -1033,12 +1043,11 @@ post_data() {
     fi
 }
 
-if ! check_command_exists which || \
-   ! check_command_exists awk || \
+if ! check_command_exists awk || \
    ! check_command_exists mktemp || \
    ! check_command_exists curl || \
    ! check_command_exists flock ; then
-    echo "which, awk, mktemp, flock or curl was not found, exiting."
+    echo "awk, mktemp, flock or curl was not found, exiting."
     exit 1
 fi
 
