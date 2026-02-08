@@ -16,6 +16,7 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 import json
+from urllib.parse import unquote
 
 from django.db import models
 from django.urls import reverse
@@ -169,7 +170,11 @@ class Report(models.Model):
 
         for attr in attrs:
             if data.get(attr):
-                setattr(self, attr, data.get(attr))
+                value = data.get(attr)
+                # Decode URL-encoded kernel (e.g., %2b -> +)
+                if attr == 'kernel':
+                    value = unquote(value)
+                setattr(self, attr, value)
             else:
                 setattr(self, attr, '')
 
