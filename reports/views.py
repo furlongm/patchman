@@ -16,6 +16,7 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 import json
+from urllib.parse import unquote
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -341,7 +342,7 @@ class ReportViewSet(viewsets.ViewSet):
             host=hostname,
             domain=domain,
             tags=tags,
-            kernel=data['kernel'],
+            kernel=unquote(data['kernel']),
             arch=data['arch'],
             os=data['os'],
             report_ip=report_ip,
