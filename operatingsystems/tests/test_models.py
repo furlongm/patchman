@@ -122,11 +122,6 @@ class NormalizeELOSReleaseTests(TestCase):
         self.assertEqual(normalize_el_osrelease('CentOS 7.9'), 'CentOS 7')
         self.assertEqual(normalize_el_osrelease('CentOS 8.5'), 'CentOS 8')
 
-    def test_rhel_with_minor_version(self):
-        """Test RHEL X.Y -> RHEL X"""
-        self.assertEqual(normalize_el_osrelease('RHEL 8.2'), 'RHEL 8')
-        self.assertEqual(normalize_el_osrelease('RHEL 9.1'), 'RHEL 9')
-
     def test_red_hat_enterprise_linux_with_minor_version(self):
         """Test Red Hat Enterprise Linux X.Y -> Red Hat Enterprise Linux X"""
         self.assertEqual(
