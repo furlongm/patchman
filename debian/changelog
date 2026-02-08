@@ -1,3 +1,16 @@
+patchman (4.0.8-1) stable; urgency=medium
+
+  * fix test warnings
+  * client updates
+  * fix osrelease from rocky/alma/epel errata
+  * alma/rhel fixes for osrelease_name
+  * fix url-encoded kernel version
+  * remove unneeded test
+  * fix test: AlmaLinux normalizes to 'Alma Linux' with space
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Sun, 08 Feb 2026 22:23:36 +0000
+
 patchman (4.0.7-1) stable; urgency=medium
 
   * bump build images
