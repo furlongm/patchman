@@ -115,7 +115,7 @@ class NormalizeELOSReleaseTests(TestCase):
 
     def test_almalinux_no_space(self):
         """Test AlmaLinux X.Y -> AlmaLinux X"""
-        self.assertEqual(normalize_el_osrelease('AlmaLinux 10.1'), 'AlmaLinux 10')
+        self.assertEqual(normalize_el_osrelease('AlmaLinux 10.1'), 'Alma Linux 10')
 
     def test_centos_with_minor_version(self):
         """Test CentOS X.Y -> CentOS X"""
