@@ -29,15 +29,20 @@ def normalize_el_osrelease(osrelease_name):
     elif osrelease_name.startswith('almalinux-'):
         major_version = osrelease_name.split('-')[1].split('.')[0]
         return f'Alma Linux {major_version}'
+    elif osrelease_name.startswith('AlmaLinux'):
+        version_part = osrelease_name[len('AlmaLinux'):].strip()
+        major_version = version_part.split('.')[0]
+        return f'Alma Linux {major_version}'
+    elif osrelease_name.startswith('rhel-'):
+        major_version = osrelease_name.split('-')[1]
+        return f'Red Hat Enterprise Linux {major_version}'
     elif osrelease_name in ['Amazon Linux', 'Amazon Linux AMI']:
         return 'Amazon Linux 1'
 
     el_distro_prefixes = [
         'Rocky Linux',
         'Alma Linux',
-        'AlmaLinux',
         'CentOS',
-        'RHEL',
         'Red Hat Enterprise Linux',
         'Oracle Linux',
     ]
