@@ -17,7 +17,7 @@
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Q
+from django.db.models import Count, IntegerField, OuterRef, Q, Subquery
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django_filters import rest_framework as filters
@@ -76,11 +76,45 @@ def _get_filtered_hosts(filter_params):
 
 @login_required
 def host_list(request):
+    # Pre-compute security updates, bug updates, errata and packages for speed
+    sec_updates_sq = Subquery(
+        Host.updates.through.objects.filter(
+            host_id=OuterRef("pk"), packageupdate__security=True
+        )
+        .values("host_id")
+        .annotate(c=Count("packageupdate_id", distinct=True))
+        .values("c"),
+        output_field=IntegerField(),
+    )
+    bug_updates_sq = Subquery(
+        Host.updates.through.objects.filter(
+            host_id=OuterRef("pk"), packageupdate__security=False
+        )
+        .values("host_id")
+        .annotate(c=Count("packageupdate_id", distinct=True))
+        .values("c"),
+        output_field=IntegerField(),
+    )
+    errata_sq = Subquery(
+        Host.errata.through.objects.filter(host_id=OuterRef("pk"))
+        .values("host_id")
+        .annotate(c=Count("erratum_id", distinct=True))
+        .values("c"),
+        output_field=IntegerField(),
+    )
+    packages_sq = Subquery(
+        Host.packages.through.objects.filter(host_id=OuterRef("pk"))
+        .values("host_id")
+        .annotate(c=Count("package_id", distinct=True))
+        .values("c"),
+        output_field=IntegerField(),
+    )
+
     hosts = Host.objects.select_related().annotate(
-        sec_updates_count=Count('updates', filter=Q(updates__security=True), distinct=True),
-        bug_updates_count=Count('updates', filter=Q(updates__security=False), distinct=True),
-        errata_count=Count('errata', distinct=True),
-        packages_count=Count('packages', distinct=True),
+        sec_updates_count=sec_updates_sq,
+        bug_updates_count=bug_updates_sq,
+        errata_count=errata_sq,
+        packages_count=packages_sq,
     )
 
     if 'domain_id' in request.GET:
