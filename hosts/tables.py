@@ -31,7 +31,7 @@ BUG_UPDATES_TEMPLATE = (
     '{% endwith %}'
 )
 AFFECTED_ERRATA_TEMPLATE = (
-    '{% with count=record.errata.count %}'
+    '{% with count=record.errata_count %}'
     '{% if count != 0 %}'
     '<a href="{% url \'errata:erratum_list\' %}?host={{ record.hostname }}">{{ count }}</a>'
     '{% else %}{% endif %}{% endwith %}'
