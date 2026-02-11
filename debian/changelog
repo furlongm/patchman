@@ -1,5 +1,11 @@
 patchman (4.0.9-1) stable; urgency=medium
 
+  * deb build fix for releases
+
+ -- Marcus Furlong <furlongm@gmail.com>  Wed, 11 Feb 2026 06:05:58 +0000
+
+patchman (4.0.9-1) stable; urgency=medium
+
   * update workflows to allow prereleases
   * use python3.9 compatible syntax
   * add ordering migrations
