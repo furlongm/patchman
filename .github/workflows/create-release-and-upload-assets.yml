@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.set-vars.outputs.version }}
+      rpm_version: ${{ steps.set-vars.outputs.rpm_version }}
       is_prerelease: ${{ steps.set-vars.outputs.is_prerelease }}
     steps:
       - id: set-vars
@@ -26,6 +27,8 @@ jobs:
           else
             VERSION="${GITHUB_REF#refs/tags/v}"
           fi
+          # RPM doesn't allow hyphens in version, convert to dots
+          RPM_VERSION="${VERSION//-/.}"
           # Pre-release if version contains -, e.g. 4.0.9-rc1, 4.0.9-dev1
           if [[ "$VERSION" == *-* ]]; then
             IS_PRERELEASE=true
@@ -33,8 +36,9 @@ jobs:
             IS_PRERELEASE=false
           fi
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "rpm_version=${RPM_VERSION}" >> $GITHUB_OUTPUT
           echo "is_prerelease=${IS_PRERELEASE}" >> $GITHUB_OUTPUT
-          echo "Version: $VERSION, Pre-release: $IS_PRERELEASE"
+          echo "Version: $VERSION, RPM Version: $RPM_VERSION, Pre-release: $IS_PRERELEASE"
 
   create-release:
     needs: setup
@@ -182,7 +186,7 @@ jobs:
           git fetch --all
       - name: Build rpm packages
         env:
-          VERSION: ${{ needs.setup.outputs.version }}
+          VERSION: ${{ needs.setup.outputs.rpm_version }}
         run: |
           echo "${VERSION}" > VERSION.txt
           python3 setup.py bdist_rpm --python=/usr/bin/python3
@@ -192,8 +196,8 @@ jobs:
         with:
           tag_name: v${{ needs.setup.outputs.version }}
           files: |
-            dist/patchman-${{ needs.setup.outputs.version }}-1.noarch.rpm
-            dist/noarch/patchman-client-${{ needs.setup.outputs.version }}-1.noarch.rpm
+            dist/patchman-${{ needs.setup.outputs.rpm_version }}-1.noarch.rpm
+            dist/noarch/patchman-client-${{ needs.setup.outputs.rpm_version }}-1.noarch.rpm
           body: ""
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
