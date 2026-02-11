@@ -3,9 +3,41 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build (e.g. 4.0.9-rc1)'
+        required: true
+
+permissions:
+  contents: write
 
 jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.set-vars.outputs.version }}
+      is_prerelease: ${{ steps.set-vars.outputs.is_prerelease }}
+    steps:
+      - id: set-vars
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          fi
+          # Pre-release if version contains -, e.g. 4.0.9-rc1, 4.0.9-dev1
+          if [[ "$VERSION" == *-* ]]; then
+            IS_PRERELEASE=true
+          else
+            IS_PRERELEASE=false
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "is_prerelease=${IS_PRERELEASE}" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION, Pre-release: $IS_PRERELEASE"
+
   create-release:
+    needs: setup
     runs-on: ubuntu-latest
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
@@ -13,22 +45,21 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: main
-      - name: git fetch --all
-        run: |
-          git fetch --all
       - name: Create release
         id: create_release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
+          tag_name: v${{ needs.setup.outputs.version }}
+          name: Release v${{ needs.setup.outputs.version }}
           draft: false
-          prerelease: false
+          prerelease: ${{ needs.setup.outputs.is_prerelease }}
+          generate_release_notes: ${{ needs.setup.outputs.is_prerelease }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   update-version-and-changelog:
-    needs: create-release
+    needs: [setup, create-release]
+    if: needs.setup.outputs.is_prerelease == 'false'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -53,7 +84,7 @@ jobs:
             auto-commit to update version
             skip-checks: true
         run: |
-          echo "${{ github.ref }}" | cut -dv -f2 > VERSION.txt
+          echo "${{ needs.setup.outputs.version }}" > VERSION.txt
           git add VERSION.txt
           git diff --quiet && git diff --staged --quiet || git commit -m "${COMMIT_MSG}"
           git push origin main
@@ -65,10 +96,13 @@ jobs:
             auto-commit to update debian changelog
             skip-checks: true
         run: |
-          gbp dch --new-version=$(cat VERSION.txt)-1 --release --distribution=stable --spawn-editor=never --commit --commit-msg="${COMMIT_MSG}"
+          gbp dch --new-version=${{ needs.setup.outputs.version }}-1 --release --distribution=stable --spawn-editor=never --commit --commit-msg="${COMMIT_MSG}"
           git push origin main
+
   build-and-upload-deb-assets:
-    needs: [create-release, update-version-and-changelog]
+    needs: [setup, create-release, update-version-and-changelog]
+    # For pre-releases, update-version-and-changelog is skipped, so use always()
+    if: always() && needs.create-release.result == 'success'
     runs-on: ubuntu-latest
     container:
       image: debian:trixie
@@ -85,41 +119,51 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: main
+          # For stable releases, use main (has updated changelog); for pre-releases, use the tag
+          ref: ${{ needs.setup.outputs.is_prerelease == 'false' && 'main' || github.ref }}
       - name: git fetch --all
         run: |
           git config --global --add safe.directory /__w/patchman/patchman
           git fetch --all
-      - name: Get version
-        run: |
-          export version=$(echo "${{ github.ref }}" | cut -dv -f2)
-          echo "version=${version}" >> $GITHUB_ENV
-      - name: Build deb packages
+      - name: Build deb packages (pre-release)
+        if: needs.setup.outputs.is_prerelease == 'true'
         env:
           EMAIL: furlongm@gmail.com
-          COMMIT_MSG: |
-            auto-commit
-            skip-checks: true
+          VERSION: ${{ needs.setup.outputs.version }}
         run: |
-          export version=$(echo "${{ github.ref }}" | cut -dv -f2)
-          echo "${version}" > VERSION.txt
-          git add VERSION.txt
-          git diff --quiet && git diff --staged --quiet || git commit -m "${COMMIT_MSG}"
-          gbp dch --new-version=${version}-1 --release --distribution=stable --spawn-editor=never --commit --commit-msg="${COMMIT_MSG}"
-          git tag --delete v${version}
-          git tag v${version}
-          gbp buildpackage --git-upstream-tree=${{ github.ref }} -uc -us
+          echo "${VERSION}" > VERSION.txt
+          # Generate changelog for pre-release
+          cat > debian/changelog << EOF
+          patchman (${VERSION}-1) unstable; urgency=medium
+
+            * Pre-release ${VERSION}
+
+           -- Marcus Furlong <furlongm@gmail.com>  $(date -R)
+          EOF
+          dpkg-buildpackage -us -uc -b
+      - name: Build deb packages (stable)
+        if: needs.setup.outputs.is_prerelease == 'false'
+        env:
+          EMAIL: furlongm@gmail.com
+          VERSION: ${{ needs.setup.outputs.version }}
+        run: |
+          # Changelog already committed to main by update-version-and-changelog job
+          echo "${VERSION}" > VERSION.txt
+          gbp buildpackage --git-upstream-tree=v${VERSION} -uc -us
       - name: Upload deb assets
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
+          tag_name: v${{ needs.setup.outputs.version }}
           files: |
-            ../python3-patchman_${{ env.version }}-1_all.deb
-            ../patchman-client_${{ env.version }}-1_all.deb
+            ../python3-patchman_${{ needs.setup.outputs.version }}-1_all.deb
+            ../patchman-client_${{ needs.setup.outputs.version }}-1_all.deb
+          body: ""
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   build-and-upload-rpm-assets:
-    needs: [create-release, update-version-and-changelog]
+    needs: [setup, create-release, update-version-and-changelog]
+    if: always() && needs.create-release.result == 'success'
     runs-on: ubuntu-latest
     container:
       image: quay.io/centos/centos:stream10
@@ -131,30 +175,32 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: main
+          ref: ${{ needs.setup.outputs.is_prerelease == 'false' && 'main' || github.ref }}
       - name: git fetch --all
         run: |
           git config --global --add safe.directory /__w/patchman/patchman
           git fetch --all
-      - name: Get version
-        run: |
-          export version=$(echo "${{ github.ref }}" | cut -dv -f2)
-          echo "version=${version}" >> $GITHUB_ENV
       - name: Build rpm packages
+        env:
+          VERSION: ${{ needs.setup.outputs.version }}
         run: |
+          echo "${VERSION}" > VERSION.txt
           python3 setup.py bdist_rpm --python=/usr/bin/python3
           rpmbuild -bb patchman-client.spec
       - name: Upload rpm assets
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
+          tag_name: v${{ needs.setup.outputs.version }}
           files: |
-            dist/patchman-${{ env.version }}-1.noarch.rpm
-            dist/noarch/patchman-client-${{ env.version }}-1.noarch.rpm
+            dist/patchman-${{ needs.setup.outputs.version }}-1.noarch.rpm
+            dist/noarch/patchman-client-${{ needs.setup.outputs.version }}-1.noarch.rpm
+          body: ""
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   upload-package-to-pypi:
-    needs: update-version-and-changelog
+    needs: [setup, create-release]
+    if: needs.setup.outputs.is_prerelease == 'false'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -164,7 +210,7 @@ jobs:
           python-version: '3.x'
       - name: Set version
         run: |
-          echo "${{ github.ref }}" | cut -dv -f2 > VERSION.txt
+          echo "${{ needs.setup.outputs.version }}" > VERSION.txt
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
