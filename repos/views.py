@@ -18,7 +18,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
-from django.db.models import Count, Q
+from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -149,9 +149,8 @@ def mirror_list(request):
             if oldrepo.mirror_set.count() == 0:
                 oldrepo.delete()
 
-    mirrors = Mirror.objects.select_related().annotate(
-        packages_count=Count('packages'),
-    ).order_by('packages_checksum')
+    # Use cached packages_count instead of expensive annotation
+    mirrors = Mirror.objects.select_related().order_by('packages_checksum')
 
     checksum = None
     if 'checksum' in request.GET:

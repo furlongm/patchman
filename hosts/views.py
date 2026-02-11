@@ -17,7 +17,7 @@
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Q
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django_filters import rest_framework as filters
@@ -76,12 +76,8 @@ def _get_filtered_hosts(filter_params):
 
 @login_required
 def host_list(request):
-    hosts = Host.objects.select_related().annotate(
-        sec_updates_count=Count('updates', filter=Q(updates__security=True), distinct=True),
-        bug_updates_count=Count('updates', filter=Q(updates__security=False), distinct=True),
-        errata_count=Count('errata', distinct=True),
-        packages_count=Count('packages', distinct=True),
-    )
+    # Use cached count fields instead of expensive annotations
+    hosts = Host.objects.select_related()
 
     if 'domain_id' in request.GET:
         hosts = hosts.filter(domain=request.GET['domain_id'])

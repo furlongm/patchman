@@ -1,4 +1,4 @@
-# Copyright 2019-2021 Marcus Furlong <furlongm@gmail.com>
+# Copyright 2026 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of Patchman.
 #
@@ -14,11 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-from django.apps import AppConfig
+from django.db.models.signals import m2m_changed
+from django.dispatch import receiver
+
+from repos.models import Mirror
 
 
-class HostsConfig(AppConfig):
-    name = 'hosts'
-
-    def ready(self):
-        import hosts.signals  # noqa
+@receiver(m2m_changed, sender=Mirror.packages.through)
+def update_mirror_packages_count(sender, instance, action, **kwargs):
+    """Update packages_count when Mirror.packages M2M changes."""
+    if action in ('post_add', 'post_remove', 'post_clear'):
+        instance.packages_count = instance.packages.count()
+        instance.save(update_fields=['packages_count'])

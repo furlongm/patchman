@@ -57,6 +57,8 @@ class OSVariant(models.Model):
     arch = models.ForeignKey(MachineArchitecture, blank=True, null=True, on_delete=models.CASCADE)
     osrelease = models.ForeignKey(OSRelease, blank=True, null=True, on_delete=models.SET_NULL)
     codename = models.CharField(max_length=255, blank=True)
+    # Cached count field for query optimization
+    hosts_count = models.PositiveIntegerField(default=0, db_index=True)
 
     class Meta:
         verbose_name = 'Operating System Variant'

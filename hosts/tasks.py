@@ -15,7 +15,6 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from celery import shared_task
-from django.db.models import Count
 
 from hosts.models import Host
 from util import get_datetime_now
@@ -51,10 +50,9 @@ def find_all_host_updates_homogenous():
             host.save()
 
             # only include hosts with the exact same number of packages
-            filtered_hosts = Host.objects.annotate(
-                packages_count=Count('packages')).filter(
-                    packages_count=host.packages.count()
-                )
+            filtered_hosts = Host.objects.filter(
+                packages_count=host.packages_count
+            )
             # and exclude hosts with the current timestamp
             filtered_hosts = filtered_hosts.exclude(updated_at=ts)
 
