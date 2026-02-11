@@ -96,7 +96,7 @@ def fetch_content(response, text='', ljust=35):
 
 
 @retry(
-    retry=retry_if_exception_type(HTTPError | Timeout | ConnectionResetError),
+    retry=retry_if_exception_type((HTTPError, Timeout, ConnectionResetError)),
     stop=stop_after_attempt(4),
     wait=wait_exponential(multiplier=1, min=1, max=10),
     reraise=False,
