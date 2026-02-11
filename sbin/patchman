@@ -23,7 +23,6 @@ import sys
 
 from django import setup as django_setup
 from django.core.exceptions import MultipleObjectsReturned
-from django.db.models import Count
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')
 from django.conf import settings  # noqa
@@ -174,9 +173,8 @@ def host_updates_alt(host=None):
             host.save()
 
             # only include hosts with the same number of packages
-            filtered_hosts = Host.objects.annotate(
-                packages_count=Count('packages')).filter(
-                    packages_count=host.packages.count())
+            filtered_hosts = Host.objects.filter(
+                packages_count=host.packages_count)
             # exclude hosts with the current timestamp
             filtered_hosts = filtered_hosts.exclude(updated_at=ts)
 

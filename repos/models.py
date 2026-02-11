@@ -151,6 +151,8 @@ class Mirror(models.Model):
     enabled = models.BooleanField(default=True)
     refresh = models.BooleanField(default=True)
     fail_count = models.IntegerField(default=0)
+    # Cached count field for query optimization
+    packages_count = models.PositiveIntegerField(default=0, db_index=True)
 
     class Meta:
         verbose_name_plural = 'Mirror'

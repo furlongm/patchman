@@ -60,6 +60,11 @@ class Host(models.Model):
     tags = TaggableManager(blank=True)
     updated_at = models.DateTimeField(default=timezone.now)
     errata = models.ManyToManyField(Erratum, blank=True)
+    # Cached count fields for query optimization
+    sec_updates_count = models.PositiveIntegerField(default=0, db_index=True)
+    bug_updates_count = models.PositiveIntegerField(default=0, db_index=True)
+    packages_count = models.PositiveIntegerField(default=0, db_index=True)
+    errata_count = models.PositiveIntegerField(default=0, db_index=True)
 
     from hosts.managers import HostManager
     objects = HostManager()
@@ -97,19 +102,22 @@ class Host(models.Model):
         return reverse('hosts:host_detail', args=[self.hostname])
 
     def get_num_security_updates(self):
-        return self.updates.filter(security=True).count()
+        return self.sec_updates_count
 
     def get_num_bugfix_updates(self):
-        return self.updates.filter(security=False).count()
+        return self.bug_updates_count
 
     def get_num_updates(self):
-        return self.updates.count()
+        return self.sec_updates_count + self.bug_updates_count
 
     def get_num_packages(self):
-        return self.packages.count()
+        return self.packages_count
 
     def get_num_repos(self):
         return self.repos.count()
+
+    def get_num_errata(self):
+        return self.errata_count
 
     def check_rdns(self):
         if self.check_dns:

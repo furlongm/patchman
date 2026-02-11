@@ -19,3 +19,6 @@ from django.apps import AppConfig
 
 class OperatingsystemsConfig(AppConfig):
     name = 'operatingsystems'
+
+    def ready(self):
+        import operatingsystems.signals  # noqa
