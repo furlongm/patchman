@@ -28,7 +28,7 @@ class MirrorSelect2Widget(ModelSelect2MultipleWidget):
     model = Mirror
     search_fields = ['url__icontains', 'repo__name__icontains']
     max_results = 50
-    queryset = Mirror.objects.select_related().order_by('repo__name', 'url')
+    queryset = Mirror.objects.select_related('repo').order_by('repo__name', 'url')
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('attrs', {})
@@ -41,7 +41,7 @@ class MirrorSelect2Widget(ModelSelect2MultipleWidget):
 
 class EditRepoForm(ModelForm):
     mirrors = ModelMultipleChoiceField(
-        queryset=Mirror.objects.select_related().order_by('repo__name', 'url'),
+        queryset=Mirror.objects.select_related('repo').order_by('repo__name', 'url'),
         required=False,
         widget=MirrorSelect2Widget(attrs={'style': 'width: 100%'}),
     )

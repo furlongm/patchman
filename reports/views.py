@@ -45,7 +45,7 @@ def _get_filtered_reports(filter_params):
     from urllib.parse import parse_qs
     params = parse_qs(filter_params)
 
-    reports = Report.objects.select_related()
+    reports = Report.objects.all()
 
     if 'host_id' in params:
         reports = reports.filter(hostname=params['host_id'][0])
@@ -108,7 +108,7 @@ def upload(request):
 @login_required
 def report_list(request):
 
-    reports = Report.objects.select_related()
+    reports = Report.objects.all()
 
     if 'host_id' in request.GET:
         reports = reports.filter(hostname=request.GET['host_id'])

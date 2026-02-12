@@ -19,6 +19,7 @@ from datetime import timedelta
 from urllib.parse import urlencode
 
 from django.template import Library
+from django.db.models import Sum
 from django.template.loader import get_template
 from django.utils import timezone
 from django.utils.html import format_html
@@ -138,7 +139,4 @@ def reports_timedelta():
 
 @register.simple_tag
 def host_count(osrelease):
-    host_count = 0
-    for osvariant in osrelease.osvariant_set.all():
-        host_count += osvariant.host_set.count()
-    return host_count
+    return osrelease.osvariant_set.aggregate(total=Sum('hosts_count'))['total'] or 0
