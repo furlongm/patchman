@@ -281,7 +281,7 @@ def clean_packageupdates():
     """
     package_updates = list(PackageUpdate.objects.all())
     for update in package_updates:
-        if update.host_set.count() == 0:
+        if not update.host_set.exists():
             text = f'Removing unused PackageUpdate {update}'
             info_message(text=text)
             update.delete()
@@ -325,7 +325,8 @@ def clean_packages(remove_duplicates=False):
                 packagetype=package.packagetype,
                 category=package.category,
             )
-            if potential_duplicates.count() > 1:
+            potential_duplicates = list(potential_duplicates)
+            if len(potential_duplicates) > 1:
                 for dupe in potential_duplicates:
                     if dupe.id != package.id:
                         info_message(text=f'Removing duplicate Package {dupe}')

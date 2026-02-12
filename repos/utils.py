@@ -273,11 +273,12 @@ def find_best_repo(package, hostrepos):
         repo. Returns the best repo.
     """
     best_repo = None
-    package_repos = hostrepos.filter(repo__mirror__packages=package).distinct()
+    package_repos = hostrepos.filter(repo__mirror__packages=package).select_related('repo').distinct()
 
+    package_repos = list(package_repos)
     if package_repos:
         best_repo = package_repos[0]
-    if package_repos.count() > 1:
+    if len(package_repos) > 1:
         for hostrepo in package_repos:
             if hostrepo.repo.security:
                 best_repo = hostrepo

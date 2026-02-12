@@ -43,7 +43,7 @@ from util.filterspecs import Filter, FilterBar
 @login_required
 def repo_list(request):
 
-    repos = Repository.objects.select_related().order_by('name')
+    repos = Repository.objects.select_related('arch').order_by('name')
 
     if 'repotype' in request.GET:
         repos = repos.filter(repotype=request.GET['repotype'])
@@ -146,11 +146,11 @@ def mirror_list(request):
                     hostrepo.delete()
             mirror.repo = repo
             mirror.save()
-            if oldrepo.mirror_set.count() == 0:
+            if not oldrepo.mirror_set.exists():
                 oldrepo.delete()
 
     # Use cached packages_count instead of expensive annotation
-    mirrors = Mirror.objects.select_related().order_by('packages_checksum')
+    mirrors = Mirror.objects.select_related('repo').order_by('packages_checksum')
 
     checksum = None
     if 'checksum' in request.GET:
@@ -318,9 +318,7 @@ def repo_edit(request, repo_id):
                 repo = edit_form.save()
                 repo.save()
                 mirrors = edit_form.cleaned_data['mirrors']
-                for mirror in mirrors:
-                    mirror.repo = repo
-                    mirror.save()
+                mirrors.update(repo=repo)
                 if repo.enabled:
                     repo.enable()
                 else:
@@ -418,7 +416,7 @@ def _get_filtered_repos(filter_params):
     from urllib.parse import parse_qs
     params = parse_qs(filter_params)
 
-    repos = Repository.objects.select_related().order_by('name')
+    repos = Repository.objects.select_related('arch').order_by('name')
 
     if 'repotype' in params:
         repos = repos.filter(repotype=params['repotype'][0])
@@ -509,7 +507,7 @@ def _get_filtered_mirrors(filter_params):
     from urllib.parse import parse_qs
     params = parse_qs(filter_params)
 
-    mirrors = Mirror.objects.select_related().order_by('packages_checksum')
+    mirrors = Mirror.objects.select_related('repo').order_by('packages_checksum')
 
     if 'checksum' in params:
         mirrors = mirrors.filter(packages_checksum=params['checksum'][0])
@@ -591,7 +589,7 @@ class RepositoryViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows repositories to be viewed or edited.
     """
-    queryset = Repository.objects.all()
+    queryset = Repository.objects.select_related('arch').all()
     serializer_class = RepositorySerializer
 
 
@@ -599,7 +597,7 @@ class MirrorViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows mirrors to be viewed or edited.
     """
-    queryset = Mirror.objects.all()
+    queryset = Mirror.objects.select_related('repo').all()
     serializer_class = MirrorSerializer
 
 
@@ -607,5 +605,5 @@ class MirrorPackageViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows mirror packages to be viewed or edited.
     """
-    queryset = MirrorPackage.objects.all()
+    queryset = MirrorPackage.objects.select_related('mirror', 'package').all()
     serializer_class = MirrorPackageSerializer

@@ -42,7 +42,7 @@ class Command(BaseCommand):
         if not api_keys.exists():
             api_keys = APIKey.objects.filter(name=key_input)
 
-        if api_keys.count() == 0:
+        if not api_keys.exists():
             raise CommandError(f'No API key found matching: {key_input}')
         elif api_keys.count() > 1:
             raise CommandError(f'Multiple keys match "{key_input}". Please be more specific.')

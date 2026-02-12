@@ -135,9 +135,9 @@ class Host(models.Model):
         """ Remove all but the last 3 reports for a host
         """
         from reports.models import Report
-        reports = Report.objects.filter(host=self).order_by('-created')[3:]
-        rlen = reports.count()
-        for report in Report.objects.filter(host=self).order_by('-created')[3:]:
+        reports = list(Report.objects.filter(host=self).order_by('-created')[3:])
+        rlen = len(reports)
+        for report in reports:
             report.delete()
         if rlen > 0:
             info_message(text=f'{self.hostname}: removed {rlen} old reports')
@@ -157,14 +157,14 @@ class Host(models.Model):
                 Q(mirror__repo__in=self.repos.all(),
                   mirror__enabled=True,
                   mirror__repo__enabled=True)
-        return Package.objects.select_related().filter(hostrepos_q).distinct()
+        return Package.objects.select_related('name', 'arch').filter(hostrepos_q).distinct()
 
     def process_update(self, package, highest_package):
         if self.host_repos_only:
             host_repos = Q(repo__host=self)
         else:
             host_repos = Q(repo__osrelease__osvariant__host=self, repo__arch=self.arch) | Q(repo__host=self)
-        mirrors = highest_package.mirror_set.filter(host_repos)
+        mirrors = highest_package.mirror_set.filter(host_repos).select_related('repo')
         security = False
         # if any of the containing repos are security, mark the update as a security update
         for mirror in mirrors:
@@ -223,7 +223,7 @@ class Host(models.Model):
                         repo__mirror__refresh=True,
                         repo__mirror__repo__enabled=True,
                         host=self)
-        hostrepos = HostRepo.objects.select_related().filter(hostrepos_q)
+        hostrepos = HostRepo.objects.select_related('host', 'repo').filter(hostrepos_q)
 
         for package in host_packages:
             highest_package = package

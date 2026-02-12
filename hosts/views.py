@@ -42,7 +42,7 @@ def _get_filtered_hosts(filter_params):
     from urllib.parse import parse_qs
     params = parse_qs(filter_params)
 
-    hosts = Host.objects.select_related()
+    hosts = Host.objects.select_related('osvariant', 'arch', 'domain')
 
     if 'domain_id' in params:
         hosts = hosts.filter(domain=params['domain_id'][0])
@@ -77,7 +77,7 @@ def _get_filtered_hosts(filter_params):
 @login_required
 def host_list(request):
     # Use cached count fields instead of expensive annotations
-    hosts = Host.objects.select_related()
+    hosts = Host.objects.select_related('osvariant', 'arch', 'domain')
 
     if 'domain_id' in request.GET:
         hosts = hosts.filter(domain=request.GET['domain_id'])
@@ -156,7 +156,7 @@ def host_detail(request, hostname):
     hostrepos = HostRepo.objects.filter(host=host)
 
     # Build packages list with update info
-    updates_by_package = {u.oldpackage_id: u for u in host.updates.select_related()}
+    updates_by_package = {u.oldpackage_id: u for u in host.updates.select_related('oldpackage', 'newpackage')}
     packages_with_updates = []
     for package in host.packages.select_related('name', 'arch').order_by('name__name'):
         package.update = updates_by_package.get(package.id)
@@ -294,7 +294,7 @@ class HostViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows hosts to be viewed or edited.
     """
-    queryset = Host.objects.all()
+    queryset = Host.objects.select_related('osvariant', 'arch', 'domain').all()
     serializer_class = HostSerializer
     filterset_class = HostFilter
 
@@ -303,5 +303,5 @@ class HostRepoViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows host repos to be viewed or edited.
     """
-    queryset = HostRepo.objects.all()
+    queryset = HostRepo.objects.select_related('host', 'repo').all()
     serializer_class = HostRepoSerializer
