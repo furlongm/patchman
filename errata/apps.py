@@ -26,6 +26,8 @@ class ErrataConfig(AppConfig):
         from django.db.models.signals import post_save
         from django.utils import timezone
 
+        import errata.signals  # noqa: F401
+
         def set_initial_last_run(sender, instance, created, **kwargs):
             if created and instance.name == 'update_errata_cves_cwes_every_12_hours':
                 instance.last_run_at = timezone.now() - timedelta(days=1)
