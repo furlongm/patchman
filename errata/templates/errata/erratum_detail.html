@@ -8,7 +8,7 @@
 
 {% block content %}
 
-{% with affected_count=erratum.affected_packages.count fixed_count=erratum.fixed_packages.count %}
+{% with affected_count=erratum.affected_packages_count fixed_count=erratum.fixed_packages_count %}
 <ul class="nav nav-tabs">
   <li class="active"><a data-toggle="tab" href="#erratum_details">Details</a></li>
   <li><a data-toggle="tab" href="#erratum_affected_packages">Packages Affected ({{ affected_count }})</a></li>

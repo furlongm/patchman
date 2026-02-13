@@ -40,6 +40,11 @@ class Erratum(models.Model):
     osreleases = models.ManyToManyField(OSRelease, blank=True)
     cves = models.ManyToManyField(CVE, blank=True)
     references = models.ManyToManyField(Reference, blank=True)
+    affected_packages_count = models.PositiveIntegerField(default=0)
+    fixed_packages_count = models.PositiveIntegerField(default=0)
+    osreleases_count = models.PositiveIntegerField(default=0)
+    cves_count = models.PositiveIntegerField(default=0)
+    references_count = models.PositiveIntegerField(default=0)
 
     objects = ErratumManager()
 
@@ -49,9 +54,9 @@ class Erratum(models.Model):
         ordering = ['-issue_date', 'name']
 
     def __str__(self):
-        text = f'{self.name} ({self.e_type}), {self.cves.count()} related CVEs, '
-        text += f'affecting {self.osreleases.count()} OS Releases, '
-        text += f'providing {self.fixed_packages.count()} fixed Packages'
+        text = f'{self.name} ({self.e_type}), {self.cves_count} related CVEs, '
+        text += f'affecting {self.osreleases_count} OS Releases, '
+        text += f'providing {self.fixed_packages_count} fixed Packages'
         return text
 
     def get_absolute_url(self):

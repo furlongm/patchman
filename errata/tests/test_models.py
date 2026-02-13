@@ -19,7 +19,7 @@ from django.utils import timezone
 
 from errata.models import Erratum
 from operatingsystems.models import OSRelease
-from security.models import CVE
+from security.models import CVE, Reference
 
 
 @override_settings(
@@ -120,3 +120,122 @@ class ErratumMethodTests(TestCase):
             issue_date=timezone.now(),
         )
         self.assertEqual(erratum.e_type, 'bugfix')
+
+
+@override_settings(
+    CELERY_TASK_ALWAYS_EAGER=True,
+    CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}}
+)
+class ErratumCachedCountTests(TestCase):
+    """Tests for Erratum cached count fields and M2M signals."""
+
+    def setUp(self):
+        self.erratum = Erratum.objects.create(
+            name='USN-5678-1',
+            e_type='security',
+            synopsis='Security update',
+            issue_date=timezone.now(),
+        )
+
+    def test_initial_counts_are_zero(self):
+        """Test that cached counts start at zero."""
+        self.assertEqual(self.erratum.cves_count, 0)
+        self.assertEqual(self.erratum.osreleases_count, 0)
+        self.assertEqual(self.erratum.affected_packages_count, 0)
+        self.assertEqual(self.erratum.fixed_packages_count, 0)
+        self.assertEqual(self.erratum.references_count, 0)
+
+    def test_cves_count_on_add(self):
+        """Test cves_count increments on add."""
+        cve1 = CVE.objects.create(cve_id='CVE-2024-0001')
+        cve2 = CVE.objects.create(cve_id='CVE-2024-0002')
+        self.erratum.cves.add(cve1)
+        self.erratum.refresh_from_db()
+        self.assertEqual(self.erratum.cves_count, 1)
+        self.erratum.cves.add(cve2)
+        self.erratum.refresh_from_db()
+        self.assertEqual(self.erratum.cves_count, 2)
+
+    def test_cves_count_on_remove(self):
+        """Test cves_count decrements on remove."""
+        cve = CVE.objects.create(cve_id='CVE-2024-0003')
+        self.erratum.cves.add(cve)
+        self.erratum.refresh_from_db()
+        self.assertEqual(self.erratum.cves_count, 1)
+        self.erratum.cves.remove(cve)
+        self.erratum.refresh_from_db()
+        self.assertEqual(self.erratum.cves_count, 0)
+
+    def test_cves_count_on_clear(self):
+        """Test cves_count resets to zero on clear."""
+        cve1 = CVE.objects.create(cve_id='CVE-2024-0004')
+        cve2 = CVE.objects.create(cve_id='CVE-2024-0005')
+        self.erratum.cves.add(cve1, cve2)
+        self.erratum.refresh_from_db()
+        self.assertEqual(self.erratum.cves_count, 2)
+        self.erratum.cves.clear()
+        self.erratum.refresh_from_db()
+        self.assertEqual(self.erratum.cves_count, 0)
+
+    def test_osreleases_count_on_add(self):
+        """Test osreleases_count increments on add."""
+        release = OSRelease.objects.create(name='Ubuntu 24.04')
+        self.erratum.osreleases.add(release)
+        self.erratum.refresh_from_db()
+        self.assertEqual(self.erratum.osreleases_count, 1)
+
+    def test_osreleases_count_on_remove(self):
+        """Test osreleases_count decrements on remove."""
+        release = OSRelease.objects.create(name='Ubuntu 24.04')
+        self.erratum.osreleases.add(release)
+        self.erratum.refresh_from_db()
+        self.assertEqual(self.erratum.osreleases_count, 1)
+        self.erratum.osreleases.remove(release)
+        self.erratum.refresh_from_db()
+        self.assertEqual(self.erratum.osreleases_count, 0)
+
+    def test_references_count_on_add(self):
+        """Test references_count increments on add."""
+        ref = Reference.objects.create(
+            ref_type='ADVISORY',
+            url='https://example.com/advisory/1',
+        )
+        self.erratum.references.add(ref)
+        self.erratum.refresh_from_db()
+        self.assertEqual(self.erratum.references_count, 1)
+
+    def test_references_count_on_remove(self):
+        """Test references_count decrements on remove."""
+        ref = Reference.objects.create(
+            ref_type='ADVISORY',
+            url='https://example.com/advisory/2',
+        )
+        self.erratum.references.add(ref)
+        self.erratum.refresh_from_db()
+        self.assertEqual(self.erratum.references_count, 1)
+        self.erratum.references.remove(ref)
+        self.erratum.refresh_from_db()
+        self.assertEqual(self.erratum.references_count, 0)
+
+    def test_str_uses_cached_counts(self):
+        """Test __str__ reflects cached count values."""
+        cve = CVE.objects.create(cve_id='CVE-2024-0010')
+        release = OSRelease.objects.create(name='RHEL 9')
+        self.erratum.cves.add(cve)
+        self.erratum.osreleases.add(release)
+        self.erratum.refresh_from_db()
+        result = str(self.erratum)
+        self.assertIn('1 related CVEs', result)
+        self.assertIn('affecting 1 OS Releases', result)
+        self.assertIn('providing 0 fixed Packages', result)
+
+    def test_counts_match_actual_m2m(self):
+        """Test cached counts stay in sync with actual M2M counts."""
+        cve1 = CVE.objects.create(cve_id='CVE-2024-0020')
+        cve2 = CVE.objects.create(cve_id='CVE-2024-0021')
+        release = OSRelease.objects.create(name='Debian 12')
+        self.erratum.cves.add(cve1, cve2)
+        self.erratum.osreleases.add(release)
+        self.erratum.refresh_from_db()
+        self.assertEqual(self.erratum.cves_count, self.erratum.cves.count())
+        self.assertEqual(self.erratum.osreleases_count, self.erratum.osreleases.count())
