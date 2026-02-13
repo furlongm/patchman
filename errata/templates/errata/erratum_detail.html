@@ -8,10 +8,11 @@
 
 {% block content %}
 
+{% with affected_count=erratum.affected_packages.count fixed_count=erratum.fixed_packages.count %}
 <ul class="nav nav-tabs">
   <li class="active"><a data-toggle="tab" href="#erratum_details">Details</a></li>
-  <li><a data-toggle="tab" href="#erratum_affected_packages">Packages Affected ({{ erratum.affected_packages.count }})</a></li>
-  <li><a data-toggle="tab" href="#erratum_fixed_packages">Packages Fixed ({{ erratum.fixed_packages.count }})</a></li>
+  <li><a data-toggle="tab" href="#erratum_affected_packages">Packages Affected ({{ affected_count }})</a></li>
+  <li><a data-toggle="tab" href="#erratum_fixed_packages">Packages Fixed ({{ fixed_count }})</a></li>
 </ul>
 
 <div class="tab-content">
@@ -22,8 +23,8 @@
         <tr><th class="col-sm-1">Type</th><td> {{ erratum.e_type }} </td></tr>
         <tr><th class="col-sm-1">Published Date</th><td>{{ erratum.issue_date|date|default_if_none:'' }}</td></tr>
         <tr><th class="col-sm-1">Synopsis</th><td> {{ erratum.synopsis }} </td></tr>
-        <tr><th class="col-sm-1">Packages Affected</th><td><a href="{% url 'packages:package_list' %}?erratum_id={{ erratum.id }}&type=affected"> {{ erratum.affected_packages.count }} </a></td></tr>
-        <tr><th class="col-sm-1">Packages Fixed</th><td><a href="{% url 'packages:package_list' %}?erratum_id={{ erratum.id }}&type=fixed"> {{ erratum.fixed_packages.count }} </a></td></tr>
+        <tr><th class="col-sm-1">Packages Affected</th><td><a href="{% url 'packages:package_list' %}?erratum_id={{ erratum.id }}&type=affected"> {{ affected_count }} </a></td></tr>
+        <tr><th class="col-sm-1">Packages Fixed</th><td><a href="{% url 'packages:package_list' %}?erratum_id={{ erratum.id }}&type=fixed"> {{ fixed_count }} </a></td></tr>
         <tr>
           <th class="col-sm-2">OS Releases Affected</th>
           <td>
@@ -78,5 +79,6 @@
     </div>
   </div>
 </div>
+{% endwith %}
 
 {% endblock %}

@@ -24,7 +24,7 @@
     {% for osvariant in osvariants %}
       <tr>
         <td><a href="{{ osvariant.get_absolute_url }}"> {{ osvariant }} </a></td>
-        <td>{% if osvariant.host_set.count != None %} {{ osvariant.host_set.count }} {% else %} 0 {% endif %}</td>
+        <td>{{ osvariant.host_set.count|default:0 }}</td>
         <td>{% if osvariant.osrelease != None %}<a href="{{ osvariant.osrelease.get_absolute_url }}"> {{ osvariant.osrelease }} </a>{% else %}No OS Release{% endif %}</td>
       </tr>
     {% endfor %}

@@ -110,10 +110,32 @@ def dashboard(request):
                 possible_mirrors[checksum] = checksums[checksum]
                 continue
 
+    has_issues = (
+        noosrelease_osvariants.exists() or
+        nohost_osvariants.exists() or
+        (norepo_osreleases is not None and norepo_osreleases.exists()) or
+        stale_hosts.exists() or
+        reboot_hosts.exists() or
+        secupdate_hosts.exists() or
+        bugupdate_hosts.exists() or
+        norepo_hosts.exists() or
+        diff_rdns_hosts.exists() or
+        failed_mirrors.exists() or
+        disabled_mirrors.exists() or
+        norefresh_mirrors.exists() or
+        failed_repos.exists() or
+        unused_repos.exists() or
+        nomirror_repos.exists() or
+        nohost_repos.exists() or
+        bool(possible_mirrors) or
+        norepo_packages.exists()
+    )
+
     return render(
         request,
         'dashboard.html',
         {'site': site,
+         'has_issues': has_issues,
          'noosrelease_osvariants': noosrelease_osvariants,
          'norepo_hosts': norepo_hosts,
          'nohost_osvariants': nohost_osvariants,
