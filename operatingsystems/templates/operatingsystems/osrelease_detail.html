@@ -12,6 +12,7 @@
 
 {% block content %}
 
+{% with osvariant_count=osrelease.osvariant_set.count repos_count=osrelease.repos.count %}
 <ul class="nav nav-tabs">
   <li class="active"><a data-toggle="tab" href="#osrelease_details">Details</a></li>
   <li><a data-toggle="tab" href="#osrelease_osvariants">Variants</a></li>
@@ -26,8 +27,8 @@
         <tr><th>Name</th><td>{{ osrelease.name }}</td></tr>
         <tr><th>CPE Name</th><td>{% if osrelease.cpe_name %}{{ osrelease.cpe_name }}{% endif %}</td></tr>
         <tr><th>Codename</th><td>{% if osrelease.codename %}{{ osrelease.codename }}{% endif %}</td></tr>
-        <tr><th>OS Variants</th><td><a href="{% url 'operatingsystems:osvariant_list' %}?osrelease_id={{ osrelease.id }}">{{ osrelease.osvariant_set.count }}</a></td></tr>
-        <tr><th>Repositories</th><td><a href="{% url 'repos:repo_list' %}?osrelease_id={{ osrelease.id }}">{{ osrelease.repos.count }}</a></td></tr>
+        <tr><th>OS Variants</th><td><a href="{% url 'operatingsystems:osvariant_list' %}?osrelease_id={{ osrelease.id }}">{{ osvariant_count }}</a></td></tr>
+        <tr><th>Repositories</th><td><a href="{% url 'repos:repo_list' %}?osrelease_id={{ osrelease.id }}">{{ repos_count }}</a></td></tr>
         <tr><th>Hosts</th><td><a href="{% url 'hosts:host_list' %}?osrelease_id={{ osrelease.id }}">{{ host_count }}</a></td></tr>
         <tr><th>Errata</th><td><a href="{% url 'errata:erratum_list' %}?osrelease_id={{ osrelease.id }}">{{ osrelease.erratum_set.count }}</a></td></tr>
       </table>
@@ -40,7 +41,7 @@
 
   <div class="tab-pane fade in" id="osrelease_osvariants">
     <div class="well well-sm">
-      {% if osrelease.osvariant_set.count == 0 %}
+      {% if osvariant_count == 0 %}
         {{ osrelease }} has no Variants
       {% else %}
         {% gen_table osrelease.osvariant_set.select_related %}
@@ -50,7 +51,7 @@
 
   <div class="tab-pane fade in" id="osrelease_repos">
     <div class="well well-sm">
-      {% if osrelease.repos.count == 0 %}
+      {% if repos_count == 0 %}
         {{ osrelease }} has no Repositories
       {% else %}
         {% gen_table osrelease.repos.select_related %}
@@ -68,5 +69,6 @@
   </div>
 
 </div>
+{% endwith %}
 
 {% endblock %}
