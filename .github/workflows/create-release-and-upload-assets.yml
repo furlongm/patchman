@@ -151,8 +151,10 @@ jobs:
           EMAIL: furlongm@gmail.com
           VERSION: ${{ needs.setup.outputs.version }}
         run: |
-          # Changelog already committed to main by update-version-and-changelog job
-          echo "${VERSION}" > VERSION.txt
+          # VERSION.txt and changelog already updated on main by update-version-and-changelog job
+          # Recreate tag to include those commits
+          git tag --delete v${VERSION}
+          git tag v${VERSION}
           gbp buildpackage --git-upstream-tree=v${VERSION} -uc -us
       - name: Upload deb assets
         uses: softprops/action-gh-release@v2
