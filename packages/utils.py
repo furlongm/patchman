@@ -19,6 +19,7 @@ import re
 
 from django.core.exceptions import MultipleObjectsReturned
 from django.db import IntegrityError, transaction
+from django.db.models import Count, Min
 
 from arch.models import PackageArchitecture
 from packages.models import (

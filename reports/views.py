@@ -16,8 +16,9 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 import json
-from urllib.parse import unquote
+from urllib.parse import parse_qs, unquote
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
@@ -28,21 +29,26 @@ from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django_tables2 import RequestConfig
 from rest_framework import status, viewsets
+from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
+from rest_framework_api_key.permissions import HasAPIKey
 from tenacity import (
     retry, retry_if_exception_type, stop_after_attempt, wait_exponential,
 )
 
 from reports.models import Report
-from reports.serializers import ReportUploadSerializer
-from reports.tables import ReportTable
+from reports.serializers import ReportSerializer, ReportUploadSerializer
+from reports.tables import (
+    ReportModuleTable, ReportPackageTable, ReportRepoTable, ReportTable,
+    ReportUpdateTable,
+)
+from reports.tasks import process_report
 from util import sanitize_filter_params
 from util.filterspecs import Filter, FilterBar
 
 
 def _get_filtered_reports(filter_params):
     """Helper to reconstruct filtered queryset from filter params."""
-    from urllib.parse import parse_qs
     params = parse_qs(filter_params)
 
     reports = Report.objects.all()
@@ -78,7 +84,6 @@ def upload(request):
         report = Report.objects.create()
         report.parse(data, meta)
 
-        from reports.tasks import process_report
         process_report.delay(report.id)
 
         if 'report' in data and data['report'] == 'true':
@@ -159,10 +164,6 @@ def report_detail(request, report_id):
 
     # Add tables for Protocol 2 reports
     if report.protocol == '2':
-        from reports.tables import (
-            ReportModuleTable, ReportPackageTable, ReportRepoTable,
-            ReportUpdateTable,
-        )
         if report.has_packages:
             context['packages_table'] = ReportPackageTable(report.packages_parsed)
         if report.has_repos:
@@ -183,7 +184,6 @@ def report_detail(request, report_id):
 def report_process(request, report_id):
     """ Process a report using a celery task
     """
-    from reports.tasks import process_report
     report = get_object_or_404(Report, id=report_id)
     report.processed = False
     report.save()
@@ -243,7 +243,6 @@ def report_bulk_action(request):
     name = Report._meta.verbose_name if count == 1 else Report._meta.verbose_name_plural
 
     if action == 'process':
-        from reports.tasks import process_report
         for report in reports:
             report.processed = False
             report.save()
@@ -273,12 +272,6 @@ class ReportViewSet(viewsets.ViewSet):
     """
 
     def get_permissions(self):
-        from django.conf import settings
-        from rest_framework.permissions import (
-            AllowAny, IsAuthenticatedOrReadOnly,
-        )
-        from rest_framework_api_key.permissions import HasAPIKey
-
         # POST requires API key if configured, otherwise allow any
         if self.action == 'create':
             if getattr(settings, 'REQUIRE_API_KEY', False):
@@ -289,16 +282,12 @@ class ReportViewSet(viewsets.ViewSet):
 
     def list(self, request):
         """List all reports."""
-        from reports.serializers import ReportSerializer
         queryset = Report.objects.all().order_by('-created')
         serializer = ReportSerializer(queryset, many=True, context={'request': request})
         return Response(serializer.data)
 
     def retrieve(self, request, pk=None):
         """Retrieve a single report."""
-        from django.shortcuts import get_object_or_404
-
-        from reports.serializers import ReportSerializer
         report = get_object_or_404(Report, pk=pk)
         serializer = ReportSerializer(report, context={'request': request})
         return Response(serializer.data)
@@ -357,7 +346,6 @@ class ReportViewSet(viewsets.ViewSet):
         )
 
         # Queue for async processing
-        from reports.tasks import process_report
         process_report.delay(report.id)
 
         return Response(

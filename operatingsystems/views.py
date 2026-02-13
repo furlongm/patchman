@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+from urllib.parse import parse_qs
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
@@ -37,7 +39,6 @@ from util import sanitize_filter_params
 
 def _get_filtered_osvariants(filter_params):
     """Helper to reconstruct filtered queryset from filter params."""
-    from urllib.parse import parse_qs
     params = parse_qs(filter_params)
 
     osvariants = OSVariant.objects.select_related('osrelease', 'arch')
@@ -57,7 +58,6 @@ def _get_filtered_osvariants(filter_params):
 
 def _get_filtered_osreleases(filter_params):
     """Helper to reconstruct filtered queryset from filter params."""
-    from urllib.parse import parse_qs
     params = parse_qs(filter_params)
 
     osreleases = OSRelease.objects.all()

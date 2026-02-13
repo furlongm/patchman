@@ -18,8 +18,8 @@ import importlib
 from datetime import timedelta
 from urllib.parse import urlencode
 
-from django.template import Library
 from django.db.models import Sum
+from django.template import Library, engines
 from django.template.loader import get_template
 from django.utils import timezone
 from django.utils.html import format_html
@@ -74,7 +74,6 @@ def gen_table(context, object_list, template_name=None):
         RequestConfig(request, paginate=False).configure(table)
 
     # Render using the table's configured template
-    from django.template import engines
     django_engine = engines['django']
     template = django_engine.from_string('{% load django_tables2 %}{% render_table table %}')
     return template.render({'table': table, 'request': request})
