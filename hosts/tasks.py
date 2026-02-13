@@ -41,10 +41,10 @@ def find_all_host_updates():
 def find_all_host_updates_homogenous():
     """ Task to find updates for all hosts where hosts are expected to be homogenous
     """
-    updated_hosts = []
+    updated_host_ids = set()
     ts = get_datetime_now()
     for host in Host.objects.all().iterator():
-        if host not in updated_hosts:
+        if host.id not in updated_host_ids:
             host.find_updates()
             host.updated_at = ts
             host.save()
@@ -56,23 +56,20 @@ def find_all_host_updates_homogenous():
             # and exclude hosts with the current timestamp
             filtered_hosts = filtered_hosts.exclude(updated_at=ts)
 
-            packages = set(host.packages.all())
-            repos = set(host.repos.all())
-            updates = host.updates.all()
+            package_ids = frozenset(host.packages.values_list('id', flat=True))
+            repo_ids = frozenset(host.repos.values_list('id', flat=True))
+            updates = list(host.updates.all())
 
-            phosts = []
             for fhost in filtered_hosts.iterator():
-                frepos = set(fhost.repos.all())
-                if repos != frepos:
+                frepo_ids = frozenset(fhost.repos.values_list('id', flat=True))
+                if repo_ids != frepo_ids:
                     continue
-                fpackages = set(fhost.packages.all())
-                if packages != fpackages:
+                fpackage_ids = frozenset(fhost.packages.values_list('id', flat=True))
+                if package_ids != fpackage_ids:
                     continue
-                phosts.append(fhost)
 
-            for phost in phosts:
-                phost.updates.set(updates)
-                phost.updated_at = ts
-                phost.save()
-                updated_hosts.append(phost)
-                info_message(text=f'Added the same updates to {phost}')
+                fhost.updates.set(updates)
+                fhost.updated_at = ts
+                fhost.save()
+                updated_host_ids.add(fhost.id)
+                info_message(text=f'Added the same updates to {fhost}')
