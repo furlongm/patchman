@@ -36,7 +36,7 @@ from errata.utils import (
     scan_package_updates_for_affected_packages,
 )
 from hosts.models import Host
-from hosts.utils import clean_tags
+from hosts.utils import clean_tags, find_host_updates_homogenous
 from modules.utils import clean_modules
 from packages.utils import (
     clean_packagenames, clean_packages, clean_packageupdates,
@@ -46,7 +46,6 @@ from reports.tasks import remove_reports_with_no_hosts
 from repos.models import Repository
 from repos.utils import clean_repos
 from security.utils import update_cves, update_cwes
-from util import get_datetime_now
 from util.logging import info_message, set_quiet_mode
 
 
@@ -161,52 +160,8 @@ def clean_reports(hoststr=None):
 def host_updates_alt(host=None):
     """ Find updates for all hosts, specify host for a single host
     """
-    updated_hosts = []
     hosts = get_hosts(host, 'Finding updates')
-    ts = get_datetime_now()
-    for host in hosts.iterator():
-        info_message(text=str(host))
-        if host not in updated_hosts:
-            host.find_updates()
-            info_message(text='')
-            host.updated_at = ts
-            host.save()
-
-            # only include hosts with the same number of packages
-            filtered_hosts = Host.objects.filter(
-                packages_count=host.packages_count)
-            # exclude hosts with the current timestamp
-            filtered_hosts = filtered_hosts.exclude(updated_at=ts)
-
-            packages = set(host.packages.all())
-            repos = set(host.repos.all())
-            updates = host.updates.all()
-
-            phosts = []
-            for fhost in filtered_hosts.iterator():
-
-                frepos = set(fhost.repos.all())
-                rdiff = repos.difference(frepos)
-                if len(rdiff) != 0:
-                    continue
-
-                fpackages = set(fhost.packages.all())
-                pdiff = packages.difference(fpackages)
-                if len(pdiff) != 0:
-                    continue
-
-                phosts.append(fhost)
-
-            for phost in phosts:
-                phost.updates.set(updates)
-                phost.updated_at = ts
-                phost.save()
-                updated_hosts.append(phost)
-                text = f'Added the same updates to {phost}'
-                info_message(text=text)
-        else:
-            text = 'Updates already added in this run'
-            info_message(text=text)
+    find_host_updates_homogenous(hosts, verbose=True)
 
 
 def host_updates(host=None):
