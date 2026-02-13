@@ -42,7 +42,7 @@ def update_cves(cve_id=None, fetch_nist_data=False):
         cve = CVE.objects.get(cve_id=cve_id)
         cve.fetch_cve_data(fetch_nist_data, sleep_secs=0)
     else:
-        for cve in CVE.objects.all():
+        for cve in CVE.objects.all().iterator():
             cve.fetch_cve_data(fetch_nist_data)
 
 
@@ -56,7 +56,7 @@ def update_cwes(cve_id=None):
         cwes = cve.cwes.all()
     else:
         cwes = CWE.objects.all()
-    for cwe in cwes:
+    for cwe in cwes.iterator():
         cwe.fetch_cwe_data()
 
 
