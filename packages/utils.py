@@ -280,21 +280,30 @@ def get_matching_packages(name, epoch, version, release, p_type, arch=None):
 def clean_packageupdates():
     """ Removes PackageUpdate objects that are no longer linked to any hosts
     """
-    package_updates = list(PackageUpdate.objects.all())
-    for update in package_updates:
-        if not update.host_set.exists():
-            text = f'Removing unused PackageUpdate {update}'
+    orphaned = PackageUpdate.objects.filter(host__isnull=True)
+    for update in orphaned:
+        text = f'Removing unused PackageUpdate {update}'
+        info_message(text=text)
+        update.delete()
+
+    duplicate_updates = PackageUpdate.objects.values(
+        'oldpackage', 'newpackage', 'security'
+    ).annotate(count=Count('id'), keep_id=Min('id')).filter(count__gt=1)
+
+    for update in duplicate_updates:
+        extra_updates = PackageUpdate.objects.filter(
+            oldpackage=update['oldpackage'],
+            newpackage=update['newpackage'],
+            security=update['security']
+        ).exclude(id=update['keep_id'])
+        keep_update = PackageUpdate.objects.get(id=update['keep_id'])
+        for extra_update in extra_updates:
+            text = f'Removing duplicate PackageUpdate: {extra_update}'
             info_message(text=text)
-            update.delete()
-        for duplicate in package_updates:
-            if update.oldpackage == duplicate.oldpackage and update.newpackage == duplicate.newpackage and \
-                    update.security == duplicate.security and update.id != duplicate.id:
-                text = f'Removing duplicate PackageUpdate: {update}'
-                info_message(text=text)
-                for host in duplicate.host_set.all():
-                    host.updates.remove(duplicate)
-                    host.updates.add(update)
-                duplicate.delete()
+            for host in extra_update.host_set.all():
+                host.updates.remove(extra_update)
+                host.updates.add(keep_update)
+            extra_update.delete()
 
 
 def clean_packages(remove_duplicates=False):
@@ -316,22 +325,23 @@ def clean_packages(remove_duplicates=False):
         packages.delete()
     if remove_duplicates:
         info_message(text='Checking for duplicate Packages...')
-        for package in Package.objects.all():
-            potential_duplicates = Package.objects.filter(
-                name=package.name,
-                arch=package.arch,
-                epoch=package.epoch,
-                version=package.version,
-                release=package.release,
-                packagetype=package.packagetype,
-                category=package.category,
-            )
-            potential_duplicates = list(potential_duplicates)
-            if len(potential_duplicates) > 1:
-                for dupe in potential_duplicates:
-                    if dupe.id != package.id:
-                        info_message(text=f'Removing duplicate Package {dupe}')
-                        dupe.delete()
+        duplicates = Package.objects.values(
+            'name', 'arch', 'epoch', 'version', 'release', 'packagetype', 'category'
+        ).annotate(count=Count('id'), keep_id=Min('id')).filter(count__gt=1)
+
+        for dup in duplicates:
+            to_delete = Package.objects.filter(
+                name=dup['name'],
+                arch=dup['arch'],
+                epoch=dup['epoch'],
+                version=dup['version'],
+                release=dup['release'],
+                packagetype=dup['packagetype'],
+                category=dup['category']
+            ).exclude(id=dup['keep_id'])
+            for package in to_delete:
+                info_message(text=f'Removing duplicate Package {package}')
+                package.delete()
 
 
 def clean_packagenames():
