@@ -20,6 +20,7 @@ from socket import gaierror, gethostbyaddr, herror
 from django.db import IntegrityError, transaction
 from taggit.models import Tag
 
+from util import get_datetime_now
 from util.logging import error_message, info_message
 
 
@@ -74,6 +75,51 @@ def get_or_create_host(report, arch, osvariant, domain):
     if host:
         host.check_rdns()
         return host
+
+
+def find_host_updates_homogenous(hosts, verbose=False):
+    """ Find updates for hosts, copying updates to homogenous hosts.
+        If a host has the same packages and repos as a previously
+        processed host, it is given the same updates.
+    """
+    from hosts.models import Host
+
+    updated_host_ids = set()
+    ts = get_datetime_now()
+    host_iter = hosts.iterator() if hasattr(hosts, 'iterator') else iter(hosts)
+    for host in host_iter:
+        if verbose:
+            info_message(text=str(host))
+        if host.id not in updated_host_ids:
+            host.find_updates()
+            if verbose:
+                info_message(text='')
+            host.updated_at = ts
+            host.save()
+
+            filtered_hosts = Host.objects.filter(
+                packages_count=host.packages_count)
+            filtered_hosts = filtered_hosts.exclude(updated_at=ts)
+
+            package_ids = frozenset(host.packages.values_list('id', flat=True))
+            repo_ids = frozenset(host.repos.values_list('id', flat=True))
+            updates = list(host.updates.all())
+
+            for fhost in filtered_hosts.iterator():
+                frepo_ids = frozenset(fhost.repos.values_list('id', flat=True))
+                if repo_ids != frepo_ids:
+                    continue
+                fpackage_ids = frozenset(fhost.packages.values_list('id', flat=True))
+                if package_ids != fpackage_ids:
+                    continue
+
+                fhost.updates.set(updates)
+                fhost.updated_at = ts
+                fhost.save()
+                updated_host_ids.add(fhost.id)
+                info_message(text=f'Added the same updates to {fhost}')
+        elif verbose:
+            info_message(text='Updates already added in this run')
 
 
 def clean_tags():
