@@ -19,3 +19,17 @@ from django.apps import AppConfig
 
 class ErrataConfig(AppConfig):
     name = 'errata'
+
+    def ready(self):
+        from datetime import timedelta
+
+        from django.db.models.signals import post_save
+        from django.utils import timezone
+
+        def set_initial_last_run(sender, instance, created, **kwargs):
+            if created and instance.name == 'update_errata_cves_cwes_every_12_hours':
+                instance.last_run_at = timezone.now() - timedelta(days=1)
+                instance.save(update_fields=['last_run_at'])
+
+        from django_celery_beat.models import PeriodicTask
+        post_save.connect(set_initial_last_run, sender=PeriodicTask)
