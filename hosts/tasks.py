@@ -33,7 +33,7 @@ def find_host_updates(host_id):
 def find_all_host_updates():
     """ Task to find updates for all hosts
     """
-    for host in Host.objects.all():
+    for host in Host.objects.all().iterator():
         find_host_updates.delay(host.id)
 
 
@@ -43,7 +43,7 @@ def find_all_host_updates_homogenous():
     """
     updated_hosts = []
     ts = get_datetime_now()
-    for host in Host.objects.all():
+    for host in Host.objects.all().iterator():
         if host not in updated_hosts:
             host.find_updates()
             host.updated_at = ts
@@ -61,7 +61,7 @@ def find_all_host_updates_homogenous():
             updates = host.updates.all()
 
             phosts = []
-            for fhost in filtered_hosts:
+            for fhost in filtered_hosts.iterator():
                 frepos = set(fhost.repos.all())
                 if repos != frepos:
                     continue

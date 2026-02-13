@@ -164,7 +164,7 @@ def host_updates_alt(host=None):
     updated_hosts = []
     hosts = get_hosts(host, 'Finding updates')
     ts = get_datetime_now()
-    for host in hosts:
+    for host in hosts.iterator():
         info_message(text=str(host))
         if host not in updated_hosts:
             host.find_updates()
@@ -183,7 +183,7 @@ def host_updates_alt(host=None):
             updates = host.updates.all()
 
             phosts = []
-            for fhost in filtered_hosts:
+            for fhost in filtered_hosts.iterator():
 
                 frepos = set(fhost.repos.all())
                 rdiff = repos.difference(frepos)
@@ -352,7 +352,7 @@ def process_reports(host=None, force=False):
 
     info_message(text=text)
 
-    for report in reports:
+    for report in reports.iterator():
         report.process(find_updates=False)
 
 
