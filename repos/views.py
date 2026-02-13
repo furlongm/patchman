@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+from urllib.parse import parse_qs
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
@@ -36,6 +38,7 @@ from repos.serializers import (
     MirrorPackageSerializer, MirrorSerializer, RepositorySerializer,
 )
 from repos.tables import MirrorTable, RepositoryTable
+from repos.tasks import refresh_repo
 from util import sanitize_filter_params
 from util.filterspecs import Filter, FilterBar
 
@@ -403,7 +406,6 @@ def repo_toggle_security(request, repo_id):
 def repo_refresh(request, repo_id):
     """ Refresh a repo using a celery task
     """
-    from repos.tasks import refresh_repo
     repo = get_object_or_404(Repository, id=repo_id)
     refresh_repo.delay(repo.id)
     text = f'Repostory {repo} is being refreshed'
@@ -413,7 +415,6 @@ def repo_refresh(request, repo_id):
 
 def _get_filtered_repos(filter_params):
     """Helper to reconstruct filtered queryset from filter params."""
-    from urllib.parse import parse_qs
     params = parse_qs(filter_params)
 
     repos = Repository.objects.select_related('arch').order_by('name')
@@ -486,7 +487,6 @@ def repo_bulk_action(request):
         repos.update(security=False)
         messages.success(request, f'Marked {count} {name} as non-security')
     elif action == 'refresh':
-        from repos.tasks import refresh_repo
         for repo in repos:
             refresh_repo.delay(repo.id)
         messages.success(request, f'Queued {count} {name} for refresh')
@@ -504,7 +504,6 @@ def repo_bulk_action(request):
 
 def _get_filtered_mirrors(filter_params):
     """Helper to reconstruct filtered queryset from filter params."""
-    from urllib.parse import parse_qs
     params = parse_qs(filter_params)
 
     mirrors = Mirror.objects.select_related('repo').order_by('packages_checksum')

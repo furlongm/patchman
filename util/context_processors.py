@@ -16,6 +16,7 @@
 
 import subprocess
 from datetime import timedelta
+from importlib.metadata import version as get_pkg_version
 from pathlib import Path
 
 from django.db.models import F
@@ -52,8 +53,7 @@ def _get_version():
     """Get version from package metadata or VERSION.txt."""
     # Try importlib.metadata first (for installed packages)
     try:
-        from importlib.metadata import version
-        return version('patchman')
+        return get_pkg_version('patchman')
     except Exception:
         pass
 
