@@ -611,7 +611,8 @@ def get_os(os, arch):
         lts = ''
         if 'LTS' in os:
             lts = ' LTS'
-        major, minor, patch = os.split(' ')[1].split('.')
+        os_ver = os.split(' ')[1].split('.')
+        major, minor = os_ver[0], os_ver[1]
         ubuntu_version = f'{major}_{minor}'
         osrelease_name = f'Ubuntu {major}.{minor}{lts}'
         cpe_name = f"cpe:2.3:o:canonical:ubuntu_linux:{ubuntu_version}:*:*:*:{'lts' if lts else '*'}:*:*:*"
