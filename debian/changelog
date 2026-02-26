@@ -1,3 +1,19 @@
+patchman (4.0.10-1) stable; urgency=medium
+
+  * trigger security updates task on first run
+  * remove celery deprecation warning
+  * add cached count fields to avoid expensive COUNT queries
+  * add further sql optimizations
+  * add .iterator() to large queryset loops
+  * address template double-count issues
+  * move imports to top-level
+  * replace o(n²) comparisons with id sets and sql aggregation
+  * consolidate and improve homogenous host update logic
+  * add cached count fields to erratum model with m2m signals
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Thu, 26 Feb 2026 02:24:26 +0000
+
 patchman (4.0.9-1) stable; urgency=medium
 
   * deb build fix for releases
