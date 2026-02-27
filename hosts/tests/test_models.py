@@ -128,3 +128,66 @@ class HostMethodTests(TestCase):
         self.assertEqual(self.host.get_num_security_updates(), 1)
         self.assertEqual(self.host.get_num_bugfix_updates(), 1)
         self.assertEqual(self.host.get_num_updates(), 2)
+
+    def test_cached_counts_survive_full_save(self):
+        """Test that cached update counts are not overwritten by a full save.
+
+        Regression test: M2M signals update cached count fields via
+        save(update_fields=[...]), but a subsequent full save() on the
+        same in-memory instance would overwrite them with stale values.
+        """
+        pkg_arch = PackageArchitecture.objects.create(name='amd64')
+        pkg_name = PackageName.objects.create(name='curl')
+        old_pkg = Package.objects.create(
+            name=pkg_name, arch=pkg_arch, epoch='',
+            version='7.0.0', release='1', packagetype='D'
+        )
+        new_pkg = Package.objects.create(
+            name=pkg_name, arch=pkg_arch, epoch='',
+            version='7.0.1', release='1', packagetype='D'
+        )
+        sec_update = PackageUpdate.objects.create(
+            oldpackage=old_pkg, newpackage=new_pkg, security=True
+        )
+
+        # simulate the find_host_updates_homogenous pattern:
+        # M2M add fires signal, then full save follows
+        self.host.updates.add(sec_update)
+        self.host.refresh_from_db(fields=['sec_updates_count', 'bug_updates_count'])
+        self.host.updated_at = timezone.now()
+        self.host.save()
+
+        # re-read from DB to verify counts persisted
+        self.host.refresh_from_db()
+        self.assertEqual(self.host.sec_updates_count, 1)
+        self.assertEqual(self.host.bug_updates_count, 0)
+
+    def test_in_memory_counts_stale_after_m2m_signal(self):
+        """Test that in-memory instance has updated counts after M2M signal.
+
+        The M2M signal updates the DB directly via save(update_fields=[...]).
+        Django also updates the in-memory instance, but on MySQL with
+        REPEATABLE READ isolation and full save(), the stale snapshot can
+        overwrite the DB values. The refresh_from_db pattern in
+        find_host_updates_homogenous prevents this.
+        """
+        pkg_arch = PackageArchitecture.objects.create(name='amd64')
+        pkg_name = PackageName.objects.create(name='wget')
+        old_pkg = Package.objects.create(
+            name=pkg_name, arch=pkg_arch, epoch='',
+            version='1.0.0', release='1', packagetype='D'
+        )
+        new_pkg = Package.objects.create(
+            name=pkg_name, arch=pkg_arch, epoch='',
+            version='1.0.1', release='1', packagetype='D'
+        )
+        bug_update = PackageUpdate.objects.create(
+            oldpackage=old_pkg, newpackage=new_pkg, security=False
+        )
+
+        # M2M add fires signal — DB has correct count
+        self.host.updates.add(bug_update)
+
+        # verify DB has the correct value
+        db_host = Host.objects.get(pk=self.host.pk)
+        self.assertEqual(db_host.bug_updates_count, 1)
