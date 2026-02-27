@@ -69,7 +69,10 @@ def get_or_create_host(report, arch, osvariant, domain):
                 host.reboot_required = True
             else:
                 host.reboot_required = False
-            host.save()
+            host.save(update_fields=[
+                'ipaddress', 'kernel', 'arch', 'osvariant',
+                'domain', 'lastreport', 'reboot_required',
+            ])
     except IntegrityError as e:
         error_message(text=e)
     if host:
@@ -94,6 +97,7 @@ def find_host_updates_homogenous(hosts, verbose=False):
             host.find_updates()
             if verbose:
                 info_message(text='')
+            host.refresh_from_db(fields=['sec_updates_count', 'bug_updates_count', 'errata_count'])
             host.updated_at = ts
             host.save()
 
@@ -114,6 +118,7 @@ def find_host_updates_homogenous(hosts, verbose=False):
                     continue
 
                 fhost.updates.set(updates)
+                fhost.refresh_from_db(fields=['sec_updates_count', 'bug_updates_count'])
                 fhost.updated_at = ts
                 fhost.save()
                 updated_host_ids.add(fhost.id)

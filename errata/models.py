@@ -149,7 +149,6 @@ class Erratum(models.Model):
     def add_fixed_packages(self, packages):
         for package in packages:
             self.fixed_packages.add(package)
-        self.save()
 
     def add_affected_packages(self, packages):
         for package in packages:

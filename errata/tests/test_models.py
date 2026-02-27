@@ -239,3 +239,22 @@ class ErratumCachedCountTests(TestCase):
         self.erratum.refresh_from_db()
         self.assertEqual(self.erratum.cves_count, self.erratum.cves.count())
         self.assertEqual(self.erratum.osreleases_count, self.erratum.osreleases.count())
+
+    def test_add_fixed_packages_no_stale_save(self):
+        """Test that add_fixed_packages does not overwrite cached counts.
+
+        Regression test: add_fixed_packages previously called self.save()
+        after the M2M .add() loop, which overwrote the signal-updated
+        fixed_packages_count with the stale in-memory value.
+        """
+        from arch.models import PackageArchitecture
+        from packages.models import Package, PackageName
+        pkg_arch = PackageArchitecture.objects.create(name='amd64')
+        pkg_name = PackageName.objects.create(name='libssl3')
+        pkg = Package.objects.create(
+            name=pkg_name, arch=pkg_arch, epoch='',
+            version='3.0.1', release='1', packagetype='D'
+        )
+        self.erratum.add_fixed_packages({pkg})
+        self.erratum.refresh_from_db()
+        self.assertEqual(self.erratum.fixed_packages_count, 1)
