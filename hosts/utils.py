@@ -97,9 +97,8 @@ def find_host_updates_homogenous(hosts, verbose=False):
             host.find_updates()
             if verbose:
                 info_message(text='')
-            host.refresh_from_db(fields=['sec_updates_count', 'bug_updates_count', 'errata_count'])
             host.updated_at = ts
-            host.save()
+            host.save(update_fields=['updated_at'])
 
             filtered_hosts = Host.objects.filter(
                 packages_count=host.packages_count)
@@ -118,9 +117,9 @@ def find_host_updates_homogenous(hosts, verbose=False):
                     continue
 
                 fhost.updates.set(updates)
-                fhost.refresh_from_db(fields=['sec_updates_count', 'bug_updates_count'])
+                fhost.reboot_required = host.reboot_required
                 fhost.updated_at = ts
-                fhost.save()
+                fhost.save(update_fields=['updated_at', 'reboot_required'])
                 updated_host_ids.add(fhost.id)
                 info_message(text=f'Added the same updates to {fhost}')
         elif verbose:
