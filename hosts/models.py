@@ -178,27 +178,28 @@ class Host(models.Model):
     def find_updates(self):
 
         kernels_q = Q(name__name='kernel') | \
-            Q(name__name='kernel-devel') | \
-            Q(name__name='kernel-preempt') | \
-            Q(name__name='kernel-preempt-devel') | \
-            Q(name__name='kernel-rt') | \
-            Q(name__name='kernel-rt-devel') | \
-            Q(name__name='kernel-debug') | \
-            Q(name__name='kernel-debug-devel') | \
-            Q(name__name='kernel-default') | \
-            Q(name__name='kernel-default-devel') | \
-            Q(name__name='kernel-headers') | \
-            Q(name__name='kernel-core') | \
-            Q(name__name='kernel-modules') | \
-            Q(name__name='virtualbox-kmp-default') | \
-            Q(name__name='virtualbox-kmp-preempt') | \
-            Q(name__name='kernel-uek') | \
-            Q(name__name='kernel-uek-devel') | \
-            Q(name__name='kernel-uek-debug') | \
-            Q(name__name='kernel-uek-debug-devel') | \
-            Q(name__name='kernel-uek-container') | \
-            Q(name__name='kernel-uek-container-debug') | \
-            Q(name__name='kernel-uek-doc')
+            Q(name__name__startswith='kernel-') | \
+            Q(name__name__startswith='virtualbox-kmp-') | \
+            Q(name__name__startswith='linux-image-') | \
+            Q(name__name__startswith='linux-headers-') | \
+            Q(name__name__regex=r'^linux-modules-\d') | \
+            Q(name__name__regex=r'^linux-modules-extra-\d') | \
+            Q(name__name__startswith='linux-tools-') | \
+            Q(name__name__startswith='linux-cloud-tools-') | \
+            Q(name__name__startswith='linux-kbuild-') | \
+            Q(name__name__startswith='linux-support-') | \
+            Q(name__name='linux') | \
+            Q(name__name='linux-lts') | \
+            Q(name__name='linux-zen') | \
+            Q(name__name='linux-hardened') | \
+            Q(name__name='linux-rt') | \
+            Q(name__name='linux-rt-lts') | \
+            Q(name__name='linux-headers') | \
+            Q(name__name='linux-lts-headers') | \
+            Q(name__name='linux-zen-headers') | \
+            Q(name__name='linux-hardened-headers') | \
+            Q(name__name='linux-rt-headers') | \
+            Q(name__name='linux-rt-lts-headers')
         repo_packages = self.get_host_repo_packages()
         host_packages = self.packages.exclude(kernels_q).distinct()
         kernel_packages = self.packages.filter(kernels_q)
@@ -313,42 +314,292 @@ class Host(models.Model):
         return update_ids
 
     def check_if_reboot_required(self, host_highest):
+        """Check if a reboot is required (running kernel < installed highest).
 
-        ver, rel = self.kernel.split('-')[:2]
+        Uses labelCompare for RPM-style version tuples parsed from uname -r.
+        Only valid for RPM kernels — DEB and Arch use compare_version via
+        their respective find_*_kernel_updates methods.
+        """
+        parts = self.kernel.split('-')
+        if len(parts) < 2:
+            return
+        ver, rel = parts[:2]
+        # strip arch suffix from uname -r release (e.g. '.x86_64', '.aarch64')
+        arch_suffix = '.' + self.arch.name
+        if rel.endswith(arch_suffix):
+            rel = rel[:-len(arch_suffix)]
+        # SUSE uname -r truncates the micro release (e.g. '160000.8' vs
+        # RPM release '160000.8.1'), so check for prefix match first
+        if host_highest.version == ver and \
+                (host_highest.release == rel or
+                 host_highest.release.startswith(rel + '.')):
+            self.reboot_required = False
+            return
         kernel_ver = ('', str(ver), str(rel))
         host_highest_ver = ('', host_highest.version, host_highest.release)
         if labelCompare(kernel_ver, host_highest_ver) == -1:
             self.reboot_required = True
         else:
             self.reboot_required = False
-        self.save()
+
+    def _get_deb_kernel_flavour(self, pkg_name):
+        """Extract the flavour suffix from a DEB kernel package name.
+
+        e.g. 'linux-image-6.8.0-51-generic' → 'generic'
+             'linux-image-6.8.0-51-lowlatency' → 'lowlatency'
+             'linux-image-6.1.0-28-cloud-amd64' → 'cloud-amd64'
+             'linux-modules-extra-6.8.0-51-generic' → 'generic'
+        Returns None if the flavour cannot be determined.
+        """
+        for prefix in self._deb_kernel_prefixes:
+            if pkg_name.startswith(prefix):
+                # strip prefix, then split version from flavour
+                # e.g. '6.8.0-51-generic' or '6.1.0-28-cloud-amd64'
+                remainder = pkg_name[len(prefix):]
+                # version parts are numeric/dotted, flavour starts after
+                # e.g. '6.8.0-51-generic' → parts=['6.8.0', '51', 'generic']
+                parts = remainder.split('-')
+                # find first non-numeric part (not starting with digit)
+                for i, part in enumerate(parts):
+                    if part and not part[0].isdigit():
+                        return '-'.join(parts[i:])
+                return None
+        return None
+
+    def _get_running_kernel_flavour(self):
+        """Extract the flavour from the running kernel string.
+
+        e.g. '6.8.0-51-generic' → 'generic'
+             '6.8.0-51-lowlatency' → 'lowlatency'
+             '6.1.0-28-cloud-amd64' → 'cloud-amd64'
+        Returns None for RPM-style kernels (no flavour suffix).
+        """
+        parts = self.kernel.split('-')
+        if len(parts) >= 2:
+            # find first non-numeric part after the version
+            for i, part in enumerate(parts):
+                if i > 0 and part and not part[0].isdigit():
+                    return '-'.join(parts[i:])
+        return None
+
+    # longest prefixes first to avoid linux-modules- matching linux-modules-extra-
+    _deb_kernel_prefixes = [
+        'linux-image-unsigned-',
+        'linux-modules-extra-',
+        'linux-cloud-tools-',
+        'linux-image-uc-',
+        'linux-image-',
+        'linux-headers-',
+        'linux-modules-',
+        'linux-support-',
+        'linux-kbuild-',
+        'linux-tools-',
+    ]
 
     def find_kernel_updates(self, kernel_packages, repo_packages):
 
         update_ids = []
+        self.reboot_required = False
+
+        deb_kernels = kernel_packages.filter(packagetype='D')
+        rpm_kernels = kernel_packages.filter(packagetype='R')
+        arch_kernels = kernel_packages.filter(packagetype='A')
+
+        update_ids.extend(self._find_rpm_kernel_updates(rpm_kernels, repo_packages))
+        update_ids.extend(self._find_deb_kernel_updates(deb_kernels, repo_packages))
+        update_ids.extend(self._find_arch_kernel_updates(arch_kernels, repo_packages))
+
+        self.save(update_fields=['reboot_required'])
+        return update_ids
+
+    def _find_rpm_kernel_updates(self, kernel_packages, repo_packages):
+
+        update_ids = []
+
+        # parse running kernel version for comparison
+        parts = self.kernel.split('-')
+        if len(parts) < 2:
+            return update_ids
+        ver, rel = parts[:2]
+        # strip arch suffix from uname -r release (e.g. '.x86_64')
+        arch_suffix = '.' + self.arch.name
+        if rel.endswith(arch_suffix):
+            rel = rel[:-len(arch_suffix)]
+
+        # deduplicate: only process each kernel package name once
+        processed_names = set()
+
         for package in kernel_packages:
-            host_highest = package
-            repo_highest = package
+            if package.name_id in processed_names:
+                continue
+            processed_names.add(package.name_id)
 
             pu_q = Q(name=package.name)
-            potential_updates = repo_packages.filter(pu_q)
-            for pu in potential_updates:
-                if package.compare_version(pu) == -1 \
-                        and repo_highest.compare_version(pu) == -1:
+
+            # find repo highest for this kernel name
+            repo_highest = None
+            for pu in repo_packages.filter(pu_q):
+                if repo_highest is None or repo_highest.compare_version(pu) == -1:
                     repo_highest = pu
 
-            host_packages = self.packages.filter(pu_q)
-            for hp in host_packages:
-                if package.compare_version(hp) == -1 and \
-                        host_highest.compare_version(hp) == -1:
-                    host_highest = hp
+            if repo_highest is None:
+                continue
 
-            if host_highest.compare_version(repo_highest) == -1:
-                uid = self.process_update(host_highest, repo_highest)
+            # find host highest installed for reboot check
+            host_highest = None
+            running_package = None
+            for hp in self.packages.filter(pu_q):
+                if host_highest is None or host_highest.compare_version(hp) == -1:
+                    host_highest = hp
+                # match installed package to running kernel
+                # SUSE uname -r truncates micro release ('160000.8' vs
+                # RPM '160000.8.1') so use prefix match with dot boundary
+                if hp.version == ver and \
+                        (hp.release == rel or
+                         hp.release.startswith(rel + '.')):
+                    running_package = hp
+
+            # for the running kernel's flavour, compare running vs repo
+            # for other flavours, compare highest installed vs repo
+            if running_package:
+                base_package = running_package
+            else:
+                base_package = host_highest
+
+            if base_package and base_package.compare_version(repo_highest) == -1:
+                uid = self.process_update(base_package, repo_highest)
                 if uid is not None:
                     update_ids.append(uid)
 
-            self.check_if_reboot_required(host_highest)
+            # reboot check only on primary kernel packages
+            if host_highest and package.name.name in (
+                'kernel', 'kernel-core', 'kernel-debug-core',
+                'kernel-default', 'kernel-rt', 'kernel-azure',
+                'kernel-kvmsmall',
+                'kernel-uek', 'kernel-uki-virt', 'kernel-debug-uki-virt',
+            ):
+                self.check_if_reboot_required(host_highest)
+
+        return update_ids
+
+    def _find_arch_kernel_updates(self, kernel_packages, repo_packages):
+
+        update_ids = []
+
+        for package in kernel_packages:
+            pu_q = Q(name=package.name)
+
+            repo_highest = None
+            for rp in repo_packages.filter(pu_q):
+                if repo_highest is None or repo_highest.compare_version(rp) == -1:
+                    repo_highest = rp
+
+            if repo_highest is None:
+                continue
+
+            if package.compare_version(repo_highest) == -1:
+                uid = self.process_update(package, repo_highest)
+                if uid is not None:
+                    update_ids.append(uid)
+
+            # reboot check for main kernel packages (not -headers)
+            # Arch uname -r format varies by flavour:
+            #   linux:     6.12.8-arch1-1         (pkgver=6.12.8.arch1)
+            #   linux-lts: 6.1.68-1-lts           (pkgver=6.1.68)
+            #   linux-zen: 6.12.8-zen1-1-zen      (pkgver=6.12.8.zen1)
+            # The only reliable common part is the base version (first segment
+            # of uname -r) which maps to the numeric prefix of pkgver
+            if package.name.name in (
+                'linux', 'linux-lts', 'linux-zen', 'linux-hardened',
+                'linux-rt', 'linux-rt-lts',
+            ):
+                running_base = self.kernel.split('-')[0] if self.kernel else ''
+                pkg_ver = package.version
+                # pkgver is either 'X.Y.Z' (lts) or 'X.Y.Z.flavourN' (others)
+                # check if the package version matches or extends the base
+                if pkg_ver != running_base and not pkg_ver.startswith(running_base + '.'):
+                    self.reboot_required = True
+
+        return update_ids
+
+    def _find_deb_kernel_updates(self, kernel_packages, repo_packages):
+
+        update_ids = []
+        running_flavour = self._get_running_kernel_flavour()
+
+        # find the linux-image package matching the running kernel
+        running_kernel_pkg = None
+        for package in kernel_packages:
+            pkg_name = package.name.name
+            if pkg_name.startswith('linux-image-') and pkg_name.endswith(self.kernel):
+                running_kernel_pkg = package
+                break
+
+        processed_prefixes = set()
+        for package in kernel_packages:
+            pkg_name = package.name.name
+            flavour = self._get_deb_kernel_flavour(pkg_name)
+
+            # if we know the running flavour, only process matching packages
+            # if we don't (unflavoured kernel), process all kernel packages
+            if running_flavour and flavour != running_flavour:
+                continue
+
+            # determine the prefix (e.g. 'linux-image-')
+            prefix = None
+            for p in self._deb_kernel_prefixes:
+                if pkg_name.startswith(p):
+                    prefix = p
+                    break
+            if prefix is None or prefix in processed_prefixes:
+                continue
+            processed_prefixes.add(prefix)
+
+            # build endswith filter for flavoured kernels
+            name_filter = Q(
+                name__name__startswith=prefix,
+                packagetype='D',
+            )
+            if running_flavour:
+                name_filter &= Q(name__name__endswith=f'-{running_flavour}')
+
+            # find repo highest for this prefix+flavour
+            repo_highest = None
+            for rp in repo_packages.filter(name_filter):
+                if repo_highest is None or repo_highest.compare_version(rp) == -1:
+                    repo_highest = rp
+
+            if repo_highest is None:
+                continue
+
+            # find the installed package matching the running kernel for this prefix
+            base_package = None
+            expected_name = prefix + self.kernel
+            for hp in self.packages.filter(name_filter):
+                if hp.name.name == expected_name:
+                    base_package = hp
+                    break
+
+            # fallback: if no running match, use the installed package we started with
+            if base_package is None:
+                base_package = package
+
+            if base_package.compare_version(repo_highest) == -1:
+                uid = self.process_update(base_package, repo_highest)
+                if uid is not None:
+                    update_ids.append(uid)
+
+        # reboot check: see if a newer linux-image is installed but not running
+        # use compare_version (DEB semantics) instead of labelCompare
+        if running_kernel_pkg:
+            for package in kernel_packages:
+                if package.name.name.startswith('linux-image-'):
+                    flavour = self._get_deb_kernel_flavour(package.name.name)
+                    if running_flavour is None or flavour == running_flavour:
+                        if running_kernel_pkg.compare_version(package) == -1:
+                            self.reboot_required = True
+                            break
+
         return update_ids
 
 
