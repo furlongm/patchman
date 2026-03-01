@@ -1,3 +1,11 @@
+patchman (4.0.13-1) stable; urgency=medium
+
+  * prefer update_fields over refresh_from_db
+  * better handling of kernel updates
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Sun, 01 Mar 2026 17:20:41 +0000
+
 patchman (4.0.12-1) stable; urgency=medium
 
   * fix warnings and errors on debian packaging
