@@ -401,18 +401,28 @@ class Host(models.Model):
         update_ids = []
         self.reboot_required = False
 
+        # build hostrepos for priority filtering (same as find_host_repo_updates)
+        hostrepos = None
+        if self.host_repos_only:
+            hostrepos_q = Q(repo__mirror__enabled=True,
+                            repo__mirror__refresh=True,
+                            repo__mirror__repo__enabled=True,
+                            host=self)
+            hostrepos = HostRepo.objects.select_related(
+                'host', 'repo').filter(hostrepos_q)
+
         deb_kernels = kernel_packages.filter(packagetype='D')
         rpm_kernels = kernel_packages.filter(packagetype='R')
         arch_kernels = kernel_packages.filter(packagetype='A')
 
-        update_ids.extend(self._find_rpm_kernel_updates(rpm_kernels, repo_packages))
-        update_ids.extend(self._find_deb_kernel_updates(deb_kernels, repo_packages))
-        update_ids.extend(self._find_arch_kernel_updates(arch_kernels, repo_packages))
+        update_ids.extend(self._find_rpm_kernel_updates(rpm_kernels, repo_packages, hostrepos))
+        update_ids.extend(self._find_deb_kernel_updates(deb_kernels, repo_packages, hostrepos))
+        update_ids.extend(self._find_arch_kernel_updates(arch_kernels, repo_packages, hostrepos))
 
         self.save(update_fields=['reboot_required'])
         return update_ids
 
-    def _find_rpm_kernel_updates(self, kernel_packages, repo_packages):
+    def _find_rpm_kernel_updates(self, kernel_packages, repo_packages, hostrepos):
 
         update_ids = []
 
@@ -436,9 +446,20 @@ class Host(models.Model):
 
             pu_q = Q(name=package.name)
 
-            # find repo highest for this kernel name
+            # determine baseline priority from the installed package's repo
+            priority = None
+            if hostrepos is not None:
+                best_repo = find_best_repo(package, hostrepos)
+                if best_repo is not None:
+                    priority = best_repo.priority
+
+            # find repo highest for this kernel name, respecting priority
             repo_highest = None
             for pu in repo_packages.filter(pu_q):
+                if priority is not None:
+                    pu_best_repo = find_best_repo(pu, hostrepos)
+                    if not pu_best_repo or pu_best_repo.priority < priority:
+                        continue
                 if repo_highest is None or repo_highest.compare_version(pu) == -1:
                     repo_highest = pu
 
@@ -482,15 +503,26 @@ class Host(models.Model):
 
         return update_ids
 
-    def _find_arch_kernel_updates(self, kernel_packages, repo_packages):
+    def _find_arch_kernel_updates(self, kernel_packages, repo_packages, hostrepos):
 
         update_ids = []
 
         for package in kernel_packages:
             pu_q = Q(name=package.name)
 
+            # determine baseline priority from the installed package's repo
+            priority = None
+            if hostrepos is not None:
+                best_repo = find_best_repo(package, hostrepos)
+                if best_repo is not None:
+                    priority = best_repo.priority
+
             repo_highest = None
             for rp in repo_packages.filter(pu_q):
+                if priority is not None:
+                    rp_best_repo = find_best_repo(rp, hostrepos)
+                    if not rp_best_repo or rp_best_repo.priority < priority:
+                        continue
                 if repo_highest is None or repo_highest.compare_version(rp) == -1:
                     repo_highest = rp
 
@@ -522,7 +554,7 @@ class Host(models.Model):
 
         return update_ids
 
-    def _find_deb_kernel_updates(self, kernel_packages, repo_packages):
+    def _find_deb_kernel_updates(self, kernel_packages, repo_packages, hostrepos):
 
         update_ids = []
         running_flavour = self._get_running_kernel_flavour()
@@ -534,6 +566,13 @@ class Host(models.Model):
             if pkg_name.startswith('linux-image-') and pkg_name.endswith(self.kernel):
                 running_kernel_pkg = package
                 break
+
+        # determine baseline priority from the running kernel's repo
+        priority = None
+        if hostrepos is not None and running_kernel_pkg is not None:
+            best_repo = find_best_repo(running_kernel_pkg, hostrepos)
+            if best_repo is not None:
+                priority = best_repo.priority
 
         processed_prefixes = set()
         for package in kernel_packages:
@@ -563,9 +602,13 @@ class Host(models.Model):
             if running_flavour:
                 name_filter &= Q(name__name__endswith=f'-{running_flavour}')
 
-            # find repo highest for this prefix+flavour
+            # find repo highest for this prefix+flavour, respecting priority
             repo_highest = None
             for rp in repo_packages.filter(name_filter):
+                if priority is not None:
+                    rp_best_repo = find_best_repo(rp, hostrepos)
+                    if not rp_best_repo or rp_best_repo.priority < priority:
+                        continue
                 if repo_highest is None or repo_highest.compare_version(rp) == -1:
                     repo_highest = rp
 

@@ -697,3 +697,202 @@ class ArchKernelUpdateTests(TestCase):
 
         host.refresh_from_db()
         self.assertFalse(host.reboot_required)
+
+
+@override_settings(
+    CELERY_TASK_ALWAYS_EAGER=True,
+    CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}}
+)
+class KernelPriorityTests(TestCase):
+    """Tests for kernel update priority filtering (backports)."""
+
+    def setUp(self):
+        self.m_arch = MachineArchitecture.objects.create(name='x86_64')
+        self.domain = Domain.objects.create(name='example.com')
+        self.os_release = OSRelease.objects.create(
+            name='Debian 12', codename='bookworm'
+        )
+        self.os_variant = OSVariant.objects.create(
+            name='Debian GNU/Linux 12', osrelease=self.os_release
+        )
+        self.pkg_arch = PackageArchitecture.objects.create(name='amd64')
+
+        # installed kernel (from main repo)
+        self.img_43_name = PackageName.objects.create(
+            name='linux-image-6.1.0-43-amd64'
+        )
+        self.img_43 = Package.objects.create(
+            name=self.img_43_name, arch=self.pkg_arch, epoch='',
+            version='6.1.162-1', release='', packagetype='D'
+        )
+
+        # backports kernel (newer version)
+        self.img_bp_name = PackageName.objects.create(
+            name='linux-image-6.12.73+deb13-amd64'
+        )
+        self.img_bp = Package.objects.create(
+            name=self.img_bp_name, arch=self.pkg_arch, epoch='',
+            version='6.12.73-1', release='', packagetype='D'
+        )
+
+        # main repo (high priority)
+        self.main_repo = Repository.objects.create(
+            name='bookworm', repotype='D', arch=self.m_arch,
+        )
+        self.main_mirror = Mirror.objects.create(
+            repo=self.main_repo,
+            url='http://deb.debian.org/debian',
+        )
+        self.main_mirror.packages.add(self.img_43)
+
+        # backports repo (low priority)
+        self.bp_repo = Repository.objects.create(
+            name='bookworm-backports', repotype='D', arch=self.m_arch,
+        )
+        self.bp_mirror = Mirror.objects.create(
+            repo=self.bp_repo,
+            url='http://deb.debian.org/debian-backports',
+        )
+        self.bp_mirror.packages.add(self.img_bp)
+
+    def _create_host(self, main_priority, bp_priority, host_repos_only=True):
+        host = Host.objects.create(
+            hostname='debian.example.com',
+            ipaddress='192.168.1.80',
+            osvariant=self.os_variant,
+            kernel='6.1.0-43-amd64',
+            arch=self.m_arch,
+            domain=self.domain,
+            lastreport=timezone.now(),
+            host_repos_only=host_repos_only,
+        )
+        host.packages.set([self.img_43])
+        HostRepo.objects.create(
+            host=host, repo=self.main_repo,
+            enabled=True, priority=main_priority,
+        )
+        HostRepo.objects.create(
+            host=host, repo=self.bp_repo,
+            enabled=True, priority=bp_priority,
+        )
+        return host
+
+    def test_deb_backports_lower_priority_no_update(self):
+        """DEB: backports kernel with lower priority should NOT be flagged."""
+        host = self._create_host(main_priority=500, bp_priority=100)
+        repo_packages = Package.objects.filter(
+            mirror__in=[self.main_mirror, self.bp_mirror]
+        )
+        kernel_packages = host.packages.filter(
+            name__name__startswith='linux-image-'
+        )
+
+        host.find_kernel_updates(kernel_packages, repo_packages)
+
+        self.assertEqual(host.updates.count(), 0)
+
+    def test_deb_backports_equal_priority_shows_update(self):
+        """DEB: backports kernel with equal priority SHOULD be flagged."""
+        host = self._create_host(main_priority=500, bp_priority=500)
+        repo_packages = Package.objects.filter(
+            mirror__in=[self.main_mirror, self.bp_mirror]
+        )
+        kernel_packages = host.packages.filter(
+            name__name__startswith='linux-image-'
+        )
+
+        host.find_kernel_updates(kernel_packages, repo_packages)
+
+        self.assertEqual(host.updates.count(), 1)
+
+    def test_deb_priority_zero_no_filtering(self):
+        """DEB: priority 0 (unset) means no filtering — backward compat."""
+        host = self._create_host(main_priority=0, bp_priority=0)
+        repo_packages = Package.objects.filter(
+            mirror__in=[self.main_mirror, self.bp_mirror]
+        )
+        kernel_packages = host.packages.filter(
+            name__name__startswith='linux-image-'
+        )
+
+        host.find_kernel_updates(kernel_packages, repo_packages)
+
+        self.assertEqual(host.updates.count(), 1)
+
+    def test_deb_host_repos_only_false_no_filtering(self):
+        """DEB: host_repos_only=False skips priority filtering entirely."""
+        host = self._create_host(
+            main_priority=500, bp_priority=100, host_repos_only=False,
+        )
+        repo_packages = Package.objects.filter(
+            mirror__in=[self.main_mirror, self.bp_mirror]
+        )
+        kernel_packages = host.packages.filter(
+            name__name__startswith='linux-image-'
+        )
+
+        host.find_kernel_updates(kernel_packages, repo_packages)
+
+        self.assertEqual(host.updates.count(), 1)
+
+    def test_rpm_backports_lower_priority_no_update(self):
+        """RPM: kernel from lower-priority repo should NOT be flagged."""
+        rpm_arch = PackageArchitecture.objects.create(name='x86_64_rpm')
+        kernel_name = PackageName.objects.create(name='kernel-core')
+        installed = Package.objects.create(
+            name=kernel_name, arch=rpm_arch, epoch='0',
+            version='5.14.0', release='362.el9', packagetype='R'
+        )
+        newer = Package.objects.create(
+            name=kernel_name, arch=rpm_arch, epoch='0',
+            version='5.14.0', release='503.el9', packagetype='R'
+        )
+
+        base_repo = Repository.objects.create(
+            name='baseos', repotype='R', arch=self.m_arch,
+        )
+        base_mirror = Mirror.objects.create(
+            repo=base_repo, url='http://repo.example.com/baseos',
+        )
+        base_mirror.packages.add(installed)
+
+        extra_repo = Repository.objects.create(
+            name='extras', repotype='R', arch=self.m_arch,
+        )
+        extra_mirror = Mirror.objects.create(
+            repo=extra_repo, url='http://repo.example.com/extras',
+        )
+        extra_mirror.packages.add(newer)
+
+        os_release = OSRelease.objects.create(
+            name='Rocky Linux 9', codename='rl9'
+        )
+        os_variant = OSVariant.objects.create(
+            name='Rocky Linux 9.4', osrelease=os_release
+        )
+        host = Host.objects.create(
+            hostname='rocky.example.com',
+            ipaddress='192.168.1.90',
+            osvariant=os_variant,
+            kernel='5.14.0-362.el9',
+            arch=self.m_arch,
+            domain=self.domain,
+            lastreport=timezone.now(),
+            host_repos_only=True,
+        )
+        host.packages.set([installed])
+        HostRepo.objects.create(
+            host=host, repo=base_repo, enabled=True, priority=500,
+        )
+        HostRepo.objects.create(
+            host=host, repo=extra_repo, enabled=True, priority=100,
+        )
+
+        repo_packages = Package.objects.filter(
+            mirror__in=[base_mirror, extra_mirror]
+        )
+        kernel_packages = host.packages.filter(name=kernel_name)
+
+        host.find_kernel_updates(kernel_packages, repo_packages)
+
+        self.assertEqual(host.updates.count(), 0)
