@@ -24,10 +24,10 @@ from repos.models import Repository
 
 class OSRelease(models.Model):
 
-    name = models.CharField(max_length=255, unique=True, blank=False, null=False)
+    name = models.CharField(max_length=128, unique=True, blank=False, null=False)
     repos = models.ManyToManyField(Repository, blank=True)
-    codename = models.CharField(max_length=255, blank=True)
-    cpe_name = models.CharField(max_length=255, null=True, blank=True, unique=True)
+    codename = models.CharField(max_length=128, blank=True)
+    cpe_name = models.CharField(max_length=128, null=True, blank=True, unique=True)
 
     from operatingsystems.managers import OSReleaseManager
     objects = OSReleaseManager()
