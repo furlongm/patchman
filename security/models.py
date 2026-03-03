@@ -28,8 +28,8 @@ from util import error_message, fetch_content, get_url, tz_aware_datetime
 
 class Reference(models.Model):
 
-    ref_type = models.CharField(max_length=255)
-    url = models.URLField(max_length=765)
+    ref_type = models.CharField(max_length=128)
+    url = models.URLField(max_length=512)
 
     class Meta:
         unique_together = ['ref_type', 'url']
@@ -82,9 +82,9 @@ class CWE(models.Model):
 class CVSS(models.Model):
 
     score = models.DecimalField(max_digits=3, decimal_places=1, null=True)
-    severity = models.CharField(max_length=255, blank=True, null=True)
+    severity = models.CharField(max_length=128, blank=True, null=True)
     version = models.DecimalField(max_digits=2, decimal_places=1)
-    vector_string = models.CharField(max_length=255, blank=True, null=True)
+    vector_string = models.CharField(max_length=128, blank=True, null=True)
 
     class Meta:
         unique_together = ['score', 'severity', 'version', 'vector_string']
