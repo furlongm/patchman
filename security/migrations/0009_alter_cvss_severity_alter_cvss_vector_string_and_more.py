@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='cvss',
             name='vector_string',
-            field=models.CharField(blank=True, max_length=128, null=True),
+            field=models.CharField(blank=True, max_length=255, null=True),
         ),
         migrations.AlterField(
             model_name='reference',
