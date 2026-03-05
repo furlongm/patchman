@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% load common %}
+
+{% block page_title %}Patchman Issues{% endblock %}
+
+{% block breadcrumbs %}
+  <li class="active"><a href="{% url 'util:issues' %}">Issues</a></li>
+{% endblock %}
+
+{% block content_title %} Issues for {{ site.name }} {% endblock %}
+
+{% block content %}
+
+{% with count=noosrelease_osvariants.count %}
+  {% if count > 0 %}
+    <div class="well well-sm">
+      <button class="btn btn-sm" data-toggle="collapse" data-target="#noosrelease_osvariants"><span class="badge">{{ count }}</span> OS Variants are not linked to any OS Release</button>
+      <div class="collapse" id="noosrelease_osvariants">
+        {% gen_table noosrelease_osvariants %}
+      </div>
+    </div>
+  {% endif %}
+{% endwith %}
+
+{% with count=nohost_osvariants.count %}
+  {% if count > 0 %}
+    <div class="well well-sm">
+      <button class="btn btn-sm" data-toggle="collapse" data-target="#nohost_osvariants"><span class="badge">{{ count }}</span> OS Variants are not installed on any Host</button>
+        <div class="collapse" id="nohost_osvariants">
+          {% gen_table nohost_osvariants %}
+        </div>
+    </div>
+  {% endif %}
+{% endwith %}
+
+{% with count=norepo_osreleases.count %}
+  {% if count > 0 and norepo_osreleases != None %}
+    <div class="well well-sm">
+      <button class="btn btn-sm" data-toggle="collapse" data-target="#norepo_osreleases"><span class="badge">{{ count }}</span> OS Releases have no associated Repositories</button>
+        <div class="collapse" id="norepo_osreleases">
+          {% gen_table norepo_osreleases %}
+        </div>
+    </div>
+  {% endif %}
+{% endwith %}
+
+{% with count=stale_hosts.count %}
+  {% if count > 0 %}
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#stale_hosts"><span class="badge">{{ count }}</span> Hosts have not reported since {% reports_timedelta %}</button>
+    <div class="collapse" id="stale_hosts">
+      {% gen_table stale_hosts %}
+    </div>
+  </div>
+  {% endif %}
+{% endwith %}
+
+{% with count=reboot_hosts.count %}
+  {% if count > 0 %}
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#reboot_hosts"><span class="badge">{{ count }}</span> Hosts require a reboot for security reasons (e.g. kernel update)</button>
+      <div class="collapse" id="reboot_hosts">
+        {% gen_table reboot_hosts %}
+      </div>
+  </div>
+  {% endif %}
+{% endwith %}
+
+{% with count=secupdate_hosts.count %}
+  {% if count > 0 %}
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#secupdate_hosts"><span class="badge">{{ count }}</span> Hosts have security updates pending</button>
+      <div class="collapse" id="secupdate_hosts">
+        {% gen_table secupdate_hosts %}
+      </div>
+  </div>
+  {% endif %}
+{% endwith %}
+
+{% with count=bugupdate_hosts.count %}
+  {% if count > 0 %}
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#bugupdate_hosts"><span class="badge">{{ count }}</span> Hosts have bugfix-only updates pending</button>
+      <div class="collapse" id="bugupdate_hosts">
+        {% gen_table bugupdate_hosts %}
+      </div>
+  </div>
+  {% endif %}
+{% endwith %}
+
+{% with count=norepo_hosts.count %}
+  {% if count > 0 %}
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#norepo_hosts"><span class="badge">{{ count }}</span> Hosts have no associated Repositories</button>
+      <div class="collapse" id="norepo_hosts">
+        {% gen_table norepo_hosts %}
+      </div>
+  </div>
+  {% endif %}
+{% endwith %}
+
+{% with count=diff_rdns_hosts.count %}
+  {% if count > 0 %}
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#diff_rdns_hosts"><span class="badge">{{ count }}</span> Hosts have a different rDNS entry (and have rDNS checking enabled)</button>
+      <div class="collapse" id="diff_rdns_hosts">
+        {% gen_table diff_rdns_hosts %}
+      </div>
+  </div>
+  {% endif %}
+{% endwith %}
+
+{% with count=failed_mirrors.count %}
+  {% if count > 0 %}
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#failed_mirrors"><span class="badge">{{ count }}</span> Repositories have some Mirrors that are failing</button>
+      <div class="collapse" id="failed_mirrors">
+        {% gen_table failed_mirrors %}
+      </div>
+  </div>
+  {% endif %}
+{% endwith %}
+
+{% with count=disabled_mirrors.count %}
+  {% if count > 0 %}
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#disabled_mirrors"><span class="badge">{{ count }}</span> Repositories have some Mirrors that are disabled</button>
+      <div class="collapse" id="disabled_mirrors">
+        {% gen_table disabled_mirrors %}
+      </div>
+  </div>
+  {% endif %}
+{% endwith %}
+
+{% with count=norefresh_mirrors.count %}
+  {% if count > 0 %}
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#norefresh_mirrors"><span class="badge">{{ count }}</span> Repositories have some Mirrors that are not set to refresh (possibly failed too many times)</button>
+      <div class="collapse" id="norefresh_mirrors">
+        {% gen_table norefresh_mirrors %}
+      </div>
+  </div>
+  {% endif %}
+{% endwith %}
+
+{% with count=failed_repos.count %}
+  {% if count > 0 %}
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#failed_repos"><span class="badge">{{ count }}</span> Repositories where all Mirrors are failing</button>
+      <div class="collapse" id="failed_repos">
+        {% gen_table failed_repos %}
+      </div>
+  </div>
+  {% endif %}
+{% endwith %}
+
+{% with count=unused_repos.count %}
+  {% if count > 0 %}
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#unused_repos"><span class="badge">{{ count }}</span> Repositories are unused (no associated Hosts or OS Groups)</button>
+      <div class="collapse" id="unused_repos">
+        {% gen_table unused_repos %}
+      </div>
+  </div>
+  {% endif %}
+{% endwith %}
+
+{% with count=nomirror_repos.count %}
+  {% if count > 0 %}
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#nomirror_repos"><span class="badge">{{ count }}</span> Repositories have no Mirrors</button>
+      <div class="collapse" id="nomirror_repos">
+        {% gen_table nomirror_repos %}
+      </div>
+  </div>
+  {% endif %}
+{% endwith %}
+
+{% with count=nohost_repos.count %}
+  {% if count > 0 %}
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#nohost_repos"><span class="badge">{{ count }}</span> Repositories are not used by any Hosts</button>
+      <div class="collapse" id="nohost_repos">
+        {% gen_table nohost_repos %}
+      </div>
+  </div>
+  {% endif %}
+{% endwith %}
+
+{% with count=possible_mirrors|length %}
+  {% if count > 0 %}
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#possible_mirrors"><span class="badge">{{ count }}</span> Sets of Mirrors have the same checksum and are not linked</button>
+      <div class="collapse" id="possible_mirrors">
+        <ul class="package-list">
+          {% for checksum in possible_mirrors %}
+            <li><a href="{% url 'repos:mirror_list' %}?checksum={{ checksum }}">{{ checksum }}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
+  </div>
+  {% endif %}
+{% endwith %}
+
+{% with count=norepo_packages.count %}
+  {% if count > 0 %}
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#norepo_packages"><span class="badge">{{ count }}</span> Installed Packages are not from any Repository</button>
+      <div class="collapse" id="norepo_packages">
+        <ul class="package-list">
+          {% for package in norepo_packages %}
+            <li><a href="{{ package.get_absolute_url }}">{{ package }}</a></li>
+          {% endfor %}
+        </ul>
+     </div>
+  </div>
+  {% endif %}
+{% endwith %}
+
+{% with count=orphaned_packages.count %}
+  {% if count < 0 %}
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#orphaned_packages"><span class="badge">{{ count }}</span> Packages are orphaned (not from any Repository, not installed on any Host)</button>
+      <div class="collapse" id="orphaned_packages">
+        <ul class="package-list">
+          {% for package in orphaned_packages %}
+            <li><a href="{{ package.get_absolute_url }}">{{ package }}</a></li>
+          {% endfor %}
+        </ul>
+     </div>
+  </div>
+  {% endif %}
+{% endwith %}
+
+{% with count=unprocessed_reports.count %}
+  {% if count < 0 %}
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#unprocessed_reports"><span class="badge">{{ count }}</span> Reports have not yet been processed</button>
+      <div class="collapse" id="unprocessed_reports">
+        {% gen_table unprocessed_reports %}
+     </div>
+  </div>
+  {% endif %}
+{% endwith %}
+
+{% if not has_issues %}
+  <div class="alert alert-success">No issues found!</div>
+{% endif %}
+
+{% endblock %}

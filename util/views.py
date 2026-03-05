@@ -39,6 +39,17 @@ def dashboard(request):
     except Site.DoesNotExist:
         site = {'name': '', 'domainname': ''}
 
+    return render(request, 'dashboard.html', {'site': site})
+
+
+@login_required
+def issues(request):
+
+    try:
+        site = Site.objects.get_current()
+    except Site.DoesNotExist:
+        site = {'name': '', 'domainname': ''}
+
     hosts = Host.objects.all()
     osvariants = OSVariant.objects.all()
     osreleases = OSRelease.objects.all()
@@ -133,7 +144,7 @@ def dashboard(request):
 
     return render(
         request,
-        'dashboard.html',
+        'issues.html',
         {'site': site,
          'has_issues': has_issues,
          'noosrelease_osvariants': noosrelease_osvariants,
