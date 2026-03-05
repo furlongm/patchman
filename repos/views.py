@@ -78,6 +78,48 @@ def repo_list(request):
     else:
         terms = ''
 
+    if 'has_failed_mirrors' in request.GET:
+        has_failed_mirrors = request.GET['has_failed_mirrors'] == 'true'
+        if has_failed_mirrors:
+            repos = repos.filter(auth_required=False, mirror__last_access_ok=False)
+        else:
+            repos = repos.exclude(auth_required=False, mirror__last_access_ok=False)
+
+    if 'has_disabled_mirrors' in request.GET:
+        has_disabled_mirrors = request.GET['has_disabled_mirrors'] == 'true'
+        if has_disabled_mirrors:
+            repos = repos.filter(auth_required=False, mirror__enabled=False, mirror__mirrorlist=False)
+        else:
+            repos = repos.exclude(auth_required=False, mirror__enabled=False, mirror__mirrorlist=False)
+
+    if 'has_norefresh_mirrors' in request.GET:
+        has_norefresh_mirrors = request.GET['has_norefresh_mirrors'] == 'true'
+        if has_norefresh_mirrors:
+            repos = repos.filter(auth_required=False, mirror__refresh=False)
+        else:
+            repos = repos.exclude(auth_required=False, mirror__refresh=False)
+
+    if 'has_mirrors' in request.GET:
+        has_mirrors = request.GET['has_mirrors'] == 'true'
+        if has_mirrors:
+            repos = repos.filter(mirror__isnull=False)
+        else:
+            repos = repos.filter(mirror__isnull=True)
+
+    if 'has_hosts' in request.GET:
+        has_hosts = request.GET['has_hosts'] == 'true'
+        if has_hosts:
+            repos = repos.filter(host__isnull=False)
+        else:
+            repos = repos.filter(host__isnull=True)
+
+    if 'used' in request.GET:
+        used = request.GET['used'] == 'true'
+        if used:
+            repos = repos.exclude(host__isnull=True, osrelease__isnull=True)
+        else:
+            repos = repos.filter(host__isnull=True, osrelease__isnull=True)
+
     repos = repos.distinct()
 
     filter_list = []
@@ -87,6 +129,12 @@ def repo_list(request):
     filter_list.append(Filter(request, 'Repo Type', 'repotype', Repository.REPO_TYPES))
     filter_list.append(Filter(request, 'Architecture', 'arch_id',
                               MachineArchitecture.objects.filter(repository__in=repos)))
+    filter_list.append(Filter(request, 'Failed Mirrors', 'has_failed_mirrors', {'true': 'Yes', 'false': 'No'}))
+    filter_list.append(Filter(request, 'Disabled Mirrors', 'has_disabled_mirrors', {'true': 'Yes', 'false': 'No'}))
+    filter_list.append(Filter(request, 'No-Refresh Mirrors', 'has_norefresh_mirrors', {'true': 'Yes', 'false': 'No'}))
+    filter_list.append(Filter(request, 'Has Mirrors', 'has_mirrors', {'true': 'Yes', 'false': 'No'}))
+    filter_list.append(Filter(request, 'Has Hosts', 'has_hosts', {'true': 'Yes', 'false': 'No'}))
+    filter_list.append(Filter(request, 'Used', 'used', {'true': 'Yes', 'false': 'No'}))
     filter_bar = FilterBar(request, filter_list)
 
     table = RepositoryTable(repos)
@@ -440,6 +488,42 @@ def _get_filtered_repos(filter_params):
             q = Q(name__icontains=term)
             query = query & q
         repos = repos.filter(query)
+    if 'has_failed_mirrors' in params:
+        has_failed_mirrors = params['has_failed_mirrors'][0] == 'true'
+        if has_failed_mirrors:
+            repos = repos.filter(auth_required=False, mirror__last_access_ok=False)
+        else:
+            repos = repos.exclude(auth_required=False, mirror__last_access_ok=False)
+    if 'has_disabled_mirrors' in params:
+        has_disabled_mirrors = params['has_disabled_mirrors'][0] == 'true'
+        if has_disabled_mirrors:
+            repos = repos.filter(auth_required=False, mirror__enabled=False, mirror__mirrorlist=False)
+        else:
+            repos = repos.exclude(auth_required=False, mirror__enabled=False, mirror__mirrorlist=False)
+    if 'has_norefresh_mirrors' in params:
+        has_norefresh_mirrors = params['has_norefresh_mirrors'][0] == 'true'
+        if has_norefresh_mirrors:
+            repos = repos.filter(auth_required=False, mirror__refresh=False)
+        else:
+            repos = repos.exclude(auth_required=False, mirror__refresh=False)
+    if 'has_mirrors' in params:
+        has_mirrors = params['has_mirrors'][0] == 'true'
+        if has_mirrors:
+            repos = repos.filter(mirror__isnull=False)
+        else:
+            repos = repos.filter(mirror__isnull=True)
+    if 'has_hosts' in params:
+        has_hosts = params['has_hosts'][0] == 'true'
+        if has_hosts:
+            repos = repos.filter(host__isnull=False)
+        else:
+            repos = repos.filter(host__isnull=True)
+    if 'used' in params:
+        used = params['used'][0] == 'true'
+        if used:
+            repos = repos.exclude(host__isnull=True, osrelease__isnull=True)
+        else:
+            repos = repos.filter(host__isnull=True, osrelease__isnull=True)
 
     return repos.distinct()
 

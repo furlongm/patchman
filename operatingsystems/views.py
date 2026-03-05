@@ -35,6 +35,7 @@ from operatingsystems.serializers import (
 )
 from operatingsystems.tables import OSReleaseTable, OSVariantTable
 from util import sanitize_filter_params
+from util.filterspecs import Filter, FilterBar
 
 
 def _get_filtered_osvariants(filter_params):
@@ -52,6 +53,18 @@ def _get_filtered_osvariants(filter_params):
             q = Q(name__icontains=term)
             query = query & q
         osvariants = osvariants.filter(query)
+    if 'has_osrelease' in params:
+        has_osrelease = params['has_osrelease'][0] == 'true'
+        if has_osrelease:
+            osvariants = osvariants.filter(osrelease__isnull=False)
+        else:
+            osvariants = osvariants.filter(osrelease__isnull=True)
+    if 'has_hosts' in params:
+        has_hosts = params['has_hosts'][0] == 'true'
+        if has_hosts:
+            osvariants = osvariants.filter(host__isnull=False).distinct()
+        else:
+            osvariants = osvariants.filter(host__isnull=True)
 
     return osvariants
 
@@ -71,6 +84,12 @@ def _get_filtered_osreleases(filter_params):
             q = Q(name__icontains=term)
             query = query & q
         osreleases = osreleases.filter(query)
+    if 'has_repos' in params:
+        has_repos = params['has_repos'][0] == 'true'
+        if has_repos:
+            osreleases = osreleases.filter(repos__isnull=False).distinct()
+        else:
+            osreleases = osreleases.filter(repos__isnull=True)
 
     return osreleases
 
@@ -95,6 +114,25 @@ def osvariant_list(request):
     else:
         terms = ''
 
+    if 'has_osrelease' in request.GET:
+        has_osrelease = request.GET['has_osrelease'] == 'true'
+        if has_osrelease:
+            osvariants = osvariants.filter(osrelease__isnull=False)
+        else:
+            osvariants = osvariants.filter(osrelease__isnull=True)
+
+    if 'has_hosts' in request.GET:
+        has_hosts = request.GET['has_hosts'] == 'true'
+        if has_hosts:
+            osvariants = osvariants.filter(host__isnull=False).distinct()
+        else:
+            osvariants = osvariants.filter(host__isnull=True)
+
+    filter_list = []
+    filter_list.append(Filter(request, 'Has OS Release', 'has_osrelease', {'true': 'Yes', 'false': 'No'}))
+    filter_list.append(Filter(request, 'Has Hosts', 'has_hosts', {'true': 'Yes', 'false': 'No'}))
+    filter_bar = FilterBar(request, filter_list)
+
     nohost_osvariants = OSVariant.objects.filter(host__isnull=True).exists()
 
     table = OSVariantTable(osvariants)
@@ -108,6 +146,7 @@ def osvariant_list(request):
     return render(request,
                   'operatingsystems/osvariant_list.html',
                   {'table': table,
+                   'filter_bar': filter_bar,
                    'terms': terms,
                    'nohost_osvariants': nohost_osvariants,
                    'total_count': osvariants.count(),
@@ -197,6 +236,17 @@ def osrelease_list(request):
     else:
         terms = ''
 
+    if 'has_repos' in request.GET:
+        has_repos = request.GET['has_repos'] == 'true'
+        if has_repos:
+            osreleases = osreleases.filter(repos__isnull=False).distinct()
+        else:
+            osreleases = osreleases.filter(repos__isnull=True)
+
+    filter_list = []
+    filter_list.append(Filter(request, 'Has Repos', 'has_repos', {'true': 'Yes', 'false': 'No'}))
+    filter_bar = FilterBar(request, filter_list)
+
     table = OSReleaseTable(osreleases)
     RequestConfig(request, paginate={'per_page': 50}).configure(table)
 
@@ -208,6 +258,7 @@ def osrelease_list(request):
     return render(request,
                   'operatingsystems/osrelease_list.html',
                   {'table': table,
+                   'filter_bar': filter_bar,
                    'terms': terms,
                    'total_count': osreleases.count(),
                    'filter_params': filter_params,

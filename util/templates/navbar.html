@@ -37,7 +37,8 @@
           </ul>
         </li>
         <li class="{% if '/reports' in request.path %}active{% endif %}"><a href="{% url 'reports:report_list' %}">Reports</a></li>
-        <li class="{% if '/dashboard' in request.path %}active{% endif %}"><a href="{% url 'util:dashboard' %}">Issues{% if issues_count %} <span class="badge">{{ issues_count }}</span>{% endif %}</a></li>
+        <li class="{% if '/dashboard' in request.path %}active{% endif %}"><a href="{% url 'util:dashboard' %}">Dashboard</a></li>
+        <li class="{% if '/issues' in request.path %}active{% endif %}"><a href="{% url 'util:issues' %}">Issues{% if issues_count %} <span class="badge">{{ issues_count }}</span>{% endif %}</a></li>
       </ul>
       <ul class="sidebar-menu sidebar-bottom">
         {% if user.is_authenticated %}

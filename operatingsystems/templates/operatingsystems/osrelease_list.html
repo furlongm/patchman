@@ -9,7 +9,7 @@
 
 {% block content %}
 <div class="row">
-  <div class="col-sm-12">
+  <div class="{% if filter_bar %}col-sm-10{% else %}col-sm-12{% endif %}">
     {% get_querydict request as querydict %}
     {% searchform terms querydict %}
 
@@ -22,5 +22,15 @@
         {% render_table table %}
     </form>
   </div>
+  {% if filter_bar %}
+    <div class="col-sm-2">
+      <div class="panel panel-primary">
+        <div class="panel-heading">Filter by...</div>
+        <div class="panel-body">
+        {{ filter_bar|safe }}
+        </div>
+      </div>
+    </div>
+  {% endif %}
 </div>
 {% endblock %}

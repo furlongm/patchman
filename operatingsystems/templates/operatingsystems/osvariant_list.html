@@ -9,7 +9,7 @@
 
 {% block content %}
 <div class="row">
-  <div class="col-sm-12">
+  <div class="{% if filter_bar %}col-sm-10{% else %}col-sm-12{% endif %}">
     {% if user.is_authenticated and perms.is_admin and nohost_osvariants %}
       <div class="well well-sm">
         <a class="btn btn-primary btn-sm" role="button" href="{% url 'operatingsystems:delete_nohost_osvariants' %}">{% bootstrap_icon "trash" %} Delete OS Variants with no Hosts</a>
@@ -28,5 +28,15 @@
         {% render_table table %}
     </form>
   </div>
+  {% if filter_bar %}
+    <div class="col-sm-2">
+      <div class="panel panel-primary">
+        <div class="panel-heading">Filter by...</div>
+        <div class="panel-body">
+        {{ filter_bar|safe }}
+        </div>
+      </div>
+    </div>
+  {% endif %}
 </div>
 {% endblock %}
