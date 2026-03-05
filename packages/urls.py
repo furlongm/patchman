@@ -27,4 +27,5 @@ urlpatterns = [
     path('name/<str:packagename>/', views.package_name_detail, name='package_name_detail'),
     path('id/', views.package_list, name='package_list'),
     path('id/<int:package_id>/', views.package_detail, name='package_detail'),
+    path('updates/', views.package_update_list, name='package_update_list'),
 ]

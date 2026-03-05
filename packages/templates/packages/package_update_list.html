@@ -1,0 +1,7 @@
+{% extends "objectlist.html" %}
+
+{% block page_title %}Package Updates{% endblock %}
+
+{% block breadcrumbs %} {{ block.super }} <li class="active"><a href="{% url 'packages:package_update_list' %}">Package Updates</a></li>{% endblock %}
+
+{% block content_title %} Package Updates {% endblock %}
