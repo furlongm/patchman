@@ -126,12 +126,11 @@ check_conf() {
     fi
 
     if [ -z "${conf}" ] || [ ! -f "${conf}" ] ; then
-        if ${verbose} ; then
-            echo "Warning: config file '${conf}' not found."
-        fi
-    else
-        source "${conf}"
+        echo "patchman-client: config file not found: ${conf}" >&2
+        echo "  Create the config file and set server= to your patchman server." >&2
+        exit 1
     fi
+    source "${conf}"
 
     conf_dir=$(dirname "${conf}")/conf.d
     if [ -d "${conf_dir}" ] ; then
@@ -141,9 +140,21 @@ check_conf() {
         fi
     fi
 
-    if [ -z "${server}" ] && [ -z "${cli_server}" ] ; then
-        echo 'Patchman server not set, exiting.'
-        exit 1
+    # check server is configured and not the example placeholder
+    if ! ${dry_run} ; then
+        if [ -z "${server}" ] && [ -z "${cli_server}" ] ; then
+            echo "patchman-client: server not configured." >&2
+            echo "  Edit ${conf} and set server= to your patchman server URL." >&2
+            exit 1
+        fi
+        if [ ! -z "${cli_server}" ] ; then
+            server=${cli_server}
+        fi
+        if echo "${server}" | grep -qE 'patchman\.example\.com' ; then
+            echo "patchman-client: server not configured." >&2
+            echo "  Edit ${conf} and set server= to your patchman server URL." >&2
+            exit 1
+        fi
     else
         if [ ! -z "${cli_server}" ] ; then
             server=${cli_server}
