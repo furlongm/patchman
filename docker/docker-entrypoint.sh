@@ -2,6 +2,11 @@
 
 conf="/etc/patchman/local_settings.py"
 
+# Configure DEBUG
+if "${DEBUG}"; then
+    sed -i '3 {s/False/True/}' "$conf"
+fi
+
 # Configure ADMINS
 if [ -n "${ADMIN_NAME}" ]; then
     sed -i '6 {s/Your Name/'"${ADMIN_NAME}"'/}' "$conf"
@@ -65,17 +70,60 @@ if [ -n "${DB_ENGINE}" ]; then
 fi
 
 # Configure TIME_ZONE
-if [ -n  "${TIMEZONE}" ]; then
+if [ -n "${TIMEZONE}" ]; then
     sed -i '22 {s/America\/New_York/'"${TIMEZONE/\//\\/}"'/}' "$conf"
+fi
+
+# Configure LANGUAGE_CODE
+if [ -n "${LANGUAGE_CODE}" ]; then
+    sed -i '26 {s/en-us/'"${LANGUAGE_CODE}"'/}' "$conf"
 fi
 
 # Configure SECRET_KEY 
 if [ -z "$(grep "SECRET_KEY" "$conf" | cut -d " " -f 3 | tr -d "'")" ]; then 
     if [ -n "${SECRET_KEY}" ]; then
-        sed -i "s/SECRET_KEY = ''/SECRET_KEY = '"${SECRET_KEY}"'/g" "$conf" 
+        sed -i "29 {s/SECRET_KEY = ''/SECRET_KEY = '${SECRET_KEY}'/}" "$conf" 
     else
         patchman-set-secret-key
     fi
+fi
+
+# Configure MAX_MIRRORS
+if [ -n "${MAX_MIRRORS}" ]; then
+    sed -i '36 {s/2/'"${MAX_MIRRORS}"'/}' "$conf"
+fi
+
+# Configure MAX_MIRROR_FAILURES
+if [ -n "${MAX_MIRROR_FAILURES}" ]; then
+    sed -i '39 {s/14/'"${MAX_MIRROR_FAILURES}"'/}' "$conf"
+fi
+
+# Configure DAYS_WITHOUT_REPORT
+if [ -n "${DAYS_WITHOUT_REPORT}" ]; then
+    sed -i '42 {s/14/'"${DAYS_WITHOUT_REPORT}"'/}' "$conf"
+fi
+
+# Configure ERRATA_OS_UPDATES
+if [ -n "${ERRATA_OS_UPDATES}" ]; then
+    errataOSUpdates="${ERRATA_OS_UPDATES// /}"
+    sed -i '45 {s/\[.*\]/['"'${errataOSUpdates//,/\', \'}'"']/}' "$conf"
+fi
+
+# Configure ALMA_RELEASES
+if [ -n "${ALMA_RELEASES}" ]; then
+    sed -i '48 {s/\[.*\]/['"${ALMA_RELEASES}"']/}' "$conf"
+fi
+
+# Configure DEBIAN_CODENAMES
+if [ -n "${DEBIAN_CODENAMES}" ]; then
+    debianCodenames="${DEBIAN_CODENAMES// /}"
+    sed -i '51 {s/\[.*\]/['"'${debianCodenames//,/\', \'}'"']/}' "$conf"
+fi
+
+# Configure UBUNTU_CODENAMES
+if [ -n "${UBUNTU_CODENAMES}" ]; then
+    ubuntuCodenames="${UBUNTU_CODENAMES// /}"
+    sed -i '54 {s/\[.*\]/['"'${ubuntuCodenames//,/\', \'}'"']/}' "$conf"
 fi
 
 # Configure CACHES

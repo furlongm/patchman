@@ -23,12 +23,22 @@ This container is configured using environment variables. The following variable
 
 | Variable | Default Value | Description |
 | :--- | :--- | :--- |
+| `DEBUG` | `False` | Debug mode |
 | `ADMIN_NAME` | `Your Name` | Your name |
 | `ADMIN_EMAIL` | `you@example.com` | Your e-mail address |
 | `TIMEZONE` | `America/New_York` | Your timezone |
+| `LANGUAGE_CODE` | `en-us` | Your language |
+| `SECRET_KEY` |  | Unique string not to be shared with anyone. Leave empty to generate one randomly |
+| `MAX_MIRRORS` | `2` | Maximum number of mirrors to add or refresh per repo |
+| `MAX_MIRROR_FAILURES` | `14` |  Maximum number of failures before disabling a mirror, set to `-1` to never disable mirrors |
+| `DAYS_WITHOUT_REPORT` | `14` | Number of days to wait before raising that a host has not reported |
+| `ERRATA_OS_UPDATES` | `yum, rocky, alma, arch, ubuntu, debian` | List of errata sources to update, remove unwanted ones to improve performance  |
+| `ALMA_RELEASES` | `8, 9, 10` | List of Alma Linux releases to update |
+| `DEBIAN_CODENAMES` | `bookworm, trixie` | List of Debian Linux releases to update |
+| `UBUNTU_CODENAMES` | `jammy, noble` | List of Ubuntu Linux releases to update |
 | `DB_ENGINE` | `SQLite` | Database engine to be used. Choose between `MySQL` or `PostgreSQL`, leave empty to use default `SQLite` |
 | `DB_HOST` |  | Database hostname, IP or container name |
-| `DB_PORT` |` | Database port |
+| `DB_PORT` |  | Database port |
 | `DB_DATABASE` |  | Database name |
 | `DB_USER` |  | Database user |
 | `DB_PASSWORD` |  | Database password |
