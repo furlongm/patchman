@@ -25,4 +25,5 @@ app_name = 'util'
 urlpatterns = [
     path('', RedirectView.as_view(pattern_name='hosts:host_list', permanent=True)),  # noqa
     path('dashboard/', views.dashboard, name='dashboard'),
+    path('issues/', views.issues, name='issues'),
 ]
