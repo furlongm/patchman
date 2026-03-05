@@ -11,11 +11,12 @@ debug=false
 report=false
 local_updates=false
 repo_check=true
+dry_run=false
 tags=''
 api_key=''
 
 usage() {
-    echo "${0} [-v] [-d] [-n] [-u] [-r] [-s SERVER] [-c FILE] [-t TAGS] [-h HOSTNAME] [-p PROTOCOL] [-k API_KEY]"
+    echo "${0} [-v] [-d] [-n] [-u] [-y] [-r] [-s SERVER] [-c FILE] [-t TAGS] [-H HOSTNAME] [-p PROTOCOL] [-k API_KEY]"
     echo "-v: verbose output (default is silent)"
     echo "-d: debug output"
     echo "-n: no repo check (required when used as an apt or yum plugin)"
@@ -24,16 +25,17 @@ usage() {
     echo "-s SERVER: web server address, e.g. https://patchman.example.com"
     echo "-c FILE: config file location (default is /etc/patchman/patchman-client.conf)"
     echo "-t TAGS: comma-separated list of tags, e.g. -t www,dev"
-    echo "-h HOSTNAME: specify the hostname of the local host"
+    echo "-H HOSTNAME: specify the hostname of the local host"
     echo "-p PROTOCOL: protocol version (1 or 2, default is 1)"
     echo "-k API_KEY: API key for protocol 2 authentication"
+    echo "-y: dry run (collect data but do not submit)"
     echo
     echo "Command line options override config file options."
     exit 0
 }
 
 parseopts() {
-    while getopts "vdnurs:c:t:h:p:k:" opt; do
+    while getopts "vdnuyrs:c:t:h:H:p:k:" opt; do
         case ${opt} in
         v)
             verbose=true
@@ -48,6 +50,9 @@ parseopts() {
         u)
             local_updates=true
             ;;
+        y)
+            dry_run=true
+            ;;
         r)
             cli_report=true
             ;;
@@ -60,7 +65,7 @@ parseopts() {
         t)
             cli_tags="${OPTARG}"
             ;;
-        h)
+        h|H)
             cli_hostname=${OPTARG}
             ;;
         p)
@@ -191,7 +196,7 @@ check_conf() {
         if [ ! -z "${api_key}" ] ; then
             echo "API Key: ${api_key:0:12}..."
         fi
-        for var in report local_updates repo_check verbose debug ; do
+        for var in report local_updates repo_check dry_run verbose debug ; do
             eval val=\$${var}
             echo "${var}: ${val}"
         done
@@ -199,7 +204,7 @@ check_conf() {
 }
 
 check_booleans() {
-    for var in report local_updates repo_check verbose debug ; do
+    for var in report local_updates repo_check dry_run verbose debug ; do
         eval val=\$${var}
         if [ -z ${val} ] || [ "${val}" == "0" ] || [ "${val,,}" == "false" ] ; then
             eval ${var}=false
@@ -1084,6 +1089,25 @@ if ${repo_check} ; then
     get_repos
 fi
 reboot_required
+
+if ${dry_run} ; then
+    echo
+    echo "=== Dry Run Summary ==="
+    echo "Hostname: ${hostname}"
+    echo "OS: ${os}"
+    echo "Arch: ${host_arch}"
+    echo "Kernel: ${host_kernel}"
+    echo "Packages: $(wc -l < ${tmpfile_pkg})"
+    echo "Repos: $(wc -l < ${tmpfile_rep})"
+    echo "Modules: $(wc -l < ${tmpfile_mod})"
+    echo "Security updates: $(wc -l < ${tmpfile_sec})"
+    echo "Bugfix updates: $(wc -l < ${tmpfile_bug})"
+    echo "Reboot required: ${reboot}"
+    if [ ! -z "${tags}" ] ; then
+        echo "Tags: ${tags}"
+    fi
+    exit 0
+fi
 
 # Use protocol 2 (JSON) or protocol 1 (form data) based on config
 if [ "${protocol}" == "2" ] ; then
