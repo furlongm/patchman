@@ -84,7 +84,7 @@ class CVSS(models.Model):
     score = models.DecimalField(max_digits=3, decimal_places=1, null=True)
     severity = models.CharField(max_length=128, blank=True, null=True)
     version = models.DecimalField(max_digits=2, decimal_places=1)
-    vector_string = models.CharField(max_length=128, blank=True, null=True)
+    vector_string = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         unique_together = ['score', 'severity', 'version', 'vector_string']
