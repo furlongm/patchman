@@ -1,5 +1,5 @@
 #!/usr/bin/dh-exec
 etc/patchman/apache.conf.example => etc/apache2/conf-available/patchman.conf
 etc/patchman/local_settings.py etc/patchman
-etc/systemd/system/patchman-celery-worker.service => lib/systemd/system/patchman-celery-worker@.service
-etc/systemd/system/patchman-celery-beat.service => lib/systemd/system/patchman-celery-beat.service
+etc/systemd/system/patchman-celery-worker@.service usr/lib/systemd/system
+etc/systemd/system/patchman-celery-beat.service => usr/lib/systemd/system/patchman-celery-beat.service

@@ -20,7 +20,9 @@ from io import BytesIO
 from defusedxml import ElementTree
 from django.db import connections
 
-from operatingsystems.utils import get_or_create_osrelease
+from operatingsystems.utils import (
+    get_or_create_osrelease, normalize_el_osrelease,
+)
 from packages.models import Package
 from packages.utils import get_or_create_package
 from patchman.signals import pbar_start, pbar_update
@@ -184,9 +186,25 @@ def get_osrelease_names(e, update):
     return osreleases
 
 
+def get_existing_el_osreleases(major_version):
+    """ Returns existing OSReleases for EL-based distros matching the major version
+    """
+    from operatingsystems.models import OSRelease
+    el_patterns = [
+        f'Red Hat Enterprise Linux {major_version}',
+        f'CentOS Stream {major_version}',
+        f'CentOS {major_version}',
+        f'Rocky Linux {major_version}',
+        f'Alma Linux {major_version}',
+        f'Oracle Linux {major_version}',
+    ]
+    return list(OSRelease.objects.filter(name__in=el_patterns))
+
+
 def add_updateinfo_osreleases(e, collection, osrelease_names):
     """ Adds OSRelease objects to an Erratum
         rocky and alma need some renaming
+        EPEL maps to existing EL-based OSReleases only
     """
     if not osrelease_names:
         collection_name = collection.find('name')
@@ -194,14 +212,14 @@ def add_updateinfo_osreleases(e, collection, osrelease_names):
             osrelease_name = collection_name.text
             osrelease_names.append(osrelease_name)
     for osrelease_name in osrelease_names:
-        if osrelease_name.startswith('almalinux'):
-            version = osrelease_name.split('-')[1]
-            osrelease_name = 'Alma Linux ' + version
-        elif osrelease_name.startswith('rocky-linux'):
-            version = osrelease_name.split('-')[2]
-            osrelease_name = 'Rocky Linux ' + version
-        elif osrelease_name in ['Amazon Linux', 'Amazon Linux AMI']:
-            osrelease_name = 'Amazon Linux 1'
+        if osrelease_name.startswith('Fedora EPEL'):
+            # "Fedora EPEL 10.0" → map to existing EL 10 OSReleases
+            version_str = osrelease_name.split()[-1]  # "10.0"
+            major_version = version_str.split('.')[0]  # "10"
+            for osrelease in get_existing_el_osreleases(major_version):
+                e.osreleases.add(osrelease)
+            continue
+        osrelease_name = normalize_el_osrelease(osrelease_name)
         osrelease = get_or_create_osrelease(name=osrelease_name)
         e.osreleases.add(osrelease)
 

@@ -58,3 +58,57 @@ class ReportTable(BaseTable):
     class Meta(BaseTable.Meta):
         model = Report
         fields = ('selection', 'report_id', 'host', 'created', 'report_ip', 'processed')
+
+
+class ReportPackageTable(tables.Table):
+    """Table for displaying packages in Protocol 2 reports."""
+    name = tables.Column()
+    epoch = tables.Column(default='')
+    version = tables.Column()
+    release = tables.Column()
+    arch = tables.Column()
+    type = tables.Column()
+
+    class Meta:
+        attrs = {'class': 'table table-striped table-bordered table-hover table-condensed'}
+        orderable = True
+
+
+class ReportRepoTable(tables.Table):
+    """Table for displaying repos in Protocol 2 reports."""
+    type = tables.Column()
+    name = tables.Column()
+    id = tables.Column(verbose_name='ID')
+    priority = tables.Column()
+
+    class Meta:
+        attrs = {'class': 'table table-striped table-bordered table-hover table-condensed'}
+        orderable = True
+
+
+class ReportModuleTable(tables.Table):
+    """Table for displaying modules in Protocol 2 reports."""
+    name = tables.Column()
+    stream = tables.Column()
+    version = tables.Column()
+    context = tables.Column()
+    arch = tables.Column()
+    repo = tables.Column(default='')
+
+    class Meta:
+        attrs = {'class': 'table table-striped table-bordered table-hover table-condensed'}
+        orderable = True
+
+
+class ReportUpdateTable(tables.Table):
+    """Table for displaying updates in Protocol 2 reports."""
+    name = tables.Column()
+    epoch = tables.Column(default='')
+    version = tables.Column()
+    release = tables.Column()
+    arch = tables.Column()
+    repo = tables.Column(default='')
+
+    class Meta:
+        attrs = {'class': 'table table-striped table-bordered table-hover table-condensed'}
+        orderable = True

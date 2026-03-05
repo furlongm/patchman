@@ -19,3 +19,6 @@ from django.apps import AppConfig
 
 class ReposConfig(AppConfig):
     name = 'repos'
+
+    def ready(self):
+        import repos.signals  # noqa

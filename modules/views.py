@@ -28,7 +28,7 @@ from modules.tables import ModuleTable
 @login_required
 def module_list(request):
 
-    modules = Module.objects.select_related()
+    modules = Module.objects.select_related('arch', 'repo')
 
     if 'search' in request.GET:
         terms = request.GET['search'].lower()
@@ -62,6 +62,6 @@ class ModuleViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows modules to be viewed or edited.
     """
-    queryset = Module.objects.all()
+    queryset = Module.objects.select_related('arch', 'repo').all()
     serializer_class = ModuleSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)

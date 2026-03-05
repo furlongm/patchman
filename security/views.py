@@ -32,7 +32,7 @@ from util.filterspecs import Filter, FilterBar
 
 @login_required
 def cwe_list(request):
-    cwes = CWE.objects.select_related()
+    cwes = CWE.objects.all()
 
     if 'search' in request.GET:
         terms = request.GET['search'].lower()
@@ -65,7 +65,7 @@ def cwe_detail(request, cwe_id):
 
 @login_required
 def cve_list(request):
-    cves = CVE.objects.select_related()
+    cves = CVE.objects.all()
 
     if 'erratum_id' in request.GET:
         cves = cves.filter(erratum=request.GET['erratum_id'])
@@ -117,7 +117,7 @@ def cve_detail(request, cve_id):
 
 @login_required
 def reference_list(request):
-    refs = Reference.objects.select_related().order_by('ref_type')
+    refs = Reference.objects.all().order_by('ref_type')
 
     if 'ref_type' in request.GET:
         refs = refs.filter(ref_type=request.GET['ref_type']).distinct()

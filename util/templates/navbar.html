@@ -1,6 +1,7 @@
     <nav class="sidebar-nav">
       <div class="sidebar-header">
         <a class="sidebar-brand" href="https://github.com/furlongm/patchman">Patchman</a>
+        <div class="sidebar-version">{{ patchman_version_display }}</div>
       </div>
       <ul class="sidebar-menu">
         <li class="{% if '/hosts' in request.path %}active{% endif %}"><a href="{% url 'hosts:host_list' %}">Hosts</a></li>

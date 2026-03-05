@@ -21,7 +21,6 @@ chown apache /etc/patchman/local_settings.py
 mkdir -p /var/lib/patchman/db
 patchman-manage collectstatic --noinput
 
-patchman-manage makemigrations
 patchman-manage migrate --run-syncdb --fake-initial
 sqlite3 /var/lib/patchman/db/patchman.db 'PRAGMA journal_mode=WAL;'
 

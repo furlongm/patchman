@@ -74,9 +74,9 @@ class Package(models.Model):
     )
 
     name = models.ForeignKey(PackageName, on_delete=models.CASCADE)
-    epoch = models.CharField(max_length=255, blank=True, null=True)
-    version = models.CharField(max_length=255)
-    release = models.CharField(max_length=255, blank=True, null=True)
+    epoch = models.CharField(max_length=128, blank=True, null=True)
+    version = models.CharField(max_length=128)
+    release = models.CharField(max_length=128, blank=True, null=True)
     arch = models.ForeignKey(PackageArchitecture, on_delete=models.CASCADE)
     packagetype = models.CharField(max_length=1, choices=PACKAGE_TYPES, blank=True, null=True)
     category = models.ForeignKey(PackageCategory, blank=True, null=True, on_delete=models.SET_NULL)
@@ -173,13 +173,13 @@ class Package(models.Model):
 
 class PackageString(models.Model):
 
-    name = models.CharField(max_length=255)
-    version = models.CharField(max_length=255)
-    epoch = models.CharField(max_length=255, blank=True, null=True)
-    release = models.CharField(max_length=255, blank=True, null=True)
-    arch = models.CharField(max_length=255)
+    name = models.CharField(max_length=128)
+    version = models.CharField(max_length=128)
+    epoch = models.CharField(max_length=128, blank=True, null=True)
+    release = models.CharField(max_length=128, blank=True, null=True)
+    arch = models.CharField(max_length=128)
     packagetype = models.CharField(max_length=1, blank=True, null=True)
-    category = models.CharField(max_length=255, blank=True, null=True)
+    category = models.CharField(max_length=128, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     url = models.URLField(max_length=255, blank=True, null=True)
 
@@ -227,6 +227,7 @@ class PackageUpdate(models.Model):
 
     class Meta:
         unique_together = ['oldpackage', 'newpackage', 'security']
+        ordering = ['oldpackage', 'newpackage']
 
     def __str__(self):
         if self.security:

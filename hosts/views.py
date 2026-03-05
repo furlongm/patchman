@@ -15,11 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+from urllib.parse import parse_qs
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Q
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django_filters import rest_framework as filters
 from django_tables2 import RequestConfig
 from rest_framework import viewsets
 from taggit.models import Tag
@@ -30,6 +33,7 @@ from hosts.forms import EditHostForm
 from hosts.models import Host, HostRepo
 from hosts.serializers import HostRepoSerializer, HostSerializer
 from hosts.tables import HostTable
+from hosts.tasks import find_host_updates
 from operatingsystems.models import OSRelease, OSVariant
 from reports.models import Report
 from util import sanitize_filter_params
@@ -38,10 +42,9 @@ from util.filterspecs import Filter, FilterBar
 
 def _get_filtered_hosts(filter_params):
     """Helper to reconstruct filtered queryset from filter params."""
-    from urllib.parse import parse_qs
     params = parse_qs(filter_params)
 
-    hosts = Host.objects.select_related()
+    hosts = Host.objects.select_related('osvariant', 'arch', 'domain')
 
     if 'domain_id' in params:
         hosts = hosts.filter(domain=params['domain_id'][0])
@@ -75,12 +78,8 @@ def _get_filtered_hosts(filter_params):
 
 @login_required
 def host_list(request):
-    hosts = Host.objects.select_related().annotate(
-        sec_updates_count=Count('updates', filter=Q(updates__security=True), distinct=True),
-        bug_updates_count=Count('updates', filter=Q(updates__security=False), distinct=True),
-        errata_count=Count('errata', distinct=True),
-        packages_count=Count('packages', distinct=True),
-    )
+    # Use cached count fields instead of expensive annotations
+    hosts = Host.objects.select_related('osvariant', 'arch', 'domain')
 
     if 'domain_id' in request.GET:
         hosts = hosts.filter(domain=request.GET['domain_id'])
@@ -159,7 +158,7 @@ def host_detail(request, hostname):
     hostrepos = HostRepo.objects.filter(host=host)
 
     # Build packages list with update info
-    updates_by_package = {u.oldpackage_id: u for u in host.updates.select_related()}
+    updates_by_package = {u.oldpackage_id: u for u in host.updates.select_related('oldpackage', 'newpackage')}
     packages_with_updates = []
     for package in host.packages.select_related('name', 'arch').order_by('name__name'):
         package.update = updates_by_package.get(package.id)
@@ -225,7 +224,6 @@ def host_delete(request, hostname):
 def host_find_updates(request, hostname):
     """ Find updates using a celery task
     """
-    from hosts.tasks import find_host_updates
     host = get_object_or_404(Host, hostname=hostname)
     find_host_updates.delay(host.id)
     text = f'Finding updates for Host {host}'
@@ -264,7 +262,6 @@ def host_bulk_action(request):
     name = Host._meta.verbose_name if count == 1 else Host._meta.verbose_name_plural
 
     if action == 'find_updates':
-        from hosts.tasks import find_host_updates
         for host in hosts:
             find_host_updates.delay(host.id)
         messages.success(request, f'Queued {count} {name} for update check')
@@ -279,18 +276,32 @@ def host_bulk_action(request):
     return redirect('hosts:host_list')
 
 
+class HostFilter(filters.FilterSet):
+    package_id = filters.NumberFilter(field_name='packages', lookup_expr='exact')
+    package_name = filters.CharFilter(field_name='packages__name__name', lookup_expr='exact')
+    package_version = filters.CharFilter(field_name='packages__version', lookup_expr='exact')
+    package_release = filters.CharFilter(field_name='packages__release', lookup_expr='exact')
+    package_epoch = filters.CharFilter(field_name='packages__epoch', lookup_expr='exact')
+    package_arch = filters.CharFilter(field_name='packages__arch__name', lookup_expr='exact')
+    tag = filters.CharFilter(field_name='tags__name', lookup_expr='exact')
+
+    class Meta:
+        model = Host
+        fields = ['hostname']
+
+
 class HostViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows hosts to be viewed or edited.
     """
-    queryset = Host.objects.all()
+    queryset = Host.objects.select_related('osvariant', 'arch', 'domain').all()
     serializer_class = HostSerializer
-    filterset_fields = ['hostname']
+    filterset_class = HostFilter
 
 
 class HostRepoViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows host repos to be viewed or edited.
     """
-    queryset = HostRepo.objects.all()
+    queryset = HostRepo.objects.select_related('host', 'repo').all()
     serializer_class = HostRepoSerializer

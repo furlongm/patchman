@@ -49,6 +49,7 @@ TEMPLATES = [
                 'django.template.context_processors.tz',
                 'django.contrib.messages.context_processors.messages',
                 'util.context_processors.issues_count',
+                'util.context_processors.patchman_version',
             ],
             'debug': DEBUG,
         },
@@ -100,14 +101,23 @@ LOCAL_APPS = [
     'security.apps.SecurityConfig',
     'reports.apps.ReportsConfig',
     'util.apps.UtilConfig',
+    'rest_framework_api_key',
 ]
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'],  # noqa
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ],
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],        # noqa
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',            # noqa
     'PAGE_SIZE': 100,
 }
+
+# API Key authentication settings
+# Set to False to allow unauthenticated protocol 2 report uploads
+REQUIRE_API_KEY = True
 
 TAGGIT_CASE_INSENSITIVE = True
 
@@ -117,6 +127,7 @@ CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
 CELERY_BROKER_TRANSPORT_OPTIONS = {
     'queue_order_strategy': 'priority',
 }
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 
 LOGIN_REDIRECT_URL = '/patchman/'
@@ -139,12 +150,12 @@ else:
     # if sys.prefix + conf_path doesn't exist, try ./etc/patchman (source)
     if not os.path.isdir(conf_path):
         conf_path = './etc/patchman'
-    # if ./etc/patchman doesn't exist, try site.getsitepackages() (pip)
+    # if ./etc/patchman doesn't exist, try site.getsitepackages() (pip/new-style virtualenv)
     if not os.path.isdir(conf_path):
         try:
-            sitepackages = site.getsitepackages()
-        except AttributeError:
-            # virtualenv, try site-packages in sys.path
+            sitepackages = site.getsitepackages()[0]
+        except (AttributeError, IndexError):
+            # old-style virtualenv, try site-packages in sys.path
             sp = 'site-packages'
             sitepackages = [s for s in sys.path if s.endswith(sp)][0]
         conf_path = os.path.join(sitepackages, 'etc/patchman')

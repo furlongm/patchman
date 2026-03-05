@@ -14,7 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+import subprocess
 from datetime import timedelta
+from importlib.metadata import version as get_pkg_version
+from pathlib import Path
 
 from django.db.models import F
 from django.utils import timezone
@@ -24,6 +27,60 @@ from operatingsystems.models import OSRelease, OSVariant
 from reports.models import Report
 from repos.models import Repository
 from util import get_setting_of_type
+
+
+def _get_git_ref():
+    """Get current git ref if in a git repo."""
+    git_dir = Path(__file__).parent.parent / '.git'
+    if not git_dir.exists():
+        return None
+    try:
+        result = subprocess.run(
+            ['git', 'rev-parse', '--short', 'HEAD'],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            cwd=git_dir.parent,
+        )
+        if result.returncode == 0:
+            return result.stdout.strip()
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        pass
+    return None
+
+
+def _get_version():
+    """Get version from package metadata or VERSION.txt."""
+    # Try importlib.metadata first (for installed packages)
+    try:
+        return get_pkg_version('patchman')
+    except Exception:
+        pass
+
+    # Fall back to VERSION.txt (for development)
+    version_file = Path(__file__).parent.parent / 'VERSION.txt'
+    try:
+        return version_file.read_text().strip()
+    except FileNotFoundError:
+        return 'unknown'
+
+
+# Cache version info at module load time (once per process)
+_PATCHMAN_VERSION = _get_version()
+_PATCHMAN_GIT_REF = _get_git_ref()
+if _PATCHMAN_GIT_REF:
+    _PATCHMAN_VERSION_DISPLAY = f'v{_PATCHMAN_VERSION} ({_PATCHMAN_GIT_REF})'
+else:
+    _PATCHMAN_VERSION_DISPLAY = f'v{_PATCHMAN_VERSION}'
+
+
+def patchman_version(request):
+    """Context processor to provide version info for navbar."""
+    return {
+        'patchman_version': _PATCHMAN_VERSION,
+        'patchman_git_ref': _PATCHMAN_GIT_REF,
+        'patchman_version_display': _PATCHMAN_VERSION_DISPLAY,
+    }
 
 
 def issues_count(request):

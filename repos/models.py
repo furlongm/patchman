@@ -56,6 +56,7 @@ class Repository(models.Model):
     class Meta:
         verbose_name_plural = 'Repository'
         verbose_name_plural = 'Repositories'
+        ordering = ['name']
 
     def __str__(self):
         return self.name
@@ -81,11 +82,11 @@ class Repository(models.Model):
             force can be set to force a reset of all the mirrors metadata
         """
         if force:
-            for mirror in self.mirror_set.all():
-                mirror.packages_checksum = None
-                mirror.modules_checksum = None
-                mirror.errata_checksum = None
-                mirror.save()
+            self.mirror_set.all().update(
+                packages_checksum=None,
+                modules_checksum=None,
+                errata_checksum=None
+            )
 
         if not self.auth_required:
             if self.repotype == Repository.DEB:
@@ -107,9 +108,7 @@ class Repository(models.Model):
         """ Refresh errata metadata for all of a repos mirrors
         """
         if force:
-            for mirror in self.mirror_set.all():
-                mirror.errata_checksum = None
-                mirror.save()
+            self.mirror_set.all().update(errata_checksum=None)
         if self.repotype == Repository.RPM:
             refresh_repo_errata(self)
 
@@ -119,10 +118,7 @@ class Repository(models.Model):
             each mirror so that it doesn't try to update its package metadata.
         """
         self.enabled = False
-        for mirror in self.mirror_set.all():
-            mirror.enabled = False
-            mirror.refresh = False
-            mirror.save()
+        self.mirror_set.all().update(enabled=False, refresh=False)
 
     def enable(self):
         """ Enable a repo. This involves enabling each mirror, which allows it
@@ -130,10 +126,7 @@ class Repository(models.Model):
             mirror so that it updates its package metadata.
         """
         self.enabled = True
-        for mirror in self.mirror_set.all():
-            mirror.enabled = True
-            mirror.refresh = True
-            mirror.save()
+        self.mirror_set.all().update(enabled=True, refresh=True)
 
 
 class Mirror(models.Model):
@@ -150,10 +143,13 @@ class Mirror(models.Model):
     enabled = models.BooleanField(default=True)
     refresh = models.BooleanField(default=True)
     fail_count = models.IntegerField(default=0)
+    # Cached count field for query optimization
+    packages_count = models.PositiveIntegerField(default=0, db_index=True)
 
     class Meta:
         verbose_name_plural = 'Mirror'
         verbose_name_plural = 'Mirrors'
+        ordering = ['url']
 
     def __str__(self):
         return self.url
@@ -203,3 +199,6 @@ class MirrorPackage(models.Model):
     mirror = models.ForeignKey(Mirror, on_delete=models.CASCADE)
     package = models.ForeignKey(Package, on_delete=models.CASCADE)
     enabled = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['mirror', 'package']

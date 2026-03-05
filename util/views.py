@@ -55,8 +55,9 @@ def dashboard(request):
     stale_hosts = hosts.filter(lastreport__lt=last_report_delta)
     norepo_hosts = hosts.filter(repos__isnull=True, osvariant__osrelease__repos__isnull=True)  # noqa
     reboot_hosts = hosts.filter(reboot_required=True)
-    secupdate_hosts = hosts.filter(updates__security=True, updates__isnull=False).distinct()  # noqa
-    bugupdate_hosts = hosts.exclude(updates__security=True, updates__isnull=False).distinct().filter(updates__security=False, updates__isnull=False).distinct()  # noqa
+    # Use cached count fields instead of expensive M2M JOINs
+    secupdate_hosts = hosts.filter(sec_updates_count__gt=0)
+    bugupdate_hosts = hosts.filter(bug_updates_count__gt=0, sec_updates_count=0)
     diff_rdns_hosts = hosts.exclude(reversedns=F('hostname')).filter(check_dns=True)  # noqa
 
     # os variant issues
@@ -89,14 +90,16 @@ def dashboard(request):
     checksums = {}
     possible_mirrors = {}
 
-    for csvalue in Mirror.objects.all().values('packages_checksum').distinct():
+    # Use cached packages_count to avoid N+1 queries
+    for csvalue in Mirror.objects.filter(packages_count__gt=0).values('packages_checksum').distinct():
         checksum = csvalue['packages_checksum']
         if checksum is not None and checksum != 'yast':
-            for mirror in Mirror.objects.filter(packages_checksum=checksum):
-                if mirror.packages.count() > 0:
-                    if checksum not in checksums:
-                        checksums[checksum] = []
-                    checksums[checksum].append(mirror)
+            mirrors = list(Mirror.objects.filter(
+                packages_checksum=checksum,
+                packages_count__gt=0
+            ).select_related('repo'))
+            if mirrors:
+                checksums[checksum] = mirrors
 
     for checksum in checksums:
         first_mirror = checksums[checksum][0]
@@ -107,10 +110,32 @@ def dashboard(request):
                 possible_mirrors[checksum] = checksums[checksum]
                 continue
 
+    has_issues = (
+        noosrelease_osvariants.exists() or
+        nohost_osvariants.exists() or
+        (norepo_osreleases is not None and norepo_osreleases.exists()) or
+        stale_hosts.exists() or
+        reboot_hosts.exists() or
+        secupdate_hosts.exists() or
+        bugupdate_hosts.exists() or
+        norepo_hosts.exists() or
+        diff_rdns_hosts.exists() or
+        failed_mirrors.exists() or
+        disabled_mirrors.exists() or
+        norefresh_mirrors.exists() or
+        failed_repos.exists() or
+        unused_repos.exists() or
+        nomirror_repos.exists() or
+        nohost_repos.exists() or
+        bool(possible_mirrors) or
+        norepo_packages.exists()
+    )
+
     return render(
         request,
         'dashboard.html',
         {'site': site,
+         'has_issues': has_issues,
          'noosrelease_osvariants': noosrelease_osvariants,
          'norepo_hosts': norepo_hosts,
          'nohost_osvariants': nohost_osvariants,

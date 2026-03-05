@@ -24,10 +24,10 @@ from repos.models import Repository
 
 class OSRelease(models.Model):
 
-    name = models.CharField(max_length=255, unique=True, blank=False, null=False)
+    name = models.CharField(max_length=128, unique=True, blank=False, null=False)
     repos = models.ManyToManyField(Repository, blank=True)
-    codename = models.CharField(max_length=255, blank=True)
-    cpe_name = models.CharField(max_length=255, null=True, blank=True, unique=True)
+    codename = models.CharField(max_length=128, blank=True)
+    cpe_name = models.CharField(max_length=128, null=True, blank=True, unique=True)
 
     from operatingsystems.managers import OSReleaseManager
     objects = OSReleaseManager()
@@ -57,6 +57,8 @@ class OSVariant(models.Model):
     arch = models.ForeignKey(MachineArchitecture, blank=True, null=True, on_delete=models.CASCADE)
     osrelease = models.ForeignKey(OSRelease, blank=True, null=True, on_delete=models.SET_NULL)
     codename = models.CharField(max_length=255, blank=True)
+    # Cached count field for query optimization
+    hosts_count = models.PositiveIntegerField(default=0, db_index=True)
 
     class Meta:
         verbose_name = 'Operating System Variant'

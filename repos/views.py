@@ -15,10 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+from urllib.parse import parse_qs
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
-from django.db.models import Count, Q
+from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -36,6 +38,7 @@ from repos.serializers import (
     MirrorPackageSerializer, MirrorSerializer, RepositorySerializer,
 )
 from repos.tables import MirrorTable, RepositoryTable
+from repos.tasks import refresh_repo
 from util import sanitize_filter_params
 from util.filterspecs import Filter, FilterBar
 
@@ -43,7 +46,7 @@ from util.filterspecs import Filter, FilterBar
 @login_required
 def repo_list(request):
 
-    repos = Repository.objects.select_related().order_by('name')
+    repos = Repository.objects.select_related('arch').order_by('name')
 
     if 'repotype' in request.GET:
         repos = repos.filter(repotype=request.GET['repotype'])
@@ -146,12 +149,11 @@ def mirror_list(request):
                     hostrepo.delete()
             mirror.repo = repo
             mirror.save()
-            if oldrepo.mirror_set.count() == 0:
+            if not oldrepo.mirror_set.exists():
                 oldrepo.delete()
 
-    mirrors = Mirror.objects.select_related().annotate(
-        packages_count=Count('packages'),
-    ).order_by('packages_checksum')
+    # Use cached packages_count instead of expensive annotation
+    mirrors = Mirror.objects.select_related('repo').order_by('packages_checksum')
 
     checksum = None
     if 'checksum' in request.GET:
@@ -319,9 +321,7 @@ def repo_edit(request, repo_id):
                 repo = edit_form.save()
                 repo.save()
                 mirrors = edit_form.cleaned_data['mirrors']
-                for mirror in mirrors:
-                    mirror.repo = repo
-                    mirror.save()
+                mirrors.update(repo=repo)
                 if repo.enabled:
                     repo.enable()
                 else:
@@ -406,7 +406,6 @@ def repo_toggle_security(request, repo_id):
 def repo_refresh(request, repo_id):
     """ Refresh a repo using a celery task
     """
-    from repos.tasks import refresh_repo
     repo = get_object_or_404(Repository, id=repo_id)
     refresh_repo.delay(repo.id)
     text = f'Repostory {repo} is being refreshed'
@@ -416,10 +415,9 @@ def repo_refresh(request, repo_id):
 
 def _get_filtered_repos(filter_params):
     """Helper to reconstruct filtered queryset from filter params."""
-    from urllib.parse import parse_qs
     params = parse_qs(filter_params)
 
-    repos = Repository.objects.select_related().order_by('name')
+    repos = Repository.objects.select_related('arch').order_by('name')
 
     if 'repotype' in params:
         repos = repos.filter(repotype=params['repotype'][0])
@@ -489,7 +487,6 @@ def repo_bulk_action(request):
         repos.update(security=False)
         messages.success(request, f'Marked {count} {name} as non-security')
     elif action == 'refresh':
-        from repos.tasks import refresh_repo
         for repo in repos:
             refresh_repo.delay(repo.id)
         messages.success(request, f'Queued {count} {name} for refresh')
@@ -507,10 +504,9 @@ def repo_bulk_action(request):
 
 def _get_filtered_mirrors(filter_params):
     """Helper to reconstruct filtered queryset from filter params."""
-    from urllib.parse import parse_qs
     params = parse_qs(filter_params)
 
-    mirrors = Mirror.objects.select_related().order_by('packages_checksum')
+    mirrors = Mirror.objects.select_related('repo').order_by('packages_checksum')
 
     if 'checksum' in params:
         mirrors = mirrors.filter(packages_checksum=params['checksum'][0])
@@ -592,7 +588,7 @@ class RepositoryViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows repositories to be viewed or edited.
     """
-    queryset = Repository.objects.all()
+    queryset = Repository.objects.select_related('arch').all()
     serializer_class = RepositorySerializer
 
 
@@ -600,7 +596,7 @@ class MirrorViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows mirrors to be viewed or edited.
     """
-    queryset = Mirror.objects.all()
+    queryset = Mirror.objects.select_related('repo').all()
     serializer_class = MirrorSerializer
 
 
@@ -608,5 +604,5 @@ class MirrorPackageViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows mirror packages to be viewed or edited.
     """
-    queryset = MirrorPackage.objects.all()
+    queryset = MirrorPackage.objects.select_related('mirror', 'package').all()
     serializer_class = MirrorPackageSerializer

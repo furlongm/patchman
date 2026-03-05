@@ -2,8 +2,7 @@ Source: patchman
 Section: python
 Priority: optional
 Maintainer: Marcus Furlong <furlongm@gmail.com>
-Uploaders: Marcus Furlong <furlongm@gmail.com>
-Build-Depends: debhelper (>=13), python3 (>= 3.11), dh-python, dh-exec
+Build-Depends: debhelper-compat (= 13), python3 (>= 3.11), dh-python, dh-exec
 Standards-Version: 4.6.2
 Homepage: https://github.com/furlongm/patchman
 Vcs-Git: git://github.com/furlongm/patchman
@@ -15,16 +14,16 @@ Architecture: all
 Homepage: https://github.com/furlongm/patchman
 Depends: ${misc:Depends}, python3 (>= 3.11), python3-django (>= 4.2),
  python3-django-extensions, python3-django-bootstrap3, python3-cvss,
- python3-djangorestframework, python3-django-filters, python3-debian,
+ python3-djangorestframework, python3-djangorestframework-api-key,
+ python3-django-filters, python3-debian,
  python3-rpm, python3-tqdm, python3-defusedxml, python3-pip, python3-tenacity,
  python3-requests, python3-colorama, python3-magic, python3-humanize,
  python3-yaml, libapache2-mod-wsgi-py3, apache2, sqlite3,
  celery, python3-celery, python3-django-celery-beat, redis-server,
  python3-redis, python3-git, python3-django-taggit, python3-zstandard,
- python3-django-tables2, python3-django-select2
+ python3-django-tables2, python3-django-select2, adduser
 Suggests: python3-mysqldb, python3-psycopg2, python3-pymemcache, memcached
 Description: Django-based patch status monitoring tool for linux systems.
- .
  Patchman provides a web interface for monitoring host package updates.
  .
  Patchman clients send a list of installed packages and enabled repositories to
@@ -44,8 +43,7 @@ Description: Django-based patch status monitoring tool for linux systems.
 Package: patchman-client
 Architecture: all
 Homepage: https://github.com/furlongm/patchman
-Depends: ${misc:Depends}, curl, debianutils, util-linux, coreutils, mawk
+Depends: ${misc:Depends}, curl, mawk, jq
 Description: Client for the patchman monitoring system.
- .
  The client will send a list of packages and repositories to the upstream
  patchman server.

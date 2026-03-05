@@ -36,7 +36,7 @@ MIRROR_URL_TEMPLATE = '<a href="{{ record.url }}" class="truncate-url">{{ record
 MIRROR_PACKAGES_TEMPLATE = (
     '{% if not record.mirrorlist %}'
     '<a href="{% url \'packages:package_list\' %}?mirror_id={{ record.id }}">'
-    '{{ record.packages.count }}</a>{% endif %}'
+    '{{ record.packages_count }}</a>{% endif %}'
 )
 MIRROR_ENABLED_TEMPLATE = '{% load common %}{% yes_no_img record.enabled %}'
 REFRESH_TEMPLATE = '{% load common %}{% yes_no_img record.refresh %}'

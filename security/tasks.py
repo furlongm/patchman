@@ -50,7 +50,7 @@ def update_cves():
 
     if cache.add(lock_key, 'true', lock_expire):
         try:
-            for cve in CVE.objects.all():
+            for cve in CVE.objects.all().iterator():
                 update_cve.delay(cve.id)
         finally:
             cache.delete(lock_key)
@@ -87,7 +87,7 @@ def update_cwes():
 
     if cache.add(lock_key, 'true', lock_expire):
         try:
-            for cwe in CWE.objects.all():
+            for cwe in CWE.objects.all().iterator():
                 update_cwe.delay(cwe.id)
         finally:
             cache.delete(lock_key)

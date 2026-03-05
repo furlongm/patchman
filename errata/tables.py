@@ -19,31 +19,31 @@ from util.tables import BaseTable
 
 ERRATUM_NAME_TEMPLATE = '<a href="{{ record.get_absolute_url }}">{{ record.name }}</a>'
 PACKAGES_AFFECTED_TEMPLATE = (
-    '{% with count=record.affected_packages.count %}'
+    '{% with count=record.affected_packages_count %}'
     '{% if count != 0 %}'
     '<a href="{% url \'packages:package_list\' %}?erratum_id={{ record.id }}&type=affected">{{ count }}</a>'
     '{% else %}{% endif %}{% endwith %}'
 )
 PACKAGES_FIXED_TEMPLATE = (
-    '{% with count=record.fixed_packages.count %}'
+    '{% with count=record.fixed_packages_count %}'
     '{% if count != 0 %}'
     '<a href="{% url \'packages:package_list\' %}?erratum_id={{ record.id }}&type=fixed">{{ count }}</a>'
     '{% else %}{% endif %}{% endwith %}'
 )
 OSRELEASES_TEMPLATE = (
-    '{% with count=record.osreleases.count %}'
+    '{% with count=record.osreleases_count %}'
     '{% if count != 0 %}'
     '<a href="{% url \'operatingsystems:osrelease_list\' %}?erratum_id={{ record.id }}">{{ count }}</a>'
     '{% else %}{% endif %}{% endwith %}'
 )
 ERRATUM_CVES_TEMPLATE = (
-    '{% with count=record.cves.count %}'
+    '{% with count=record.cves_count %}'
     '{% if count != 0 %}'
     '<a href="{% url \'security:cve_list\' %}?erratum_id={{ record.id }}">{{ count }}</a>'
     '{% else %}{% endif %}{% endwith %}'
 )
 REFERENCES_TEMPLATE = (
-    '{% with count=record.references.count %}'
+    '{% with count=record.references_count %}'
     '{% if count != 0 %}'
     '<a href="{% url \'security:reference_list\' %}?erratum_id={{ record.id }}">{{ count }}</a>'
     '{% else %}{% endif %}{% endwith %}'

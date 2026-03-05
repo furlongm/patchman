@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+from urllib.parse import parse_qs
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
@@ -37,10 +39,9 @@ from util import sanitize_filter_params
 
 def _get_filtered_osvariants(filter_params):
     """Helper to reconstruct filtered queryset from filter params."""
-    from urllib.parse import parse_qs
     params = parse_qs(filter_params)
 
-    osvariants = OSVariant.objects.select_related()
+    osvariants = OSVariant.objects.select_related('osrelease', 'arch')
 
     if 'osrelease_id' in params:
         osvariants = osvariants.filter(osrelease=params['osrelease_id'][0])
@@ -57,10 +58,9 @@ def _get_filtered_osvariants(filter_params):
 
 def _get_filtered_osreleases(filter_params):
     """Helper to reconstruct filtered queryset from filter params."""
-    from urllib.parse import parse_qs
     params = parse_qs(filter_params)
 
-    osreleases = OSRelease.objects.select_related()
+    osreleases = OSRelease.objects.all()
 
     if 'erratum_id' in params:
         osreleases = osreleases.filter(erratum=params['erratum_id'][0])
@@ -77,8 +77,8 @@ def _get_filtered_osreleases(filter_params):
 
 @login_required
 def osvariant_list(request):
-    osvariants = OSVariant.objects.select_related().annotate(
-        hosts_count=Count('host'),
+    # Use cached hosts_count instead of expensive annotation
+    osvariants = OSVariant.objects.select_related('osrelease', 'arch').annotate(
         repos_count=Count('osrelease__repos'),
     )
 
@@ -182,7 +182,7 @@ def delete_nohost_osvariants(request):
 
 @login_required
 def osrelease_list(request):
-    osreleases = OSRelease.objects.select_related()
+    osreleases = OSRelease.objects.all()
 
     if 'erratum_id' in request.GET:
         osreleases = osreleases.filter(erratum=request.GET['erratum_id'])
@@ -347,7 +347,7 @@ class OSVariantViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows operating system variants to be viewed or edited.
     """
-    queryset = OSVariant.objects.all()
+    queryset = OSVariant.objects.select_related('osrelease', 'arch').all()
     serializer_class = OSVariantSerializer
     filterset_fields = ['name']
 

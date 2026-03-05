@@ -28,11 +28,12 @@ from util import error_message, fetch_content, get_url, tz_aware_datetime
 
 class Reference(models.Model):
 
-    ref_type = models.CharField(max_length=255)
-    url = models.URLField(max_length=765)
+    ref_type = models.CharField(max_length=128)
+    url = models.URLField(max_length=512)
 
     class Meta:
         unique_together = ['ref_type', 'url']
+        ordering = ['ref_type', 'url']
 
     def __str__(self):
         return self.url
@@ -43,6 +44,9 @@ class CWE(models.Model):
     cwe_id = models.CharField(max_length=255, unique=True)
     name = models.CharField(max_length=255, blank=True, null=True)
     description = models.TextField(blank=True, default='')
+
+    class Meta:
+        ordering = ['cwe_id']
 
     def __str__(self):
         return f'{self.cwe_id} - {self.name}'
@@ -78,7 +82,7 @@ class CWE(models.Model):
 class CVSS(models.Model):
 
     score = models.DecimalField(max_digits=3, decimal_places=1, null=True)
-    severity = models.CharField(max_length=255, blank=True, null=True)
+    severity = models.CharField(max_length=128, blank=True, null=True)
     version = models.DecimalField(max_digits=2, decimal_places=1)
     vector_string = models.CharField(max_length=255, blank=True, null=True)
 

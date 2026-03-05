@@ -47,7 +47,7 @@ class CreateOSReleaseForm(ModelForm):
 class AddReposToOSReleaseForm(ModelForm):
 
     repos = ModelMultipleChoiceField(
-        queryset=Repository.objects.select_related(),
+        queryset=Repository.objects.select_related('arch'),
         required=False,
         label=None,
         widget=FilteredSelectMultiple('Repos', False, attrs={'size': '30'}))

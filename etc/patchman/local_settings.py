@@ -8,7 +8,7 @@ ADMINS = (
 
 DATABASES = {
     'default': {
-#        'ENGINE': 'django.db.backends.sqlite3',  # noqa disabled until django 5.1 is in use, see https://blog.pecar.me/django-sqlite-dblock
+#        'ENGINE': 'django.db.backends.sqlite3',  # noqa - disabled until django 5.1 is in use, see https://blog.pecar.me/django-sqlite-dblock
         'ENGINE': 'patchman.sqlite3',
         'NAME': '/var/lib/patchman/db/patchman.db',
         'OPTIONS': {
@@ -111,5 +111,7 @@ LOGGING = {
     'loggers': {
         'urllib3': {'level': 'WARNING', 'handlers': ['console'], 'propagate': False},
         'git': {'level': 'WARNING', 'handlers': ['console'], 'propagate': False},
+        'version_utils': {'level': 'WARNING', 'handlers': ['console'], 'propagate': False},
+        'celery': {'level': 'WARNING', 'handlers': ['console'], 'propagate': False},
     }
 }

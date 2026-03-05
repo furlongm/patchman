@@ -13,7 +13,7 @@
 {% block content %}
 
 {% with count=noosrelease_osvariants.count %}
-  {% if noosrelease_osvariants.count > 0 %}
+  {% if count > 0 %}
     <div class="well well-sm">
       <button class="btn btn-sm" data-toggle="collapse" data-target="#noosrelease_osvariants"><span class="badge">{{ count }}</span> OS Variants are not linked to any OS Release</button>
       <div class="collapse" id="noosrelease_osvariants">
@@ -24,7 +24,7 @@
 {% endwith %}
 
 {% with count=nohost_osvariants.count %}
-  {% if nohost_osvariants.count > 0 %}
+  {% if count > 0 %}
     <div class="well well-sm">
       <button class="btn btn-sm" data-toggle="collapse" data-target="#nohost_osvariants"><span class="badge">{{ count }}</span> OS Variants are not installed on any Host</button>
         <div class="collapse" id="nohost_osvariants">
@@ -243,5 +243,9 @@
   </div>
   {% endif %}
 {% endwith %}
+
+{% if not has_issues %}
+  <div class="alert alert-success">No issues found!</div>
+{% endif %}
 
 {% endblock %}

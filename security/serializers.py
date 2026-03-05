@@ -22,14 +22,14 @@ from security.models import CVE, CWE, Reference
 class CWESerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = CWE
-        fields = ('cwe_id', 'title', 'description')
+        fields = ('cwe_id', 'name', 'description')
 
 
 class CVESerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = CVE
-        fields = ('cve_id', 'description', 'cvss_score', 'cwe',
-                  'registered_date', 'published_date', 'updated_date')
+        fields = ('cve_id', 'description', 'cvss_scores', 'cwes',
+                  'reserved_date', 'published_date', 'updated_date')
 
 
 class ReferenceSerializer(serializers.HyperlinkedModelSerializer):

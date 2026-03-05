@@ -29,7 +29,7 @@ from util.filterspecs import Filter, FilterBar
 
 @login_required
 def erratum_list(request):
-    errata = Erratum.objects.select_related()
+    errata = Erratum.objects.all()
 
     if 'e_type' in request.GET:
         errata = errata.filter(e_type=request.GET['e_type']).distinct()

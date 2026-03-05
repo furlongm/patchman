@@ -32,7 +32,7 @@ from util.filterspecs import Filter, FilterBar
 
 @login_required
 def package_list(request):
-    packages = Package.objects.select_related()
+    packages = Package.objects.select_related('name', 'arch')
 
     if 'arch_id' in request.GET:
         packages = packages.filter(arch=request.GET['arch_id']).distinct()
@@ -121,7 +121,7 @@ def package_list(request):
 
 @login_required
 def package_name_list(request):
-    packages = PackageName.objects.select_related()
+    packages = PackageName.objects.all()
 
     if 'arch_id' in request.GET:
         packages = packages.filter(package__arch=request.GET['arch_id']).distinct()
@@ -165,7 +165,7 @@ def package_detail(request, package_id):
 @login_required
 def package_name_detail(request, packagename):
     package = get_object_or_404(PackageName, name=packagename)
-    allversions = Package.objects.select_related().filter(name=package.id)
+    allversions = Package.objects.select_related('name', 'arch').filter(name=package.id)
     return render(request,
                   'packages/package_name_detail.html',
                   {'package': package,
@@ -185,7 +185,7 @@ class PackageViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows packages to be viewed or edited.
     """
-    queryset = Package.objects.all()
+    queryset = Package.objects.select_related('name', 'arch').all()
     serializer_class = PackageSerializer
     filterset_fields = [
         'name',
@@ -201,6 +201,6 @@ class PackageUpdateViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows packages updates to be viewed or edited.
     """
-    queryset = PackageUpdate.objects.all()
+    queryset = PackageUpdate.objects.select_related('oldpackage', 'newpackage').all()
     serializer_class = PackageUpdateSerializer
     filterset_fields = ['oldpackage', 'newpackage', 'security']
