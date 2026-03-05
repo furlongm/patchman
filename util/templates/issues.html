@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% load common %}
+
+{% block page_title %}Patchman Issues{% endblock %}
+
+{% block breadcrumbs %}
+  <li class="active"><a href="{% url 'util:issues' %}">Issues</a></li>
+{% endblock %}
+
+{% block content_title %} Issues for {{ site.name }} {% endblock %}
+
+{% block content %}
+
+{% if noosrelease_osvariants > 0 %}
+  <div class="well well-sm">
+    <a class="btn btn-sm" href="{% url 'operatingsystems:osvariant_list' %}?has_osrelease=false"><span class="badge">{{ noosrelease_osvariants }}</span> OS Variants are not linked to any OS Release</a>
+  </div>
+{% endif %}
+
+{% if nohost_osvariants > 0 %}
+  <div class="well well-sm">
+    <a class="btn btn-sm" href="{% url 'operatingsystems:osvariant_list' %}?has_hosts=false"><span class="badge">{{ nohost_osvariants }}</span> OS Variants are not installed on any Host</a>
+  </div>
+{% endif %}
+
+{% if norepo_osreleases > 0 %}
+  <div class="well well-sm">
+    <a class="btn btn-sm" href="{% url 'operatingsystems:osrelease_list' %}?has_repos=false"><span class="badge">{{ norepo_osreleases }}</span> OS Releases have no associated Repositories</a>
+  </div>
+{% endif %}
+
+{% if stale_hosts > 0 %}
+  <div class="well well-sm">
+    <a class="btn btn-sm" href="{% url 'hosts:host_list' %}?stale=true"><span class="badge">{{ stale_hosts }}</span> Hosts have not reported since {% reports_timedelta %}</a>
+  </div>
+{% endif %}
+
+{% if reboot_hosts > 0 %}
+  <div class="well well-sm">
+    <a class="btn btn-sm" href="{% url 'hosts:host_list' %}?reboot_required=true"><span class="badge">{{ reboot_hosts }}</span> Hosts require a reboot for security reasons (e.g. kernel update)</a>
+  </div>
+{% endif %}
+
+{% if secupdate_hosts > 0 %}
+  <div class="well well-sm">
+    <a class="btn btn-sm" href="{% url 'hosts:host_list' %}?has_security_updates=true"><span class="badge">{{ secupdate_hosts }}</span> Hosts have security updates pending</a>
+  </div>
+{% endif %}
+
+{% if bugupdate_hosts > 0 %}
+  <div class="well well-sm">
+    <a class="btn btn-sm" href="{% url 'hosts:host_list' %}?has_bugfix_updates=true"><span class="badge">{{ bugupdate_hosts }}</span> Hosts have bugfix-only updates pending</a>
+  </div>
+{% endif %}
+
+{% if norepo_hosts > 0 %}
+  <div class="well well-sm">
+    <a class="btn btn-sm" href="{% url 'hosts:host_list' %}?has_repos=false"><span class="badge">{{ norepo_hosts }}</span> Hosts have no associated Repositories</a>
+  </div>
+{% endif %}
+
+{% if diff_rdns_hosts > 0 %}
+  <div class="well well-sm">
+    <a class="btn btn-sm" href="{% url 'hosts:host_list' %}?rdns_mismatch=true"><span class="badge">{{ diff_rdns_hosts }}</span> Hosts have a different rDNS entry (and have rDNS checking enabled)</a>
+  </div>
+{% endif %}
+
+{% if failed_mirrors > 0 %}
+  <div class="well well-sm">
+    <a class="btn btn-sm" href="{% url 'repos:repo_list' %}?has_failed_mirrors=true"><span class="badge">{{ failed_mirrors }}</span> Repositories have some Mirrors that are failing</a>
+  </div>
+{% endif %}
+
+{% if disabled_mirrors > 0 %}
+  <div class="well well-sm">
+    <a class="btn btn-sm" href="{% url 'repos:repo_list' %}?has_disabled_mirrors=true"><span class="badge">{{ disabled_mirrors }}</span> Repositories have some Mirrors that are disabled</a>
+  </div>
+{% endif %}
+
+{% if norefresh_mirrors > 0 %}
+  <div class="well well-sm">
+    <a class="btn btn-sm" href="{% url 'repos:repo_list' %}?has_norefresh_mirrors=true"><span class="badge">{{ norefresh_mirrors }}</span> Repositories have some Mirrors that are not set to refresh (possibly failed too many times)</a>
+  </div>
+{% endif %}
+
+{% if failed_repos > 0 %}
+  <div class="well well-sm">
+    <a class="btn btn-sm" href="{% url 'repos:repo_list' %}?has_failed_mirrors=true"><span class="badge">{{ failed_repos }}</span> Repositories where all Mirrors are failing</a>
+  </div>
+{% endif %}
+
+{% if unused_repos > 0 %}
+  <div class="well well-sm">
+    <a class="btn btn-sm" href="{% url 'repos:repo_list' %}?used=false"><span class="badge">{{ unused_repos }}</span> Repositories are unused (no associated Hosts or OS Groups)</a>
+  </div>
+{% endif %}
+
+{% if nomirror_repos > 0 %}
+  <div class="well well-sm">
+    <a class="btn btn-sm" href="{% url 'repos:repo_list' %}?has_mirrors=false"><span class="badge">{{ nomirror_repos }}</span> Repositories have no Mirrors</a>
+  </div>
+{% endif %}
+
+{% if nohost_repos > 0 %}
+  <div class="well well-sm">
+    <a class="btn btn-sm" href="{% url 'repos:repo_list' %}?has_hosts=false"><span class="badge">{{ nohost_repos }}</span> Repositories are not used by any Hosts</a>
+  </div>
+{% endif %}
+
+{% with count=possible_mirrors|length %}
+  {% if count > 0 %}
+  <div class="well well-sm">
+    <button class="btn btn-sm" data-toggle="collapse" data-target="#possible_mirrors"><span class="badge">{{ count }}</span> Sets of Mirrors have the same checksum and are not linked</button>
+      <div class="collapse" id="possible_mirrors">
+        <ul class="package-list">
+          {% for checksum in possible_mirrors %}
+            <li><a href="{% url 'repos:mirror_list' %}?checksum={{ checksum }}">{{ checksum }}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
+  </div>
+  {% endif %}
+{% endwith %}
+
+{% if norepo_packages > 0 %}
+  <div class="well well-sm">
+    <a class="btn btn-sm" href="{% url 'packages:package_list' %}?available_in_repos=false&installed_on_hosts=true"><span class="badge">{{ norepo_packages }}</span> Installed Packages are not from any Repository</a>
+  </div>
+{% endif %}
+
+{% if orphaned_packages > 0 %}
+  <div class="well well-sm">
+    <a class="btn btn-sm" href="{% url 'packages:package_list' %}?available_in_repos=false&installed_on_hosts=false"><span class="badge">{{ orphaned_packages }}</span> Packages are orphaned (not from any Repository, not installed on any Host)</a>
+  </div>
+{% endif %}
+
+{% if unprocessed_reports > 0 %}
+  <div class="well well-sm">
+    <a class="btn btn-sm" href="{% url 'reports:report_list' %}?processed=false"><span class="badge">{{ unprocessed_reports }}</span> Reports have not yet been processed</a>
+  </div>
+{% endif %}
+
+{% if not has_issues %}
+  <div class="alert alert-success">No issues found!</div>
+{% endif %}
+
+{% endblock %}

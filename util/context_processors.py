@@ -24,6 +24,7 @@ from django.utils import timezone
 
 from hosts.models import Host
 from operatingsystems.models import OSRelease, OSVariant
+from packages.models import Package
 from reports.models import Report
 from repos.models import Repository
 from util import get_setting_of_type
@@ -120,7 +121,8 @@ def issues_count(request):
     if hosts.filter(host_repos_only=False).exists():
         norepo_osreleases_count = osreleases.filter(repos__isnull=True).count()
 
-    # mirror issues
+    # mirror issues — chained .filter() on M2M creates separate JOINs,
+    # so this finds repos with BOTH a failing AND a succeeding mirror
     failed_mirrors = repos.filter(
         auth_required=False, mirror__last_access_ok=False
     ).filter(mirror__last_access_ok=True).distinct()
@@ -140,6 +142,12 @@ def issues_count(request):
     # report issues
     unprocessed_reports = Report.objects.filter(processed=False)
 
+    # package issues
+    norepo_packages = Package.objects.filter(
+        mirror__isnull=True, oldpackage__isnull=True, host__isnull=False
+    )
+    orphaned_packages = Package.objects.filter(mirror__isnull=True, host__isnull=True)
+
     count = (
         (1 if stale_hosts.exists() else 0) +
         (1 if norepo_hosts.exists() else 0) +
@@ -157,7 +165,9 @@ def issues_count(request):
         (1 if unused_repos.exists() else 0) +
         (1 if nomirror_repos.exists() else 0) +
         (1 if nohost_repos.exists() else 0) +
-        (1 if unprocessed_reports.exists() else 0)
+        (1 if unprocessed_reports.exists() else 0) +
+        (1 if norepo_packages.exists() else 0) +
+        (1 if orphaned_packages.exists() else 0)
     )
 
     return {'issues_count': count}

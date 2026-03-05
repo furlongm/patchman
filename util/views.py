@@ -39,11 +39,19 @@ def dashboard(request):
     except Site.DoesNotExist:
         site = {'name': '', 'domainname': ''}
 
+    return render(request, 'dashboard.html', {'site': site})
+
+
+@login_required
+def issues(request):
+
+    try:
+        site = Site.objects.get_current()
+    except Site.DoesNotExist:
+        site = {'name': '', 'domainname': ''}
+
     hosts = Host.objects.all()
-    osvariants = OSVariant.objects.all()
-    osreleases = OSRelease.objects.all()
     repos = Repository.objects.all()
-    packages = Package.objects.all()
 
     # host issues
     days = get_setting_of_type(
@@ -52,45 +60,45 @@ def dashboard(request):
         default=14,
     )
     last_report_delta = timezone.now() - timedelta(days=days)
-    stale_hosts = hosts.filter(lastreport__lt=last_report_delta)
-    norepo_hosts = hosts.filter(repos__isnull=True, osvariant__osrelease__repos__isnull=True)  # noqa
-    reboot_hosts = hosts.filter(reboot_required=True)
-    # Use cached count fields instead of expensive M2M JOINs
-    secupdate_hosts = hosts.filter(sec_updates_count__gt=0)
-    bugupdate_hosts = hosts.filter(bug_updates_count__gt=0, sec_updates_count=0)
-    diff_rdns_hosts = hosts.exclude(reversedns=F('hostname')).filter(check_dns=True)  # noqa
+    counts = {
+        'stale_hosts': hosts.filter(lastreport__lt=last_report_delta).count(),
+        'norepo_hosts': hosts.filter(repos__isnull=True, osvariant__osrelease__repos__isnull=True).count(),
+        'reboot_hosts': hosts.filter(reboot_required=True).count(),
+        'secupdate_hosts': hosts.filter(sec_updates_count__gt=0).count(),
+        'bugupdate_hosts': hosts.filter(bug_updates_count__gt=0, sec_updates_count=0).count(),
+        'diff_rdns_hosts': hosts.exclude(reversedns=F('hostname')).filter(check_dns=True).count(),
+        'noosrelease_osvariants': OSVariant.objects.filter(osrelease__isnull=True).count(),
+        'nohost_osvariants': OSVariant.objects.filter(host__isnull=True).count(),
+        'norepo_osreleases': 0,
+    }
 
-    # os variant issues
-    noosrelease_osvariants = osvariants.filter(osrelease__isnull=True)
-    nohost_osvariants = osvariants.filter(host__isnull=True)
-
-    # os release issues
-    norepo_osreleases = None
     if hosts.filter(host_repos_only=False).exists():
-        norepo_osreleases = osreleases.filter(repos__isnull=True)
+        counts['norepo_osreleases'] = OSRelease.objects.filter(repos__isnull=True).count()
 
-    # mirror issues
-    failed_mirrors = repos.filter(auth_required=False).filter(mirror__last_access_ok=False).filter(mirror__last_access_ok=True).distinct()  # noqa
-    disabled_mirrors = repos.filter(auth_required=False).filter(mirror__enabled=False).filter(mirror__mirrorlist=False).distinct()  # noqa
-    norefresh_mirrors = repos.filter(auth_required=False).filter(mirror__refresh=False).distinct()  # noqa
+    # mirror issues — chained .filter() on M2M creates separate JOINs,
+    # so this finds repos with BOTH a failing AND a succeeding mirror
+    failed_mirrors_qs = repos.filter(auth_required=False).filter(mirror__last_access_ok=False).filter(mirror__last_access_ok=True).distinct()  # noqa
+    failed_mirror_ids = list(failed_mirrors_qs.values_list('id', flat=True))
+    counts['failed_mirrors'] = len(failed_mirror_ids)
+    counts['disabled_mirrors'] = repos.filter(auth_required=False, mirror__enabled=False, mirror__mirrorlist=False).distinct().count()  # noqa
+    counts['norefresh_mirrors'] = repos.filter(auth_required=False, mirror__refresh=False).distinct().count()
 
-    # repo issues
-    failed_repos = repos.filter(auth_required=False).filter(mirror__last_access_ok=False).exclude(id__in=[x.id for x in failed_mirrors]).distinct()  # noqa
-    unused_repos = repos.filter(host__isnull=True, osrelease__isnull=True)
-    nomirror_repos = repos.filter(mirror__isnull=True)
-    nohost_repos = repos.filter(host__isnull=True)
+    # repo issues — all mirrors failing = has failing mirrors but not in partial-failure set
+    counts['failed_repos'] = repos.filter(auth_required=False, mirror__last_access_ok=False).exclude(id__in=failed_mirror_ids).distinct().count()  # noqa
+    counts['unused_repos'] = repos.filter(host__isnull=True, osrelease__isnull=True).count()
+    counts['nomirror_repos'] = repos.filter(mirror__isnull=True).count()
+    counts['nohost_repos'] = repos.filter(host__isnull=True).count()
 
     # package issues
-    norepo_packages = packages.filter(mirror__isnull=True, oldpackage__isnull=True, host__isnull=False).distinct()  # noqa
-    orphaned_packages = packages.filter(mirror__isnull=True, host__isnull=True).distinct()  # noqa
+    counts['norepo_packages'] = Package.objects.filter(mirror__isnull=True, oldpackage__isnull=True, host__isnull=False).distinct().count()  # noqa
+    counts['orphaned_packages'] = Package.objects.filter(mirror__isnull=True, host__isnull=True).count()
 
     # report issues
-    unprocessed_reports = Report.objects.filter(processed=False)
+    counts['unprocessed_reports'] = Report.objects.filter(processed=False).count()
 
+    # possible mirrors (checksum duplicates across repos)
     checksums = {}
     possible_mirrors = {}
-
-    # Use cached packages_count to avoid N+1 queries
     for csvalue in Mirror.objects.filter(packages_count__gt=0).values('packages_checksum').distinct():
         checksum = csvalue['packages_checksum']
         if checksum is not None and checksum != 'yast':
@@ -110,49 +118,12 @@ def dashboard(request):
                 possible_mirrors[checksum] = checksums[checksum]
                 continue
 
-    has_issues = (
-        noosrelease_osvariants.exists() or
-        nohost_osvariants.exists() or
-        (norepo_osreleases is not None and norepo_osreleases.exists()) or
-        stale_hosts.exists() or
-        reboot_hosts.exists() or
-        secupdate_hosts.exists() or
-        bugupdate_hosts.exists() or
-        norepo_hosts.exists() or
-        diff_rdns_hosts.exists() or
-        failed_mirrors.exists() or
-        disabled_mirrors.exists() or
-        norefresh_mirrors.exists() or
-        failed_repos.exists() or
-        unused_repos.exists() or
-        nomirror_repos.exists() or
-        nohost_repos.exists() or
-        bool(possible_mirrors) or
-        norepo_packages.exists()
-    )
+    has_issues = any(counts.values()) or bool(possible_mirrors)
 
     return render(
         request,
-        'dashboard.html',
+        'issues.html',
         {'site': site,
          'has_issues': has_issues,
-         'noosrelease_osvariants': noosrelease_osvariants,
-         'norepo_hosts': norepo_hosts,
-         'nohost_osvariants': nohost_osvariants,
-         'diff_rdns_hosts': diff_rdns_hosts,
-         'stale_hosts': stale_hosts,
          'possible_mirrors': possible_mirrors,
-         'norepo_packages': norepo_packages,
-         'nohost_repos': nohost_repos,
-         'secupdate_hosts': secupdate_hosts,
-         'bugupdate_hosts': bugupdate_hosts,
-         'norepo_osreleases': norepo_osreleases,
-         'unused_repos': unused_repos,
-         'disabled_mirrors': disabled_mirrors,
-         'norefresh_mirrors': norefresh_mirrors,
-         'failed_mirrors': failed_mirrors,
-         'orphaned_packages': orphaned_packages,
-         'failed_repos': failed_repos,
-         'nomirror_repos': nomirror_repos,
-         'reboot_hosts': reboot_hosts,
-         'unprocessed_reports': unprocessed_reports})
+         **counts})
