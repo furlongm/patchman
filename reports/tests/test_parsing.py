@@ -19,6 +19,7 @@ from django.test import TestCase, override_settings
 from packages.models import Package
 from reports.utils import (
     _get_package_type, _get_repo_type, parse_packages, parse_repos,
+    process_repo_text,
 )
 from repos.models import Repository
 
@@ -178,3 +179,61 @@ class GetRepoTypeTests(TestCase):
         """Test unknown repo type returns None."""
         self.assertIsNone(_get_repo_type(''))
         self.assertIsNone(_get_repo_type('invalid'))
+
+
+@override_settings(
+    CELERY_TASK_ALWAYS_EAGER=True,
+    CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}}
+)
+class ProcessRepoTextTests(TestCase):
+    """Tests for process_repo_text() - handles malformed repo data gracefully."""
+
+    def setUp(self):
+        from arch.models import MachineArchitecture
+        self.arch, _ = MachineArchitecture.objects.get_or_create(name='x86_64')
+
+    def test_rpm_normal(self):
+        """Test normal RPM repo parsing."""
+        repo = ['rpm', 'Rocky BaseOS x86_64', 'baseos', '99',
+                'https://dl.rockylinux.org/vault/rocky/9/BaseOS/x86_64/os/']
+        result, priority = process_repo_text(repo, 'x86_64')
+        self.assertIsNotNone(result)
+        self.assertEqual(priority, -99)
+
+    def test_rpm_url_as_priority(self):
+        """Test RPM repo where URL appears where priority should be (metalink merge bug)."""
+        repo = ['rpm', 'EPEL 9 x86_64', 'epel',
+                'https://mirrors.fedoraproject.org/metalink?repo=epel-9&arch=x86_64']
+        result, priority = process_repo_text(repo, 'x86_64')
+        self.assertIsNone(result)
+        self.assertEqual(priority, 0)
+
+    def test_rpm_missing_priority(self):
+        """Test RPM repo with missing priority field skips gracefully."""
+        repo = ['rpm', 'EPEL x86_64', 'epel']
+        result, priority = process_repo_text(repo, 'x86_64')
+        self.assertIsNone(result)
+        self.assertEqual(priority, 0)
+
+    def test_deb_normal(self):
+        """Test normal Debian repo parsing."""
+        repo = ['deb', 'Ubuntu Main x86_64', '500',
+                'http://archive.ubuntu.com/ubuntu']
+        result, priority = process_repo_text(repo, 'x86_64')
+        self.assertIsNotNone(result)
+        self.assertEqual(priority, 500)
+
+    def test_deb_url_as_priority(self):
+        """Test Debian repo where URL appears where priority should be."""
+        repo = ['deb', 'Ubuntu Main x86_64',
+                'http://archive.ubuntu.com/ubuntu']
+        result, priority = process_repo_text(repo, 'x86_64')
+        self.assertIsNone(result)
+        self.assertEqual(priority, 0)
+
+    def test_unknown_type(self):
+        """Test unknown repo type returns None."""
+        repo = ['unknown', 'test', '0', 'http://example.com']
+        result, priority = process_repo_text(repo, 'x86_64')
+        self.assertIsNone(result)
+        self.assertEqual(priority, 0)
