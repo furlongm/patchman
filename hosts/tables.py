@@ -22,12 +22,14 @@ SELECT_ALL_CHECKBOX = '<input type="checkbox" id="select-all-page" title="Select
 HOSTNAME_TEMPLATE = '<a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>'
 SEC_UPDATES_TEMPLATE = (
     '{% with count=record.get_num_security_updates %}'
-    '{% if count != 0 %}<span style="color:red">{{ count }}</span>{% else %}{% endif %}'
+    '{% if count != 0 %}<a href="{% url \'packages:package_update_list\' %}?host_id={{ record.id }}&security=true">'
+    '<span style="color:red">{{ count }}</span></a>{% endif %}'
     '{% endwith %}'
 )
 BUG_UPDATES_TEMPLATE = (
     '{% with count=record.get_num_bugfix_updates %}'
-    '{% if count != 0 %}<span style="color:orange">{{ count }}</span>{% else %}{% endif %}'
+    '{% if count != 0 %}<a href="{% url \'packages:package_update_list\' %}?host_id={{ record.id }}&security=false">'
+    '<span style="color:orange">{{ count }}</span></a>{% endif %}'
     '{% endwith %}'
 )
 AFFECTED_ERRATA_TEMPLATE = (

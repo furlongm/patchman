@@ -14,7 +14,7 @@
 
 import django_tables2 as tables
 
-from packages.models import Package, PackageName
+from packages.models import Package, PackageName, PackageUpdate
 from util.tables import BaseTable
 
 PACKAGE_NAME_TEMPLATE = '<a href="{{ record.get_absolute_url }}">{{ record }}</a>'
@@ -118,3 +118,74 @@ class PackageNameTable(BaseTable):
     class Meta(BaseTable.Meta):
         model = PackageName
         fields = ('packagename_name', 'versions')
+
+
+UPDATE_OLD_TEMPLATE = (
+    '<a href="{% url \'packages:package_detail\' record.oldpackage.id %}">'
+    '{{ record.oldpackage }}</a>'
+)
+UPDATE_NEW_TEMPLATE = (
+    '<a href="{% url \'packages:package_detail\' record.newpackage.id %}">'
+    '{{ record.newpackage }}</a>'
+)
+UPDATE_HOSTS_TEMPLATE = (
+    '<a href="{% url \'hosts:host_list\' %}?update_id={{ record.id }}">'
+    '{{ record.host_count }}</a>'
+)
+UPDATE_AFFECTED_TEMPLATE = (
+    '<a href="{% url \'errata:erratum_list\' %}?package_id={{ record.oldpackage.id }}&type=affected">'
+    '{{ record.affected_count }}</a>'
+)
+UPDATE_FIXED_TEMPLATE = (
+    '<a href="{% url \'errata:erratum_list\' %}?package_id={{ record.newpackage.id }}&type=fixed">'
+    '{{ record.fixed_count }}</a>'
+)
+
+
+UPDATE_TYPE_TEMPLATE = (
+    '{% if record.security %}'
+    '<span class="label label-danger">Security</span>'
+    '{% else %}'
+    '<span class="label label-info">Bugfix</span>'
+    '{% endif %}'
+)
+
+
+class PackageUpdateTable(BaseTable):
+    oldpackage = tables.TemplateColumn(
+        UPDATE_OLD_TEMPLATE,
+        verbose_name='Installed',
+        attrs={'th': {'class': 'col-sm-3'}, 'td': {'class': 'col-sm-3'}},
+    )
+    newpackage = tables.TemplateColumn(
+        UPDATE_NEW_TEMPLATE,
+        verbose_name='Available',
+        attrs={'th': {'class': 'col-sm-3'}, 'td': {'class': 'col-sm-3'}},
+    )
+    security = tables.TemplateColumn(
+        UPDATE_TYPE_TEMPLATE,
+        verbose_name='Type',
+        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1'}},
+    )
+    hosts = tables.TemplateColumn(
+        UPDATE_HOSTS_TEMPLATE,
+        verbose_name='Hosts',
+        order_by='host_count',
+        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1'}},
+    )
+    affected = tables.TemplateColumn(
+        UPDATE_AFFECTED_TEMPLATE,
+        verbose_name='Affected by Errata',
+        order_by='affected_count',
+        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1'}},
+    )
+    fixed = tables.TemplateColumn(
+        UPDATE_FIXED_TEMPLATE,
+        verbose_name='Fixed in Errata',
+        order_by='fixed_count',
+        attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1'}},
+    )
+
+    class Meta(BaseTable.Meta):
+        model = PackageUpdate
+        fields = ('oldpackage', 'newpackage', 'security', 'hosts', 'affected', 'fixed')
