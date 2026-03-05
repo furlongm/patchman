@@ -713,13 +713,23 @@ get_repos() {
 }
 
 reboot_required() {
-    # On debian-based clients, the update-notifier-common
-    # package needs to be installed for this to work.
+    # Debian/Ubuntu: update-notifier-common sets this file
     if [ -e /var/run/reboot-required ] ; then
         reboot=True
-    else
-        reboot=ServerCheck
+        return
     fi
+
+    # Compare running vs installed kernel via /boot/vmlinuz symlink
+    if [ -e /proc/sys/kernel/osrelease ] && [ -L /boot/vmlinuz ] ; then
+        running_kernel=$(cat /proc/sys/kernel/osrelease)
+        installed_kernel=$(readlink /boot/vmlinuz | sed -e 's/^vmlinuz-//')
+        if [ "${running_kernel}" != "${installed_kernel}" ] ; then
+            reboot=True
+            return
+        fi
+    fi
+
+    reboot=ServerCheck
 }
 
 build_packages_json() {
