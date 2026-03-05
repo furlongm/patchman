@@ -548,9 +548,9 @@ get_repos() {
         for i in $(echo "${yum_repolist}" | awk 'BEGIN{n=0} { if ($1=="Repo-id") {if(n>0){print ""} n++; url=0; printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'"'"' "} if ($1=="Repo-name") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'" ${host_arch}'"' "} if ($1=="Repo-mirrors" || $1=="Repo-metalink") {printf "'"'"'"; for (i=3; i<NF; i++) printf $i " "; printf $NF"'"'"' "} if ($1=="Repo-baseurl" || $1=="Repo-baseurl:") { url=1; comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else { if (url==1) { if ($1==":") { comma=match($NF,","); if (comma) out=substr($NF,1,comma-1); else out=$NF; printf "'"'"'"out"'"'"' "; } else {url=0} } } } END{if(n>0) print ""}' | sed -e "s/\/'/'/g" | sed -e "s/ ' /' /") ; do
             full_id=$(echo ${i} | cut -d \' -f 2)
             id=$(echo ${i} | cut -d \' -f 2 | cut -d \/ -f 1)
-            name=$(echo ${i} | cut -d \' -f 4)
+            orig_name=$(echo ${i} | cut -d \' -f 4)
             # Strip " - arch arch" suffix pattern to avoid duplicates like "EPEL - x86_64 x86_64"
-            name=$(echo "${name}" | sed -e "s/ - ${host_arch} ${host_arch}$/ ${host_arch}/")
+            name=$(echo "${orig_name}" | sed -e "s/ - ${host_arch} ${host_arch}$/ ${host_arch}/")
             if [ "${priorities}" != "" ] ; then
                 priority=$(echo "${priorities}" | grep "'${name}'" | sed -e "s/priority=\(.*\) '${name}'/\1/")
             fi
@@ -568,7 +568,7 @@ get_repos() {
             if [ ! -z ${CPE_NAME} ] ; then
                 id="${CPE_NAME}-${id}"
             fi
-            j=$(echo ${i} | sed -e "s#'${full_id}' '${name}'#'${name}' '${id}' '${priority}'#" | sed -e "s/'\[/'/g" -e "s/\]'/'/g")
+            j=$(echo ${i} | sed -e "s#'${full_id}' '${orig_name}'#'${name}' '${id}' '${priority}'#" | sed -e "s/'\[/'/g" -e "s/\]'/'/g")
             echo "'rpm' ${j}" >> "${tmpfile_rep}"
             unset priority
         done
