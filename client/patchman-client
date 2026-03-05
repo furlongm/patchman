@@ -506,6 +506,30 @@ get_zypper_updates() {
     zypper -q -n -s11 lu -r ${1} | grep ^v | awk '{print $2"."$5,$4}' | sed -e "s/$/ ${1}/" >> "${tmpfile_bug}"
 }
 
+get_apt_updates() {
+    if ! check_command_exists apt ; then
+        return
+    fi
+    if ${verbose} ; then
+        echo 'Finding apt updates...'
+    fi
+    apt list --upgradable 2>/dev/null | grep -v '^Listing' | while IFS= read -r line ; do
+        if [ -z "${line}" ] ; then
+            continue
+        fi
+        # Format: package/suite version arch [upgradable from: old-version]
+        pkg=$(echo "${line}" | cut -d '/' -f 1)
+        suite=$(echo "${line}" | cut -d '/' -f 2 | cut -d ' ' -f 1)
+        version=$(echo "${line}" | awk '{print $2}')
+        arch=$(echo "${line}" | awk '{print $3}')
+        if echo "${suite}" | grep -qi 'security' ; then
+            echo "${pkg}.${arch} ${version}" >> "${tmpfile_sec}"
+        else
+            echo "${pkg}.${arch} ${version}" >> "${tmpfile_bug}"
+        fi
+    done
+}
+
 get_repos() {
     IFS=${NL_IFS}
 
@@ -1098,6 +1122,9 @@ get_packages
 get_modules
 if ${repo_check} ; then
     get_repos
+fi
+if ${local_updates} ; then
+    get_apt_updates
 fi
 reboot_required
 
