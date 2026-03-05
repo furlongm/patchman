@@ -491,7 +491,7 @@ def repo_bulk_action(request):
             refresh_repo.delay(repo.id)
         messages.success(request, f'Queued {count} {name} for refresh')
     elif action == 'delete':
-        repos.delete()
+        Repository.objects.filter(pk__in=repos.values_list('pk', flat=True)).delete()
         messages.success(request, f'Deleted {count} {name}')
     else:
         messages.warning(request, 'Invalid action')
@@ -574,7 +574,7 @@ def mirror_bulk_action(request):
         mirrors.update(refresh=False)
         messages.success(request, f'Disabled refresh for {count} {name}')
     elif action == 'delete':
-        mirrors.delete()
+        Mirror.objects.filter(pk__in=mirrors.values_list('pk', flat=True)).delete()
         messages.success(request, f'Deleted {count} {name}')
     else:
         messages.warning(request, 'Invalid action')
