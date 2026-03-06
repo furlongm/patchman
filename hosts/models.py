@@ -213,7 +213,7 @@ class Host(models.Model):
 
         kernel_update_ids = self.find_kernel_updates(kernel_packages, repo_packages)
         for ku_id in kernel_update_ids:
-            update_ids.append(ku_id)
+            update_ids.add(ku_id)
 
         for update in self.updates.all():
             if update.id not in update_ids:
@@ -225,7 +225,7 @@ class Host(models.Model):
 
     def find_host_repo_updates(self, host_packages, repo_packages, errata_ids):
 
-        update_ids = []
+        update_ids = set()
         hostrepos_q = Q(repo__mirror__enabled=True,
                         repo__mirror__refresh=True,
                         repo__mirror__repo__enabled=True,
@@ -280,12 +280,12 @@ class Host(models.Model):
             if highest_package != package:
                 uid = self.process_update(package, highest_package)
                 if uid is not None:
-                    update_ids.append(uid)
+                    update_ids.add(uid)
         return update_ids
 
     def find_osrelease_repo_updates(self, host_packages, repo_packages, errata_ids):
 
-        update_ids = []
+        update_ids = set()
         for package in host_packages:
             highest_package = package
 
@@ -318,7 +318,7 @@ class Host(models.Model):
             if highest_package != package:
                 uid = self.process_update(package, highest_package)
                 if uid is not None:
-                    update_ids.append(uid)
+                    update_ids.add(uid)
         return update_ids
 
     def check_if_reboot_required(self, host_highest):
@@ -406,7 +406,7 @@ class Host(models.Model):
 
     def find_kernel_updates(self, kernel_packages, repo_packages):
 
-        update_ids = []
+        update_ids = set()
         self.reboot_required = False
 
         # build hostrepos for priority filtering (same as find_host_repo_updates)
@@ -423,16 +423,16 @@ class Host(models.Model):
         rpm_kernels = kernel_packages.filter(packagetype='R')
         arch_kernels = kernel_packages.filter(packagetype='A')
 
-        update_ids.extend(self._find_rpm_kernel_updates(rpm_kernels, repo_packages, hostrepos))
-        update_ids.extend(self._find_deb_kernel_updates(deb_kernels, repo_packages, hostrepos))
-        update_ids.extend(self._find_arch_kernel_updates(arch_kernels, repo_packages, hostrepos))
+        update_ids.update(self._find_rpm_kernel_updates(rpm_kernels, repo_packages, hostrepos))
+        update_ids.update(self._find_deb_kernel_updates(deb_kernels, repo_packages, hostrepos))
+        update_ids.update(self._find_arch_kernel_updates(arch_kernels, repo_packages, hostrepos))
 
         self.save(update_fields=['reboot_required'])
         return update_ids
 
     def _find_rpm_kernel_updates(self, kernel_packages, repo_packages, hostrepos):
 
-        update_ids = []
+        update_ids = set()
 
         # parse running kernel version for comparison
         parts = self.kernel.split('-')
@@ -498,7 +498,7 @@ class Host(models.Model):
             if base_package and base_package.compare_version(repo_highest) == -1:
                 uid = self.process_update(base_package, repo_highest)
                 if uid is not None:
-                    update_ids.append(uid)
+                    update_ids.add(uid)
 
             # reboot check only on primary kernel packages
             if host_highest and package.name.name in (
@@ -513,7 +513,7 @@ class Host(models.Model):
 
     def _find_arch_kernel_updates(self, kernel_packages, repo_packages, hostrepos):
 
-        update_ids = []
+        update_ids = set()
 
         for package in kernel_packages:
             pu_q = Q(name=package.name)
@@ -540,7 +540,7 @@ class Host(models.Model):
             if package.compare_version(repo_highest) == -1:
                 uid = self.process_update(package, repo_highest)
                 if uid is not None:
-                    update_ids.append(uid)
+                    update_ids.add(uid)
 
             # reboot check for main kernel packages (not -headers)
             # Arch uname -r format varies by flavour:
@@ -564,7 +564,7 @@ class Host(models.Model):
 
     def _find_deb_kernel_updates(self, kernel_packages, repo_packages, hostrepos):
 
-        update_ids = []
+        update_ids = set()
         running_flavour = self._get_running_kernel_flavour()
 
         # find the linux-image package matching the running kernel
@@ -638,7 +638,7 @@ class Host(models.Model):
             if base_package.compare_version(repo_highest) == -1:
                 uid = self.process_update(base_package, repo_highest)
                 if uid is not None:
-                    update_ids.append(uid)
+                    update_ids.add(uid)
 
         # reboot check: see if a newer linux-image is installed but not running
         # use compare_version (DEB semantics) instead of labelCompare
