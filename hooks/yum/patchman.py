@@ -1,4 +1,4 @@
-# Copyright 2013-2016 Marcus Furlong <furlongm@gmail.com>
+# Copyright 2013-2026 Marcus Furlong <furlongm@gmail.com>
 #
 # This file is part of Patchman.
 #
@@ -23,10 +23,12 @@ plugin_type = (TYPE_CORE,)
 
 
 def posttrans_hook(conduit):
-    conduit.info(2, 'Sending report to patchman server...')
     servicecmd = conduit.confString('main',
                                     'servicecmd',
                                     '/usr/sbin/patchman-client')
+    if not os.path.isfile(servicecmd) or not os.access(servicecmd, os.X_OK):
+        return
+    conduit.info(2, 'Sending report to patchman server...')
     args = '-n'
-    command = f'{servicecmd} {args}> /dev/null'
+    command = f'{servicecmd} {args} > /dev/null'
     os.system(command)
