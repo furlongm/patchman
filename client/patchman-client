@@ -1155,6 +1155,54 @@ if ${dry_run} ; then
     if [ ! -z "${tags}" ] ; then
         echo "Tags: ${tags}"
     fi
+    if ${verbose} ; then
+        echo
+        echo "=== Packages ==="
+        cut -d \' -f 2 "${tmpfile_pkg}" | sort
+        echo
+        echo "=== Repos ==="
+        awk -F\' '{printf "  [%s] %s\n", $2, $4}' "${tmpfile_rep}"
+        if [ -s "${tmpfile_sec}" ] ; then
+            echo
+            echo "=== Security Updates ==="
+            awk -F\' '{printf "  %s %s\n", $2, $4}' "${tmpfile_sec}"
+        fi
+        if [ -s "${tmpfile_bug}" ] ; then
+            echo
+            echo "=== Bugfix Updates ==="
+            awk -F\' '{printf "  %s %s\n", $2, $4}' "${tmpfile_bug}"
+        fi
+        if [ -s "${tmpfile_mod}" ] ; then
+            echo
+            echo "=== Modules ==="
+            awk -F\' '{printf "  %s\n", $2}' "${tmpfile_mod}"
+        fi
+    fi
+    if ${debug} ; then
+        if [ "${protocol}" == "2" ] && check_command_exists jq ; then
+            tmpfile_packages_json=$(mktemp)
+            tmpfile_repos_json=$(mktemp)
+            tmpfile_modules_json=$(mktemp)
+            tmpfile_sec_json=$(mktemp)
+            tmpfile_bug_json=$(mktemp)
+            echo
+            echo "=== Full JSON Report ==="
+            build_json_report
+        else
+            echo
+            echo "=== Raw Data Files ==="
+            echo "--- ${tmpfile_pkg} ---"
+            cat "${tmpfile_pkg}"
+            echo "--- ${tmpfile_rep} ---"
+            cat "${tmpfile_rep}"
+            echo "--- ${tmpfile_sec} ---"
+            cat "${tmpfile_sec}"
+            echo "--- ${tmpfile_bug} ---"
+            cat "${tmpfile_bug}"
+            echo "--- ${tmpfile_mod} ---"
+            cat "${tmpfile_mod}"
+        fi
+    fi
     exit 0
 fi
 
