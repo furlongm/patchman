@@ -1,0 +1,105 @@
+services:
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${DB_NAME:-patchman}
+      POSTGRES_USER: ${DB_USER:-patchman}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-patchman} -d ${DB_NAME:-patchman}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    command: web
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-8000}:8000"
+    volumes:
+      - static_files:/var/lib/patchman/static
+    environment:
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required}
+      DB_NAME: ${DB_NAME:-patchman}
+      DB_USER: ${DB_USER:-patchman}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      DB_HOST: db
+      DB_PORT: "5432"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-*}
+      DEBUG: ${DEBUG:-False}
+      TIME_ZONE: ${TIME_ZONE:-UTC}
+      GUNICORN_WORKERS: ${GUNICORN_WORKERS:-4}
+      GUNICORN_THREADS: ${GUNICORN_THREADS:-2}
+      GUNICORN_TIMEOUT: ${GUNICORN_TIMEOUT:-120}
+      REQUIRE_API_KEY: ${REQUIRE_API_KEY:-True}
+      CACHE_MIDDLEWARE_SECONDS: ${CACHE_MIDDLEWARE_SECONDS:-0}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery-worker:
+    build: .
+    command: celery-worker
+    restart: unless-stopped
+    environment:
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required}
+      DB_NAME: ${DB_NAME:-patchman}
+      DB_USER: ${DB_USER:-patchman}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      DB_HOST: db
+      DB_PORT: "5432"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      CELERY_LOG_LEVEL: ${CELERY_LOG_LEVEL:-info}
+      CELERY_POOL_TYPE: ${CELERY_POOL_TYPE:-threads}
+      CELERY_CONCURRENCY: ${CELERY_CONCURRENCY:-4}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery-beat:
+    build: .
+    command: celery-beat
+    restart: unless-stopped
+    environment:
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required}
+      DB_NAME: ${DB_NAME:-patchman}
+      DB_USER: ${DB_USER:-patchman}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      DB_HOST: db
+      DB_PORT: "5432"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      CELERY_LOG_LEVEL: ${CELERY_LOG_LEVEL:-info}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:
+  static_files:
