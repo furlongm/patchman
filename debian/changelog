@@ -1,3 +1,22 @@
+patchman (4.0.18-1) stable; urgency=medium
+
+  * handle malformed repos better
+  * fix metalink parsing error
+  * add dry-run mode to client
+  * improve client error output
+  * option to get apt updates on debian
+  * improve duplicate arch removal handling
+  * improve reboot detection
+  * add shellcheck disables for client
+  * use pysqlite3 if available
+  * update yum hook
+  * add helpful client debug and verbose output
+  * fix repo/mirror bulk delete bug
+  * ensure host errata are tracked and updated
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Fri, 06 Mar 2026 03:21:58 +0000
+
 patchman (4.0.17-1) stable; urgency=medium
 
   [ dependabot[bot] ]

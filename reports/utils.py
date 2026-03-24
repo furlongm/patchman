@@ -34,7 +34,7 @@ from packages.utils import (
 from patchman.signals import pbar_start, pbar_update
 from repos.models import Mirror, MirrorPackage, Repository
 from repos.utils import get_or_create_repo
-from util.logging import debug_message, info_message
+from util.logging import debug_message, error_message, info_message
 
 
 def process_repos(report, host):
@@ -281,23 +281,27 @@ def process_repo_text(repo, arch):
     """
     r_id = None
 
-    if repo[0] == 'deb':
-        r_type = Repository.DEB
-        r_priority = int(repo[2])
-    elif repo[0] == 'rpm':
-        r_type = Repository.RPM
-        r_id = repo.pop(2)
-        r_priority = int(repo[2]) * -1
-    elif repo[0] == 'arch':
-        r_type = Repository.ARCH
-        r_id = repo[2]
-        r_priority = 0
-    elif repo[0] == 'gentoo':
-        r_type = Repository.GENTOO
-        r_id = repo.pop(2)
-        r_priority = repo[2]
-        arch = 'any'
-    else:
+    try:
+        if repo[0] == 'deb':
+            r_type = Repository.DEB
+            r_priority = int(repo[2])
+        elif repo[0] == 'rpm':
+            r_type = Repository.RPM
+            r_id = repo.pop(2)
+            r_priority = int(repo[2]) * -1
+        elif repo[0] == 'arch':
+            r_type = Repository.ARCH
+            r_id = repo[2]
+            r_priority = 0
+        elif repo[0] == 'gentoo':
+            r_type = Repository.GENTOO
+            r_id = repo.pop(2)
+            r_priority = int(repo[2])
+            arch = 'any'
+        else:
+            return None, 0
+    except (ValueError, IndexError) as e:
+        error_message(text=f'Skipping malformed repo line: {repo} ({e})')
         return None, 0
 
     r_name = repo[1] if repo[1] else ''

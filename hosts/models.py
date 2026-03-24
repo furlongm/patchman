@@ -204,10 +204,12 @@ class Host(models.Model):
         host_packages = self.packages.exclude(kernels_q).distinct()
         kernel_packages = self.packages.filter(kernels_q)
 
+        errata_ids = set()
+
         if self.host_repos_only:
-            update_ids = self.find_host_repo_updates(host_packages, repo_packages)
+            update_ids = self.find_host_repo_updates(host_packages, repo_packages, errata_ids)
         else:
-            update_ids = self.find_osrelease_repo_updates(host_packages, repo_packages)
+            update_ids = self.find_osrelease_repo_updates(host_packages, repo_packages, errata_ids)
 
         kernel_update_ids = self.find_kernel_updates(kernel_packages, repo_packages)
         for ku_id in kernel_update_ids:
@@ -217,7 +219,11 @@ class Host(models.Model):
             if update.id not in update_ids:
                 self.updates.remove(update)
 
-    def find_host_repo_updates(self, host_packages, repo_packages):
+        for erratum in self.errata.all():
+            if erratum.id not in errata_ids:
+                self.errata.remove(erratum)
+
+    def find_host_repo_updates(self, host_packages, repo_packages, errata_ids):
 
         update_ids = []
         hostrepos_q = Q(repo__mirror__enabled=True,
@@ -258,6 +264,7 @@ class Host(models.Model):
                     if errata:
                         for erratum in errata:
                             self.errata.add(erratum)
+                            errata_ids.add(erratum.id)
                     if highest_package.compare_version(pu) == -1:
                         if priority is not None:
                             # proceed only if the package is from a repo with a
@@ -276,7 +283,7 @@ class Host(models.Model):
                     update_ids.append(uid)
         return update_ids
 
-    def find_osrelease_repo_updates(self, host_packages, repo_packages):
+    def find_osrelease_repo_updates(self, host_packages, repo_packages, errata_ids):
 
         update_ids = []
         for package in host_packages:
@@ -304,6 +311,7 @@ class Host(models.Model):
                     if errata:
                         for erratum in errata:
                             self.errata.add(erratum)
+                            errata_ids.add(erratum.id)
                     if highest_package.compare_version(pu) == -1:
                         highest_package = pu
 
