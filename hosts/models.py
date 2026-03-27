@@ -206,10 +206,7 @@ class Host(models.Model):
 
         errata_ids = set()
 
-        if self.host_repos_only:
-            update_ids = self.find_host_repo_updates(host_packages, repo_packages, errata_ids)
-        else:
-            update_ids = self.find_osrelease_repo_updates(host_packages, repo_packages, errata_ids)
+        update_ids = self.find_repo_updates(host_packages, repo_packages, errata_ids)
 
         kernel_update_ids = self.find_kernel_updates(kernel_packages, repo_packages)
         for ku_id in kernel_update_ids:
@@ -223,7 +220,7 @@ class Host(models.Model):
             if erratum.id not in errata_ids:
                 self.errata.remove(erratum)
 
-    def find_host_repo_updates(self, host_packages, repo_packages, errata_ids):
+    def find_repo_updates(self, host_packages, repo_packages, errata_ids):
 
         update_ids = set()
         hostrepos_q = Q(repo__mirror__enabled=True,
@@ -276,44 +273,6 @@ class Host(models.Model):
                                     highest_package = pu
                         else:
                             highest_package = pu
-
-            if highest_package != package:
-                uid = self.process_update(package, highest_package)
-                if uid is not None:
-                    update_ids.add(uid)
-        return update_ids
-
-    def find_osrelease_repo_updates(self, host_packages, repo_packages, errata_ids):
-
-        update_ids = set()
-        for package in host_packages:
-            highest_package = package
-
-            # find the packages that are potential updates
-            pu_q = Q(name=package.name,
-                     arch=package.arch,
-                     packagetype=package.packagetype)
-            potential_updates = repo_packages.filter(pu_q)
-            for pu in potential_updates:
-                pu_is_module_package = False
-                pu_in_enabled_modules = False
-                if pu.module_set.exists():
-                    pu_is_module_package = True
-                    for module in pu.module_set.all():
-                        if module in self.modules.all():
-                            pu_in_enabled_modules = True
-                if pu_is_module_package:
-                    if not pu_in_enabled_modules:
-                        continue
-                if package.compare_version(pu) == -1:
-                    # package updates that are fixed by erratum (may already be superceded by another update)
-                    errata = pu.provides_fix_in_erratum.all()
-                    if errata:
-                        for erratum in errata:
-                            self.errata.add(erratum)
-                            errata_ids.add(erratum.id)
-                    if highest_package.compare_version(pu) == -1:
-                        highest_package = pu
 
             if highest_package != package:
                 uid = self.process_update(package, highest_package)
@@ -409,7 +368,7 @@ class Host(models.Model):
         update_ids = set()
         self.reboot_required = False
 
-        # build hostrepos for priority filtering (same as find_host_repo_updates)
+        # build hostrepos for priority filtering (same as find_repo_updates)
         hostrepos = None
         if self.host_repos_only:
             hostrepos_q = Q(repo__mirror__enabled=True,
