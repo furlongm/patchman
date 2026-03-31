@@ -227,6 +227,35 @@ class ProcessRepoTests(TestCase):
         # RPM priority is negated
         self.assertEqual(priority, -99)
 
+    def test_process_repo_no_rename_on_existing_mirror(self):
+        """Repo found by mirror URL should keep its original name.
+
+        Repo names are set at creation and should not be overwritten by
+        client reports — the admin may have renamed the repo in the UI.
+        """
+        repo, _ = process_repo(
+            r_type=Repository.RPM,
+            r_name='Zabbix Official Repository - x86_64 x86_64',
+            r_id='zabbix',
+            r_priority=-99,
+            urls=['https://repo.zabbix.com/zabbix/6.0/rhel/9/x86_64'],
+            arch='x86_64',
+        )
+        self.assertEqual(repo.name, 'Zabbix Official Repository - x86_64 x86_64')
+
+        # updated client reports same URL with corrected name
+        repo2, _ = process_repo(
+            r_type=Repository.RPM,
+            r_name='Zabbix Official Repository - x86_64',
+            r_id='zabbix',
+            r_priority=-99,
+            urls=['https://repo.zabbix.com/zabbix/6.0/rhel/9/x86_64'],
+            arch='x86_64',
+        )
+        # should return the same repo, name unchanged
+        self.assertEqual(repo2.id, repo.id)
+        self.assertEqual(repo2.name, 'Zabbix Official Repository - x86_64 x86_64')
+
 
 @override_settings(
     CELERY_TASK_ALWAYS_EAGER=True,
