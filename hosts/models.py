@@ -309,7 +309,7 @@ class Host(models.Model):
         else:
             self.reboot_required = False
 
-    def _get_deb_kernel_flavour(self, pkg_name):
+    def get_deb_kernel_flavour(self, pkg_name):
         """Extract the flavour suffix from a DEB kernel package name.
 
         e.g. 'linux-image-6.8.0-51-generic' → 'generic'
@@ -318,7 +318,7 @@ class Host(models.Model):
              'linux-modules-extra-6.8.0-51-generic' → 'generic'
         Returns None if the flavour cannot be determined.
         """
-        for prefix in self._deb_kernel_prefixes:
+        for prefix in self.deb_kernel_prefixes:
             if pkg_name.startswith(prefix):
                 # strip prefix, then split version from flavour
                 # e.g. '6.8.0-51-generic' or '6.1.0-28-cloud-amd64'
@@ -333,7 +333,7 @@ class Host(models.Model):
                 return None
         return None
 
-    def _get_running_kernel_flavour(self):
+    def get_running_kernel_flavour(self):
         """Extract the flavour from the running kernel string.
 
         e.g. '6.8.0-51-generic' → 'generic'
@@ -350,7 +350,7 @@ class Host(models.Model):
         return None
 
     # longest prefixes first to avoid linux-modules- matching linux-modules-extra-
-    _deb_kernel_prefixes = [
+    deb_kernel_prefixes = [
         'linux-image-unsigned-',
         'linux-modules-extra-',
         'linux-cloud-tools-',
@@ -382,14 +382,14 @@ class Host(models.Model):
         rpm_kernels = kernel_packages.filter(packagetype='R')
         arch_kernels = kernel_packages.filter(packagetype='A')
 
-        update_ids.update(self._find_rpm_kernel_updates(rpm_kernels, repo_packages, hostrepos))
-        update_ids.update(self._find_deb_kernel_updates(deb_kernels, repo_packages, hostrepos))
-        update_ids.update(self._find_arch_kernel_updates(arch_kernels, repo_packages, hostrepos))
+        update_ids.update(self.find_rpm_kernel_updates(rpm_kernels, repo_packages, hostrepos))
+        update_ids.update(self.find_deb_kernel_updates(deb_kernels, repo_packages, hostrepos))
+        update_ids.update(self.find_arch_kernel_updates(arch_kernels, repo_packages, hostrepos))
 
         self.save(update_fields=['reboot_required'])
         return update_ids
 
-    def _find_rpm_kernel_updates(self, kernel_packages, repo_packages, hostrepos):
+    def find_rpm_kernel_updates(self, kernel_packages, repo_packages, hostrepos):
 
         update_ids = set()
 
@@ -470,7 +470,7 @@ class Host(models.Model):
 
         return update_ids
 
-    def _find_arch_kernel_updates(self, kernel_packages, repo_packages, hostrepos):
+    def find_arch_kernel_updates(self, kernel_packages, repo_packages, hostrepos):
 
         update_ids = set()
 
@@ -521,10 +521,10 @@ class Host(models.Model):
 
         return update_ids
 
-    def _find_deb_kernel_updates(self, kernel_packages, repo_packages, hostrepos):
+    def find_deb_kernel_updates(self, kernel_packages, repo_packages, hostrepos):
 
         update_ids = set()
-        running_flavour = self._get_running_kernel_flavour()
+        running_flavour = self.get_running_kernel_flavour()
 
         # find the linux-image package matching the running kernel
         running_kernel_pkg = None
@@ -544,7 +544,7 @@ class Host(models.Model):
         processed_prefixes = set()
         for package in kernel_packages:
             pkg_name = package.name.name
-            flavour = self._get_deb_kernel_flavour(pkg_name)
+            flavour = self.get_deb_kernel_flavour(pkg_name)
 
             # if we know the running flavour, only process matching packages
             # if we don't (unflavoured kernel), process all kernel packages
@@ -553,7 +553,7 @@ class Host(models.Model):
 
             # determine the prefix (e.g. 'linux-image-')
             prefix = None
-            for p in self._deb_kernel_prefixes:
+            for p in self.deb_kernel_prefixes:
                 if pkg_name.startswith(p):
                     prefix = p
                     break
@@ -604,7 +604,7 @@ class Host(models.Model):
         if running_kernel_pkg:
             for package in kernel_packages:
                 if package.name.name.startswith('linux-image-'):
-                    flavour = self._get_deb_kernel_flavour(package.name.name)
+                    flavour = self.get_deb_kernel_flavour(package.name.name)
                     if running_flavour is None or flavour == running_flavour:
                         if running_kernel_pkg.compare_version(package) == -1:
                             self.reboot_required = True
