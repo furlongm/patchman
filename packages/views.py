@@ -109,6 +109,13 @@ def package_list(request):
     filter_list.append(Filter(request, 'Architecture', 'arch_id', PackageArchitecture.objects.all()))
     filter_bar = FilterBar(request, filter_list)
 
+    packages = packages.annotate(
+        host_count=Count('host', distinct=True),
+        repo_count=Count('mirror__repo', distinct=True),
+        affected_count=Count('affected_by_erratum', distinct=True),
+        fixed_count=Count('provides_fix_in_erratum', distinct=True),
+    )
+
     table = PackageTable(packages)
     RequestConfig(request, paginate={'per_page': 50}).configure(table)
 
@@ -144,6 +151,8 @@ def package_name_list(request):
     filter_list.append(Filter(request, 'Architecture', 'arch_id', PackageArchitecture.objects.all()))
     filter_bar = FilterBar(request, filter_list)
 
+    packages = packages.annotate(host_count=Count('package__host', distinct=True))
+
     table = PackageNameTable(packages)
     RequestConfig(request, paginate={'per_page': 50}).configure(table)
 
@@ -165,11 +174,20 @@ def package_detail(request, package_id):
 @login_required
 def package_name_detail(request, packagename):
     package = get_object_or_404(PackageName, name=packagename)
-    allversions = Package.objects.select_related('name', 'arch').filter(name=package.id)
+    allversions = Package.objects.select_related(
+        'name', 'arch',
+    ).filter(name=package.id).annotate(
+        host_count=Count('host', distinct=True),
+        repo_count=Count('mirror__repo', distinct=True),
+        affected_count=Count('affected_by_erratum', distinct=True),
+        fixed_count=Count('provides_fix_in_erratum', distinct=True),
+    )
+    table = PackageTable(allversions)
+    RequestConfig(request, paginate={'per_page': 50}).configure(table)
     return render(request,
                   'packages/package_name_detail.html',
                   {'package': package,
-                   'allversions': allversions})
+                   'table': table})
 
 
 @login_required
