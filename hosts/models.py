@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+import re
+
 from django.db import models
 from django.db.models import Q
 from django.urls import reverse
@@ -363,6 +365,21 @@ class Host(models.Model):
         'linux-tools-',
     ]
 
+    def get_deb_kernel_series(self, pkg_name):
+        """Extract kernel major.minor series from a DEB kernel package name.
+
+        e.g. 'linux-image-6.8.0-51-generic' → '6.8'
+             'linux-image-6.17.0-19-generic' → '6.17'
+             'linux-modules-extra-6.1.0-28-cloud-amd64' → '6.1'
+        Returns None if the series cannot be determined.
+        """
+        for prefix in self.deb_kernel_prefixes:
+            if pkg_name.startswith(prefix):
+                remainder = pkg_name[len(prefix):]
+                m = re.match(r'(\d+\.\d+)', remainder)
+                return m.group(1) if m else None
+        return None
+
     def find_kernel_updates(self, kernel_packages, repo_packages):
 
         update_ids = set()
@@ -561,6 +578,10 @@ class Host(models.Model):
                 continue
             processed_prefixes.add(prefix)
 
+            # extract kernel series (e.g. '6.8') to avoid cross-track
+            # comparisons (GA 6.8 vs HWE 6.17 in the same repo)
+            installed_series = self.get_deb_kernel_series(pkg_name)
+
             # build endswith filter for flavoured kernels
             name_filter = Q(
                 name__name__startswith=prefix,
@@ -570,8 +591,13 @@ class Host(models.Model):
                 name_filter &= Q(name__name__endswith=f'-{running_flavour}')
 
             # find repo highest for this prefix+flavour, respecting priority
+            # and kernel series (GA vs HWE)
             repo_highest = None
             for rp in repo_packages.filter(name_filter):
+                if installed_series is not None:
+                    rp_series = self.get_deb_kernel_series(rp.name.name)
+                    if rp_series != installed_series:
+                        continue
                 if priority is not None:
                     rp_best_repo = find_best_repo(rp, hostrepos)
                     if not rp_best_repo or rp_best_repo.priority < priority:
