@@ -16,7 +16,8 @@
 # along with  If not, see <http://www.gnu.org/licenses/>
 
 from django.conf import settings
-from django.conf.urls import handler404, handler500, include  # noqa
+from django.urls import include
+from django.conf.urls import handler404, handler500
 from django.contrib import admin
 from django.urls import path
 from django.views import static

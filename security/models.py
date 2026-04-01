@@ -32,7 +32,12 @@ class Reference(models.Model):
     url = models.URLField(max_length=512)
 
     class Meta:
-        unique_together = ['ref_type', 'url']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['ref_type', 'url'],
+                name='unique_reference',
+            ),
+        ]
         ordering = ['ref_type', 'url']
 
     def __str__(self):
@@ -87,7 +92,12 @@ class CVSS(models.Model):
     vector_string = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
-        unique_together = ['score', 'severity', 'version', 'vector_string']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['score', 'severity', 'version', 'vector_string'],
+                name='unique_cvss',
+            ),
+        ]
 
     def __str__(self):
         return f'{self.score} ({self.severity}) [{self.vector_string}]'

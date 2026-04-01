@@ -20,14 +20,14 @@ from django.contrib import admin
 from packages.models import Package, PackageName, PackageUpdate
 
 
+@admin.register(Package)
 class PackageAdmin(admin.ModelAdmin):
     readonly_fields = ('name',)
 
 
+@admin.register(PackageUpdate)
 class PackageUpdateAdmin(admin.ModelAdmin):
     readonly_fields = ('oldpackage', 'newpackage')
 
 
-admin.site.register(Package, PackageAdmin)
 admin.site.register(PackageName)
-admin.site.register(PackageUpdate, PackageUpdateAdmin)
