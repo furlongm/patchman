@@ -208,7 +208,7 @@ def get_accepted_ubuntu_codenames():
     """ Get acceptable Ubuntu OS codenames
         Can be overridden by specifying UBUNTU_CODENAMES in settings
     """
-    default_codenames = ['jammy', 'noble']
+    default_codenames = ['jammy', 'noble', 'resolute']
     accepted_codenames = get_setting_of_type(
         setting_name='UBUNTU_CODENAMES',
         setting_type=list,

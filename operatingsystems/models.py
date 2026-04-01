@@ -35,7 +35,12 @@ class OSRelease(models.Model):
     class Meta:
         verbose_name = 'Operating System Release'
         verbose_name_plural = 'Operating System Releases'
-        unique_together = ['name', 'codename', 'cpe_name']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['name', 'codename', 'cpe_name'],
+                name='unique_osrelease',
+            ),
+        ]
         ordering = ['name']
 
     def __str__(self):

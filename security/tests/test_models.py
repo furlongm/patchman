@@ -16,6 +16,7 @@
 
 from decimal import Decimal
 
+from django.db import IntegrityError
 from django.test import TestCase, override_settings
 
 from security.models import CVE, CVSS, CWE, Reference
@@ -47,7 +48,6 @@ class CVEMethodTests(TestCase):
     def test_cve_unique_id(self):
         """Test CVE cve_id is unique."""
         CVE.objects.create(cve_id='CVE-2024-12345')
-        from django.db import IntegrityError
         with self.assertRaises(IntegrityError):
             CVE.objects.create(cve_id='CVE-2024-12345')
 
@@ -90,7 +90,6 @@ class CWEMethodTests(TestCase):
     def test_cwe_unique_id(self):
         """Test CWE cwe_id is unique."""
         CWE.objects.create(cwe_id='CWE-79', name='XSS')
-        from django.db import IntegrityError
         with self.assertRaises(IntegrityError):
             CWE.objects.create(cwe_id='CWE-79', name='Different name')
 
@@ -155,12 +154,11 @@ class ReferenceMethodTests(TestCase):
         self.assertIn('example.com', str_repr)
 
     def test_reference_unique_together(self):
-        """Test Reference unique_together constraint."""
+        """Test Reference unique constraint."""
         Reference.objects.create(
             url='https://example.com/advisory',
             ref_type='VENDOR',
         )
-        from django.db import IntegrityError
         with self.assertRaises(IntegrityError):
             Reference.objects.create(
                 url='https://example.com/advisory',
