@@ -544,35 +544,35 @@ class DebKernelUpdateTests(TestCase):
         self.assertEqual(update.newpackage, self.img_53)
 
     def test_deb_flavour_extraction(self):
-        """Test _get_deb_kernel_flavour helper."""
+        """Test get_deb_kernel_flavour helper."""
         host = self._create_host('6.8.0-51-generic', [self.img_51])
         self.assertEqual(
-            host._get_deb_kernel_flavour('linux-image-6.8.0-51-generic'),
+            host.get_deb_kernel_flavour('linux-image-6.8.0-51-generic'),
             'generic'
         )
         self.assertEqual(
-            host._get_deb_kernel_flavour('linux-modules-extra-6.8.0-51-lowlatency'),
+            host.get_deb_kernel_flavour('linux-modules-extra-6.8.0-51-lowlatency'),
             'lowlatency'
         )
         self.assertEqual(
-            host._get_deb_kernel_flavour('linux-image-6.1.0-28-cloud-amd64'),
+            host.get_deb_kernel_flavour('linux-image-6.1.0-28-cloud-amd64'),
             'cloud-amd64'
         )
         self.assertEqual(
-            host._get_deb_kernel_flavour('linux-image-unsigned-6.8.0-51-generic'),
+            host.get_deb_kernel_flavour('linux-image-unsigned-6.8.0-51-generic'),
             'generic'
         )
 
     def test_deb_running_kernel_flavour(self):
-        """Test _get_running_kernel_flavour helper."""
+        """Test get_running_kernel_flavour helper."""
         host = self._create_host('6.8.0-51-generic', [self.img_51])
-        self.assertEqual(host._get_running_kernel_flavour(), 'generic')
+        self.assertEqual(host.get_running_kernel_flavour(), 'generic')
 
         host.kernel = '6.1.0-28-cloud-amd64'
-        self.assertEqual(host._get_running_kernel_flavour(), 'cloud-amd64')
+        self.assertEqual(host.get_running_kernel_flavour(), 'cloud-amd64')
 
         host.kernel = '5.14.0-503.el9'
-        self.assertIsNone(host._get_running_kernel_flavour())
+        self.assertIsNone(host.get_running_kernel_flavour())
 
     def test_deb_kernel_series_extraction(self):
         """Test get_deb_kernel_series helper."""
