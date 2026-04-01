@@ -155,7 +155,7 @@ class ReferenceMethodTests(TestCase):
         self.assertIn('example.com', str_repr)
 
     def test_reference_unique_together(self):
-        """Test Reference unique_together constraint."""
+        """Test Reference unique constraint."""
         Reference.objects.create(
             url='https://example.com/advisory',
             ref_type='VENDOR',

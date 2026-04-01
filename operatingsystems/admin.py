@@ -20,9 +20,9 @@ from django.contrib import admin
 from operatingsystems.models import OSRelease, OSVariant
 
 
+@admin.register(OSRelease)
 class OSReleaseAdmin(admin.ModelAdmin):
     filter_horizontal = ('repos',)
 
 
 admin.site.register(OSVariant)
-admin.site.register(OSRelease, OSReleaseAdmin)

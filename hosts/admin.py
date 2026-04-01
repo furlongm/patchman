@@ -20,9 +20,9 @@ from django.contrib import admin
 from hosts.models import Host, HostRepo
 
 
+@admin.register(Host)
 class HostAdmin(admin.ModelAdmin):
     readonly_fields = ('packages', 'updates')
 
 
-admin.site.register(Host, HostAdmin)
 admin.site.register(HostRepo)
