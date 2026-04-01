@@ -87,7 +87,12 @@ class Package(models.Model):
 
     class Meta:
         ordering = ['name', 'epoch', 'version', 'release', 'arch']
-        unique_together = ['name', 'epoch', 'version', 'release', 'arch', 'packagetype', 'category']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['name', 'epoch', 'version', 'release', 'arch', 'packagetype', 'category'],
+                name='unique_package',
+            ),
+        ]
 
     def __str__(self):
         if self.epoch:
@@ -226,7 +231,12 @@ class PackageUpdate(models.Model):
     security = models.BooleanField(default=False)
 
     class Meta:
-        unique_together = ['oldpackage', 'newpackage', 'security']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['oldpackage', 'newpackage', 'security'],
+                name='unique_packageupdate',
+            ),
+        ]
         ordering = ['oldpackage', 'newpackage']
 
     def __str__(self):
