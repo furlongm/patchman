@@ -15,9 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+import sys
+
 from colorama import Fore, Style, init
 from django.conf import settings
 from django.dispatch import receiver
+from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 
 from patchman.signals import (
@@ -54,9 +57,7 @@ def print_info_message(**kwargs):
     """
     text = str(kwargs.get('text'))
     if not get_quiet_mode():
-        with logging_redirect_tqdm(loggers=[logger]):
-            for line in text.splitlines():
-                logger.info(Style.RESET_ALL + Fore.RESET + line)
+        tqdm.write(text, file=sys.stdout)
 
 
 @receiver(warning_message_s)
