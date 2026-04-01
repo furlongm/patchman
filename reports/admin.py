@@ -20,8 +20,8 @@ from django.contrib import admin
 from reports.models import Report
 
 
+@admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
     readonly_fields = ('packages',)
 
 
-admin.site.register(Report, ReportAdmin)

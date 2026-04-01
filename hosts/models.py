@@ -646,7 +646,12 @@ class HostRepo(models.Model):
     priority = models.IntegerField(default=0)
 
     class Meta:
-        unique_together = ['host', 'repo']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['host', 'repo'],
+                name='unique_hostrepo',
+            ),
+        ]
         ordering = ['host', 'repo']
 
     def __str__(self):

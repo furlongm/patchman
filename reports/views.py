@@ -304,8 +304,8 @@ class ReportViewSet(viewsets.ViewSet):
         data = serializer.validated_data
 
         # Extract client IP
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-        x_real_ip = request.META.get('HTTP_X_REAL_IP')
+        x_forwarded_for = request.headers.get('x-forwarded-for')
+        x_real_ip = request.headers.get('x-real-ip')
         if x_forwarded_for:
             report_ip = x_forwarded_for.split(',')[0]
         elif x_real_ip:
@@ -336,7 +336,7 @@ class ReportViewSet(viewsets.ViewSet):
             os=data['os'],
             report_ip=report_ip,
             protocol='2',
-            useragent=request.META.get('HTTP_USER_AGENT', ''),
+            useragent=request.headers.get('user-agent', ''),
             packages=json.dumps(data.get('packages', [])),
             repos=json.dumps(data.get('repos', [])),
             modules=json.dumps(data.get('modules', [])),

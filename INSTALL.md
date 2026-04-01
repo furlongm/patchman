@@ -5,18 +5,18 @@ mysql or postgresql instead, see the database configuration section.
 
 
 ## Supported Server Installation Options
-  - [Ubuntu 24.04](#ubuntu-2404-noble)
+  - [Ubuntu 26.04](#ubuntu-2604-noble)
   - [Debian 13](#debian-13-trixie)
   - [Rocky 10](#rocky-10)
   - [virtualenv + pip](#virtualenv--pip)
   - [Source](#source)
 
 
-### Ubuntu 24.04 (noble)
+### Ubuntu 26.04 (resolute)
 
 ```shell
 curl -sS https://repo.openbytes.ie/openbytes.gpg > /usr/share/keyrings/openbytes.gpg
-echo "deb [signed-by=/usr/share/keyrings/openbytes.gpg] https://repo.openbytes.ie/patchman/ubuntu noble-backports main" > /etc/apt/sources.list.d/patchman.list
+echo "deb [signed-by=/usr/share/keyrings/openbytes.gpg] https://repo.openbytes.ie/patchman/ubuntu resolute main" > /etc/apt/sources.list.d/patchman.list
 apt update
 apt -y install python3-patchman patchman-client
 patchman-manage createsuperuser
@@ -74,7 +74,7 @@ gunicorn patchman.wsgi -b 0.0.0.0:80
 
 ### Source
 
-#### Ubuntu 24.04 (noble)
+#### Ubuntu 26.04 (resolute)
 
 1. Install dependencies
 
