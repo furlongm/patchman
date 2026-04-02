@@ -93,15 +93,28 @@ class Erratum(models.Model):
                         # marked as a security update, so delete this one
                         affected_update.delete()
 
-    def fetch_osv_dev_data(self):
+    def fetch_osv_dev_data(self, session=None):
+        """ Fetch osv.dev JSON for this erratum. Returns parsed JSON or None.
+        """
+        from util.logging import debug_message
         osv_dev_url = f'https://api.osv.dev/v1/vulns/{self.name}'
-        res = get_url(osv_dev_url)
+        debug_message(text=f'Trying {osv_dev_url}')
+        try:
+            if session:
+                res = session.get(osv_dev_url, timeout=30)
+            else:
+                res = get_url(osv_dev_url)
+                if res is None:
+                    error_message(text=f'No response - Skipping {self.name} - {osv_dev_url}')
+                    return None
+        except Exception as e:
+            error_message(text=f'Error fetching {osv_dev_url}: {e}')
+            return None
+        debug_message(text=f'{res.status_code}: {res.headers}')
         if res.status_code == 404:
-            error_message(text=f'404 - Skipping {self.name} - {osv_dev_url}')
-            return
+            return None
         data = res.content
-        osv_dev_json = json.loads(data)
-        self.parse_osv_dev_data(osv_dev_json)
+        return json.loads(data)
 
     def parse_osv_dev_data(self, osv_dev_json):
         name = osv_dev_json.get('id')

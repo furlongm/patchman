@@ -101,7 +101,7 @@ def fetch_content(response, text='', ljust=35):
     wait=wait_exponential(multiplier=1, min=1, max=10),
     reraise=False,
 )
-def get_url(url, headers=None, params=None):
+def get_url(url, headers=None, params=None, session=None):
     """ Perform a http GET on a URL. Return None on error.
     """
     response = None
@@ -109,9 +109,10 @@ def get_url(url, headers=None, params=None):
         headers = {}
     if not params:
         params = {}
+    requester = session or requests
     try:
         debug_message(text=f'Trying {url} headers:{headers} params:{params}')
-        response = requests.get(url, headers=headers, params=params, stream=True, proxies=proxies, timeout=30)
+        response = requester.get(url, headers=headers, params=params, stream=True, proxies=proxies, timeout=30)
         debug_message(text=f'{response.status_code}: {response.headers}')
         if response.status_code in [403, 404]:
             return response
