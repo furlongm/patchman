@@ -91,12 +91,30 @@ def scan_package_updates_for_affected_packages():
 def enrich_errata():
     """ Enrich Errata with data from osv.dev
     """
-    connections.close_all()
-    elen = Erratum.objects.count()
-    pbar_start.send(sender=None, ptext=f'Adding osv.dev data to {elen} Errata', plen=elen)
-    i = 0
-    with concurrent.futures.ProcessPoolExecutor(max_workers=25) as executor:
-        futures = [executor.submit(e.fetch_osv_dev_data) for e in Erratum.objects.all()]
-        for future in concurrent.futures.as_completed(futures):
+    import requests
+    from requests.adapters import HTTPAdapter
+    errata = list(Erratum.objects.all())
+    elen = len(errata)
+
+    # phase 1: fetch osv.dev data
+    pbar_start.send(sender=None, ptext=f'Fetching osv.dev data for {elen} Errata', plen=elen)
+    results = []
+    session = requests.Session()
+    adapter = HTTPAdapter(pool_connections=25, pool_maxsize=25)
+    session.mount('https://', adapter)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=25) as executor:
+        futures = {executor.submit(e.fetch_osv_dev_data, session): e for e in errata}
+        for i, future in enumerate(concurrent.futures.as_completed(futures)):
+            erratum = futures[future]
+            osv_data = future.result()
+            if osv_data is not None:
+                results.append((erratum, osv_data))
             pbar_update.send(sender=None, index=i + 1)
-            i += 1
+
+    # phase 2: parse and write to db (serial, no lock contention)
+    rlen = len(results)
+    if rlen > 0:
+        pbar_start.send(sender=None, ptext=f'Parsing osv.dev data for {rlen} Errata', plen=rlen)
+        for i, (erratum, osv_data) in enumerate(results):
+            erratum.parse_osv_dev_data(osv_data)
+            pbar_update.send(sender=None, index=i + 1)
