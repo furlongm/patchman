@@ -37,6 +37,19 @@ quiet_mode = False
 pbar = None
 
 
+def clear_forked_pbar():
+    """ Clear any tqdm instances inherited from a parent process via fork.
+        Prevents subprocess tqdm.write() from redrawing a stale progress bar
+        on the parent's terminal. Only clears if running in a child process.
+    """
+    import os
+    if os.getpid() != _main_pid and tqdm._instances:
+        tqdm._instances.clear()
+
+
+_main_pid = __import__('os').getpid()
+
+
 def get_quiet_mode():
     """ Get the global quiet_mode
     """
@@ -56,7 +69,7 @@ def create_pbar(ptext, plength, ljust=35, **kwargs):
     global pbar
     if not quiet_mode and plength > 0:
         jtext = str(ptext).ljust(ljust)
-        pbar = tqdm(total=plength, desc=jtext, position=0, leave=True, ascii=' >=')
+        pbar = tqdm(total=plength, desc=jtext, position=0, leave=True, ascii=' >=', mininterval=0.5)
         return pbar
 
 

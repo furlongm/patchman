@@ -62,19 +62,24 @@ def get_or_create_erratum(name, e_type, issue_date, synopsis):
     return e, created
 
 
-def mark_errata_security_updates():
+def mark_errata_security_updates(concurrent_processing=True, max_workers=25):
     """ For each set of erratum packages, modify any PackageUpdate that
         should be marked as a security update.
     """
-    connections.close_all()
     elen = Erratum.objects.count()
     pbar_start.send(sender=None, ptext=f'Scanning {elen} Errata for security updates', plen=elen)
-    i = 0
-    with concurrent.futures.ProcessPoolExecutor(max_workers=25) as executor:
-        futures = [executor.submit(e.scan_for_security_updates) for e in Erratum.objects.all()]
-        for future in concurrent.futures.as_completed(futures):
+    if concurrent_processing:
+        connections.close_all()
+        i = 0
+        with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
+            futures = [executor.submit(e.scan_for_security_updates) for e in Erratum.objects.all()]
+            for future in concurrent.futures.as_completed(futures):
+                pbar_update.send(sender=None, index=i + 1)
+                i += 1
+    else:
+        for i, e in enumerate(Erratum.objects.all()):
+            e.scan_for_security_updates()
             pbar_update.send(sender=None, index=i + 1)
-            i += 1
 
 
 def scan_package_updates_for_affected_packages():
@@ -88,7 +93,7 @@ def scan_package_updates_for_affected_packages():
             e.affected_packages.add(pu.oldpackage)
 
 
-def enrich_errata():
+def enrich_errata(concurrent_processing=True, max_workers=25):
     """ Enrich Errata with data from osv.dev
     """
     import requests
@@ -99,16 +104,23 @@ def enrich_errata():
     # phase 1: fetch osv.dev data
     pbar_start.send(sender=None, ptext=f'Fetching osv.dev data for {elen} Errata', plen=elen)
     results = []
-    session = requests.Session()
-    adapter = HTTPAdapter(pool_connections=25, pool_maxsize=25)
-    session.mount('https://', adapter)
-    with concurrent.futures.ThreadPoolExecutor(max_workers=25) as executor:
-        futures = {executor.submit(e.fetch_osv_dev_data, session): e for e in errata}
-        for i, future in enumerate(concurrent.futures.as_completed(futures)):
-            erratum = futures[future]
-            osv_data = future.result()
+    if concurrent_processing:
+        session = requests.Session()
+        adapter = HTTPAdapter(pool_connections=max_workers, pool_maxsize=max_workers)
+        session.mount('https://', adapter)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {executor.submit(e.fetch_osv_dev_data, session): e for e in errata}
+            for i, future in enumerate(concurrent.futures.as_completed(futures)):
+                erratum = futures[future]
+                osv_data = future.result()
+                if osv_data is not None:
+                    results.append((erratum, osv_data))
+                pbar_update.send(sender=None, index=i + 1)
+    else:
+        for i, e in enumerate(errata):
+            osv_data = e.fetch_osv_dev_data()
             if osv_data is not None:
-                results.append((erratum, osv_data))
+                results.append((e, osv_data))
             pbar_update.send(sender=None, index=i + 1)
 
     # phase 2: parse and write to db (serial, no lock contention)

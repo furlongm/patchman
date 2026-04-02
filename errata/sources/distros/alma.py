@@ -26,7 +26,7 @@ from patchman.signals import pbar_start, pbar_update
 from util import fetch_content, get_setting_of_type, get_url
 
 
-def update_alma_errata(concurrent_processing=True):
+def update_alma_errata(concurrent_processing=True, max_workers=25):
     """ Update Alma Linux advisories from errata.almalinux.org:
            https://errata.almalinux.org/8/errata.full.json
            https://errata.almalinux.org/9/errata.full.json
@@ -40,7 +40,7 @@ def update_alma_errata(concurrent_processing=True):
     )
     for release in alma_releases:
         advisories = fetch_alma_advisories(release)
-        process_alma_errata(release, advisories, concurrent_processing)
+        process_alma_errata(release, advisories, concurrent_processing, max_workers)
 
 
 def fetch_alma_advisories(release):
@@ -54,11 +54,11 @@ def fetch_alma_advisories(release):
     return advisories
 
 
-def process_alma_errata(release, advisories, concurrent_processing):
+def process_alma_errata(release, advisories, concurrent_processing, max_workers=25):
     """ Process Alma Linux Errata
     """
     if concurrent_processing:
-        process_alma_errata_concurrently(release, advisories)
+        process_alma_errata_concurrently(release, advisories, max_workers)
     else:
         process_alma_errata_serially(release, advisories)
 
@@ -73,14 +73,14 @@ def process_alma_errata_serially(release, advisories):
         pbar_update.send(sender=None, index=i + 1)
 
 
-def process_alma_errata_concurrently(release, advisories):
+def process_alma_errata_concurrently(release, advisories, max_workers=25):
     """ Process Alma Linux Errata concurrently
     """
     connections.close_all()
     elen = len(advisories)
     pbar_start.send(sender=None, ptext=f'Processing {elen} Alma {release} Errata', plen=elen)
     i = 0
-    with concurrent.futures.ProcessPoolExecutor(max_workers=25) as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
         futures = [executor.submit(process_alma_erratum, release, advisory) for advisory in advisories]
         for future in concurrent.futures.as_completed(futures):
             i += 1
@@ -91,6 +91,8 @@ def process_alma_erratum(release, advisory):
     """ Process a single Alma Linux Erratum
     """
     from errata.utils import get_or_create_erratum
+    from util.logging import clear_forked_pbar
+    clear_forked_pbar()
     erratum_name = advisory.get('id')
     issue_date = advisory.get('issued_date')
     synopsis = advisory.get('title')
@@ -160,8 +162,7 @@ def add_alma_erratum_modules(e, advisory):
         stream = module.get('stream')
         version = module.get('version')
         matching_modules = get_matching_modules(name, stream, version, context, arch)
-        for match in matching_modules:
+        for match in matching_modules.prefetch_related('packages'):
             for fixed_package in match.packages.all():
-                match.packages.add(fixed_package)
                 fixed_packages.add(fixed_package)
     e.add_fixed_packages(fixed_packages)

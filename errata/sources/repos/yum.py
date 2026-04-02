@@ -31,7 +31,7 @@ from util import extract, get_url
 from util.logging import error_message
 
 
-def extract_updateinfo(data, url, concurrent_processing=True):
+def extract_updateinfo(data, url, concurrent_processing=True, max_workers=25):
     """ Parses updateinfo.xml and extracts package/errata information
     """
     extracted = extract(data, url)
@@ -43,7 +43,7 @@ def extract_updateinfo(data, url, concurrent_processing=True):
     except ElementTree.ParseError as e:
         error_message(text=f'Error parsing updateinfo file from {url} : {e}')
     if concurrent_processing:
-        extract_updateinfo_concurrently(updates, elen)
+        extract_updateinfo_concurrently(updates, elen, max_workers)
     else:
         extract_updateinfo_serially(updates, elen)
 
@@ -57,13 +57,13 @@ def extract_updateinfo_serially(updates, elen):
         pbar_update.send(sender=None, index=i + 1)
 
 
-def extract_updateinfo_concurrently(updates, elen):
+def extract_updateinfo_concurrently(updates, elen, max_workers=25):
     """ Parses updateinfo.xml and extracts package/errata information concurrently
     """
     connections.close_all()
     pbar_start.send(sender=None, ptext=f'Extracting {elen} updateinfo Errata', plen=elen)
     i = 0
-    with concurrent.futures.ProcessPoolExecutor(max_workers=100) as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
         futures = [executor.submit(process_updateinfo_erratum, update) for update in updates]
         for future in concurrent.futures.as_completed(futures):
             i += 1
@@ -74,6 +74,8 @@ def process_updateinfo_erratum(update):
     """ Processes a single erratum from updateinfo.xml
     """
     from errata.utils import get_or_create_erratum
+    from util.logging import clear_forked_pbar
+    clear_forked_pbar()
     e_type = update.attrib.get('type')
     e_name = update.find('id').text
     name, ref_type, urls = get_distro_data(e_name, e_type)

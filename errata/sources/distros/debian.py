@@ -34,7 +34,7 @@ from util.logging import error_message, warning_message
 DSCs = {}
 
 
-def update_debian_errata(concurrent_processing=True):
+def update_debian_errata(concurrent_processing=True, max_workers=25):
     """ Update Debian errata using:
           https://salsa.debian.org/security-tracker-team/security-tracker/raw/master/data/DSA/list
           https://salsa.debian.org/security-tracker-team/security-tracker/raw/master/data/DSA/list
@@ -47,7 +47,7 @@ def update_debian_errata(concurrent_processing=True):
     fetch_dscs_from_debian_package_file_maps()
     accepted_codenames = get_accepted_debian_codenames()
     errata = parse_debian_errata(advisories, accepted_codenames)
-    create_debian_errata(errata, accepted_codenames, concurrent_processing)
+    create_debian_errata(errata, accepted_codenames, concurrent_processing, max_workers)
 
 
 def fetch_debian_dsa_advisories():
@@ -113,7 +113,9 @@ def parse_debian_errata(advisories, accepted_codenames):
     """
     distro_pattern = re.compile(r'^\t\[(.+?)\] - .*')
     title_pattern = re.compile(r'^\[(.+?)\] (.+?) (.+?)[ ]+[-]+ (.*)')
+    distro_package_pattern = re.compile(r'^\t\[(.+?)\] - (.+?) (.*)')
     errata = []
+    dsc_fetches = []
     e = {'packages': {}, 'cve_ids': [], 'releases': []}
     for line in advisories.splitlines():
         if line.startswith('['):
@@ -132,9 +134,17 @@ def parse_debian_errata(advisories, accepted_codenames):
                 e['releases'].append(release)
                 if not e.get('packages').get(release):
                     e['packages'][release] = []
-                e['packages'][release].append(parse_debian_erratum_package(line, accepted_codenames))
+                pkg_match = re.match(distro_package_pattern, line)
+                if pkg_match and pkg_match.group(1) in accepted_codenames:
+                    source_package = pkg_match.group(2)
+                    source_version = pkg_match.group(3)
+                    dsc_fetches.append((source_package, source_version))
+                    e['packages'][release].append((source_package, source_version))
+                else:
+                    e['packages'][release].append(None)
     # add the last one
     errata = add_errata_by_codename(errata, e, accepted_codenames)
+    fetch_debian_dsc_package_lists(dsc_fetches)
     return errata
 
 
@@ -162,11 +172,11 @@ def parse_debian_erratum_advisory(e, match):
     return e
 
 
-def create_debian_errata(errata, accepted_codenames, concurrent_processing):
+def create_debian_errata(errata, accepted_codenames, concurrent_processing, max_workers=25):
     """ Create Debian Errata
     """
     if concurrent_processing:
-        create_debian_errata_concurrently(errata, accepted_codenames)
+        create_debian_errata_concurrently(errata, accepted_codenames, max_workers)
     else:
         create_debian_errata_serially(errata, accepted_codenames)
 
@@ -181,14 +191,14 @@ def create_debian_errata_serially(errata, accepted_codenames):
         pbar_update.send(sender=None, index=i + 1)
 
 
-def create_debian_errata_concurrently(errata, accepted_codenames):
+def create_debian_errata_concurrently(errata, accepted_codenames, max_workers=25):
     """ Create Debian Errata concurrently
     """
     connections.close_all()
     elen = len(errata)
     pbar_start.send(sender=None, ptext=f'Processing {elen} Debian Errata', plen=elen)
     i = 0
-    with concurrent.futures.ProcessPoolExecutor(max_workers=25) as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
         futures = [executor.submit(process_debian_erratum, erratum, accepted_codenames) for erratum in errata]
         for future in concurrent.futures.as_completed(futures):
             i += 1
@@ -200,6 +210,8 @@ def process_debian_erratum(erratum, accepted_codenames):
     """
     try:
         from errata.utils import get_or_create_erratum
+        from util.logging import clear_forked_pbar
+        clear_forked_pbar()
         erratum_name = erratum.get('name')
         e, created = get_or_create_erratum(
             name=erratum_name,
@@ -221,19 +233,15 @@ def process_debian_erratum(erratum, accepted_codenames):
         error_message(text=exc)
 
 
-def parse_debian_erratum_package(line, accepted_codenames):
-    """ Parse the codename and source package from a DSA/DLA file
-        Returns the source package and source version
+
+
+def fetch_debian_dsc_package_lists(dsc_fetches):
+    """ Fetch DSC package lists with a progress bar
     """
-    distro_package_pattern = re.compile(r'^\t\[(.+?)\] - (.+?) (.*)')
-    match = re.match(distro_package_pattern, line)
-    if match:
-        codename = match.group(1)
-        if codename in accepted_codenames:
-            source_package = match.group(2)
-            source_version = match.group(3)
-            fetch_debian_dsc_package_list(source_package, source_version)
-            return source_package, source_version
+    pbar_start.send(sender=None, ptext=f'Fetching {len(dsc_fetches)} Debian DSC files', plen=len(dsc_fetches))
+    for i, (package, version) in enumerate(dsc_fetches):
+        fetch_debian_dsc_package_list(package, version)
+        pbar_update.send(sender=None, index=i + 1)
 
 
 def get_debian_dsc_package_list(package, version):
@@ -301,6 +309,8 @@ def create_debian_os_releases(codename_to_version):
 def process_debian_erratum_fixed_packages(e, package_data):
     """ Process packages fixed in a Debian errata
     """
+    if not package_data:
+        return
     source_package, source_version = package_data
     epoch, ver, rel = find_evr(source_version)
     package_list = get_debian_dsc_package_list(source_package, source_version)
