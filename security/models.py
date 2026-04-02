@@ -179,8 +179,10 @@ class CVE(models.Model):
         references = cve_json.get('references')
         if references:
             for reference in references:
-                ref_type = reference.get('type').capitalize()
                 url = reference.get('url')
+                if not url:
+                    continue
+                ref_type = reference.get('type').capitalize()
                 get_or_create_reference(ref_type, url)
         scores = cve_json.get('severity')
         if scores:

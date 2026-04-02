@@ -95,15 +95,19 @@ def fixup_reference(ref):
     """ Fix up a Security Reference object to normalize the URL and type
     """
     url = urlparse(ref.get('url'))
+    if not url.hostname:
+        return ref
     ref_type = ref.get('ref_type')
-    if 'lists' in url.hostname or 'lists' in url.path:
+    hostname = url.hostname
+    if 'lists' in hostname or 'lists' in url.path:
         ref_type = 'Mailing List'
-    if ref_type == 'bugzilla' or 'bug' in url.hostname or 'bugs' in url.path:
+    if ref_type == 'bugzilla' or 'bug' in hostname or 'bugs' in url.path:
         ref_type = 'Bug Tracker'
     url = fixup_ubuntu_usn_url(url)
-    if url.hostname == 'ubuntu.com' and url.path.startswith('/security/notices/USN'):
+    hostname = url.hostname
+    if hostname == 'ubuntu.com' and url.path.startswith('/security/notices/USN'):
         ref_type = 'USN'
-    if 'launchpad.net' in url.hostname:
+    if 'launchpad.net' in hostname:
         ref_type = 'Bug Tracker'
         netloc = url.netloc.replace('bugs.', '')
         bug = url.path.split('/')[-1]
