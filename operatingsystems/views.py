@@ -269,7 +269,7 @@ def osvariant_bulk_action(request):
 
     action = request.POST.get('action', '')
     select_all_filtered = request.POST.get('select_all_filtered') == '1'
-    filter_params = request.POST.get('filter_params', '')
+    filter_params = sanitize_filter_params(request.POST.get('filter_params', ''))
 
     if not action:
         messages.warning(request, 'Please select an action')
@@ -310,7 +310,7 @@ def osrelease_bulk_action(request):
 
     action = request.POST.get('action', '')
     select_all_filtered = request.POST.get('select_all_filtered') == '1'
-    filter_params = request.POST.get('filter_params', '')
+    filter_params = sanitize_filter_params(request.POST.get('filter_params', ''))
 
     if not action:
         messages.warning(request, 'Please select an action')
