@@ -81,7 +81,7 @@ def issues(request):
         norepo_osreleases = osreleases.filter(repos__isnull=True)
 
     # mirror issues
-    failed_mirrors = repos.filter(auth_required=False).filter(mirror__last_access_ok=False).filter(mirror__last_access_ok=True).distinct()  # noqa
+    failed_mirrors = repos.filter(auth_required=False).filter(mirror__last_access_ok=False).distinct()  # noqa
     disabled_mirrors = repos.filter(auth_required=False).filter(mirror__enabled=False).filter(mirror__mirrorlist=False).distinct()  # noqa
     norefresh_mirrors = repos.filter(auth_required=False).filter(mirror__refresh=False).distinct()  # noqa
 
@@ -92,8 +92,8 @@ def issues(request):
     nohost_repos = repos.filter(host__isnull=True)
 
     # package issues
-    norepo_packages = packages.filter(mirror__isnull=True, oldpackage__isnull=True, host__isnull=False).distinct()  # noqa
-    orphaned_packages = packages.filter(mirror__isnull=True, host__isnull=True).distinct()  # noqa
+    norepo_packages_count = packages.filter(mirror__isnull=True, oldpackage__isnull=True, host__isnull=False).distinct().count()  # noqa
+    orphaned_packages_count = packages.filter(mirror__isnull=True, host__isnull=True).count()  # noqa
 
     # report issues
     unprocessed_reports = Report.objects.filter(processed=False)
@@ -139,7 +139,9 @@ def issues(request):
         nomirror_repos.exists() or
         nohost_repos.exists() or
         bool(possible_mirrors) or
-        norepo_packages.exists()
+        norepo_packages_count > 0 or
+        orphaned_packages_count > 0 or
+        unprocessed_reports.exists()
     )
 
     return render(
@@ -153,7 +155,7 @@ def issues(request):
          'diff_rdns_hosts': diff_rdns_hosts,
          'stale_hosts': stale_hosts,
          'possible_mirrors': possible_mirrors,
-         'norepo_packages': norepo_packages,
+         'norepo_packages_count': norepo_packages_count,
          'nohost_repos': nohost_repos,
          'secupdate_hosts': secupdate_hosts,
          'bugupdate_hosts': bugupdate_hosts,
@@ -162,7 +164,7 @@ def issues(request):
          'disabled_mirrors': disabled_mirrors,
          'norefresh_mirrors': norefresh_mirrors,
          'failed_mirrors': failed_mirrors,
-         'orphaned_packages': orphaned_packages,
+         'orphaned_packages_count': orphaned_packages_count,
          'failed_repos': failed_repos,
          'nomirror_repos': nomirror_repos,
          'reboot_hosts': reboot_hosts,

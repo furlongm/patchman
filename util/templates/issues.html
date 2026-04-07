@@ -203,38 +203,20 @@
   {% endif %}
 {% endwith %}
 
-{% with count=norepo_packages.count %}
-  {% if count > 0 %}
+{% if norepo_packages_count > 0 %}
   <div class="well well-sm">
-    <button class="btn btn-sm" data-toggle="collapse" data-target="#norepo_packages"><span class="badge">{{ count }}</span> Installed Packages are not from any Repository</button>
-      <div class="collapse" id="norepo_packages">
-        <ul class="package-list">
-          {% for package in norepo_packages %}
-            <li><a href="{{ package.get_absolute_url }}">{{ package }}</a></li>
-          {% endfor %}
-        </ul>
-     </div>
+    <a class="btn btn-sm" href="{% url 'packages:package_list' %}?available_in_repos=false&installed_on_hosts=true"><span class="badge">{{ norepo_packages_count }}</span> Installed Packages are not from any Repository</a>
   </div>
-  {% endif %}
-{% endwith %}
+{% endif %}
 
-{% with count=orphaned_packages.count %}
-  {% if count < 0 %}
+{% if orphaned_packages_count > 0 %}
   <div class="well well-sm">
-    <button class="btn btn-sm" data-toggle="collapse" data-target="#orphaned_packages"><span class="badge">{{ count }}</span> Packages are orphaned (not from any Repository, not installed on any Host)</button>
-      <div class="collapse" id="orphaned_packages">
-        <ul class="package-list">
-          {% for package in orphaned_packages %}
-            <li><a href="{{ package.get_absolute_url }}">{{ package }}</a></li>
-          {% endfor %}
-        </ul>
-     </div>
+    <a class="btn btn-sm" href="{% url 'packages:package_list' %}?available_in_repos=false&installed_on_hosts=false"><span class="badge">{{ orphaned_packages_count }}</span> Packages are orphaned (not from any Repository, not installed on any Host)</a>
   </div>
-  {% endif %}
-{% endwith %}
+{% endif %}
 
 {% with count=unprocessed_reports.count %}
-  {% if count < 0 %}
+  {% if count > 0 %}
   <div class="well well-sm">
     <button class="btn btn-sm" data-toggle="collapse" data-target="#unprocessed_reports"><span class="badge">{{ count }}</span> Reports have not yet been processed</button>
       <div class="collapse" id="unprocessed_reports">
