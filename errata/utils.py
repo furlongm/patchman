@@ -112,7 +112,12 @@ def enrich_errata(concurrent_processing=True, max_workers=25):
             futures = {executor.submit(e.fetch_osv_dev_data, session): e for e in errata}
             for i, future in enumerate(concurrent.futures.as_completed(futures)):
                 erratum = futures[future]
-                osv_data = future.result()
+                try:
+                    osv_data = future.result()
+                except Exception as e:
+                    error_message(text=f'Error fetching osv.dev data for {erratum}: {e}')
+                    pbar_update.send(sender=None, index=i + 1)
+                    continue
                 if osv_data is not None:
                     results.append((erratum, osv_data))
                 pbar_update.send(sender=None, index=i + 1)
