@@ -68,6 +68,7 @@ def extract_module_metadata(data, url, repo):
         modules_yaml = yaml.safe_load_all(extracted)
     except yaml.YAMLError as e:
         error_message(text=f'Error parsing modules.yaml: {e}')
+        return modules
 
     mlen = len(re.findall(r'---', yaml.dump(extracted.decode())))
     pbar_start.send(sender=None, ptext=f'Extracting {mlen} Modules ', plen=mlen)
