@@ -288,10 +288,7 @@ def get_matching_packages_q(name, q, p_type, arch=None):
     base_filter = {'name': package_name, 'packagetype': p_type}
     if arch:
         if not isinstance(arch, PackageArchitecture):
-            try:
-                arch = PackageArchitecture.objects.get_or_create(name=arch)
-            except PackageArchitecture.DoesNotExist:
-                return Package.objects.none()
+            arch, _ = PackageArchitecture.objects.get_or_create(name=arch)
         base_filter['arch'] = arch
     return Package.objects.filter(q, **base_filter)
 
