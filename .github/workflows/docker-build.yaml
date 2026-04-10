@@ -1,0 +1,42 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          file: docker/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{vars.DOCKERHUB_USERNAME}}/${{vars.DOCKERHUB_CONTAINER}}:latest,${{vars.DOCKERHUB_USERNAME}}/${{vars.DOCKERHUB_CONTAINER}}:${{github.ref_name}}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Checkout for next job
+        uses: actions/checkout@v4
+
+      - name: Docker Hub Description
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{vars.DOCKERHUB_USERNAME}}/${{vars.DOCKERHUB_CONTAINER}}
+          readme-filepath: docker/README.md
