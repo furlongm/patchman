@@ -121,10 +121,11 @@ def issues_count(request):
     if hosts.filter(host_repos_only=False).exists():
         norepo_osreleases_count = osreleases.filter(repos__isnull=True).count()
 
-    # mirror issues
+    # mirror issues — chained .filter() on M2M creates separate JOINs,
+    # so this finds repos with BOTH a failing AND a succeeding mirror
     failed_mirrors = repos.filter(
         auth_required=False, mirror__last_access_ok=False
-    ).distinct()
+    ).filter(mirror__last_access_ok=True).distinct()
     disabled_mirrors = repos.filter(
         auth_required=False, mirror__enabled=False, mirror__mirrorlist=False
     ).distinct()
