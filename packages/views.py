@@ -15,9 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+from urllib.parse import parse_qs
+
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django_tables2 import RequestConfig
 from rest_framework import viewsets
 
@@ -27,7 +31,73 @@ from packages.serializers import (
     PackageNameSerializer, PackageSerializer, PackageUpdateSerializer,
 )
 from packages.tables import PackageNameTable, PackageTable, PackageUpdateTable
+from util import sanitize_filter_params
 from util.filterspecs import Filter, FilterBar
+
+
+def _get_filtered_packages(filter_params):
+    """Helper to reconstruct filtered queryset from filter params."""
+    params = parse_qs(filter_params)
+    packages = Package.objects.select_related('name', 'arch')
+
+    if 'arch_id' in params:
+        packages = packages.filter(arch=params['arch_id'][0]).distinct()
+    if 'packagetype' in params:
+        packages = packages.filter(packagetype=params['packagetype'][0]).distinct()
+    if 'affected_by_errata' in params:
+        if params['affected_by_errata'][0] == 'true':
+            packages = packages.filter(affected_by_erratum__isnull=False)
+        else:
+            packages = packages.filter(affected_by_erratum__isnull=True)
+    if 'provides_fix_in_erratum' in params:
+        if params['provides_fix_in_erratum'][0] == 'true':
+            packages = packages.filter(provides_fix_in_erratum__isnull=False)
+        else:
+            packages = packages.filter(provides_fix_in_erratum__isnull=True)
+    if 'installed_on_hosts' in params:
+        if params['installed_on_hosts'][0] == 'true':
+            packages = packages.filter(host__isnull=False)
+        else:
+            packages = packages.filter(host__isnull=True)
+    if 'available_in_repos' in params:
+        if params['available_in_repos'][0] == 'true':
+            packages = packages.filter(mirror__isnull=False)
+        else:
+            packages = packages.filter(mirror__isnull=True)
+    if 'search' in params:
+        terms = params['search'][0].lower()
+        query = Q()
+        for term in terms.split(' '):
+            q = Q(name__name__icontains=term)
+            query = query & q
+        packages = packages.filter(query)
+
+    return packages.distinct()
+
+
+def _get_filtered_package_updates(filter_params):
+    """Helper to reconstruct filtered queryset from filter params."""
+    params = parse_qs(filter_params)
+    updates = PackageUpdate.objects.select_related(
+        'oldpackage__name', 'oldpackage__arch',
+        'newpackage__name', 'newpackage__arch',
+    )
+
+    if 'security' in params:
+        security = params['security'][0] == 'true'
+        updates = updates.filter(security=security)
+    if 'host_id' in params:
+        updates = updates.filter(host=params['host_id'][0])
+    if 'search' in params:
+        terms = params['search'][0].lower()
+        query = Q()
+        for term in terms.split(' '):
+            q = (Q(oldpackage__name__name__icontains=term) |
+                 Q(newpackage__name__name__icontains=term))
+            query = query & q
+        updates = updates.filter(query)
+
+    return updates.distinct()
 
 
 @login_required
@@ -119,11 +189,19 @@ def package_list(request):
     table = PackageTable(packages)
     RequestConfig(request, paginate={'per_page': 50}).configure(table)
 
+    filter_params = sanitize_filter_params(request.GET.urlencode())
+    bulk_actions = [
+        {'value': 'delete', 'label': 'Delete'},
+    ]
+
     return render(request,
                   'packages/package_list.html',
                   {'table': table,
                    'filter_bar': filter_bar,
-                   'terms': terms})
+                   'terms': terms,
+                   'total_count': packages.count(),
+                   'filter_params': filter_params,
+                   'bulk_actions': bulk_actions})
 
 
 @login_required
@@ -225,11 +303,101 @@ def package_update_list(request):
     table = PackageUpdateTable(updates.distinct())
     RequestConfig(request, paginate={'per_page': 50}).configure(table)
 
+    filter_params = sanitize_filter_params(request.GET.urlencode())
+    bulk_actions = [
+        {'value': 'delete', 'label': 'Delete'},
+    ]
+
     return render(request,
                   'packages/package_update_list.html',
                   {'table': table,
                    'filter_bar': filter_bar,
-                   'terms': terms})
+                   'terms': terms,
+                   'total_count': updates.distinct().count(),
+                   'filter_params': filter_params,
+                   'bulk_actions': bulk_actions})
+
+
+@login_required
+def package_bulk_action(request):
+    """Handle bulk actions on packages."""
+    if request.method != 'POST':
+        return redirect('packages:package_list')
+
+    action = request.POST.get('action', '')
+    select_all_filtered = request.POST.get('select_all_filtered') == '1'
+    filter_params = sanitize_filter_params(request.POST.get('filter_params', ''))
+
+    if not action:
+        messages.warning(request, 'Please select an action')
+        if filter_params:
+            return redirect(f"{reverse('packages:package_list')}?{filter_params}")
+        return redirect('packages:package_list')
+
+    if select_all_filtered:
+        packages = _get_filtered_packages(filter_params)
+    else:
+        selected_ids = request.POST.getlist('selected_ids')
+        if not selected_ids:
+            messages.warning(request, 'No packages selected')
+            if filter_params:
+                return redirect(f"{reverse('packages:package_list')}?{filter_params}")
+            return redirect('packages:package_list')
+        packages = Package.objects.filter(id__in=selected_ids)
+
+    count = packages.count()
+    name = Package._meta.verbose_name if count == 1 else Package._meta.verbose_name_plural
+
+    if action == 'delete':
+        packages.delete()
+        messages.success(request, f'Deleted {count} {name}')
+    else:
+        messages.warning(request, 'Invalid action')
+
+    if filter_params:
+        return redirect(f"{reverse('packages:package_list')}?{filter_params}")
+    return redirect('packages:package_list')
+
+
+@login_required
+def package_update_bulk_action(request):
+    """Handle bulk actions on package updates."""
+    if request.method != 'POST':
+        return redirect('packages:package_update_list')
+
+    action = request.POST.get('action', '')
+    select_all_filtered = request.POST.get('select_all_filtered') == '1'
+    filter_params = sanitize_filter_params(request.POST.get('filter_params', ''))
+
+    if not action:
+        messages.warning(request, 'Please select an action')
+        if filter_params:
+            return redirect(f"{reverse('packages:package_update_list')}?{filter_params}")
+        return redirect('packages:package_update_list')
+
+    if select_all_filtered:
+        updates = _get_filtered_package_updates(filter_params)
+    else:
+        selected_ids = request.POST.getlist('selected_ids')
+        if not selected_ids:
+            messages.warning(request, 'No package updates selected')
+            if filter_params:
+                return redirect(f"{reverse('packages:package_update_list')}?{filter_params}")
+            return redirect('packages:package_update_list')
+        updates = PackageUpdate.objects.filter(id__in=selected_ids)
+
+    count = updates.count()
+    name = PackageUpdate._meta.verbose_name if count == 1 else PackageUpdate._meta.verbose_name_plural
+
+    if action == 'delete':
+        updates.delete()
+        messages.success(request, f'Deleted {count} {name}')
+    else:
+        messages.warning(request, 'Invalid action')
+
+    if filter_params:
+        return redirect(f"{reverse('packages:package_update_list')}?{filter_params}")
+    return redirect('packages:package_update_list')
 
 
 class PackageNameViewSet(viewsets.ModelViewSet):

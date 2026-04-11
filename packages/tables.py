@@ -17,6 +17,8 @@ import django_tables2 as tables
 from packages.models import Package, PackageName, PackageUpdate
 from util.tables import BaseTable
 
+CHECKBOX_TEMPLATE = '<input type="checkbox" name="selected_ids" value="{{ record.id }}" class="bulk-checkbox">'
+SELECT_ALL_CHECKBOX = '<input type="checkbox" id="select-all-page" title="Select all on this page">'
 PACKAGE_NAME_TEMPLATE = '<a href="{{ record.get_absolute_url }}">{{ record }}</a>'
 PACKAGE_REPOS_TEMPLATE = (
     '<a href="{% url \'repos:repo_list\' %}?package_id={{ record.id }}">'
@@ -37,6 +39,12 @@ FIXED_TEMPLATE = (
 
 
 class PackageTable(BaseTable):
+    select = tables.TemplateColumn(
+        CHECKBOX_TEMPLATE,
+        verbose_name=SELECT_ALL_CHECKBOX,
+        orderable=False,
+        attrs={'th': {'class': 'col-sm-auto'}, 'td': {'class': 'col-sm-auto'}},
+    )
     package_name = tables.TemplateColumn(
         PACKAGE_NAME_TEMPLATE,
         order_by='name__name',
@@ -96,7 +104,7 @@ class PackageTable(BaseTable):
     class Meta(BaseTable.Meta):
         model = Package
         fields = (
-            'package_name', 'epoch', 'package_version', 'release', 'package_arch',
+            'select', 'package_name', 'epoch', 'package_version', 'release', 'package_arch',
             'packagetype', 'package_repos', 'package_hosts', 'affected', 'fixed',
         )
 
@@ -164,6 +172,12 @@ UPDATE_TYPE_TEMPLATE = (
 
 
 class PackageUpdateTable(BaseTable):
+    select = tables.TemplateColumn(
+        CHECKBOX_TEMPLATE,
+        verbose_name=SELECT_ALL_CHECKBOX,
+        orderable=False,
+        attrs={'th': {'class': 'col-sm-auto'}, 'td': {'class': 'col-sm-auto'}},
+    )
     oldpackage = tables.TemplateColumn(
         UPDATE_OLD_TEMPLATE,
         verbose_name='Installed',
@@ -200,4 +214,4 @@ class PackageUpdateTable(BaseTable):
 
     class Meta(BaseTable.Meta):
         model = PackageUpdate
-        fields = ('oldpackage', 'newpackage', 'security', 'hosts', 'affected', 'fixed')
+        fields = ('select', 'oldpackage', 'newpackage', 'security', 'hosts', 'affected', 'fixed')

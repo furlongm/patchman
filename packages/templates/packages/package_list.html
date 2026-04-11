@@ -1,7 +1,37 @@
-{% extends "objectlist.html" %}
+{% extends "base.html" %}
+{% load django_tables2 common %}
 
 {% block page_title %}Packages{% endblock %}
 
 {% block breadcrumbs %} {{ block.super }} <li class="active"><a href="{% url 'packages:package_list' %}">Packages</a></li>{% endblock %}
 
 {% block content_title %} Packages {% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="{% if filter_bar %}col-sm-10{% else %}col-sm-12{% endif %}">
+    {% get_querydict request as querydict %}
+    {% searchform terms querydict %}
+
+    <form id="bulk-action-form" method="post" action="{% url 'packages:package_bulk_action' %}">
+        {% csrf_token %}
+        <input type="hidden" name="filter_params" value="{{ filter_params }}">
+
+        {% include "bulk_actions.html" %}
+
+        {% render_table table %}
+    </form>
+  </div>
+
+  {% if filter_bar %}
+    <div class="col-sm-2">
+      <div class="panel panel-primary">
+        <div class="panel-heading">Filter by...</div>
+        <div class="panel-body">
+        {{ filter_bar|safe }}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
