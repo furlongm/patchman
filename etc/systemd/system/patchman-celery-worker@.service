@@ -5,6 +5,8 @@ After=network-online.target
 
 [Service]
 Type=simple
+Restart=on-failure
+RestartSec=10
 User=patchman
 Group=patchman
 Environment="REDIS_HOST=127.0.0.1"
@@ -19,6 +21,7 @@ ExecStart=/usr/bin/celery \
     --task-events \
     --pool ${CELERY_POOL_TYPE} \
     --concurrency ${CELERY_CONCURRENCY} \
+    --loglevel info \
     --hostname patchman-celery-worker%i@%%h
 
 [Install]
