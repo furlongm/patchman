@@ -15,12 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+from datetime import timedelta
 from urllib.parse import parse_qs
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
+from django.db.models import F, Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.urls import reverse
 from django_filters import rest_framework as filters
 from django_tables2 import RequestConfig
@@ -36,7 +38,7 @@ from hosts.tables import HostTable
 from hosts.tasks import find_host_updates
 from operatingsystems.models import OSRelease, OSVariant
 from reports.models import Report
-from util import sanitize_filter_params
+from util import get_setting_of_type, sanitize_filter_params
 from util.filterspecs import Filter, FilterBar
 
 
@@ -65,6 +67,42 @@ def _get_filtered_hosts(filter_params):
     if 'reboot_required' in params:
         reboot_required = params['reboot_required'][0] == 'true'
         hosts = hosts.filter(reboot_required=reboot_required)
+    if 'stale' in params:
+        days = get_setting_of_type(
+            setting_name='DAYS_WITHOUT_REPORT',
+            setting_type=int,
+            default=14,
+        )
+        stale = params['stale'][0] == 'true'
+        last_report_delta = timezone.now() - timedelta(days=days)
+        if stale:
+            hosts = hosts.filter(lastreport__lt=last_report_delta)
+        else:
+            hosts = hosts.filter(lastreport__gte=last_report_delta)
+    if 'has_security_updates' in params:
+        has_security_updates = params['has_security_updates'][0] == 'true'
+        if has_security_updates:
+            hosts = hosts.filter(sec_updates_count__gt=0)
+        else:
+            hosts = hosts.filter(sec_updates_count=0)
+    if 'has_bugfix_updates' in params:
+        has_bugfix_updates = params['has_bugfix_updates'][0] == 'true'
+        if has_bugfix_updates:
+            hosts = hosts.filter(bug_updates_count__gt=0)
+        else:
+            hosts = hosts.filter(bug_updates_count=0)
+    if 'has_repos' in params:
+        has_repos = params['has_repos'][0] == 'true'
+        if has_repos:
+            hosts = hosts.exclude(repos__isnull=True, osvariant__osrelease__repos__isnull=True)
+        else:
+            hosts = hosts.filter(repos__isnull=True, osvariant__osrelease__repos__isnull=True)
+    if 'rdns_mismatch' in params:
+        rdns_mismatch = params['rdns_mismatch'][0] == 'true'
+        if rdns_mismatch:
+            hosts = hosts.exclude(reversedns=F('hostname')).filter(check_dns=True)
+        else:
+            hosts = hosts.filter(reversedns=F('hostname'))
     if 'search' in params:
         terms = params['search'][0].lower()
         query = Q()
@@ -112,6 +150,47 @@ def host_list(request):
         reboot_required = request.GET['reboot_required'] == 'true'
         hosts = hosts.filter(reboot_required=reboot_required)
 
+    if 'stale' in request.GET:
+        days = get_setting_of_type(
+            setting_name='DAYS_WITHOUT_REPORT',
+            setting_type=int,
+            default=14,
+        )
+        stale = request.GET['stale'] == 'true'
+        last_report_delta = timezone.now() - timedelta(days=days)
+        if stale:
+            hosts = hosts.filter(lastreport__lt=last_report_delta)
+        else:
+            hosts = hosts.filter(lastreport__gte=last_report_delta)
+
+    if 'has_security_updates' in request.GET:
+        has_security_updates = request.GET['has_security_updates'] == 'true'
+        if has_security_updates:
+            hosts = hosts.filter(sec_updates_count__gt=0)
+        else:
+            hosts = hosts.filter(sec_updates_count=0)
+
+    if 'has_bugfix_updates' in request.GET:
+        has_bugfix_updates = request.GET['has_bugfix_updates'] == 'true'
+        if has_bugfix_updates:
+            hosts = hosts.filter(bug_updates_count__gt=0)
+        else:
+            hosts = hosts.filter(bug_updates_count=0)
+
+    if 'has_repos' in request.GET:
+        has_repos = request.GET['has_repos'] == 'true'
+        if has_repos:
+            hosts = hosts.exclude(repos__isnull=True, osvariant__osrelease__repos__isnull=True)
+        else:
+            hosts = hosts.filter(repos__isnull=True, osvariant__osrelease__repos__isnull=True)
+
+    if 'rdns_mismatch' in request.GET:
+        rdns_mismatch = request.GET['rdns_mismatch'] == 'true'
+        if rdns_mismatch:
+            hosts = hosts.exclude(reversedns=F('hostname')).filter(check_dns=True)
+        else:
+            hosts = hosts.filter(reversedns=F('hostname'))
+
     if 'search' in request.GET:
         terms = request.GET['search'].lower()
         query = Q()
@@ -133,6 +212,11 @@ def host_list(request):
     filter_list.append(Filter(request, 'OS Variant', 'osvariant_id', OSVariant.objects.filter(host__in=hosts)))
     filter_list.append(Filter(request, 'Architecture', 'arch_id', MachineArchitecture.objects.filter(host__in=hosts)))
     filter_list.append(Filter(request, 'Reboot Required', 'reboot_required', {'true': 'Yes', 'false': 'No'}))
+    filter_list.append(Filter(request, 'Stale', 'stale', {'true': 'Yes', 'false': 'No'}))
+    filter_list.append(Filter(request, 'Security Updates', 'has_security_updates', {'true': 'Yes', 'false': 'No'}))
+    filter_list.append(Filter(request, 'Bugfix Updates', 'has_bugfix_updates', {'true': 'Yes', 'false': 'No'}))
+    filter_list.append(Filter(request, 'Has Repos', 'has_repos', {'true': 'Yes', 'false': 'No'}))
+    filter_list.append(Filter(request, 'rDNS Mismatch', 'rdns_mismatch', {'true': 'Yes', 'false': 'No'}))
     filter_bar = FilterBar(request, filter_list)
 
     table = HostTable(hosts)
