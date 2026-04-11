@@ -26,6 +26,8 @@ urlpatterns = [
     path('name/', views.package_name_list, name='package_name_list'),
     path('name/<str:packagename>/', views.package_name_detail, name='package_name_detail'),
     path('id/', views.package_list, name='package_list'),
+    path('id/bulk-action/', views.package_bulk_action, name='package_bulk_action'),
     path('id/<int:package_id>/', views.package_detail, name='package_detail'),
     path('updates/', views.package_update_list, name='package_update_list'),
+    path('updates/bulk-action/', views.package_update_bulk_action, name='package_update_bulk_action'),
 ]
