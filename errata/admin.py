@@ -19,8 +19,8 @@ from django.contrib import admin
 from errata.models import Erratum
 
 
+@admin.register(Erratum)
 class ErratumAdmin(admin.ModelAdmin):
     readonly_fields = ('affected_packages', 'fixed_packages', 'references')
 
 
-admin.site.register(Erratum, ErratumAdmin)
