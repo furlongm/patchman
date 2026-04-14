@@ -20,14 +20,14 @@ from django.contrib import admin
 from repos.models import Mirror, MirrorPackage, Repository
 
 
+@admin.register(Mirror)
 class MirrorAdmin(admin.ModelAdmin):
     readonly_fields = ('packages',)
 
 
+@admin.register(MirrorPackage)
 class MirrorPackageAdmin(admin.ModelAdmin):
     readonly_fields = ('package',)
 
 
 admin.site.register(Repository)
-admin.site.register(Mirror, MirrorAdmin)
-admin.site.register(MirrorPackage, MirrorPackageAdmin)
