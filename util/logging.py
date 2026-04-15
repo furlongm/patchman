@@ -16,6 +16,7 @@
 
 
 import logging
+import os
 
 from django.conf import settings
 from tqdm import tqdm
@@ -23,6 +24,8 @@ from tqdm import tqdm
 from patchman.signals import (
     debug_message_s, error_message_s, info_message_s, warning_message_s,
 )
+
+tqdm.monitor_interval = 0
 
 log_format = '[%(asctime)s] %(levelname)s: %(message)s'
 if settings.DEBUG:
@@ -35,6 +38,18 @@ logging.getLogger('git.cmd').setLevel(logging.WARNING)
 
 quiet_mode = False
 pbar = None
+
+
+def clear_forked_pbar():
+    """ Clear any tqdm instances inherited from a parent process via fork.
+        Prevents subprocess tqdm.write() from redrawing a stale progress bar
+        on the parent's terminal. Only clears if running in a child process.
+    """
+    if os.getpid() != _main_pid and tqdm._instances:
+        tqdm._instances.clear()
+
+
+_main_pid = os.getpid()
 
 
 def get_quiet_mode():

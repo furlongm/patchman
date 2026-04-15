@@ -14,15 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-import concurrent.futures
 import csv
 import json
 import os
 from io import StringIO
 from urllib.parse import urlparse
 
-from django.db import connections
-
+from errata.utils import get_or_create_erratum
 from operatingsystems.models import OSRelease, OSVariant
 from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
@@ -33,11 +31,12 @@ from packages.utils import (
 from patchman.signals import pbar_start, pbar_update
 from util import (
     bunzip2, fetch_content, get_setting_of_type, get_sha256, get_url,
+    run_concurrently,
 )
-from util.logging import error_message
+from util.logging import clear_forked_pbar, error_message
 
 
-def update_ubuntu_errata(concurrent_processing=False):
+def update_ubuntu_errata(concurrent_processing=True, max_workers=25):
     """ Update Ubuntu errata
     """
     codenames = retrieve_ubuntu_codenames()
@@ -47,7 +46,7 @@ def update_ubuntu_errata(concurrent_processing=False):
         expected_checksum = fetch_ubuntu_usn_db_checksum()
         actual_checksum = get_sha256(data)
         if actual_checksum == expected_checksum:
-            parse_usn_data(data, concurrent_processing)
+            parse_usn_data(data, concurrent_processing, max_workers)
         else:
             e = 'Ubuntu USN DB checksum mismatch, skipping Ubuntu errata parsing\n'
             e += f'{actual_checksum} (actual) != {expected_checksum} (expected)'
@@ -70,14 +69,14 @@ def fetch_ubuntu_usn_db_checksum():
     return fetch_content(res, 'Fetching Ubuntu Errata Checksum').decode().split()[0]
 
 
-def parse_usn_data(data, concurrent_processing):
+def parse_usn_data(data, concurrent_processing, max_workers=25):
     """ Parse the Ubuntu USN data
     """
     accepted_releases = get_accepted_ubuntu_codenames()
     extracted = bunzip2(data).decode()
     advisories = json.loads(extracted)
     if concurrent_processing:
-        parse_usn_data_concurrently(advisories, accepted_releases)
+        parse_usn_data_concurrently(advisories, accepted_releases, max_workers)
     else:
         parse_usn_data_serially(advisories, accepted_releases)
 
@@ -92,25 +91,24 @@ def parse_usn_data_serially(advisories, accepted_releases):
         pbar_update.send(sender=None, index=i + 1)
 
 
-def parse_usn_data_concurrently(advisories, accepted_releases):
+def parse_usn_data_concurrently(advisories, accepted_releases, max_workers=25):
     """ Parse the Ubuntu USN data concurrently
     """
-    connections.close_all()
     elen = len(advisories)
     pbar_start.send(sender=None, ptext=f'Processing {elen} Ubuntu Errata', plen=elen)
-    i = 0
-    with concurrent.futures.ProcessPoolExecutor(max_workers=25) as executor:
-        futures = [executor.submit(process_usn, usn_id, advisory, accepted_releases)
-                   for usn_id, advisory in advisories.items()]
-        for future in concurrent.futures.as_completed(futures):
-            i += 1
-            pbar_update.send(sender=None, index=i + 1)
+    args = [(usn_id, advisory, accepted_releases) for usn_id, advisory in advisories.items()]
+    for i, _ in enumerate(run_concurrently(process_usn_wrapper, args, max_workers)):
+        pbar_update.send(sender=None, index=i + 1)
+
+
+def process_usn_wrapper(args):
+    clear_forked_pbar()
+    return process_usn(*args)
 
 
 def process_usn(usn_id, advisory, accepted_releases):
     """ Process a single USN advisory
     """
-    from errata.utils import get_or_create_erratum
     try:
         affected_releases = advisory.get('releases', {}).keys()
         if not release_is_affected(affected_releases, accepted_releases):

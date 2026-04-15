@@ -17,8 +17,7 @@
 import concurrent.futures
 import json
 
-from django.db import connections
-
+from errata.utils import get_or_create_erratum
 from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
 from packages.utils import (
@@ -26,16 +25,17 @@ from packages.utils import (
 )
 from patchman.signals import pbar_start, pbar_update
 from util import fetch_content, get_url
-from util.logging import error_message
+from util.logging import clear_forked_pbar, error_message
 
 
-def update_arch_errata(concurrent_processing=False):
+def update_arch_errata(concurrent_processing=False, max_workers=25):
     """ Update Arch Linux Errata from the following sources:
         https://security.archlinux.org/advisories.json
     """
     add_arch_linux_osrelease()
     advisories = fetch_arch_errata()
-    parse_arch_errata(advisories, concurrent_processing)
+    if advisories:
+        parse_arch_errata(advisories, concurrent_processing, max_workers)
 
 
 def fetch_arch_errata():
@@ -44,14 +44,16 @@ def fetch_arch_errata():
     """
     res = get_url('https://security.archlinux.org/advisories.json')
     advisories = fetch_content(res, 'Fetching Arch Advisories')
+    if advisories is None:
+        return None
     return json.loads(advisories)
 
 
-def parse_arch_errata(advisories, concurrent_processing):
+def parse_arch_errata(advisories, concurrent_processing, max_workers=25):
     """ Parse Arch Linux Errata Advisories
     """
     if concurrent_processing:
-        parse_arch_errata_concurrently(advisories)
+        parse_arch_errata_concurrently(advisories, max_workers)
     else:
         parse_arch_errata_serially(advisories)
 
@@ -67,15 +69,14 @@ def parse_arch_errata_serially(advisories):
         pbar_update.send(sender=None, index=i + 1)
 
 
-def parse_arch_errata_concurrently(advisories):
+def parse_arch_errata_concurrently(advisories, max_workers=25):
     """ Parse Arch Linux Errata Advisories concurrently
     """
     osrelease = get_or_create_osrelease(name='Arch Linux')
-    connections.close_all()
     elen = len(advisories)
     pbar_start.send(sender=None, ptext=f'Processing {elen} Arch Advisories', plen=elen)
     i = 0
-    with concurrent.futures.ProcessPoolExecutor(max_workers=25) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = [executor.submit(process_arch_erratum, advisory, osrelease) for advisory in advisories]
         for future in concurrent.futures.as_completed(futures):
             i += 1
@@ -85,7 +86,7 @@ def parse_arch_errata_concurrently(advisories):
 def process_arch_erratum(advisory, osrelease):
     """ Process a single Arch Linux Erratum
     """
-    from errata.utils import get_or_create_erratum
+    clear_forked_pbar()
     try:
         name = advisory.get('name')
         issue_date = advisory.get('date')
@@ -121,6 +122,8 @@ def add_arch_erratum_references(e, advisory):
     e.add_reference('ASA', url)
     raw_url = f'{url}/raw'
     res = get_url(raw_url)
+    if res is None:
+        return
     data = res.content
     parse_arch_erratum_raw(e, data.decode())
 
@@ -152,6 +155,8 @@ def add_arch_erratum_packages(e, advisory):
     group_id = advisory.get('group')
     group_url = f'https://security.archlinux.org/group/{group_id}.json'
     res = get_url(group_url)
+    if res is None:
+        return
     data = res.content
     group = json.loads(data)
     packages = group.get('packages')

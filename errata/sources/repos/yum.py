@@ -14,11 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/
 
-import concurrent.futures
 from io import BytesIO
 
 from defusedxml import ElementTree
-from django.db import connections
 
 from operatingsystems.utils import (
     get_or_create_osrelease, normalize_el_osrelease,
@@ -27,11 +25,11 @@ from packages.models import Package
 from packages.utils import get_or_create_package
 from patchman.signals import pbar_start, pbar_update
 from security.models import Reference
-from util import extract, get_url
-from util.logging import error_message
+from util import extract, get_url, run_concurrently
+from util.logging import clear_forked_pbar, error_message
 
 
-def extract_updateinfo(data, url, concurrent_processing=True):
+def extract_updateinfo(data, url, concurrent_processing=True, max_workers=25):
     """ Parses updateinfo.xml and extracts package/errata information
     """
     extracted = extract(data, url)
@@ -43,7 +41,7 @@ def extract_updateinfo(data, url, concurrent_processing=True):
     except ElementTree.ParseError as e:
         error_message(text=f'Error parsing updateinfo file from {url} : {e}')
     if concurrent_processing:
-        extract_updateinfo_concurrently(updates, elen)
+        extract_updateinfo_concurrently(updates, elen, max_workers)
     else:
         extract_updateinfo_serially(updates, elen)
 
@@ -57,17 +55,17 @@ def extract_updateinfo_serially(updates, elen):
         pbar_update.send(sender=None, index=i + 1)
 
 
-def extract_updateinfo_concurrently(updates, elen):
+def extract_updateinfo_concurrently(updates, elen, max_workers=25):
     """ Parses updateinfo.xml and extracts package/errata information concurrently
     """
-    connections.close_all()
     pbar_start.send(sender=None, ptext=f'Extracting {elen} updateinfo Errata', plen=elen)
-    i = 0
-    with concurrent.futures.ProcessPoolExecutor(max_workers=100) as executor:
-        futures = [executor.submit(process_updateinfo_erratum, update) for update in updates]
-        for future in concurrent.futures.as_completed(futures):
-            i += 1
-            pbar_update.send(sender=None, index=i + 1)
+    for i, _ in enumerate(run_concurrently(process_updateinfo_erratum_wrapper, updates, max_workers)):
+        pbar_update.send(sender=None, index=i + 1)
+
+
+def process_updateinfo_erratum_wrapper(update):
+    clear_forked_pbar()
+    return process_updateinfo_erratum(update)
 
 
 def process_updateinfo_erratum(update):
