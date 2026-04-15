@@ -46,6 +46,7 @@ from reports.tasks import remove_reports_with_no_hosts
 from repos.models import Repository
 from repos.utils import clean_repos
 from security.utils import update_cves, update_cwes
+from util import get_setting_of_type
 from util.logging import info_message, set_quiet_mode
 
 
@@ -482,10 +483,20 @@ def process_args(args):
         dns_checks(args.host)
         showhelp = False
     if args.update_errata:
+        concurrent = get_setting_of_type(
+            setting_name='CONCURRENT_PROCESSING',
+            setting_type=bool,
+            default=True,
+        )
+        max_workers = get_setting_of_type(
+            setting_name='CONCURRENT_WORKERS',
+            setting_type=int,
+            default=25,
+        )
         update_errata(args.erratum_type, args.force, args.repo)
         scan_package_updates_for_affected_packages()
-        mark_errata_security_updates()
-        enrich_errata()
+        mark_errata_security_updates(concurrent, max_workers)
+        enrich_errata(concurrent, max_workers)
         showhelp = False
     if args.update_cves:
         update_cves(args.cve, args.fetch_nist_data)

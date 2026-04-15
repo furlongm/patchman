@@ -54,6 +54,16 @@ def update_errata(erratum_type=None, force=False, repo=None):
             errata_os_updates = []
             erratum_types = ['yum', 'rocky', 'alma', 'arch', 'ubuntu', 'debian', 'centos']
             erratum_type_defaults = ['yum', 'rocky', 'alma', 'arch', 'ubuntu', 'debian']
+            concurrent = get_setting_of_type(
+                setting_name='CONCURRENT_PROCESSING',
+                setting_type=bool,
+                default=True,
+            )
+            max_workers = get_setting_of_type(
+                setting_name='CONCURRENT_WORKERS',
+                setting_type=int,
+                default=25,
+            )
             if erratum_type:
                 if erratum_type not in erratum_types:
                     error_message(text=f'Erratum type `{erratum_type}` not in {erratum_types}')
@@ -70,13 +80,13 @@ def update_errata(erratum_type=None, force=False, repo=None):
             if 'arch' in errata_os_updates:
                 update_arch_errata()
             if 'alma' in errata_os_updates:
-                update_alma_errata()
+                update_alma_errata(concurrent, max_workers)
             if 'rocky' in errata_os_updates:
-                update_rocky_errata()
+                update_rocky_errata(concurrent, max_workers)
             if 'debian' in errata_os_updates:
-                update_debian_errata()
+                update_debian_errata(concurrent, max_workers)
             if 'ubuntu' in errata_os_updates:
-                update_ubuntu_errata()
+                update_ubuntu_errata(concurrent, max_workers)
             if 'centos' in errata_os_updates:
                 update_centos_errata()
         finally:
