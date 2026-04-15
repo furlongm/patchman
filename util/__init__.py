@@ -101,7 +101,7 @@ def fetch_content(response, text='', ljust=35):
     wait=wait_exponential(multiplier=1, min=1, max=10),
     reraise=False,
 )
-def get_url(url, headers=None, params=None):
+def get_url(url, headers=None, params=None, session=None):
     """ Perform a http GET on a URL. Return None on error.
     """
     response = None
@@ -109,9 +109,10 @@ def get_url(url, headers=None, params=None):
         headers = {}
     if not params:
         params = {}
+    requester = session or requests
     try:
         debug_message(text=f'Trying {url} headers:{headers} params:{params}')
-        response = requests.get(url, headers=headers, params=params, stream=True, proxies=proxies, timeout=30)
+        response = requester.get(url, headers=headers, params=params, stream=True, proxies=proxies, timeout=30)
         debug_message(text=f'{response.status_code}: {response.headers}')
         if response.status_code in [403, 404]:
             return response
@@ -297,3 +298,26 @@ def get_datetime_now():
     """ Return the current timezone-aware datetime removing microseconds
     """
     return datetime.now().astimezone().replace(microsecond=0)
+
+
+def run_concurrently(func, items, max_workers=25):
+    """ Run func across items using multiprocessing, yielding results as
+        they complete. Uses multiprocessing.Pool on Python < 3.12 to avoid
+        ProcessPoolExecutor deadlock (CPython #105829).
+    """
+    import concurrent.futures
+    import multiprocessing
+    import sys
+
+    from django.db import connections
+    connections.close_all()
+    items = list(items)
+    if sys.version_info >= (3, 12):
+        with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
+            futures = [executor.submit(func, item) for item in items]
+            for future in concurrent.futures.as_completed(futures):
+                yield future.result()
+    else:
+        with multiprocessing.Pool(processes=max_workers) as pool:
+            for result in pool.imap_unordered(func, items, chunksize=1):
+                yield result

@@ -17,28 +17,33 @@
 import concurrent.futures
 import json
 
-from django.db import connections
 from django.db.utils import OperationalError
 from tenacity import (
     retry, retry_if_exception_type, stop_after_attempt, wait_exponential,
 )
 
+from errata.utils import get_or_create_erratum
+from modules.models import Module
+from modules.utils import get_matching_modules
 from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
 from packages.utils import get_or_create_package, parse_package_string
 from patchman.signals import pbar_start, pbar_update
-from util import fetch_content, get_url
-from util.logging import error_message, info_message
+from util import fetch_content, get_url, run_concurrently
+from util.logging import clear_forked_pbar, error_message, info_message
 
 
-def update_rocky_errata(concurrent_processing=True):
+def update_rocky_errata(concurrent_processing=True, max_workers=25):
     """ Update Rocky Linux errata
     """
     rocky_errata_api_host = 'https://apollo.build.resf.org'
     rocky_errata_api_url = '/api/v3/'
     if check_rocky_errata_endpoint_health(rocky_errata_api_host):
-        advisories = fetch_rocky_advisories(rocky_errata_api_host, rocky_errata_api_url, concurrent_processing)
-        process_rocky_errata(advisories, concurrent_processing)
+        advisories = fetch_rocky_advisories(
+            rocky_errata_api_host, rocky_errata_api_url,
+            concurrent_processing, max_workers,
+        )
+        process_rocky_errata(advisories, concurrent_processing, max_workers)
 
 
 def check_rocky_errata_endpoint_health(rocky_errata_api_host):
@@ -66,11 +71,11 @@ def check_rocky_errata_endpoint_health(rocky_errata_api_host):
         return False
 
 
-def fetch_rocky_advisories(rocky_errata_api_host, rocky_errata_api_url, concurrent_processing):
+def fetch_rocky_advisories(rocky_errata_api_host, rocky_errata_api_url, concurrent_processing, max_workers=25):
     """ Fetch Rocky Linux advisories and return the list
     """
     if concurrent_processing:
-        return fetch_rocky_advisories_concurrently(rocky_errata_api_host, rocky_errata_api_url)
+        return fetch_rocky_advisories_concurrently(rocky_errata_api_host, rocky_errata_api_url, max_workers)
     else:
         return fetch_rocky_advisories_serially(rocky_errata_api_host, rocky_errata_api_url)
 
@@ -103,7 +108,7 @@ def fetch_rocky_advisories_serially(rocky_errata_api_host, rocky_errata_api_url)
     return advisories
 
 
-def fetch_rocky_advisories_concurrently(rocky_errata_api_host, rocky_errata_api_url):
+def fetch_rocky_advisories_concurrently(rocky_errata_api_host, rocky_errata_api_url, max_workers=25):
     """ Fetch Rocky Linux advisories concurrently and return the list
     """
     rocky_errata_advisories_url = rocky_errata_api_host + rocky_errata_api_url + 'advisories/'
@@ -119,7 +124,7 @@ def fetch_rocky_advisories_concurrently(rocky_errata_api_host, rocky_errata_api_
     ptext = 'Fetching Rocky Advisories'
     pbar_start.send(sender=None, ptext=ptext, plen=pages)
     i = 0
-    with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = [executor.submit(get_rocky_advisory, rocky_errata_advisories_url, page)
                    for page in range(1, pages + 1)]
         for future in concurrent.futures.as_completed(futures):
@@ -140,11 +145,11 @@ def get_rocky_advisory(rocky_errata_advisories_url, page):
     return advisories_dict.get('advisories')
 
 
-def process_rocky_errata(advisories, concurrent_processing):
+def process_rocky_errata(advisories, concurrent_processing, max_workers=25):
     """ Process Rocky Linux Errata
     """
     if concurrent_processing:
-        process_rocky_errata_concurrently(advisories)
+        process_rocky_errata_concurrently(advisories, max_workers)
     else:
         process_rocky_errata_serially(advisories)
 
@@ -159,18 +164,18 @@ def process_rocky_errata_serially(advisories):
         pbar_update.send(sender=None, index=i + 1)
 
 
-def process_rocky_errata_concurrently(advisories):
+def process_rocky_errata_concurrently(advisories, max_workers=25):
     """ Process Rocky Linux errata concurrently
     """
-    connections.close_all()
     elen = len(advisories)
     pbar_start.send(sender=None, ptext=f'Processing {elen} Rocky Errata', plen=elen)
-    i = 0
-    with concurrent.futures.ProcessPoolExecutor(max_workers=25) as executor:
-        futures = [executor.submit(process_rocky_erratum, advisory) for advisory in advisories]
-        for future in concurrent.futures.as_completed(futures):
-            i += 1
-            pbar_update.send(sender=None, index=i + 1)
+    for i, _ in enumerate(run_concurrently(_process_rocky_erratum_wrapper, advisories, max_workers)):
+        pbar_update.send(sender=None, index=i + 1)
+
+
+def _process_rocky_erratum_wrapper(advisory):
+    clear_forked_pbar()
+    return process_rocky_erratum(advisory)
 
 
 @retry(
@@ -181,7 +186,6 @@ def process_rocky_errata_concurrently(advisories):
 def process_rocky_erratum(advisory):
     """ Process a single Rocky Linux erratum
     """
-    from errata.utils import get_or_create_erratum
     try:
         erratum_name = advisory.get('name')
         e_type = advisory.get('kind').lower().replace(' ', '')
@@ -230,9 +234,9 @@ def add_rocky_erratum_oses(e, advisory):
 def add_rocky_erratum_packages(e, advisory):
     """ Parse and add packages for Rocky Linux errata
     """
-    from modules.utils import get_matching_modules
     packages = advisory.get('packages')
     fixed_packages = set()
+    module_package_adds = {}
     for package in packages:
         package_name = package.get('nevra')
         if package_name:
@@ -253,5 +257,9 @@ def add_rocky_erratum_packages(e, advisory):
                     arch,
                 )
                 for match in matching_modules:
-                    match.packages.add(fixed_package)
+                    if match.pk not in module_package_adds:
+                        module_package_adds[match.pk] = set()
+                    module_package_adds[match.pk].add(fixed_package)
+    for module_pk, pkgs in module_package_adds.items():
+        Module.objects.get(pk=module_pk).packages.add(*pkgs)
     e.add_fixed_packages(fixed_packages)

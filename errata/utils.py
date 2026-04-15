@@ -16,13 +16,14 @@
 
 import concurrent.futures
 
-from django.db import connections
+import requests
+from requests.adapters import HTTPAdapter
 
 from errata.models import Erratum
 from packages.models import PackageUpdate
 from patchman.signals import pbar_start, pbar_update
-from util import tz_aware_datetime
-from util.logging import warning_message
+from util import run_concurrently, tz_aware_datetime
+from util.logging import error_message, warning_message
 
 
 def get_or_create_erratum(name, e_type, issue_date, synopsis):
@@ -62,19 +63,25 @@ def get_or_create_erratum(name, e_type, issue_date, synopsis):
     return e, created
 
 
-def mark_errata_security_updates():
+def mark_errata_security_updates(concurrent_processing=True, max_workers=25):
     """ For each set of erratum packages, modify any PackageUpdate that
         should be marked as a security update.
     """
-    connections.close_all()
     elen = Erratum.objects.count()
     pbar_start.send(sender=None, ptext=f'Scanning {elen} Errata for security updates', plen=elen)
-    i = 0
-    with concurrent.futures.ProcessPoolExecutor(max_workers=25) as executor:
-        futures = [executor.submit(e.scan_for_security_updates) for e in Erratum.objects.all()]
-        for future in concurrent.futures.as_completed(futures):
+    if concurrent_processing:
+        pks = list(Erratum.objects.values_list('pk', flat=True))
+        for i, _ in enumerate(run_concurrently(_scan_security_worker, pks, max_workers)):
             pbar_update.send(sender=None, index=i + 1)
-            i += 1
+    else:
+        for i, e in enumerate(Erratum.objects.all()):
+            e.scan_for_security_updates()
+            pbar_update.send(sender=None, index=i + 1)
+
+
+def _scan_security_worker(pk):
+    e = Erratum.objects.get(pk=pk)
+    return e.scan_for_security_updates()
 
 
 def scan_package_updates_for_affected_packages():
@@ -88,15 +95,43 @@ def scan_package_updates_for_affected_packages():
             e.affected_packages.add(pu.oldpackage)
 
 
-def enrich_errata():
+def enrich_errata(concurrent_processing=True, max_workers=25):
     """ Enrich Errata with data from osv.dev
     """
-    connections.close_all()
-    elen = Erratum.objects.count()
-    pbar_start.send(sender=None, ptext=f'Adding osv.dev data to {elen} Errata', plen=elen)
-    i = 0
-    with concurrent.futures.ProcessPoolExecutor(max_workers=25) as executor:
-        futures = [executor.submit(e.fetch_osv_dev_data) for e in Erratum.objects.all()]
-        for future in concurrent.futures.as_completed(futures):
+    errata = list(Erratum.objects.all())
+    elen = len(errata)
+
+    # phase 1: fetch osv.dev data
+    pbar_start.send(sender=None, ptext=f'Fetching osv.dev data for {elen} Errata', plen=elen)
+    results = []
+    if concurrent_processing:
+        session = requests.Session()
+        adapter = HTTPAdapter(pool_connections=max_workers, pool_maxsize=max_workers)
+        session.mount('https://', adapter)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {executor.submit(e.fetch_osv_dev_data, session): e for e in errata}
+            for i, future in enumerate(concurrent.futures.as_completed(futures)):
+                erratum = futures[future]
+                try:
+                    osv_data = future.result()
+                except Exception as e:
+                    error_message(text=f'Error fetching osv.dev data for {erratum}: {e}')
+                    pbar_update.send(sender=None, index=i + 1)
+                    continue
+                if osv_data is not None:
+                    results.append((erratum, osv_data))
+                pbar_update.send(sender=None, index=i + 1)
+    else:
+        for i, e in enumerate(errata):
+            osv_data = e.fetch_osv_dev_data()
+            if osv_data is not None:
+                results.append((e, osv_data))
             pbar_update.send(sender=None, index=i + 1)
-            i += 1
+
+    # phase 2: parse and write to db (serial, no lock contention)
+    rlen = len(results)
+    if rlen > 0:
+        pbar_start.send(sender=None, ptext=f'Parsing osv.dev data for {rlen} Errata', plen=rlen)
+        for i, (erratum, osv_data) in enumerate(results):
+            erratum.parse_osv_dev_data(osv_data)
+            pbar_update.send(sender=None, index=i + 1)
