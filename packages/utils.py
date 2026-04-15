@@ -277,6 +277,22 @@ def get_matching_packages(name, epoch, version, release, p_type, arch=None):
     return packages
 
 
+def get_matching_packages_q(name, q, p_type, arch=None):
+    """ Get packages matching a compound Q filter for batch version lookups.
+        Returns the matching packages or an empty queryset.
+    """
+    try:
+        package_name = PackageName.objects.get(name=name)
+    except PackageName.DoesNotExist:
+        return Package.objects.none()
+    base_filter = {'name': package_name, 'packagetype': p_type}
+    if arch:
+        if not isinstance(arch, PackageArchitecture):
+            arch, _ = PackageArchitecture.objects.get_or_create(name=arch)
+        base_filter['arch'] = arch
+    return Package.objects.filter(q, **base_filter)
+
+
 def clean_packageupdates():
     """ Removes PackageUpdate objects that are no longer linked to any hosts
     """
