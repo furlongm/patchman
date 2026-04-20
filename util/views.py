@@ -19,13 +19,13 @@ from datetime import timedelta
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.models import Site
-from django.db.models import F
+from django.db.models import Exists, F, OuterRef
 from django.shortcuts import render
 from django.utils import timezone
 
 from hosts.models import Host
 from operatingsystems.models import OSRelease, OSVariant
-from packages.models import Package
+from packages.models import Package, PackageUpdate
 from reports.models import Report
 from repos.models import Mirror, Repository
 from util import get_setting_of_type
@@ -65,7 +65,7 @@ def dashboard(request):
     nohost_osvariants = osvariants.filter(host__isnull=True)
 
     # os release issues
-    norepo_osreleases = None
+    norepo_osreleases = OSRelease.objects.none()
     if hosts.filter(host_repos_only=False).exists():
         norepo_osreleases = osreleases.filter(repos__isnull=True)
 
@@ -81,8 +81,14 @@ def dashboard(request):
     nohost_repos = repos.filter(host__isnull=True)
 
     # package issues
-    norepo_packages = packages.filter(mirror__isnull=True, oldpackage__isnull=True, host__isnull=False).distinct()  # noqa
-    orphaned_packages = packages.filter(mirror__isnull=True, host__isnull=True).distinct()  # noqa
+    nomirror_packages = Mirror.packages.through.objects.filter(package=OuterRef('pk'))
+    nohost_packages = Host.packages.through.objects.filter(package=OuterRef('pk'))
+    nooldpackage_packages = PackageUpdate.objects.filter(oldpackage=OuterRef('pk'))
+    norepo_packages = packages.filter(Exists(nohost_packages),
+                                      ~Exists(nomirror_packages),
+                                      ~Exists(nooldpackage_packages))
+    orphaned_packages = packages.filter(~Exists(nohost_packages),
+                                        ~Exists(nomirror_packages))
 
     # report issues
     unprocessed_reports = Report.objects.filter(processed=False)
@@ -91,15 +97,12 @@ def dashboard(request):
     possible_mirrors = {}
 
     # Use cached packages_count to avoid N+1 queries
-    for csvalue in Mirror.objects.filter(packages_count__gt=0).values('packages_checksum').distinct():
-        checksum = csvalue['packages_checksum']
-        if checksum is not None and checksum != 'yast':
-            mirrors = list(Mirror.objects.filter(
-                packages_checksum=checksum,
-                packages_count__gt=0
-            ).select_related('repo'))
-            if mirrors:
-                checksums[checksum] = mirrors
+    mirrors = Mirror.objects.filter(packages_count__gt=0, packages_checksum__isnull=False).exclude(packages_checksum='yast').select_related('repo')
+    for mirror in mirrors:
+        checksum = mirror.packages_checksum
+        if checksum not in checksums:
+            checksums[checksum] = []
+        checksums[checksum].append(mirror)
 
     for checksum in checksums:
         first_mirror = checksums[checksum][0]
