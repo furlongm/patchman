@@ -44,7 +44,7 @@ def _get_filtered_hosts(filter_params):
     """Helper to reconstruct filtered queryset from filter params."""
     params = parse_qs(filter_params)
 
-    hosts = Host.objects.select_related('osvariant', 'arch', 'domain')
+    hosts = Host.objects.all()
 
     if 'domain_id' in params:
         hosts = hosts.filter(domain=params['domain_id'][0])
@@ -79,7 +79,7 @@ def _get_filtered_hosts(filter_params):
 @login_required
 def host_list(request):
     # Use cached count fields instead of expensive annotations
-    hosts = Host.objects.select_related('osvariant', 'arch', 'domain')
+    hosts = Host.objects.all()
 
     if 'domain_id' in request.GET:
         hosts = hosts.filter(domain=request.GET['domain_id'])
@@ -297,7 +297,7 @@ class HostViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows hosts to be viewed or edited.
     """
-    queryset = Host.objects.select_related('osvariant', 'arch', 'domain').all()
+    queryset = Host.objects.all()
     serializer_class = HostSerializer
     filterset_class = HostFilter
 
