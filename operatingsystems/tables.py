@@ -24,11 +24,11 @@ SELECT_ALL_CHECKBOX = '<input type="checkbox" id="select-all-page" title="Select
 OSRELEASE_NAME_TEMPLATE = '<a href="{{ record.get_absolute_url }}">{{ record.name }}</a>'
 OSRELEASE_REPOS_TEMPLATE = (
     '<a href="{% url \'repos:repo_list\' %}?osrelease_id={{ record.id }}">'
-    '{{ record.repos.count }}</a>'
+    '{{ record.repos_count }}</a>'
 )
 OSVARIANTS_TEMPLATE = (
     '<a href="{% url \'operatingsystems:osvariant_list\' %}?osrelease_id={{ record.id }}">'
-    '{{ record.osvariant_set.count }}</a>'
+    '{{ record.osvariant_count }}</a>'
 )
 OSRELEASE_HOSTS_TEMPLATE = (
     '{% load common %}'
@@ -36,7 +36,7 @@ OSRELEASE_HOSTS_TEMPLATE = (
 )
 OSRELEASE_ERRATA_TEMPLATE = (
     '<a href="{% url \'errata:erratum_list\' %}?osrelease_id={{ record.id }}">'
-    '{{ record.erratum_set.count }}</a>'
+    '{{ record.erratum_count }}</a>'
 )
 
 # OSVariantTable templates
@@ -47,7 +47,7 @@ OSVARIANT_CODENAME_TEMPLATE = (
 )
 OSVARIANT_HOSTS_TEMPLATE = (
     '<a href="{% url \'hosts:host_list\' %}?osvariant_id={{ record.id }}">'
-    '{{ record.host_set.count }}</a>'
+    '{{ record.hosts_count }}</a>'
 )
 OSVARIANT_OSRELEASE_TEMPLATE = (
     '{% if record.osrelease %}'
