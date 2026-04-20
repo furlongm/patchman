@@ -244,7 +244,7 @@
   {% endif %}
 {% endwith %}
 
-{% if not has_issues %}
+{% if issues_count == 0 %}
   <div class="alert alert-success">No issues found!</div>
 {% endif %}
 
