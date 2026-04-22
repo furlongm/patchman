@@ -28,7 +28,8 @@ from packages.models import Package
 from packages.utils import find_evr, get_or_create_package
 from patchman.signals import pbar_start, pbar_update
 from util import (
-    extract, fetch_content, get_setting_of_type, get_url, run_concurrently,
+    extract, fetch_concurrently, fetch_content, get_setting_of_type, get_url,
+    run_concurrently,
 )
 from util.logging import clear_forked_pbar, error_message, warning_message
 
@@ -47,7 +48,7 @@ def update_debian_errata(concurrent_processing=True, max_workers=25):
     advisories = dsas + dlas
     fetch_dscs_from_debian_package_file_maps()
     accepted_codenames = get_accepted_debian_codenames()
-    errata = parse_debian_errata(advisories, accepted_codenames)
+    errata = parse_debian_errata(advisories, accepted_codenames, concurrent_processing, max_workers)
     create_debian_errata(errata, accepted_codenames, concurrent_processing, max_workers)
 
 
@@ -109,7 +110,7 @@ def parse_debian_package_file_map(data, repo):
             parsing_dsc = False
 
 
-def parse_debian_errata(advisories, accepted_codenames):
+def parse_debian_errata(advisories, accepted_codenames, concurrent_processing=True, max_workers=25):
     """ Parse Debian DSA/DLA files for security advisories
     """
     distro_pattern = re.compile(r'^\t\[(.+?)\] - .*')
@@ -145,7 +146,7 @@ def parse_debian_errata(advisories, accepted_codenames):
                     e['packages'][release].append(None)
     # add the last one
     errata = add_errata_by_codename(errata, e, accepted_codenames)
-    fetch_debian_dsc_package_lists(dsc_fetches)
+    fetch_debian_dsc_package_lists(dsc_fetches, concurrent_processing, max_workers)
     return errata
 
 
@@ -232,13 +233,23 @@ def process_debian_erratum(erratum, accepted_codenames):
         error_message(text=exc)
 
 
-def fetch_debian_dsc_package_lists(dsc_fetches):
+def fetch_debian_dsc_package_lists(dsc_fetches, concurrent_processing=True, max_workers=25):
     """ Fetch DSC package lists with a progress bar
     """
-    pbar_start.send(sender=None, ptext=f'Fetching {len(dsc_fetches)} Debian DSC files', plen=len(dsc_fetches))
-    for i, (package, version) in enumerate(dsc_fetches):
-        fetch_debian_dsc_package_list(package, version)
-        pbar_update.send(sender=None, index=i + 1)
+    flen = len(dsc_fetches)
+    pbar_start.send(sender=None, ptext=f'Fetching {flen} Debian DSC files', plen=flen)
+    if concurrent_processing:
+        for i, _ in enumerate(fetch_concurrently(fetch_dsc_worker, dsc_fetches, max_workers)):
+            pbar_update.send(sender=None, index=i + 1)
+    else:
+        for i, (package, version) in enumerate(dsc_fetches):
+            fetch_debian_dsc_package_list(package, version)
+            pbar_update.send(sender=None, index=i + 1)
+
+
+def fetch_dsc_worker(item, session):
+    package, version = item
+    fetch_debian_dsc_package_list(package, version, session=session)
 
 
 def get_debian_dsc_package_list(package, version):
@@ -251,14 +262,14 @@ def get_debian_dsc_package_list(package, version):
         return package_list
 
 
-def fetch_debian_dsc_package_list(package, version):
+def fetch_debian_dsc_package_list(package, version, session=None):
     """ Fetch the package list from a DSC file for a given source package/version
     """
     if not DSCs.get(package) or not DSCs[package].get(version):
         warning_message(text=f'No DSC found for {package} {version}')
         return
     source_url = DSCs[package][version]['url']
-    res = get_url(source_url)
+    res = get_url(source_url, session=session)
     data = res.content
     dsc = Dsc(data.decode())
     package_list = dsc.get('package-list')

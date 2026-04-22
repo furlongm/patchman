@@ -300,6 +300,27 @@ def get_datetime_now():
     return datetime.now().astimezone().replace(microsecond=0)
 
 
+def fetch_concurrently(func, items, max_workers=25):
+    """ Run func across items using threads with pooled HTTP sessions,
+        yielding results as they complete. Ideal for I/O-bound work
+        (network fetches). func(item, session) receives a shared
+        requests.Session with connection pooling.
+    """
+    import concurrent.futures
+
+    from requests.adapters import HTTPAdapter
+
+    session = requests.Session()
+    adapter = HTTPAdapter(pool_connections=max_workers, pool_maxsize=max_workers)
+    session.mount('https://', adapter)
+    session.mount('http://', adapter)
+    items = list(items)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {executor.submit(func, item, session): item for item in items}
+        for future in concurrent.futures.as_completed(futures):
+            yield future.result()
+
+
 def run_concurrently(func, items, max_workers=25):
     """ Run func across items using multiprocessing, yielding results as
         they complete. Uses multiprocessing.Pool on Python < 3.12 to avoid
