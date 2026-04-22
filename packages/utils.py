@@ -173,6 +173,8 @@ def get_or_create_package(name, epoch, version, release, arch, p_type):
 
     if epoch in [None, 0, '0']:
         epoch = ''
+    if release is None:
+        release = ''
 
     package_name, c = PackageName.objects.get_or_create(name=name)
     package_arch, c = PackageArchitecture.objects.get_or_create(name=arch)

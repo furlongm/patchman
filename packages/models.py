@@ -125,17 +125,17 @@ class Package(models.Model):
         return hash(self.__key())
 
     def _version_string_rpm(self):
-        return (str(self.epoch), str(self.version), str(self.release))
+        return (str(self.epoch or ''), str(self.version or ''), str(self.release or ''))
 
     def _version_string_deb_arch(self):
         epoch = ''
         version = ''
         release = ''
-        if self.epoch != '':
+        if self.epoch:
             epoch = str(self.epoch) + ':'
-        if self.version != '':
+        if self.version:
             version = str(self.version)
-        if self.release != '':
+        if self.release:
             release = '-' + str(self.release)
         return (epoch + version + release)
 
