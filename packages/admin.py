@@ -33,6 +33,7 @@ class PackageUpdateAdmin(admin.ModelAdmin):
                             'newpackage__name', 'newpackage__arch')
         return qs
 
+
 admin.site.register(Package, PackageAdmin)
 admin.site.register(PackageName)
 admin.site.register(PackageUpdate, PackageUpdateAdmin)
