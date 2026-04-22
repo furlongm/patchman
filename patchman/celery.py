@@ -20,6 +20,7 @@ from celery import Celery
 from celery.signals import task_prerun
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')  # noqa
+from django import db  # noqa
 from django.conf import settings  # noqa
 
 app = Celery('patchman')
@@ -36,5 +37,4 @@ def close_stale_connections(**kwargs):
     (MySQL) or 'server closed the connection unexpectedly' (PostgreSQL)
     when the DB server drops idle connections.
     """
-    from django import db
     db.close_old_connections()
