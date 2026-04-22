@@ -14,16 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-import concurrent.futures
-
-import requests
-from requests.adapters import HTTPAdapter
-
 from errata.models import Erratum
 from packages.models import PackageUpdate
 from patchman.signals import pbar_start, pbar_update
-from util import run_concurrently, tz_aware_datetime
-from util.logging import error_message, warning_message
+from util import fetch_concurrently, run_concurrently, tz_aware_datetime
+from util.logging import warning_message
 
 
 def get_or_create_erratum(name, e_type, issue_date, synopsis):
@@ -105,22 +100,11 @@ def enrich_errata(concurrent_processing=True, max_workers=25):
     pbar_start.send(sender=None, ptext=f'Fetching osv.dev data for {elen} Errata', plen=elen)
     results = []
     if concurrent_processing:
-        session = requests.Session()
-        adapter = HTTPAdapter(pool_connections=max_workers, pool_maxsize=max_workers)
-        session.mount('https://', adapter)
-        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = {executor.submit(e.fetch_osv_dev_data, session): e for e in errata}
-            for i, future in enumerate(concurrent.futures.as_completed(futures)):
-                erratum = futures[future]
-                try:
-                    osv_data = future.result()
-                except Exception as e:
-                    error_message(text=f'Error fetching osv.dev data for {erratum}: {e}')
-                    pbar_update.send(sender=None, index=i + 1)
-                    continue
-                if osv_data is not None:
-                    results.append((erratum, osv_data))
-                pbar_update.send(sender=None, index=i + 1)
+        for i, result in enumerate(fetch_concurrently(fetch_osv_worker, errata, max_workers)):
+            erratum, osv_data = result
+            if osv_data is not None:
+                results.append((erratum, osv_data))
+            pbar_update.send(sender=None, index=i + 1)
     else:
         for i, e in enumerate(errata):
             osv_data = e.fetch_osv_dev_data()
@@ -135,3 +119,7 @@ def enrich_errata(concurrent_processing=True, max_workers=25):
         for i, (erratum, osv_data) in enumerate(results):
             erratum.parse_osv_dev_data(osv_data)
             pbar_update.send(sender=None, index=i + 1)
+
+
+def fetch_osv_worker(erratum, session):
+    return (erratum, erratum.fetch_osv_dev_data(session))
