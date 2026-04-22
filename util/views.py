@@ -97,7 +97,10 @@ def dashboard(request):
     possible_mirrors = {}
 
     # Use cached packages_count to avoid N+1 queries
-    mirrors = Mirror.objects.filter(packages_count__gt=0, packages_checksum__isnull=False).exclude(packages_checksum='yast').select_related('repo')
+    mirrors = Mirror.objects.filter(packages_count__gt=0, packages_checksum__isnull=False) \
+        .exclude(packages_checksum='yast') \
+        .select_related('repo')
+
     for mirror in mirrors:
         checksum = mirror.packages_checksum
         if checksum not in checksums:
