@@ -1,0 +1,42 @@
+---
+services:
+  patchman:
+    container_name: patchman
+    image: furlongm/patchman:latest 
+    restart: unless-stopped
+    environment:
+      ADMIN_NAME: admin_name
+      ADMIN_EMAIL: admin_mail@domain.tld
+      TIMEZONE: America/New_York
+      DB_ENGINE: MySQL
+      DB_HOST: patchman-db
+      DB_PORT: 3306
+      DB_DATABASE: patchman
+      DB_USER: user
+      DB_PASSWORD: changeme
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      USE_CELERY: True
+      USE_CACHE: True
+      CACHE_TIMEOUT: 20
+    ports:
+      - 80:80/tcp
+    depends_on:
+      - patchman-db
+      - redis
+
+  patchman-db:
+    container_name: patchman-db
+    image: mysql:latest
+    restart: unless-stopped
+    command: ["mysqld", "--character-set-server=utf8", "--collation-server=utf8_general_ci"]
+    environment:
+      MYSQL_ROOT_PASSWORD: changeme 
+      MYSQL_DATABASE: patchman 
+      MYSQL_USER: user
+      MYSQL_PASSWORD: changeme
+
+  redis:
+    container_name: redis
+    image: redis:latest
+    restart: unless-stopped
