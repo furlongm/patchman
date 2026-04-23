@@ -90,6 +90,9 @@ def host_list(request):
     if 'package' in request.GET:
         hosts = hosts.filter(packages__name__name=request.GET['package'])
 
+    if 'update_id' in request.GET:
+        hosts = hosts.filter(updates=request.GET['update_id'])
+
     if 'repo_id' in request.GET:
         hosts = hosts.filter(repos=request.GET['repo_id'])
 

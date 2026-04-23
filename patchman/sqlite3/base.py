@@ -20,6 +20,11 @@ from django.db.backends.sqlite3 import base
 
 
 class DatabaseWrapper(base.DatabaseWrapper):
+    def get_new_connection(self, conn_params):
+        conn = super().get_new_connection(conn_params)
+        conn.execute('PRAGMA journal_mode=WAL')
+        return conn
+
     def _start_transaction_under_autocommit(self):
         # Acquire a write lock immediately for transactions
         self.cursor().execute('BEGIN IMMEDIATE')

@@ -258,9 +258,6 @@ def process_repo(r_type, r_name, r_id, r_priority, urls, arch):
     if r_id and repository.repo_id != r_id:
         repository.repo_id = r_id
 
-    if r_name and repository.name != r_name:
-        repository.name = r_name
-
     for url in unknown:
         Mirror.objects.create(repo=repository, url=url.rstrip('/'))
 

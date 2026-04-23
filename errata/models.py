@@ -21,7 +21,7 @@ from django.urls import reverse
 
 from errata.managers import ErratumManager
 from packages.models import Package, PackageUpdate
-from packages.utils import find_evr, get_matching_packages
+from packages.utils import find_evr, get_matching_packages_q
 from security.models import CVE, Reference
 from security.utils import get_or_create_cve, get_or_create_reference
 from util import get_url
@@ -64,34 +64,32 @@ class Erratum(models.Model):
 
     def scan_for_security_updates(self):
         if self.e_type == 'security':
-            for package in self.fixed_packages.all():
-                affected_updates = PackageUpdate.objects.filter(
-                    newpackage=package,
-                    security=False,
+            fixed_pks = list(self.fixed_packages.values_list('pk', flat=True))
+            if fixed_pks:
+                self._mark_updates_security(
+                    PackageUpdate.objects.filter(newpackage__in=fixed_pks, security=False)
                 )
-                for affected_update in affected_updates:
-                    affected_update.security = True
-                    try:
-                        affected_update.save()
-                    except IntegrityError as e:
-                        error_message(text=e)
-                        # a version of this update already exists that is
-                        # marked as a security update, so delete this one
-                        affected_update.delete()
-            for package in self.affected_packages.all():
-                affected_updates = PackageUpdate.objects.filter(
-                    oldpackage=package,
-                    security=False,
+            affected_pks = list(self.affected_packages.values_list('pk', flat=True))
+            if affected_pks:
+                self._mark_updates_security(
+                    PackageUpdate.objects.filter(oldpackage__in=affected_pks, security=False)
                 )
-                for affected_update in affected_updates:
-                    affected_update.security = True
-                    try:
-                        affected_update.save()
-                    except IntegrityError as e:
-                        error_message(text=e)
-                        # a version of this update already exists that is
-                        # marked as a security update, so delete this one
-                        affected_update.delete()
+
+    def _mark_updates_security(self, updates):
+        """ Mark a queryset of PackageUpdates as security updates.
+            Handles IntegrityError by deleting duplicates.
+        """
+        try:
+            updates.update(security=True)
+        except IntegrityError:
+            # fall back to individual saves to handle duplicates
+            for update in updates:
+                update.security = True
+                try:
+                    update.save()
+                except IntegrityError as e:
+                    error_message(text=e)
+                    update.delete()
 
     def fetch_osv_dev_data(self):
         osv_dev_url = f'https://api.osv.dev/v1/vulns/{self.name}'
@@ -104,15 +102,19 @@ class Erratum(models.Model):
         self.parse_osv_dev_data(osv_dev_json)
 
     def parse_osv_dev_data(self, osv_dev_json):
+        from django.db.models import Q
         name = osv_dev_json.get('id')
         if name != self.name:
             error_message(text=f'Erratum name mismatch - {self.name} != {name}')
             return
         related = osv_dev_json.get('related')
         if related:
+            cves = []
             for vuln in related:
                 if vuln.startswith('CVE'):
-                    self.add_cve(vuln)
+                    cves.append(vuln)
+            for cve_id in cves:
+                self.add_cve(cve_id)
         affected = osv_dev_json.get('affected')
         if not affected:
             return
@@ -129,30 +131,29 @@ class Erratum(models.Model):
                         for match in matching_packages:
                             fixed_packages.add(match)
             affected_versions = package.get('versions')
-            if not affected_versions:
+            if not affected_versions or not fixed_packages:
                 continue
-            for package in fixed_packages:
+            for fp in fixed_packages:
+                q = Q()
                 for version in affected_versions:
                     epoch, ver, rel = find_evr(version)
-                    matching_packages = get_matching_packages(
-                        name=package.name,
-                        epoch=epoch,
-                        version=ver,
-                        release=rel,
-                        arch=package.arch,
-                        p_type=package.packagetype,
-                    )
-                    for match in matching_packages:
-                        affected_packages.add(match)
+                    q |= Q(epoch=epoch, version=ver, release=rel)
+                matching_packages = get_matching_packages_q(
+                    name=fp.name,
+                    q=q,
+                    arch=fp.arch,
+                    p_type=fp.packagetype,
+                )
+                affected_packages.update(matching_packages)
         self.add_affected_packages(affected_packages)
 
     def add_fixed_packages(self, packages):
-        for package in packages:
-            self.fixed_packages.add(package)
+        if packages:
+            self.fixed_packages.add(*packages)
 
     def add_affected_packages(self, packages):
-        for package in packages:
-            self.affected_packages.add(package)
+        if packages:
+            self.affected_packages.add(*packages)
 
     def add_cve(self, cve_id):
         """ Add a CVE to an Erratum object

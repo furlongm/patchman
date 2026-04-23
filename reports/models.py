@@ -46,7 +46,7 @@ class Report(models.Model):
     reboot = models.TextField(null=True, blank=True)
 
     class Meta:
-        verbose_name_plural = 'Report'
+        verbose_name = 'Report'
         verbose_name_plural = 'Reports'
         ordering = ['-created']
 

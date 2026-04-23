@@ -136,6 +136,8 @@ def add_updateinfo_erratum_references(e, update, ref_type, urls):
         for url in urls:
             e.add_reference(ref_type, url)
     references = update.find('references')
+    if references is None:
+        return
     for reference in references.findall('reference'):
         if reference.attrib.get('type') == 'cve':
             cve_id = reference.attrib.get('id')

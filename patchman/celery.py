@@ -17,10 +17,24 @@
 import os
 
 from celery import Celery
+from celery.signals import task_prerun
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')  # noqa
+from django import db  # noqa
 from django.conf import settings  # noqa
 
 app = Celery('patchman')
 app.config_from_object('django.conf:settings', namespace='CELERY')
 app.autodiscover_tasks()
+
+
+@task_prerun.connect
+def close_stale_connections(**kwargs):
+    """Close stale DB connections before each task.
+
+    Django does this automatically for HTTP requests but not for Celery
+    tasks. Without this, long-lived workers hit 'server has gone away'
+    (MySQL) or 'server closed the connection unexpectedly' (PostgreSQL)
+    when the DB server drops idle connections.
+    """
+    db.close_old_connections()

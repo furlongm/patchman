@@ -544,35 +544,121 @@ class DebKernelUpdateTests(TestCase):
         self.assertEqual(update.newpackage, self.img_53)
 
     def test_deb_flavour_extraction(self):
-        """Test _get_deb_kernel_flavour helper."""
+        """Test get_deb_kernel_flavour helper."""
         host = self._create_host('6.8.0-51-generic', [self.img_51])
         self.assertEqual(
-            host._get_deb_kernel_flavour('linux-image-6.8.0-51-generic'),
+            host.get_deb_kernel_flavour('linux-image-6.8.0-51-generic'),
             'generic'
         )
         self.assertEqual(
-            host._get_deb_kernel_flavour('linux-modules-extra-6.8.0-51-lowlatency'),
+            host.get_deb_kernel_flavour('linux-modules-extra-6.8.0-51-lowlatency'),
             'lowlatency'
         )
         self.assertEqual(
-            host._get_deb_kernel_flavour('linux-image-6.1.0-28-cloud-amd64'),
+            host.get_deb_kernel_flavour('linux-image-6.1.0-28-cloud-amd64'),
             'cloud-amd64'
         )
         self.assertEqual(
-            host._get_deb_kernel_flavour('linux-image-unsigned-6.8.0-51-generic'),
+            host.get_deb_kernel_flavour('linux-image-unsigned-6.8.0-51-generic'),
             'generic'
         )
 
     def test_deb_running_kernel_flavour(self):
-        """Test _get_running_kernel_flavour helper."""
+        """Test get_running_kernel_flavour helper."""
         host = self._create_host('6.8.0-51-generic', [self.img_51])
-        self.assertEqual(host._get_running_kernel_flavour(), 'generic')
+        self.assertEqual(host.get_running_kernel_flavour(), 'generic')
 
         host.kernel = '6.1.0-28-cloud-amd64'
-        self.assertEqual(host._get_running_kernel_flavour(), 'cloud-amd64')
+        self.assertEqual(host.get_running_kernel_flavour(), 'cloud-amd64')
 
         host.kernel = '5.14.0-503.el9'
-        self.assertIsNone(host._get_running_kernel_flavour())
+        self.assertIsNone(host.get_running_kernel_flavour())
+
+    def test_deb_kernel_series_extraction(self):
+        """Test get_deb_kernel_series helper."""
+        host = self._create_host('6.8.0-51-generic', [self.img_51])
+        self.assertEqual(
+            host.get_deb_kernel_series('linux-image-6.8.0-51-generic'), '6.8'
+        )
+        self.assertEqual(
+            host.get_deb_kernel_series('linux-image-6.17.0-19-generic'), '6.17'
+        )
+        self.assertEqual(
+            host.get_deb_kernel_series('linux-modules-extra-6.1.0-28-cloud-amd64'), '6.1'
+        )
+        self.assertEqual(
+            host.get_deb_kernel_series('linux-image-unsigned-6.8.0-51-generic'), '6.8'
+        )
+        self.assertIsNone(host.get_deb_kernel_series('not-a-kernel'))
+
+    def test_deb_hwe_not_offered_to_ga_host(self):
+        """HWE kernels (6.17) should not be offered as updates to GA (6.8) hosts.
+
+        Reproduces GitHub issue: both GA and HWE kernels in the same repo
+        (noble-updates), same priority. Without series filtering, 6.17 would
+        be incorrectly picked as an update for a 6.8 host.
+        """
+        # add HWE kernel packages to the same repo/mirror
+        hwe_img_name = PackageName.objects.create(
+            name='linux-image-6.17.0-19-generic'
+        )
+        hwe_img = Package.objects.create(
+            name=hwe_img_name, arch=self.pkg_arch, epoch='',
+            version='6.17.0-19.19~24.04.2', release='', packagetype='D'
+        )
+        self.mirror.packages.add(hwe_img)
+
+        host = self._create_host(
+            '6.8.0-51-generic',
+            [self.img_49, self.img_51],
+        )
+        repo_packages = Package.objects.filter(mirror=self.mirror)
+        kernel_packages = host.packages.filter(
+            name__name__startswith='linux-image-'
+        )
+
+        host.find_kernel_updates(kernel_packages, repo_packages)
+
+        # should get GA update (6.8.0-51 → 6.8.0-53), NOT HWE (6.17)
+        self.assertEqual(host.updates.count(), 1)
+        update = host.updates.first()
+        self.assertEqual(update.oldpackage, self.img_51)
+        self.assertEqual(update.newpackage, self.img_53)
+
+    def test_deb_hwe_host_gets_hwe_updates(self):
+        """HWE host (6.17) should get HWE updates, not GA."""
+        hwe_img_19_name = PackageName.objects.create(
+            name='linux-image-6.17.0-19-generic'
+        )
+        hwe_img_19 = Package.objects.create(
+            name=hwe_img_19_name, arch=self.pkg_arch, epoch='',
+            version='6.17.0-19.19~24.04.2', release='', packagetype='D'
+        )
+        hwe_img_21_name = PackageName.objects.create(
+            name='linux-image-6.17.0-21-generic'
+        )
+        hwe_img_21 = Package.objects.create(
+            name=hwe_img_21_name, arch=self.pkg_arch, epoch='',
+            version='6.17.0-21.21~24.04.2', release='', packagetype='D'
+        )
+        self.mirror.packages.add(hwe_img_19, hwe_img_21)
+
+        host = self._create_host(
+            '6.17.0-19-generic',
+            [hwe_img_19],
+        )
+        repo_packages = Package.objects.filter(mirror=self.mirror)
+        kernel_packages = host.packages.filter(
+            name__name__startswith='linux-image-'
+        )
+
+        host.find_kernel_updates(kernel_packages, repo_packages)
+
+        # should get HWE update only
+        self.assertEqual(host.updates.count(), 1)
+        update = host.updates.first()
+        self.assertEqual(update.oldpackage, hwe_img_19)
+        self.assertEqual(update.newpackage, hwe_img_21)
 
 
 @override_settings(
@@ -791,8 +877,10 @@ class KernelPriorityTests(TestCase):
 
         self.assertEqual(host.updates.count(), 0)
 
-    def test_deb_backports_equal_priority_shows_update(self):
-        """DEB: backports kernel with equal priority SHOULD be flagged."""
+    def test_deb_backports_equal_priority_no_update(self):
+        """DEB: backports kernel with equal priority but different series
+        should NOT be flagged — series filtering prevents cross-track updates.
+        """
         host = self._create_host(main_priority=500, bp_priority=500)
         repo_packages = Package.objects.filter(
             mirror__in=[self.main_mirror, self.bp_mirror]
@@ -803,10 +891,10 @@ class KernelPriorityTests(TestCase):
 
         host.find_kernel_updates(kernel_packages, repo_packages)
 
-        self.assertEqual(host.updates.count(), 1)
+        self.assertEqual(host.updates.count(), 0)
 
-    def test_deb_priority_zero_no_filtering(self):
-        """DEB: priority 0 (unset) means no filtering — backward compat."""
+    def test_deb_priority_zero_no_cross_series_update(self):
+        """DEB: priority 0 (unset) still respects series filtering."""
         host = self._create_host(main_priority=0, bp_priority=0)
         repo_packages = Package.objects.filter(
             mirror__in=[self.main_mirror, self.bp_mirror]
@@ -817,10 +905,10 @@ class KernelPriorityTests(TestCase):
 
         host.find_kernel_updates(kernel_packages, repo_packages)
 
-        self.assertEqual(host.updates.count(), 1)
+        self.assertEqual(host.updates.count(), 0)
 
-    def test_deb_host_repos_only_false_no_filtering(self):
-        """DEB: host_repos_only=False skips priority filtering entirely."""
+    def test_deb_host_repos_only_false_no_cross_series_update(self):
+        """DEB: host_repos_only=False still respects series filtering."""
         host = self._create_host(
             main_priority=500, bp_priority=100, host_repos_only=False,
         )
@@ -833,7 +921,7 @@ class KernelPriorityTests(TestCase):
 
         host.find_kernel_updates(kernel_packages, repo_packages)
 
-        self.assertEqual(host.updates.count(), 1)
+        self.assertEqual(host.updates.count(), 0)
 
     def test_rpm_backports_lower_priority_no_update(self):
         """RPM: kernel from lower-priority repo should NOT be flagged."""

@@ -16,7 +16,7 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, render
 from django_tables2 import RequestConfig
 from rest_framework import viewsets
@@ -26,7 +26,7 @@ from packages.models import Package, PackageName, PackageUpdate
 from packages.serializers import (
     PackageNameSerializer, PackageSerializer, PackageUpdateSerializer,
 )
-from packages.tables import PackageNameTable, PackageTable
+from packages.tables import PackageNameTable, PackageTable, PackageUpdateTable
 from util.filterspecs import Filter, FilterBar
 
 
@@ -109,6 +109,13 @@ def package_list(request):
     filter_list.append(Filter(request, 'Architecture', 'arch_id', PackageArchitecture.objects.all()))
     filter_bar = FilterBar(request, filter_list)
 
+    packages = packages.annotate(
+        host_count=Count('host', distinct=True),
+        repo_count=Count('mirror__repo', distinct=True),
+        affected_count=Count('affected_by_erratum', distinct=True),
+        fixed_count=Count('provides_fix_in_erratum', distinct=True),
+    )
+
     table = PackageTable(packages)
     RequestConfig(request, paginate={'per_page': 50}).configure(table)
 
@@ -144,6 +151,8 @@ def package_name_list(request):
     filter_list.append(Filter(request, 'Architecture', 'arch_id', PackageArchitecture.objects.all()))
     filter_bar = FilterBar(request, filter_list)
 
+    packages = packages.annotate(host_count=Count('package__host', distinct=True))
+
     table = PackageNameTable(packages)
     RequestConfig(request, paginate={'per_page': 50}).configure(table)
 
@@ -165,11 +174,62 @@ def package_detail(request, package_id):
 @login_required
 def package_name_detail(request, packagename):
     package = get_object_or_404(PackageName, name=packagename)
-    allversions = Package.objects.select_related('name', 'arch').filter(name=package.id)
+    allversions = Package.objects.select_related(
+        'name', 'arch',
+    ).filter(name=package.id).annotate(
+        host_count=Count('host', distinct=True),
+        repo_count=Count('mirror__repo', distinct=True),
+        affected_count=Count('affected_by_erratum', distinct=True),
+        fixed_count=Count('provides_fix_in_erratum', distinct=True),
+    )
+    table = PackageTable(allversions)
+    RequestConfig(request, paginate={'per_page': 50}).configure(table)
     return render(request,
                   'packages/package_name_detail.html',
                   {'package': package,
-                   'allversions': allversions})
+                   'table': table})
+
+
+@login_required
+def package_update_list(request):
+    updates = PackageUpdate.objects.select_related(
+        'oldpackage__name', 'oldpackage__arch',
+        'newpackage__name', 'newpackage__arch',
+    ).annotate(
+        host_count=Count('host', distinct=True),
+        affected_count=Count('oldpackage__affected_by_erratum', distinct=True),
+        fixed_count=Count('newpackage__provides_fix_in_erratum', distinct=True),
+    )
+
+    if 'security' in request.GET:
+        security = request.GET['security'] == 'true'
+        updates = updates.filter(security=security)
+    if 'host_id' in request.GET:
+        updates = updates.filter(host=request.GET['host_id'])
+    if 'search' in request.GET:
+        terms = request.GET['search'].lower()
+        query = Q()
+        for term in terms.split(' '):
+            q = (Q(oldpackage__name__name__icontains=term) |
+                 Q(newpackage__name__name__icontains=term))
+            query = query & q
+        updates = updates.filter(query)
+    else:
+        terms = ''
+
+    filter_list = []
+    filter_list.append(Filter(request, 'Type', 'security',
+                              {'true': 'Security', 'false': 'Bugfix'}))
+    filter_bar = FilterBar(request, filter_list)
+
+    table = PackageUpdateTable(updates.distinct())
+    RequestConfig(request, paginate={'per_page': 50}).configure(table)
+
+    return render(request,
+                  'packages/package_update_list.html',
+                  {'table': table,
+                   'filter_bar': filter_bar,
+                   'terms': terms})
 
 
 class PackageNameViewSet(viewsets.ModelViewSet):

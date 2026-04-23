@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+import re
+
 from django.db import models
 from django.db.models import Q
 from django.urls import reverse
@@ -206,14 +208,11 @@ class Host(models.Model):
 
         errata_ids = set()
 
-        if self.host_repos_only:
-            update_ids = self.find_host_repo_updates(host_packages, repo_packages, errata_ids)
-        else:
-            update_ids = self.find_osrelease_repo_updates(host_packages, repo_packages, errata_ids)
+        update_ids = self.find_repo_updates(host_packages, repo_packages, errata_ids)
 
         kernel_update_ids = self.find_kernel_updates(kernel_packages, repo_packages)
         for ku_id in kernel_update_ids:
-            update_ids.append(ku_id)
+            update_ids.add(ku_id)
 
         for update in self.updates.all():
             if update.id not in update_ids:
@@ -223,9 +222,9 @@ class Host(models.Model):
             if erratum.id not in errata_ids:
                 self.errata.remove(erratum)
 
-    def find_host_repo_updates(self, host_packages, repo_packages, errata_ids):
+    def find_repo_updates(self, host_packages, repo_packages, errata_ids):
 
-        update_ids = []
+        update_ids = set()
         hostrepos_q = Q(repo__mirror__enabled=True,
                         repo__mirror__refresh=True,
                         repo__mirror__repo__enabled=True,
@@ -280,45 +279,7 @@ class Host(models.Model):
             if highest_package != package:
                 uid = self.process_update(package, highest_package)
                 if uid is not None:
-                    update_ids.append(uid)
-        return update_ids
-
-    def find_osrelease_repo_updates(self, host_packages, repo_packages, errata_ids):
-
-        update_ids = []
-        for package in host_packages:
-            highest_package = package
-
-            # find the packages that are potential updates
-            pu_q = Q(name=package.name,
-                     arch=package.arch,
-                     packagetype=package.packagetype)
-            potential_updates = repo_packages.filter(pu_q)
-            for pu in potential_updates:
-                pu_is_module_package = False
-                pu_in_enabled_modules = False
-                if pu.module_set.exists():
-                    pu_is_module_package = True
-                    for module in pu.module_set.all():
-                        if module in self.modules.all():
-                            pu_in_enabled_modules = True
-                if pu_is_module_package:
-                    if not pu_in_enabled_modules:
-                        continue
-                if package.compare_version(pu) == -1:
-                    # package updates that are fixed by erratum (may already be superceded by another update)
-                    errata = pu.provides_fix_in_erratum.all()
-                    if errata:
-                        for erratum in errata:
-                            self.errata.add(erratum)
-                            errata_ids.add(erratum.id)
-                    if highest_package.compare_version(pu) == -1:
-                        highest_package = pu
-
-            if highest_package != package:
-                uid = self.process_update(package, highest_package)
-                if uid is not None:
-                    update_ids.append(uid)
+                    update_ids.add(uid)
         return update_ids
 
     def check_if_reboot_required(self, host_highest):
@@ -350,7 +311,7 @@ class Host(models.Model):
         else:
             self.reboot_required = False
 
-    def _get_deb_kernel_flavour(self, pkg_name):
+    def get_deb_kernel_flavour(self, pkg_name):
         """Extract the flavour suffix from a DEB kernel package name.
 
         e.g. 'linux-image-6.8.0-51-generic' → 'generic'
@@ -359,7 +320,7 @@ class Host(models.Model):
              'linux-modules-extra-6.8.0-51-generic' → 'generic'
         Returns None if the flavour cannot be determined.
         """
-        for prefix in self._deb_kernel_prefixes:
+        for prefix in self.deb_kernel_prefixes:
             if pkg_name.startswith(prefix):
                 # strip prefix, then split version from flavour
                 # e.g. '6.8.0-51-generic' or '6.1.0-28-cloud-amd64'
@@ -374,7 +335,7 @@ class Host(models.Model):
                 return None
         return None
 
-    def _get_running_kernel_flavour(self):
+    def get_running_kernel_flavour(self):
         """Extract the flavour from the running kernel string.
 
         e.g. '6.8.0-51-generic' → 'generic'
@@ -391,7 +352,7 @@ class Host(models.Model):
         return None
 
     # longest prefixes first to avoid linux-modules- matching linux-modules-extra-
-    _deb_kernel_prefixes = [
+    deb_kernel_prefixes = [
         'linux-image-unsigned-',
         'linux-modules-extra-',
         'linux-cloud-tools-',
@@ -404,12 +365,27 @@ class Host(models.Model):
         'linux-tools-',
     ]
 
+    def get_deb_kernel_series(self, pkg_name):
+        """Extract kernel major.minor series from a DEB kernel package name.
+
+        e.g. 'linux-image-6.8.0-51-generic' → '6.8'
+             'linux-image-6.17.0-19-generic' → '6.17'
+             'linux-modules-extra-6.1.0-28-cloud-amd64' → '6.1'
+        Returns None if the series cannot be determined.
+        """
+        for prefix in self.deb_kernel_prefixes:
+            if pkg_name.startswith(prefix):
+                remainder = pkg_name[len(prefix):]
+                m = re.match(r'(\d+\.\d+)', remainder)
+                return m.group(1) if m else None
+        return None
+
     def find_kernel_updates(self, kernel_packages, repo_packages):
 
-        update_ids = []
+        update_ids = set()
         self.reboot_required = False
 
-        # build hostrepos for priority filtering (same as find_host_repo_updates)
+        # build hostrepos for priority filtering (same as find_repo_updates)
         hostrepos = None
         if self.host_repos_only:
             hostrepos_q = Q(repo__mirror__enabled=True,
@@ -423,16 +399,16 @@ class Host(models.Model):
         rpm_kernels = kernel_packages.filter(packagetype='R')
         arch_kernels = kernel_packages.filter(packagetype='A')
 
-        update_ids.extend(self._find_rpm_kernel_updates(rpm_kernels, repo_packages, hostrepos))
-        update_ids.extend(self._find_deb_kernel_updates(deb_kernels, repo_packages, hostrepos))
-        update_ids.extend(self._find_arch_kernel_updates(arch_kernels, repo_packages, hostrepos))
+        update_ids.update(self.find_rpm_kernel_updates(rpm_kernels, repo_packages, hostrepos))
+        update_ids.update(self.find_deb_kernel_updates(deb_kernels, repo_packages, hostrepos))
+        update_ids.update(self.find_arch_kernel_updates(arch_kernels, repo_packages, hostrepos))
 
         self.save(update_fields=['reboot_required'])
         return update_ids
 
-    def _find_rpm_kernel_updates(self, kernel_packages, repo_packages, hostrepos):
+    def find_rpm_kernel_updates(self, kernel_packages, repo_packages, hostrepos):
 
-        update_ids = []
+        update_ids = set()
 
         # parse running kernel version for comparison
         parts = self.kernel.split('-')
@@ -498,7 +474,7 @@ class Host(models.Model):
             if base_package and base_package.compare_version(repo_highest) == -1:
                 uid = self.process_update(base_package, repo_highest)
                 if uid is not None:
-                    update_ids.append(uid)
+                    update_ids.add(uid)
 
             # reboot check only on primary kernel packages
             if host_highest and package.name.name in (
@@ -511,9 +487,9 @@ class Host(models.Model):
 
         return update_ids
 
-    def _find_arch_kernel_updates(self, kernel_packages, repo_packages, hostrepos):
+    def find_arch_kernel_updates(self, kernel_packages, repo_packages, hostrepos):
 
-        update_ids = []
+        update_ids = set()
 
         for package in kernel_packages:
             pu_q = Q(name=package.name)
@@ -540,7 +516,7 @@ class Host(models.Model):
             if package.compare_version(repo_highest) == -1:
                 uid = self.process_update(package, repo_highest)
                 if uid is not None:
-                    update_ids.append(uid)
+                    update_ids.add(uid)
 
             # reboot check for main kernel packages (not -headers)
             # Arch uname -r format varies by flavour:
@@ -562,10 +538,10 @@ class Host(models.Model):
 
         return update_ids
 
-    def _find_deb_kernel_updates(self, kernel_packages, repo_packages, hostrepos):
+    def find_deb_kernel_updates(self, kernel_packages, repo_packages, hostrepos):
 
-        update_ids = []
-        running_flavour = self._get_running_kernel_flavour()
+        update_ids = set()
+        running_flavour = self.get_running_kernel_flavour()
 
         # find the linux-image package matching the running kernel
         running_kernel_pkg = None
@@ -585,7 +561,7 @@ class Host(models.Model):
         processed_prefixes = set()
         for package in kernel_packages:
             pkg_name = package.name.name
-            flavour = self._get_deb_kernel_flavour(pkg_name)
+            flavour = self.get_deb_kernel_flavour(pkg_name)
 
             # if we know the running flavour, only process matching packages
             # if we don't (unflavoured kernel), process all kernel packages
@@ -594,13 +570,17 @@ class Host(models.Model):
 
             # determine the prefix (e.g. 'linux-image-')
             prefix = None
-            for p in self._deb_kernel_prefixes:
+            for p in self.deb_kernel_prefixes:
                 if pkg_name.startswith(p):
                     prefix = p
                     break
             if prefix is None or prefix in processed_prefixes:
                 continue
             processed_prefixes.add(prefix)
+
+            # extract kernel series (e.g. '6.8') to avoid cross-track
+            # comparisons (GA 6.8 vs HWE 6.17 in the same repo)
+            installed_series = self.get_deb_kernel_series(pkg_name)
 
             # build endswith filter for flavoured kernels
             name_filter = Q(
@@ -611,8 +591,13 @@ class Host(models.Model):
                 name_filter &= Q(name__name__endswith=f'-{running_flavour}')
 
             # find repo highest for this prefix+flavour, respecting priority
+            # and kernel series (GA vs HWE)
             repo_highest = None
             for rp in repo_packages.filter(name_filter):
+                if installed_series is not None:
+                    rp_series = self.get_deb_kernel_series(rp.name.name)
+                    if rp_series != installed_series:
+                        continue
                 if priority is not None:
                     rp_best_repo = find_best_repo(rp, hostrepos)
                     if not rp_best_repo or rp_best_repo.priority < priority:
@@ -638,14 +623,14 @@ class Host(models.Model):
             if base_package.compare_version(repo_highest) == -1:
                 uid = self.process_update(base_package, repo_highest)
                 if uid is not None:
-                    update_ids.append(uid)
+                    update_ids.add(uid)
 
         # reboot check: see if a newer linux-image is installed but not running
         # use compare_version (DEB semantics) instead of labelCompare
         if running_kernel_pkg:
             for package in kernel_packages:
                 if package.name.name.startswith('linux-image-'):
-                    flavour = self._get_deb_kernel_flavour(package.name.name)
+                    flavour = self.get_deb_kernel_flavour(package.name.name)
                     if running_flavour is None or flavour == running_flavour:
                         if running_kernel_pkg.compare_version(package) == -1:
                             self.reboot_required = True
