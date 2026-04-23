@@ -579,8 +579,13 @@ class Host(models.Model):
             processed_prefixes.add(prefix)
 
             # extract kernel series (e.g. '6.8') to avoid cross-track
-            # comparisons (GA 6.8 vs HWE 6.17 in the same repo)
+            # comparisons (GA vs HWE); meta-packages like linux-image-generic
+            # yield None, so fall back to the running kernel's series
             installed_series = self.get_deb_kernel_series(pkg_name)
+            if installed_series is None and self.kernel:
+                m = re.match(r'(\d+\.\d+)', self.kernel)
+                if m:
+                    installed_series = m.group(1)
 
             # build endswith filter for flavoured kernels
             name_filter = Q(
