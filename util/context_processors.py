@@ -29,7 +29,7 @@ from repos.models import Repository
 from util import get_setting_of_type
 
 
-def _get_git_ref():
+def get_git_ref():
     """Get current git ref if in a git repo."""
     git_dir = Path(__file__).parent.parent / '.git'
     if not git_dir.exists():
@@ -49,7 +49,7 @@ def _get_git_ref():
     return None
 
 
-def _get_version():
+def get_version():
     """Get version from package metadata or VERSION.txt."""
     # Try importlib.metadata first (for installed packages)
     try:
@@ -66,8 +66,8 @@ def _get_version():
 
 
 # Cache version info at module load time (once per process)
-_PATCHMAN_VERSION = _get_version()
-_PATCHMAN_GIT_REF = _get_git_ref()
+_PATCHMAN_VERSION = get_version()
+_PATCHMAN_GIT_REF = get_git_ref()
 if _PATCHMAN_GIT_REF:
     _PATCHMAN_VERSION_DISPLAY = f'v{_PATCHMAN_VERSION} ({_PATCHMAN_GIT_REF})'
 else:
