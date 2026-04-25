@@ -133,10 +133,10 @@ def package_name_list(request):
     packages = PackageName.objects.all()
 
     if 'arch_id' in request.GET:
-        packages = packages.filter(package__arch=request.GET['arch_id'])
+        packages = packages.filter(package__arch=request.GET['arch_id']).distinct()
 
     if 'packagetype' in request.GET:
-        packages = packages.filter(package__packagetype=request.GET['packagetype'])
+        packages = packages.filter(package__packagetype=request.GET['packagetype']).distinct()
 
     if 'search' in request.GET:
         terms = request.GET['search'].lower()
