@@ -51,7 +51,7 @@ ALMA_RELEASES = [8, 9, 10]
 DEBIAN_CODENAMES = ['bookworm', 'trixie']
 
 # list of Ubuntu Linux releases to update
-UBUNTU_CODENAMES = ['jammy', 'noble']
+UBUNTU_CODENAMES = ['jammy', 'noble', 'resolute']
 
 # Whether to run patchman under the gunicorn web server
 RUN_GUNICORN = False
