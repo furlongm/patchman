@@ -79,7 +79,7 @@ def _get_filtered_osreleases(filter_params):
 @login_required
 def osvariant_list(request):
     # Use cached hosts_count instead of expensive annotation
-    osvariants = OSVariant.objects.select_related('osrelease', 'arch').prefetch_related('osrelease__repos').annotate(
+    osvariants = OSVariant.objects.select_related('osrelease', 'arch').annotate(
         repos_count=Count('osrelease__repos'),
     )
 

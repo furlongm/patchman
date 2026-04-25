@@ -55,7 +55,7 @@ OSVARIANT_OSRELEASE_TEMPLATE = (
     '{% endif %}'
 )
 REPOS_OSRELEASE_TEMPLATE = (
-    '{% if record.osrelease.repos.count != None %}{{ record.osrelease.repos.count }}{% else %}0{% endif %}'
+    '{% if record.osrelease.repos.count != None %}{{ record.repos_count }}{% else %}0{% endif %}'
 )
 
 
