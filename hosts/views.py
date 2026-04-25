@@ -44,7 +44,7 @@ def _get_filtered_hosts(filter_params):
     """Helper to reconstruct filtered queryset from filter params."""
     params = parse_qs(filter_params)
 
-    hosts = Host.objects.select_related('osvariant', 'arch', 'domain')
+    hosts = Host.objects.all()
 
     if 'domain_id' in params:
         hosts = hosts.filter(domain=params['domain_id'][0])
@@ -79,7 +79,7 @@ def _get_filtered_hosts(filter_params):
 @login_required
 def host_list(request):
     # Use cached count fields instead of expensive annotations
-    hosts = Host.objects.select_related('osvariant', 'arch', 'domain')
+    hosts = Host.objects.all()
 
     if 'domain_id' in request.GET:
         hosts = hosts.filter(domain=request.GET['domain_id'])
@@ -130,7 +130,8 @@ def host_list(request):
     filter_list.append(Filter(request, 'Domain', 'domain_id', Domain.objects.all()))
     filter_list.append(Filter(request, 'OS Release', 'osrelease_id',
                               OSRelease.objects.filter(osvariant__host__in=hosts)))
-    filter_list.append(Filter(request, 'OS Variant', 'osvariant_id', OSVariant.objects.filter(host__in=hosts)))
+    filter_list.append(Filter(request, 'OS Variant', 'osvariant_id',
+                              OSVariant.objects.filter(host__in=hosts).select_related('arch')))
     filter_list.append(Filter(request, 'Architecture', 'arch_id', MachineArchitecture.objects.filter(host__in=hosts)))
     filter_list.append(Filter(request, 'Reboot Required', 'reboot_required', {'true': 'Yes', 'false': 'No'}))
     filter_bar = FilterBar(request, filter_list)
@@ -158,12 +159,15 @@ def host_list(request):
 def host_detail(request, hostname):
     host = get_object_or_404(Host, hostname=hostname)
     reports = Report.objects.filter(host=hostname).order_by('-created')[:3]
-    hostrepos = HostRepo.objects.filter(host=host)
+    hostrepos = HostRepo.objects.filter(host=host).select_related('repo')
 
     # Build packages list with update info
-    updates_by_package = {u.oldpackage_id: u for u in host.updates.select_related('oldpackage', 'newpackage')}
+    updates_by_package = {u.oldpackage_id: u for u in host.updates.select_related('oldpackage',
+                                                                                  'newpackage',
+                                                                                  'newpackage__name',
+                                                                                  'newpackage__arch')}
     packages_with_updates = []
-    for package in host.packages.select_related('name', 'arch').order_by('name__name'):
+    for package in host.packages.order_by('name__name'):
         package.update = updates_by_package.get(package.id)
         packages_with_updates.append(package)
 
@@ -297,7 +301,7 @@ class HostViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows hosts to be viewed or edited.
     """
-    queryset = Host.objects.select_related('osvariant', 'arch', 'domain').all()
+    queryset = Host.objects.all()
     serializer_class = HostSerializer
     filterset_class = HostFilter
 
