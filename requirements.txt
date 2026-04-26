@@ -13,7 +13,7 @@ django-filter==25.1
 humanize==4.12.1
 version-utils==0.3.2
 python-magic==0.4.27
-gitpython==3.1.44
+gitpython==3.1.47
 tenacity==8.2.3
 celery==5.4.0
 redis==6.4.0
