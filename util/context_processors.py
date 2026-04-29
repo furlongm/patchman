@@ -20,6 +20,7 @@ from importlib.metadata import version as get_pkg_version
 from pathlib import Path
 
 from django.db.models import F
+from django.urls import reverse
 from django.utils import timezone
 
 from hosts.models import Host
@@ -87,6 +88,10 @@ def issues_count(request):
     """Context processor to provide issues count for navbar."""
     if not request.user.is_authenticated:
         return {'issues_count': 0}
+    if request.path.startswith(reverse("admin:index")):
+        return {'issues_count': 0}
+    if hasattr(request, 'issues_count'):
+        return {'issues_count': request.issues_count}
 
     hosts = Host.objects.all()
     osvariants = OSVariant.objects.all()
@@ -159,5 +164,6 @@ def issues_count(request):
         (1 if nohost_repos.exists() else 0) +
         (1 if unprocessed_reports.exists() else 0)
     )
+    request.issues_count = count  # cache result while django-tables2 renders templates
 
     return {'issues_count': count}
