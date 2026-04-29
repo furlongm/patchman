@@ -1,3 +1,45 @@
+patchman (4.0.19-1) stable; urgency=medium
+
+  [ dependabot[bot] ]
+  * Bump requests from 2.32.4 to 2.33.0
+
+  [ Marcus Furlong ]
+  * use sets instead of lists for update tracking
+  * merge duplicate update-finding methods into find_repo_updates
+  * remove underscore prefix from kernel helper methods
+  * don't rename repos from client reports
+  * filter deb kernel updates by major.minor series
+  * add package updates list view with table, filters, and nav entry
+  * add sortable columns to package list and name detail views
+
+  [ dependabot[bot] ]
+  * Bump django from 4.2.29 to 4.2.30
+  * add celery worker resilience for database connection timeouts
+  * auto-enable wal mode for sqlite backend
+  * fix duplicate verbose_name_plural in report model meta
+  * sanitize filter_params in bulk action views
+  * add null guard for missing references element in updateinfo xml
+  * return early on yaml parse error in extract_module_metadata
+  * fix null url handling in osv.dev cve references
+  * send info messages to stdout instead of stderr
+  * move function-level import to top-level
+  * bulk db optimizations for errata processing
+  * add concurrent processing with deadlock workaround and progress bar fixes
+  * add fetch_concurrently helper function
+
+  [ Aman Maharjan ]
+  * fix: deb kernel meta-packages bypass series check causing false HWE updates
+  * fix: skip meta-packages in deb kernel series check instead of falling back to running kernel
+
+  [ Marcus Furlong ]
+  * add ubuntu 26.04 resolute codename
+
+  [ dependabot[bot] ]
+  * Bump gitpython from 3.1.44 to 3.1.47
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Wed, 29 Apr 2026 01:25:17 +0000
+
 patchman (4.0.18-1) stable; urgency=medium
 
   * handle malformed repos better
