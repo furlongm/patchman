@@ -194,9 +194,10 @@ def unzstd(contents):
     """ unzstd contents in memory and return the data
     """
     try:
-        zstddata = zstd.ZstdDecompressor().stream_reader(contents).read()
-        return zstddata
-    except zstd.ZstdError as e:
+        if hasattr(zstd, 'decompress'):
+            return zstd.decompress(contents)
+        return zstd.ZstdDecompressor().stream_reader(contents).read()
+    except (zstd.ZstdError, Exception) as e:
         error_message(text=f'zstd: {e}')
 
 
