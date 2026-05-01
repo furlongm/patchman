@@ -16,9 +16,11 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 import bz2
+import gzip
 import lzma
 import os
 import zlib
+from io import BytesIO
 
 import magic
 import requests
@@ -221,6 +223,29 @@ def extract(data, fmt):
     elif mime == 'application/gzip' or fmt.endswith('gz'):
         return gunzip(data)
     return data
+
+
+def stream_extract(data, fmt):
+    """ Return a file-like object that streams decompressed data.
+        Avoids holding the full decompressed contents in memory.
+        Falls back to BytesIO wrapping for uncompressed or zstd data.
+    """
+    try:
+        mime = magic.from_buffer(data, mime=True)
+    except AttributeError:
+        m = magic.open(magic.MAGIC_MIME)
+        m.load()
+        mime = m.buffer(data).split(';')[0]
+    bio = BytesIO(data)
+    if mime == 'application/x-bzip2' or fmt.endswith('bz2'):
+        return bz2.open(bio)
+    if mime == 'application/x-xz' or fmt.endswith('xz'):
+        return lzma.open(bio)
+    if mime == 'application/gzip' or fmt.endswith('gz'):
+        return gzip.open(bio)
+    if mime == 'application/zstd' or fmt.endswith('zst'):
+        return BytesIO(unzstd(data))
+    return bio
 
 
 def get_checksum(data, checksum_type):

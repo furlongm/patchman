@@ -32,7 +32,7 @@ from repos.utils import (
     add_mirrors_from_urls, mirror_checksum_is_valid, update_mirror_packages,
 )
 from util import (
-    Checksum, extract, fetch_content, get_checksum, get_datetime_now, get_url,
+    Checksum, fetch_content, get_checksum, get_datetime_now, get_url,
     response_is_valid,
 )
 from util.logging import error_message, info_message, warning_message
@@ -76,7 +76,6 @@ def refresh_gentoo_main_repo(repo):
         if data is None:
             mirror.fail()
             continue
-        extracted = extract(data, mirror.url)
         info_message(text=f'Found Gentoo Repo - {mirror.url}')
 
         computed_checksum = get_checksum(data, Checksum.md5)
@@ -86,7 +85,7 @@ def refresh_gentoo_main_repo(repo):
         else:
             mirror.packages_checksum = checksum
 
-        packages = extract_gentoo_packages(mirror, extracted)
+        packages = extract_gentoo_packages(mirror, data)
         if packages:
             update_mirror_packages(mirror, packages)
 
@@ -219,7 +218,7 @@ def extract_gentoo_ebuilds(data):
     """ Extract ebuilds from a Gentoo tarball
     """
     extracted_ebuilds = {}
-    with tarfile.open(fileobj=BytesIO(data), mode='r') as tar:
+    with tarfile.open(fileobj=BytesIO(data), mode='r:*') as tar:
         for member in tar.getmembers():
             if member.isfile() and member.name.endswith('ebuild') and not member.name.endswith('skel.ebuild'):
                 file_content = tar.extractfile(member).read()

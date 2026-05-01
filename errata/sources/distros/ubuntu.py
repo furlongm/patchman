@@ -15,6 +15,7 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 import csv
+import io
 import json
 import os
 from io import StringIO
@@ -30,8 +31,8 @@ from packages.utils import (
 )
 from patchman.signals import pbar_start, pbar_update
 from util import (
-    bunzip2, fetch_content, get_setting_of_type, get_sha256, get_url,
-    run_concurrently,
+    fetch_content, get_setting_of_type, get_sha256, get_url, run_concurrently,
+    stream_extract,
 )
 from util.logging import clear_forked_pbar, error_message
 
@@ -73,8 +74,8 @@ def parse_usn_data(data, concurrent_processing, max_workers=25):
     """ Parse the Ubuntu USN data
     """
     accepted_releases = get_accepted_ubuntu_codenames()
-    extracted = bunzip2(data).decode()
-    advisories = json.loads(extracted)
+    with stream_extract(data, 'bz2') as f:
+        advisories = json.load(io.TextIOWrapper(f, encoding='utf-8'))
     if concurrent_processing:
         parse_usn_data_concurrently(advisories, accepted_releases, max_workers)
     else:
