@@ -22,7 +22,9 @@ from operatingsystems.utils import get_or_create_osrelease
 from packages.models import Package
 from packages.utils import get_or_create_package, parse_package_string
 from patchman.signals import pbar_start, pbar_update
-from util import bunzip2, fetch_content, get_setting_of_type, get_sha1, get_url
+from util import (
+    fetch_content, get_setting_of_type, get_sha1, get_url, stream_extract,
+)
 from util.logging import error_message
 
 
@@ -39,7 +41,8 @@ def update_centos_errata():
         error_message(text=e)
     else:
         if data:
-            parse_centos_errata(bunzip2(data))
+            with stream_extract(data, 'bz2') as f:
+                parse_centos_errata(f)
 
 
 def fetch_centos_errata_checksum():
@@ -67,7 +70,8 @@ def parse_centos_errata_checksum(data):
 def parse_centos_errata(data):
     """ Parse CentOS errata from https://cefs.steve-meier.de/
     """
-    result = ElementTree.XML(data)
+    tree = ElementTree.parse(data)
+    result = tree.getroot()
     errata_xml = result.findall('*')
     elen = len(errata_xml)
     pbar_start.send(sender=None, ptext=f'Processing {elen} CentOS Errata', plen=elen)

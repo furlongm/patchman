@@ -14,8 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/
 
-from io import BytesIO
-
 from defusedxml import ElementTree
 
 from operatingsystems.utils import (
@@ -25,21 +23,22 @@ from packages.models import Package
 from packages.utils import get_or_create_package
 from patchman.signals import pbar_start, pbar_update
 from security.models import Reference
-from util import extract, get_url, run_concurrently
+from util import get_url, run_concurrently, stream_extract
 from util.logging import clear_forked_pbar, error_message
 
 
 def extract_updateinfo(data, url, concurrent_processing=True, max_workers=25):
     """ Parses updateinfo.xml and extracts package/errata information
     """
-    extracted = extract(data, url)
     try:
-        tree = ElementTree.parse(BytesIO(extracted))
+        with stream_extract(data, url) as f:
+            tree = ElementTree.parse(f)
         root = tree.getroot()
         elen = root.__len__()
         updates = root.findall('update')
     except ElementTree.ParseError as e:
         error_message(text=f'Error parsing updateinfo file from {url} : {e}')
+        return
     if concurrent_processing:
         extract_updateinfo_concurrently(updates, elen, max_workers)
     else:
