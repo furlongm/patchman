@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/
 
-import re
 from io import BytesIO
 
 import yaml
@@ -25,7 +24,7 @@ from packages.models import Package, PackageString
 from packages.utils import get_or_create_package, parse_package_string
 from patchman.signals import pbar_start, pbar_update
 from repos.utils import fetch_mirror_data, update_mirror_packages
-from util import extract
+from util import extract, stream_extract
 from util.logging import error_message, warning_message
 
 
@@ -63,14 +62,14 @@ def extract_module_metadata(data, url, repo):
     """ Extract module metadata from a modules.yaml file
     """
     modules = set()
-    extracted = extract(data, url)
     try:
-        modules_yaml = yaml.safe_load_all(extracted)
+        with stream_extract(data, url) as f:
+            modules_yaml = list(yaml.safe_load_all(f))
     except yaml.YAMLError as e:
         error_message(text=f'Error parsing modules.yaml: {e}')
         return modules
 
-    mlen = len(re.findall(r'---', yaml.dump(extracted.decode())))
+    mlen = len(modules_yaml)
     pbar_start.send(sender=None, ptext=f'Extracting {mlen} Modules ', plen=mlen)
     for i, doc in enumerate(modules_yaml):
         pbar_update.send(sender=None, index=i + 1)
@@ -109,52 +108,52 @@ def extract_module_metadata(data, url, repo):
 def extract_yum_packages(data, url):
     """ Extract package metadata from a yum primary.xml file
     """
-    extracted = extract(data, url)
     ns = 'http://linux.duke.edu/metadata/common'
     packages = set()
     try:
-        context = ElementTree.iterparse(BytesIO(extracted), events=('start', 'end'))
-        for event, elem in context:
-            if event == 'start':
-                if elem.tag == f'{{{ns}}}metadata':
-                    plen = int(elem.attrib.get('packages'))
-                    break
-        pbar_start.send(sender=None, ptext=f'Extracting {plen} Packages', plen=plen)
-        i = 0
-        for event, elem in context:
-            if event == 'start':
-                if elem.tag == f'{{{ns}}}package':
-                    if elem.attrib.get('type') == 'rpm':
-                        name = version = release = arch = ''
-            elif event == 'end':
-                if elem.tag == f'{{{ns}}}name':
-                    name = elem.text.lower()
-                elif elem.tag == f'{{{ns}}}arch':
-                    arch = elem.text
-                elif elem.tag == f'{{{ns}}}version':
-                    fullversion = elem
-                    epoch = fullversion.get('epoch')
-                    version = fullversion.get('ver')
-                    release = fullversion.get('rel')
-                elif elem.tag == f'{{{ns}}}package':
-                    if name and version and release and arch:
-                        if epoch == '0':
-                            epoch = ''
-                        package = PackageString(
-                            name=name,
-                            epoch=epoch,
-                            version=version,
-                            release=release,
-                            arch=arch,
-                            packagetype='R',
-                        )
-                        packages.add(package)
-                        pbar_update.send(sender=None, index=i + 1)
-                        i += 1
-                    else:
-                        text = f'Error parsing Package: {name} {epoch} {version} {release} {arch}'
-                        error_message(text=text)
-                elem.clear()
+        with stream_extract(data, url) as f:
+            context = ElementTree.iterparse(f, events=('start', 'end'))
+            for event, elem in context:
+                if event == 'start':
+                    if elem.tag == f'{{{ns}}}metadata':
+                        plen = int(elem.attrib.get('packages'))
+                        break
+            pbar_start.send(sender=None, ptext=f'Extracting {plen} Packages', plen=plen)
+            i = 0
+            for event, elem in context:
+                if event == 'start':
+                    if elem.tag == f'{{{ns}}}package':
+                        if elem.attrib.get('type') == 'rpm':
+                            name = version = release = arch = ''
+                elif event == 'end':
+                    if elem.tag == f'{{{ns}}}name':
+                        name = elem.text.lower()
+                    elif elem.tag == f'{{{ns}}}arch':
+                        arch = elem.text
+                    elif elem.tag == f'{{{ns}}}version':
+                        fullversion = elem
+                        epoch = fullversion.get('epoch')
+                        version = fullversion.get('ver')
+                        release = fullversion.get('rel')
+                    elif elem.tag == f'{{{ns}}}package':
+                        if name and version and release and arch:
+                            if epoch == '0':
+                                epoch = ''
+                            package = PackageString(
+                                name=name,
+                                epoch=epoch,
+                                version=version,
+                                release=release,
+                                arch=arch,
+                                packagetype='R',
+                            )
+                            packages.add(package)
+                            pbar_update.send(sender=None, index=i + 1)
+                            i += 1
+                        else:
+                            text = f'Error parsing Package: {name} {epoch} {version} {release} {arch}'
+                            error_message(text=text)
+                    elem.clear()
     except ElementTree.ParseError as e:
         error_message(text=f'Error parsing yum primary.xml from {url}: {e}')
     return packages

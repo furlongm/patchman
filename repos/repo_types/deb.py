@@ -14,8 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
-import re
-
 from debian.deb822 import Packages
 from debian.debian_support import Version
 
@@ -24,7 +22,7 @@ from patchman.signals import pbar_start, pbar_update
 from repos.utils import (
     fetch_mirror_data, find_mirror_url, update_mirror_packages,
 )
-from util import Checksum, extract, get_checksum, get_datetime_now
+from util import Checksum, get_checksum, get_datetime_now, stream_extract
 from util.logging import error_message, info_message, warning_message
 
 
@@ -32,17 +30,17 @@ def extract_deb_packages(data, url):
     """ Extract package metadata from debian Packages file
     """
     try:
-        extracted = extract(data, url).decode('utf-8')
+        with stream_extract(data, url) as f:
+            paragraphs = list(Packages.iter_paragraphs(f, encoding='utf-8'))
     except UnicodeDecodeError as e:
         error_message(text=f'Skipping {url} : {e}')
         return
-    package_re = re.compile('^Package: ', re.M)
-    plen = len(package_re.findall(extracted))
+    plen = len(paragraphs)
     packages = set()
 
     if plen > 0:
         pbar_start.send(sender=None, ptext=f'Extracting {plen} Packages', plen=plen)
-        for i, stanza in enumerate(Packages.iter_paragraphs(extracted)):
+        for i, stanza in enumerate(paragraphs):
             # https://github.com/furlongm/patchman/issues/55
             if 'version' not in stanza:
                 continue

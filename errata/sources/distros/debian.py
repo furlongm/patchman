@@ -28,8 +28,8 @@ from packages.models import Package
 from packages.utils import find_evr, get_or_create_package
 from patchman.signals import pbar_start, pbar_update
 from util import (
-    extract, fetch_concurrently, fetch_content, get_setting_of_type, get_url,
-    run_concurrently,
+    fetch_concurrently, fetch_content, get_setting_of_type, get_url,
+    run_concurrently, stream_extract,
 )
 from util.logging import clear_forked_pbar, error_message, warning_message
 
@@ -78,11 +78,11 @@ def fetch_dscs_from_debian_package_file_maps():
         file_map_url = f'https://deb.debian.org/{repo}/indices/package-file.map.bz2'
         res = get_url(file_map_url)
         data = fetch_content(res, f'Fetching `{repo}` package file map')
-        file_map_data = extract(data, file_map_url).decode()
-        parse_debian_package_file_map(file_map_data, repo)
+        with stream_extract(data, file_map_url) as f:
+            parse_debian_package_file_map(f, repo)
 
 
-def parse_debian_package_file_map(data, repo):
+def parse_debian_package_file_map(file_map, repo):
     """ Parse the a Debian package file map
         Format:
             Path: ./pool/updates/main/3/389-ds-base/389-ds-base_1.4.0.21-1+deb10u1.dsc
@@ -90,7 +90,10 @@ def parse_debian_package_file_map(data, repo):
             Source-Version: 1.4.0.21-1+deb10u1
     """
     parsing_dsc = False
-    for line in data.splitlines():
+    for line in file_map:
+        if isinstance(line, bytes):
+            line = line.decode()
+        line = line.rstrip('\n')
         if line.startswith('Path:'):
             if line.endswith('.dsc'):
                 parsing_dsc = True

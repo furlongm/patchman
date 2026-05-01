@@ -19,7 +19,7 @@ import re
 from packages.models import PackageString
 from patchman.signals import pbar_start, pbar_update
 from repos.utils import fetch_mirror_data, update_mirror_packages
-from util import extract
+from util import stream_extract
 from util.logging import info_message
 
 
@@ -47,8 +47,14 @@ def refresh_yast_repo(mirror, data):
 def extract_yast_packages(data):
     """ Extract package metadata from yast metadata file
     """
-    extracted = extract(data, 'gz').decode('utf-8')
-    pkgs = re.findall('=Pkg: (.*)', extracted)
+    pkgs = []
+    with stream_extract(data, 'gz') as f:
+        for line in f:
+            if isinstance(line, bytes):
+                line = line.decode('utf-8')
+            line = line.rstrip('\n')
+            if line.startswith('=Pkg: '):
+                pkgs.append(line[6:])
     plen = len(pkgs)
     packages = set()
 
