@@ -18,7 +18,7 @@ from django.test import TestCase, override_settings
 
 from packages.models import Package
 from reports.utils import (
-    _get_package_type, _get_repo_type, parse_packages, parse_repos,
+    get_package_type, get_repo_type, parse_packages, parse_repos,
     process_repo_text,
 )
 from repos.models import Repository
@@ -122,32 +122,32 @@ class ParseReposTests(TestCase):
     CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}}
 )
 class GetPackageTypeTests(TestCase):
-    """Tests for _get_package_type() function."""
+    """Tests for get_package_type() function."""
 
-    def test_get_package_type_deb(self):
+    def testget_package_type_deb(self):
         """Test DEB package type detection."""
-        self.assertEqual(_get_package_type('deb'), Package.DEB)
-        self.assertEqual(_get_package_type('DEB'), Package.DEB)
-        self.assertEqual(_get_package_type('Deb'), Package.DEB)
+        self.assertEqual(get_package_type('deb'), Package.DEB)
+        self.assertEqual(get_package_type('DEB'), Package.DEB)
+        self.assertEqual(get_package_type('Deb'), Package.DEB)
 
-    def test_get_package_type_rpm(self):
+    def testget_package_type_rpm(self):
         """Test RPM package type detection."""
-        self.assertEqual(_get_package_type('rpm'), Package.RPM)
-        self.assertEqual(_get_package_type('RPM'), Package.RPM)
+        self.assertEqual(get_package_type('rpm'), Package.RPM)
+        self.assertEqual(get_package_type('RPM'), Package.RPM)
 
-    def test_get_package_type_arch(self):
+    def testget_package_type_arch(self):
         """Test Arch package type detection."""
-        self.assertEqual(_get_package_type('arch'), Package.ARCH)
+        self.assertEqual(get_package_type('arch'), Package.ARCH)
 
-    def test_get_package_type_gentoo(self):
+    def testget_package_type_gentoo(self):
         """Test Gentoo package type detection."""
-        self.assertEqual(_get_package_type('gentoo'), Package.GENTOO)
+        self.assertEqual(get_package_type('gentoo'), Package.GENTOO)
 
-    def test_get_package_type_unknown(self):
+    def testget_package_type_unknown(self):
         """Test unknown package type returns UNKNOWN."""
-        self.assertEqual(_get_package_type(''), Package.UNKNOWN)
-        self.assertEqual(_get_package_type('invalid'), Package.UNKNOWN)
-        self.assertEqual(_get_package_type(None), Package.UNKNOWN)
+        self.assertEqual(get_package_type(''), Package.UNKNOWN)
+        self.assertEqual(get_package_type('invalid'), Package.UNKNOWN)
+        self.assertEqual(get_package_type(None), Package.UNKNOWN)
 
 
 @override_settings(
@@ -155,30 +155,30 @@ class GetPackageTypeTests(TestCase):
     CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}}
 )
 class GetRepoTypeTests(TestCase):
-    """Tests for _get_repo_type() function."""
+    """Tests for get_repo_type() function."""
 
-    def test_get_repo_type_deb(self):
+    def testget_repo_type_deb(self):
         """Test DEB repo type detection."""
-        self.assertEqual(_get_repo_type('deb'), Repository.DEB)
-        self.assertEqual(_get_repo_type('DEB'), Repository.DEB)
+        self.assertEqual(get_repo_type('deb'), Repository.DEB)
+        self.assertEqual(get_repo_type('DEB'), Repository.DEB)
 
-    def test_get_repo_type_rpm(self):
+    def testget_repo_type_rpm(self):
         """Test RPM repo type detection."""
-        self.assertEqual(_get_repo_type('rpm'), Repository.RPM)
-        self.assertEqual(_get_repo_type('RPM'), Repository.RPM)
+        self.assertEqual(get_repo_type('rpm'), Repository.RPM)
+        self.assertEqual(get_repo_type('RPM'), Repository.RPM)
 
-    def test_get_repo_type_arch(self):
+    def testget_repo_type_arch(self):
         """Test Arch repo type detection."""
-        self.assertEqual(_get_repo_type('arch'), Repository.ARCH)
+        self.assertEqual(get_repo_type('arch'), Repository.ARCH)
 
-    def test_get_repo_type_gentoo(self):
+    def testget_repo_type_gentoo(self):
         """Test Gentoo repo type detection."""
-        self.assertEqual(_get_repo_type('gentoo'), Repository.GENTOO)
+        self.assertEqual(get_repo_type('gentoo'), Repository.GENTOO)
 
-    def test_get_repo_type_unknown(self):
+    def testget_repo_type_unknown(self):
         """Test unknown repo type returns None."""
-        self.assertIsNone(_get_repo_type(''))
-        self.assertIsNone(_get_repo_type('invalid'))
+        self.assertIsNone(get_repo_type(''))
+        self.assertIsNone(get_repo_type('invalid'))
 
 
 @override_settings(

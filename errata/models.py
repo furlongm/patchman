@@ -33,7 +33,7 @@ class Erratum(models.Model):
     name = models.CharField(max_length=255, unique=True)
     e_type = models.CharField(max_length=255)
     issue_date = models.DateTimeField()
-    synopsis = models.CharField(max_length=255)
+    synopsis = models.TextField()
     affected_packages = models.ManyToManyField(Package, blank=True, related_name='affected_by_erratum')
     fixed_packages = models.ManyToManyField(Package, blank=True, related_name='provides_fix_in_erratum')
     from operatingsystems.models import OSRelease

@@ -194,16 +194,18 @@ def unzstd(contents):
     """ unzstd contents in memory and return the data
     """
     try:
-        zstddata = zstd.ZstdDecompressor().stream_reader(contents).read()
-        return zstddata
-    except zstd.ZstdError as e:
+        if hasattr(zstd, 'decompress'):
+            return zstd.decompress(contents)
+        return zstd.ZstdDecompressor().stream_reader(contents).read()
+    except (zstd.ZstdError, Exception) as e:
         error_message(text=f'zstd: {e}')
 
 
 def extract(data, fmt):
     """ Extract the contents based on mimetype or file ending. Return the
         unmodified data if neither mimetype nor file ending matches, otherwise
-        return the extracted contents.
+        return the extracted contents. Falls back to unmodified data if
+        decompression fails (e.g. requests already decompressed the content).
     """
     try:
         mime = magic.from_buffer(data, mime=True)
@@ -212,14 +214,19 @@ def extract(data, fmt):
         m = magic.open(magic.MAGIC_MIME)
         m.load()
         mime = m.buffer(data).split(';')[0]
+    if mime.startswith('text/'):
+        return data
+    extracted = None
     if mime == 'application/zstd' or fmt.endswith('zst'):
-        return unzstd(data)
-    if mime == 'application/x-xz' or fmt.endswith('xz'):
-        return unxz(data)
+        extracted = unzstd(data)
+    elif mime == 'application/x-xz' or fmt.endswith('xz'):
+        extracted = unxz(data)
     elif mime == 'application/x-bzip2' or fmt.endswith('bz2'):
-        return bunzip2(data)
+        extracted = bunzip2(data)
     elif mime == 'application/gzip' or fmt.endswith('gz'):
-        return gunzip(data)
+        extracted = gunzip(data)
+    if extracted is not None:
+        return extracted
     return data
 
 
