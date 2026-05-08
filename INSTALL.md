@@ -15,7 +15,7 @@ mysql or postgresql instead, see the database configuration section.
 ### Ubuntu 24.04 (noble)
 
 ```shell
-curl -sS https://repo.openbytes.ie/openbytes.gpg > /usr/share/keyrings/openbytes.gpg
+curl -sS https://repo.openbytes.ie/openbytes-1.gpg > /usr/share/keyrings/openbytes.gpg
 echo "deb [signed-by=/usr/share/keyrings/openbytes.gpg] https://repo.openbytes.ie/patchman/ubuntu noble-backports main" > /etc/apt/sources.list.d/patchman.list
 apt update
 apt -y install python3-patchman patchman-client
@@ -25,7 +25,7 @@ patchman-manage createsuperuser
 ### Debian 13 (trixie)
 
 ```shell
-curl -sS https://repo.openbytes.ie/openbytes.gpg > /usr/share/keyrings/openbytes.gpg
+curl -sS https://repo.openbytes.ie/openbytes-1.gpg > /usr/share/keyrings/openbytes.gpg
 echo "deb [signed-by=/usr/share/keyrings/openbytes.gpg] https://repo.openbytes.ie/patchman/debian trixie main" > /etc/apt/sources.list.d/patchman.list
 apt update
 apt -y install python3-patchman patchman-client
@@ -40,7 +40,7 @@ Client installation should work as expected.
 This also applies to Alma, RHEL, etc.
 
 ```shell
-curl -sS https://repo.openbytes.ie/openbytes-2.gpg > /etc/pki/rpm-gpg/RPM-GPG-KEY-openbytes
+curl -sS https://repo.openbytes.ie/openbytes-1.gpg > /etc/pki/rpm-gpg/RPM-GPG-KEY-openbytes
 cat <<EOF >> /etc/yum.repos.d/openbytes.repo
 [openbytes]
 name=openbytes
