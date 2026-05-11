@@ -1,0 +1,50 @@
+# Copyright 2023 Marcus Furlong <furlongm@gmail.com>
+#
+# This file is part of Patchman.
+#
+# Patchman is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 3 only.
+#
+# Patchman is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Patchman. If not, see <http://www.gnu.org/licenses/>
+
+from django.db import models
+from django.urls import reverse
+
+from patchman.arch.models import PackageArchitecture
+from patchman.packages.models import Package
+from patchman.repos.models import Repository
+
+
+class Module(models.Model):
+
+    name = models.CharField(max_length=128)
+    stream = models.CharField(max_length=128)
+    version = models.CharField(max_length=128)
+    context = models.CharField(max_length=128)
+    arch = models.ForeignKey(PackageArchitecture, on_delete=models.CASCADE)
+    repo = models.ForeignKey(Repository, on_delete=models.CASCADE)
+    packages = models.ManyToManyField(Package, blank=True)
+
+    class Meta:
+        verbose_name = 'Module'
+        verbose_name_plural = 'Modules'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['name', 'stream', 'version', 'context', 'arch', 'repo'],
+                name='unique_module',
+            ),
+        ]
+        ordering = ['name', 'stream']
+
+    def __str__(self):
+        return f'{self.name}-{self.stream}-{self.version}-{self.context}'
+
+    def get_absolute_url(self):
+        return reverse('modules:module_detail', args=[str(self.id)])
