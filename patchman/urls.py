@@ -21,17 +21,17 @@ from django.urls import include, path
 from django.views import static
 from rest_framework import routers
 
-from arch import views as arch_views
-from domains import views as domain_views
-from errata import views as errata_views
-from hosts import views as host_views
-from operatingsystems import views as os_views
-from packages import views as package_views
-from reports import views as report_views
-from repos import views as repo_views
-from security import views as security_views
-from util.api import StatsView
-from util.urls import cert_urlpatterns
+from patchman.arch import views as arch_views
+from patchman.domains import views as domain_views
+from patchman.errata import views as errata_views
+from patchman.hosts import views as host_views
+from patchman.operatingsystems import views as os_views
+from patchman.packages import views as package_views
+from patchman.reports import views as report_views
+from patchman.repos import views as repo_views
+from patchman.security import views as security_views
+from patchman.util.api import StatsView
+from patchman.util.urls import cert_urlpatterns
 
 router = routers.DefaultRouter()
 router.register(r'package-architecture', arch_views.PackageArchitectureViewSet)
@@ -63,15 +63,15 @@ urlpatterns = [
     path('api/cert/', include(cert_urlpatterns)),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),  # noqa
     path('select2/', include('django_select2.urls')),
-    path('', include('util.urls', namespace='util')),
-    path('errata/', include('errata.urls', namespace='errata')),
-    path('reports/', include('reports.urls', namespace='reports')),
-    path('hosts/', include('hosts.urls', namespace='hosts')),
-    path('packages/', include('packages.urls', namespace='packages')),
-    path('modules/', include('modules.urls', namespace='modules')),
-    path('repos/', include('repos.urls', namespace='repos')),
-    path('security/', include('security.urls', namespace='security')),
-    path('os/', include('operatingsystems.urls', namespace='operatingsystems')),  # noqa
+    path('', include('patchman.util.urls', namespace='util')),
+    path('errata/', include('patchman.errata.urls', namespace='errata')),
+    path('reports/', include('patchman.reports.urls', namespace='reports')),
+    path('hosts/', include('patchman.hosts.urls', namespace='hosts')),
+    path('packages/', include('patchman.packages.urls', namespace='packages')),
+    path('modules/', include('patchman.modules.urls', namespace='modules')),
+    path('repos/', include('patchman.repos.urls', namespace='repos')),
+    path('security/', include('patchman.security.urls', namespace='security')),
+    path('os/', include('patchman.operatingsystems.urls', namespace='operatingsystems')),  # noqa
 ]
 
 if settings.DEBUG:

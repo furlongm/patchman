@@ -27,7 +27,7 @@ from patchman.signals import (
     debug_message_s, error_message_s, info_message_s, pbar_start, pbar_update,
     warning_message_s,
 )
-from util.logging import create_pbar, get_quiet_mode, logger, update_pbar
+from patchman.util.logging import create_pbar, get_quiet_mode, logger, update_pbar
 
 init(autoreset=True)
 

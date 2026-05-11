@@ -29,25 +29,25 @@ from django.conf import settings  # noqa
 
 django_setup()
 
-from arch.utils import clean_architectures
-from errata.tasks import update_errata
-from errata.utils import (
+from patchman.arch.utils import clean_architectures
+from patchman.errata.tasks import update_errata
+from patchman.errata.utils import (
     enrich_errata, mark_errata_security_updates,
     scan_package_updates_for_affected_packages,
 )
-from hosts.models import Host
-from hosts.utils import clean_tags, find_host_updates_homogenous
-from modules.utils import clean_modules
-from packages.utils import (
+from patchman.hosts.models import Host
+from patchman.hosts.utils import clean_tags, find_host_updates_homogenous
+from patchman.modules.utils import clean_modules
+from patchman.packages.utils import (
     clean_packagenames, clean_packages, clean_packageupdates,
 )
-from reports.models import Report
-from reports.tasks import remove_reports_with_no_hosts
-from repos.models import Repository
-from repos.utils import clean_repos
-from security.utils import update_cves, update_cwes
-from util import get_setting_of_type
-from util.logging import info_message, set_quiet_mode
+from patchman.reports.models import Report
+from patchman.reports.tasks import remove_reports_with_no_hosts
+from patchman.repos.models import Repository
+from patchman.repos.utils import clean_repos
+from patchman.security.utils import update_cves, update_cwes
+from patchman.util import get_setting_of_type
+from patchman.util.logging import info_message, set_quiet_mode
 
 
 def get_host(host=None, action='Performing action'):
