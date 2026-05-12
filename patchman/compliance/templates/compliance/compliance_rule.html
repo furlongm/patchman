@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block page_title %}Compliance Rule - {{ rule.rule_id }}{% endblock %}
+
+{% block breadcrumbs %}
+  <li><a href="{% url 'compliance:compliance_summary' %}">Compliance</a></li>
+  <li class="active"><a href="{% url 'compliance:compliance_rule' rule.id %}">{{ rule.rule_id }}</a></li>
+{% endblock %}
+
+{% block content %}
+
+<h4>{{ rule.rule_id }}</h4>
+
+{% if rule.title %}<p><strong>Title:</strong> {{ rule.title }}</p>{% endif %}
+{% if rule.severity %}<p><strong>Severity:</strong> {{ rule.severity }}</p>{% endif %}
+{% if rule.description %}<p><strong>Description:</strong> {{ rule.description }}</p>{% endif %}
+
+<div class="row">
+  <div class="col-sm-3">
+    <div class="panel panel-success">
+      <div class="panel-heading"><strong>Pass</strong></div>
+      <div class="panel-body text-center"><h3>{{ pass_count }}</h3></div>
+    </div>
+  </div>
+  <div class="col-sm-3">
+    <div class="panel panel-danger">
+      <div class="panel-heading"><strong>Fail</strong></div>
+      <div class="panel-body text-center"><h3>{{ fail_count }}</h3></div>
+    </div>
+  </div>
+</div>
+
+<h4>Host Results</h4>
+<table class="table table-striped table-condensed">
+  <thead><tr><th>Host</th><th>Result</th></tr></thead>
+  <tbody>
+  {% for r in results %}
+    <tr>
+      <td><a href="{% url 'compliance:compliance_host' r.scan.host.id %}">{{ r.scan.host.hostname }}</a></td>
+      <td>
+        {% if r.result == "pass" %}
+          <span class="label label-success">{{ r.result }}</span>
+        {% elif r.result == "fail" %}
+          <span class="label label-danger">{{ r.result }}</span>
+        {% elif r.result == "error" %}
+          <span class="label label-warning">{{ r.result }}</span>
+        {% else %}
+          <span class="label label-default">{{ r.result }}</span>
+        {% endif %}
+      </td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="2">No results found.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}

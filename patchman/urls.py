@@ -29,6 +29,7 @@ from patchman.operatingsystems import views as os_views
 from patchman.packages import views as package_views
 from patchman.reports import views as report_views
 from patchman.repos import views as repo_views
+from patchman.compliance import views as compliance_views
 from patchman.security import views as security_views
 from patchman.util.api import StatsView
 from patchman.util.urls import cert_urlpatterns
@@ -52,6 +53,9 @@ router.register(r'repo', repo_views.RepositoryViewSet)
 router.register(r'mirror', repo_views.MirrorViewSet)
 router.register(r'mirror-package', repo_views.MirrorPackageViewSet)
 router.register(r'report', report_views.ReportViewSet, basename='report')
+router.register(r'compliance-profile', compliance_views.ComplianceProfileViewSet)
+router.register(r'compliance-rule', compliance_views.ComplianceRuleViewSet)
+router.register(r'compliance-scan', compliance_views.ComplianceScanViewSet)
 
 admin.autodiscover()
 
@@ -60,6 +64,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
     path('api/stats/', StatsView.as_view(), name='api-stats'),
+    path('api/compliance/stats/', compliance_views.ComplianceStatsView.as_view(), name='api-compliance-stats'),
     path('api/cert/', include(cert_urlpatterns)),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),  # noqa
     path('select2/', include('django_select2.urls')),
@@ -71,6 +76,7 @@ urlpatterns = [
     path('modules/', include('patchman.modules.urls', namespace='modules')),
     path('repos/', include('patchman.repos.urls', namespace='repos')),
     path('security/', include('patchman.security.urls', namespace='security')),
+    path('compliance/', include('patchman.compliance.urls', namespace='compliance')),
     path('os/', include('patchman.operatingsystems.urls', namespace='operatingsystems')),  # noqa
 ]
 
