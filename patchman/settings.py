@@ -96,6 +96,7 @@ THIRD_PARTY_APPS = [
 ]
 
 LOCAL_APPS = [
+    'patchman.apps.PatchmanConfig',
     'patchman.arch.apps.ArchConfig',
     'patchman.domains.apps.DomainsConfig',
     'patchman.errata.apps.ErrataConfig',
