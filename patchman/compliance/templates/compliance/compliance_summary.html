@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% load django_tables2 %}
+
+{% block page_title %}Compliance Summary{% endblock %}
+
+{% block breadcrumbs %}
+  <li class="active"><a href="{% url 'compliance:compliance_summary' %}">Compliance</a></li>
+{% endblock %}
+
+{% block content %}
+
+<div class="row">
+  <div class="col-sm-3">
+    <div class="panel panel-default">
+      <div class="panel-heading"><strong>Total Hosts Scanned</strong></div>
+      <div class="panel-body text-center"><h3>{{ total_hosts }}</h3></div>
+    </div>
+  </div>
+  <div class="col-sm-3">
+    <div class="panel panel-default">
+      <div class="panel-heading"><strong>Average Score</strong></div>
+      <div class="panel-body text-center"><h3>{{ avg_score|floatformat:1 }}%</h3></div>
+    </div>
+  </div>
+</div>
+
+{% if top_failures %}
+<div class="row">
+  <div class="col-sm-12">
+    <div class="panel panel-danger">
+      <div class="panel-heading"><strong>Top Failing Rules</strong></div>
+      <div class="panel-body">
+        <table class="table table-condensed">
+          <thead><tr><th>Rule</th><th>Severity</th><th>Failing Hosts</th></tr></thead>
+          <tbody>
+          {% for f in top_failures %}
+            <tr>
+              <td>{{ f.rule__rule_id }}</td>
+              <td>{{ f.rule__severity }}</td>
+              <td>{{ f.count }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="row">
+  <div class="col-sm-12">
+    {% render_table table %}
+  </div>
+</div>
+
+{% endblock %}

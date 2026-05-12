@@ -106,6 +106,7 @@ LOCAL_APPS = [
     'patchman.packages.apps.PackagesConfig',
     'patchman.repos.apps.ReposConfig',
     'patchman.security.apps.SecurityConfig',
+    'patchman.compliance.apps.ComplianceConfig',
     'patchman.reports.apps.ReportsConfig',
     'patchman.util.apps.UtilConfig',
     'rest_framework_api_key',

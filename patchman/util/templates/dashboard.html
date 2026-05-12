@@ -91,6 +91,14 @@
     </div>
   </div>
 </div>
+<div class="chart-row">
+  <div class="chart-col">
+    <div class="chart-box">
+      <h4>Compliance Score Distribution</h4>
+      <canvas id="complianceScoreChart"></canvas>
+    </div>
+  </div>
+</div>
 
 <script>
 (function() {
@@ -259,6 +267,28 @@
     });
   };
   xhr.send();
+
+  // compliance score distribution
+  var cxhr = new XMLHttpRequest();
+  cxhr.open('GET', '/api/compliance/stats/');
+  cxhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+  cxhr.onload = function() {
+    if (cxhr.status !== 200) return;
+    var cdata = JSON.parse(cxhr.responseText);
+    var sd = cdata.score_distribution;
+    new Chart(document.getElementById('complianceScoreChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['High (>90%)', 'Medium (70-90%)', 'Low (<70%)'],
+        datasets: [{
+          data: [sd.high, sd.medium, sd.low],
+          backgroundColor: ['#5cb85c', '#f0ad4e', '#d9534f']
+        }]
+      },
+      options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    });
+  };
+  cxhr.send();
 })();
 </script>
 

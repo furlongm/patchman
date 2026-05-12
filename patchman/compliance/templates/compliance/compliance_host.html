@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% load django_tables2 %}
+
+{% block page_title %}Compliance - {{ host.hostname }}{% endblock %}
+
+{% block breadcrumbs %}
+  <li><a href="{% url 'compliance:compliance_summary' %}">Compliance</a></li>
+  <li class="active"><a href="{% url 'compliance:compliance_host' host.id %}">{{ host.hostname }}</a></li>
+{% endblock %}
+
+{% block content %}
+
+<h4>{{ host.hostname }}</h4>
+
+{% if latest_scan %}
+<div class="row">
+  <div class="col-sm-3">
+    <div class="panel panel-default">
+      <div class="panel-heading"><strong>Profile</strong></div>
+      <div class="panel-body">{{ latest_scan.profile.profile_id }}</div>
+    </div>
+  </div>
+  <div class="col-sm-2">
+    <div class="panel panel-default">
+      <div class="panel-heading"><strong>Score</strong></div>
+      <div class="panel-body text-center"><h3>{{ latest_scan.score|floatformat:1 }}</h3></div>
+    </div>
+  </div>
+  <div class="col-sm-2">
+    <div class="panel panel-{% if latest_scan.fail_count %}danger{% else %}success{% endif %}">
+      <div class="panel-heading"><strong>Pass / Fail</strong></div>
+      <div class="panel-body text-center">{{ latest_scan.pass_count }} / {{ latest_scan.fail_count }}</div>
+    </div>
+  </div>
+  <div class="col-sm-3">
+    <div class="panel panel-default">
+      <div class="panel-heading"><strong>Scanned At</strong></div>
+      <div class="panel-body">{{ latest_scan.scanned_at }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-sm-12">
+    <h4>Rule Results</h4>
+    {% render_table results_table %}
+  </div>
+</div>
+{% else %}
+<div class="alert alert-info">No compliance scans found for this host.</div>
+{% endif %}
+
+{% if scans.count > 1 %}
+<div class="row">
+  <div class="col-sm-12">
+    <h4>Scan History</h4>
+    <table class="table table-condensed table-striped">
+      <thead><tr><th>Profile</th><th>Score</th><th>Pass</th><th>Fail</th><th>Scanned At</th></tr></thead>
+      <tbody>
+      {% for scan in scans %}
+        <tr>
+          <td>{{ scan.profile.profile_id }}</td>
+          <td>{{ scan.score|floatformat:1 }}</td>
+          <td>{{ scan.pass_count }}</td>
+          <td>{{ scan.fail_count }}</td>
+          <td>{{ scan.scanned_at }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

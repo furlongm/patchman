@@ -29,6 +29,7 @@
             <li><a href="{% url 'security:reference_list' %}">Security References</a></li>
           </ul>
         </li>
+        <li class="{% if '/compliance' in request.path %}active{% endif %}"><a href="{% url 'compliance:compliance_summary' %}">Compliance</a></li>
         <li class="has-submenu open {% if '/os' in request.path %}active{% endif %}">
           <a href="#">Operating Systems <span class="caret"></span></a>
           <ul class="submenu">

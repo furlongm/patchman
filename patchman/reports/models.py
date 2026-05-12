@@ -44,6 +44,7 @@ class Report(models.Model):
     repos = models.TextField(null=True, blank=True)
     modules = models.TextField(null=True, blank=True)
     reboot = models.TextField(null=True, blank=True)
+    compliance = models.TextField(null=True, blank=True)
 
     class Meta:
         verbose_name = 'Report'
@@ -141,6 +142,23 @@ class Report(models.Model):
             return bool(self.bug_updates_parsed)
         return bool(self.bug_updates and self.bug_updates.strip())
 
+    @property
+    def compliance_parsed(self):
+        """Parse compliance JSON for Protocol 2 reports."""
+        if self.protocol == '2' and self.compliance:
+            try:
+                return json.loads(self.compliance)
+            except json.JSONDecodeError:
+                return {}
+        return {}
+
+    @property
+    def has_compliance(self):
+        """Check if report has compliance data."""
+        if self.protocol == '2':
+            return bool(self.compliance_parsed)
+        return bool(self.compliance and self.compliance.strip())
+
     def parse(self, data, meta):
         """ Parse a report and save the object
         """
@@ -166,7 +184,8 @@ class Report(models.Model):
                  'bug_updates',
                  'repos',
                  'modules',
-                 'reboot']
+                 'reboot',
+                 'compliance']
 
         for attr in attrs:
             if data.get(attr):
@@ -223,6 +242,11 @@ class Report(models.Model):
             process_modules_json(modules_json, host)
             process_packages_json(packages_json, host)
             process_updates_json(sec_updates_json, bug_updates_json, host)
+
+            if self.compliance:
+                from patchman.compliance.utils import process_compliance_json
+                compliance_json = json.loads(self.compliance)
+                process_compliance_json(compliance_json, host)
         else:
             # Protocol 1: Text data
             from patchman.reports.utils import (
