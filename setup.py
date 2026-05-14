@@ -67,7 +67,7 @@ setup(
     author='Marcus Furlong',
     author_email='furlongm@gmail.com',
     description='Django based patch status monitoring tool for linux systems',
-    license='GPLv3',
+    license='GPL-3.0-only',
     keywords='django patch status monitoring linux spacewalk patchman',
     packages=find_packages(),
     install_requires=install_requires,
@@ -84,6 +84,5 @@ setup(
         'Environment :: Web Environment',
         'Framework :: Django',
         'Topic :: Internet :: WWW/HTTP :: WSGI :: Application',
-        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
     ],
 )
