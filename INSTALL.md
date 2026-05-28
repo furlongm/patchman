@@ -7,7 +7,7 @@ mysql or postgresql instead, see the database configuration section.
 ## Supported Server Installation Options
   - [Ubuntu 24.04](#ubuntu-2404-noble)
   - [Debian 13](#debian-13-trixie)
-  - [Rocky 10](#rocky-10)
+  - [Rocky/Alma/RHEL](#rockyalmarhel)
   - [virtualenv + pip](#virtualenv--pip)
   - [Source](#source)
 
@@ -32,19 +32,19 @@ apt -y install python3-patchman patchman-client
 patchman-manage createsuperuser
 ```
 
-### Rocky 10
+### Rocky/Alma/RHEL
 
 Server installation is currently broken due to missing upstream packages: https://github.com/furlongm/patchman/issues/669
 Client installation should work as expected.
 
-This also applies to Alma, RHEL, etc.
 
 ```shell
-curl -sS https://repo.openbytes.ie/openbytes-1.gpg > /etc/pki/rpm-gpg/RPM-GPG-KEY-openbytes
+# curl -sS https://repo.openbytes.ie/openbytes.gpg > /etc/pki/rpm-gpg/RPM-GPG-KEY-openbytes  # rocky/alma/rhel 8/9
+curl -sS https://repo.openbytes.ie/openbytes-1.gpg > /etc/pki/rpm-gpg/RPM-GPG-KEY-openbytes  # rocky/alma/rhel 10
 cat <<EOF >> /etc/yum.repos.d/openbytes.repo
 [openbytes]
 name=openbytes
-baseurl=https://repo.openbytes.ie/patchman/el10
+baseurl=https://repo.openbytes.ie/patchman/el\$releasever
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-openbytes
@@ -53,15 +53,15 @@ dnf -y install epel-release
 dnf makecache
 dnf -y install patchman-client
 #dnf -y install patchman
-systemctl restart httpd
-patchman-manage createsuperuser
+#systemctl restart httpd
+#patchman-manage createsuperuser
 ```
 
 ### virtualenv + pip
 
 ```shell
 apt -y install python3-venv        # (debian/ubuntu)
-dnf -y install python3-virtualenv  # (rocky/alma/redhat)
+dnf -y install python3-virtualenv  # (rocky/alma/rhel)
 mkdir /srv/patchman
 cd /srv/patchman
 python3 -m venv .venv
@@ -165,7 +165,7 @@ protocol=2
 Or use the `-p 2` command line option:
 
 ```shell
-$ patchman-client -s http://patchman.example.org -p 2
+$ patchman-client -s http://patchman.example.com -p 2
 ```
 
 
@@ -393,14 +393,14 @@ patchman-client
 Install Celery for realtime processing of reports from clients and for periodic
 maintenance tasks. The celery configuation file is in `/etc/patchman/celery.conf`
 
-#### Ubuntu / Debian
+#### Debian/Ubuntu
 
 ```shell
 apt -y install python3-celery redis python3-redis python-celery-common
 /usr/bin/celery --broker redis://127.0.0.1:6379/0 --app patchman worker --loglevel info --beat --scheduler django_celery_beat.schedulers:DatabaseScheduler --task-events --pool threads
 ```
 
-#### Rocky / Alma / RHEL
+#### Rocky/Alma/RHEL
 
 Currently waiting on https://bugzilla.redhat.com/show_bug.cgi?id=2032543
 
@@ -434,8 +434,9 @@ Install Redis:
 
 ```shell
 apt -y install redis python3-redis  # (debian/ubuntu)
-dnf -y install redis python3-redis  # (rocky/alma/redhat)
-systemctl restart redis/redis-server
+dnf -y install redis python3-redis  # (rocky/alma/rhel)
+systemctl restart redis-server  # (debian/ubuntu)
+systemctl restart redis         # (rocky/alma/rhel)
 ```
 
 and add the following to `/etc/patchman/local_settings.py`
@@ -450,13 +451,13 @@ CACHES = {
 }
 ```
 
-#### Memcacached
+#### Memcached
 
 Install Memcached
 
 ```shell
 apt -y install memcached python3-pymemcache  # (debian/ubuntu)
-dnf -y install memcached python3-pymemcache  # (rocky/alma/redhat)
+dnf -y install memcached python3-pymemcache  # (rocky/alma/rhel)
 systemctl restart memcached
 ```
 
@@ -522,7 +523,7 @@ api_key=abc123...
 Or use the `-k` command line option:
 
 ```shell
-$ patchman-client -s http://patchman.example.org -p 2 -k abc123...
+$ patchman-client -s http://patchman.example.com -p 2 -k abc123...
 ```
 
 
