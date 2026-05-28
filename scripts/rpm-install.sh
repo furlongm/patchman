@@ -19,4 +19,4 @@ for i in `cat INSTALLED_FILES`; do
 done
 
 cat DIRS > INSTALLED_FILES
-sed -e '/\/etc\//s|^|%config(noreplace) |' FILES >>INSTALLED_FILES
+sed -e '/\/etc\//s|^|%config |' FILES >>INSTALLED_FILES
