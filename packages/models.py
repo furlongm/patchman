@@ -183,7 +183,7 @@ class PackageString(models.Model):
     epoch = models.CharField(max_length=128, blank=True, null=True)
     release = models.CharField(max_length=128, blank=True, null=True)
     arch = models.CharField(max_length=128)
-    packagetype = models.CharField(max_length=1, blank=True, null=True)
+    packagetype = models.CharField(max_length=1, choices=Package.PACKAGE_TYPES, blank=True, null=True)
     category = models.CharField(max_length=128, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     url = models.URLField(max_length=255, blank=True, null=True)
