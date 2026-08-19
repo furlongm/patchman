@@ -27,7 +27,7 @@ from util.logging import error_message, info_message
 
 class Report(models.Model):
 
-    created = models.DateTimeField(auto_now_add=True)
+    created = models.DateTimeField(auto_now_add=True, db_index=True)
     host = models.CharField(max_length=255, null=True)
     domain = models.CharField(max_length=255, null=True)
     tags = models.CharField(max_length=255, null=True, default='')
