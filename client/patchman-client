@@ -580,25 +580,45 @@ get_repos() {
         if ${verbose} ; then
             echo 'Finding apt repos...'
         fi
+        local osname shortversion repos
         osname=$(echo ${os} | cut -d " " -f 1)
         shortversion=${VERSION_ID}
-        repo_string="'deb\' \'${osname} ${shortversion} ${host_arch} repo at"
         repos=$(apt-cache policy | grep -v Translation | grep -E "^ *[0-9]{1,5}" | grep -E " mirror\+file|http(s)?:" | sed -e "s/^ *//g" -e "s/ *$//g" | cut -d " " -f 1,2,3,4)
-        non_mirror_repos=$(echo "${repos}" | grep -Ev "mirror\+file")
-        dist_repos=$(echo "${non_mirror_repos}" | grep -v -e "Packages$")
-        nondist_repos=$(echo "${non_mirror_repos}" | grep -e "Packages$")
-        mirror_repos=$(echo "${repos}" | grep -E "mirror\+file")
-        for mirror_repo in ${mirror_repos} ; do
-            mirror_file=$(echo "${mirror_repo}" | sed -e "s/.* mirror+file://g" | cut -d " " -f 1)
-            if [ -f "${mirror_file}" ] ; then
-                for url in $(cat ${mirror_file}) ; do
-                    dist_repo=$(echo "${mirror_repo}" | sed -e "s#mirror+file:${mirror_file}#${url}#g")
-                    dist_repos="${dist_repos}"$'\n'"${dist_repo}"
-                done
-            fi
-        done
-        echo "${dist_repos}" | sed -e "s/\([0-9]*\) \(http:.*\|https:.*\)[\/]\? \(.*\/.*\) \(.*\)/${repo_string} \2\/dists\/\3\/binary-\4' '\1' '\2\/dists\/\3\/binary-\4'/" >> "${tmpfile_rep}"
-        echo "${nondist_repos}" | sed -e "s/\([0-9]*\) \(http:.*\|https:.*\)[\/]\? \(.*\/\?.*\) Packages/${repo_string} \2\/\3' '\1' '\2\/\3'/" >> "${tmpfile_rep}"
+        local prio baseurl suite_component arch
+        echo "${repos}" | while IFS=$FULL_IFS read -r prio baseurl suite_component arch; do
+            local baseurls
+            case "$baseurl" in
+                mirror+file:*)
+                    mapfile -t baseurls < "${baseurl#mirror+file:}"
+                    ;;
+                *)
+                    baseurls=("$baseurl")
+                    ;;
+            esac
+            baseurls=("${baseurls[@]/%\//}")
+            local suffix
+            case "$arch" in
+                Packages|"")
+                    suffix="/${suite_component}"
+                    ;;
+                *)
+                    suffix="/dists/${suite_component}/binary-${arch}"
+                    ;;
+            esac
+            local urls=("${baseurls[@]/%/${suffix}}")
+            local title="${osname} ${shortversion}"
+            case "$arch" in
+                all|Packages|"")
+                    ;;
+                *)
+                    title="${title} ${arch}"
+                    ;;
+            esac
+            title="${title} repo at ${urls[0]}"
+            local repo
+            printf -v repo "'%s' " deb "${title}" "${prio}" "${urls[@]}"
+            echo "${repo% }"
+        done >> "${tmpfile_rep}"
     fi
 
     # SUSE
