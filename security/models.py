@@ -200,7 +200,7 @@ class CVE(models.Model):
                 self.add_cvss_score(vector_string=score.get('score'))
 
     def fetch_nist_cve_data(self):
-        nist_cve_url = f'https://services.nvd.nist.gov/rest/json/cves/2.0?cveId={self.cve_id}'
+        nist_cve_url = f'https://services.nvd.nist.gov/rest/json/cves/2.0?cveIds={self.cve_id}'
         res = get_url(nist_cve_url)
         data = fetch_content(res, f'Fetching {self.cve_id} NIST data')
         if res.status_code == 404:
