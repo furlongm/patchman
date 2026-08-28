@@ -46,6 +46,7 @@ def get_or_create_host(report, arch, osvariant, domain):
         except herror:
             report.host = report.report_ip
         report.save()
+    host = None
     try:
         with transaction.atomic():
             host, created = Host.objects.get_or_create(
