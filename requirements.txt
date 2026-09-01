@@ -7,7 +7,7 @@ defusedxml==0.7.1
 PyYAML==6.0.2
 requests==2.33.0
 colorama==0.4.6
-djangorestframework==3.15.2
+djangorestframework==3.17.2
 djangorestframework-api-key==3.0.0
 django-filter==25.1
 humanize==4.12.1
