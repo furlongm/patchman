@@ -633,6 +633,11 @@ class Host(models.Model):
         if running_kernel_pkg:
             for package in kernel_packages:
                 if package.name.name.startswith('linux-image-'):
+                    # skip meta-packages (e.g. linux-image-generic): their version
+                    # (5.15.0.198.171) always sorts above the kernel they pull in
+                    # (5.15.0-198.208), so they would flag a reboot on every host
+                    if self.get_deb_kernel_series(package.name.name) is None:
+                        continue
                     flavour = self.get_deb_kernel_flavour(package.name.name)
                     if running_flavour is None or flavour == running_flavour:
                         if running_kernel_pkg.compare_version(package) == -1:
