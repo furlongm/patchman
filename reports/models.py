@@ -201,6 +201,9 @@ class Report(models.Model):
         osvariant = get_os(self.os, arch)
         domain = get_domain(self.domain)
         host = get_or_create_host(self, arch, osvariant, domain)
+        if host is None:
+            error_message(text=f'Error: could not get or create Host for report {self.id}')
+            return
 
         if verbose:
             info_message(text=f'Processing report {self.id} - {self.host}')
