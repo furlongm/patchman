@@ -715,6 +715,20 @@ class GetOSTests(TestCase):
         self.assertEqual(osvariant.name, 'Debian 12.0')
         self.assertEqual(osvariant.osrelease.name, 'Debian 12')
 
+    def test_debian_major_without_minor(self):
+        """Test Debian version without a minor part"""
+        from reports.utils import get_os
+        osvariant = get_os('Debian 13', self.arch)
+        self.assertEqual(osvariant.osrelease.name, 'Debian 13')
+
+    def test_debian_testing_codename(self):
+        """Test Debian testing/sid reports a codename instead of a version"""
+        from reports.utils import get_os
+        osvariant = get_os('Debian trixie-sid', self.arch)
+        self.assertEqual(osvariant.name, 'Debian trixie-sid')
+        self.assertEqual(osvariant.osrelease.name, 'Debian trixie-sid')
+        self.assertIsNone(osvariant.osrelease.cpe_name)
+
     def test_rocky_with_cpe(self):
         """Test Rocky Linux with CPE in brackets"""
         from reports.utils import get_os
