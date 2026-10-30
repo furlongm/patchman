@@ -611,9 +611,12 @@ def get_os(os, arch):
     elif os.startswith('Arch'):
         cpe_name = 'cpe:2.3:o:archlinux:arch_linux:-:*:*:*:*:*:*:*'
     elif os.startswith('Debian'):
-        major, minor = os.split(' ')[1].split('.')
-        osrelease_name = f'Debian {major}'
-        cpe_name = f'cpe:2.3:o:debian:debian_linux:{major}.0:*:*:*:*:*:*:*'
+        # testing/sid report a codename (e.g. 'Debian trixie-sid'), not a version
+        match = re.match(r'Debian (\d+)', os)
+        if match:
+            major = match.group(1)
+            osrelease_name = f'Debian {major}'
+            cpe_name = f'cpe:2.3:o:debian:debian_linux:{major}.0:*:*:*:*:*:*:*'
     elif os.startswith('Ubuntu'):
         lts = ''
         if 'LTS' in os:
