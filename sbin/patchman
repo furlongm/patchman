@@ -428,7 +428,7 @@ def process_args(args):
         args.clean_updates = True
         args.dbcheck = True
         args.dns_checks = True
-        args.errata = True
+        args.update_errata = True
     if args.list_repos:
         list_repos(args.repo)
         return False
