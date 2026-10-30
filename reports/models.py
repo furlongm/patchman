@@ -187,6 +187,8 @@ class Report(models.Model):
 
     def process(self, find_updates=True, verbose=False, force=False):
         """ Process a report and extract os, arch, domain, packages, repos etc
+            Already-processed reports and reports older than the host's last
+            report are skipped unless force is set
         """
         if not self.os or not self.kernel or not self.arch:
             error_message(text=f'Error: OS, kernel or arch not sent with report {self.id}')
@@ -194,6 +196,14 @@ class Report(models.Model):
 
         if self.processed and not force:
             info_message(text=f'Report {self.id} has already been processed')
+            return
+
+        from hosts.models import Host
+        if not force and self.host and Host.objects.filter(hostname=self.host, lastreport__gt=self.created).exists():
+            info_message(text=f'Report {self.id} is older than the last processed report for {self.host}, skipping')
+            if not self.processed:
+                self.processed = True
+                self.save(update_fields=['processed'])
             return
 
         from reports.utils import get_arch, get_domain, get_os

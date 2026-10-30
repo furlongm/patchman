@@ -62,7 +62,7 @@ Patchman CLI tool
 
 options:
   -h, --help            show this help message and exit
-  -f, --force           Ignore stored checksums and force-refresh all Mirrors
+  -f, --force           Ignore stored Mirror/Errata checksums, reprocess the latest Report for each Host
   -q, --quiet           Quiet mode (e.g. for cronjobs)
   -r, --refresh-repos   Refresh Repositories
   -R REPO, --repo REPO  Only perform action on a specific Repository (repo_id)

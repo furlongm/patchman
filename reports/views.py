@@ -185,9 +185,7 @@ def report_process(request, report_id):
     """ Process a report using a celery task
     """
     report = get_object_or_404(Report, id=report_id)
-    report.processed = False
-    report.save()
-    process_report.delay(report.id)
+    process_report.delay(report.id, force=True)
     text = f'Report {report} is being processed'
     messages.info(request, text)
     return redirect(report.get_absolute_url())
@@ -244,9 +242,7 @@ def report_bulk_action(request):
 
     if action == 'process':
         for report in reports:
-            report.processed = False
-            report.save()
-            process_report.delay(report.id)
+            process_report.delay(report.id, force=True)
         messages.success(request, f'Queued {count} {name} for processing')
     elif action == 'delete':
         reports.delete()

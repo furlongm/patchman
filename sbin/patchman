@@ -23,6 +23,7 @@ import sys
 
 from django import setup as django_setup
 from django.core.exceptions import MultipleObjectsReturned
+from django.db.models import OuterRef, Subquery
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'patchman.settings')
 from django.conf import settings  # noqa
@@ -290,12 +291,14 @@ def dns_checks(host=None):
 
 def process_reports(host=None, force=False):
     """ Process all pending reports, specify host to process only a single host
-        The --force option forces even processed reports to be reprocessed
-        No reports are skipped in case some reports contain repo information
-        and others only contain package information.
+        The --force option reprocesses the latest report for each host, so
+        that older reports are never re-applied
     """
     reports = Report.objects.all()
-    if not force:
+    if force:
+        latest = Report.objects.filter(host=OuterRef('host')).order_by('-created', '-id').values('pk')[:1]
+        reports = reports.filter(pk=Subquery(latest))
+    else:
         reports = reports.filter(processed=False)
     if host:
         reports = reports.filter(host=host)
@@ -305,7 +308,7 @@ def process_reports(host=None, force=False):
 
     info_message(text=text)
 
-    for report in reports.order_by('created').iterator():
+    for report in reports.order_by('created', 'id').iterator():
         report.process(find_updates=False, force=force)
 
 
@@ -328,7 +331,7 @@ def collect_args():
     parser = argparse.ArgumentParser(description='Patchman CLI tool')
     parser.add_argument(
         '-f', '--force', action='store_true',
-        help='Ignore stored checksums and force-refresh all Mirrors')
+        help='Ignore stored Mirror/Errata checksums, reprocess the latest Report for each Host')
     parser.add_argument(
         '-q', '--quiet', action='store_true',
         help='Quiet mode (e.g. for cronjobs)')

@@ -104,6 +104,25 @@ class ProcessReportTaskTests(TestCase):
         process_report(report.id)
         report.refresh_from_db()
         self.assertTrue(report.processed)
+        self.assertFalse(Host.objects.filter(hostname='processedhost.example.com').exists())
+
+    def test_process_report_task_force_reprocesses(self):
+        """Test process_report with force reprocesses an already processed report."""
+        report = Report.objects.create(
+            host='forcedhost.example.com',
+            domain='example.com',
+            report_ip='192.168.1.103',
+            os='Ubuntu 22.04.3 LTS',
+            kernel='5.15.0-91-generic',
+            arch='x86_64',
+            protocol='2',
+            processed=True,
+            packages=json.dumps([]),
+        )
+
+        process_report(report.id, force=True)
+
+        self.assertTrue(Host.objects.filter(hostname='forcedhost.example.com').exists())
 
 
 @override_settings(
