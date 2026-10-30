@@ -17,11 +17,16 @@
 from unittest.mock import patch
 
 from django.test import TestCase
+from django.utils import timezone
 
-from arch.models import MachineArchitecture
+from arch.models import MachineArchitecture, PackageArchitecture
 from domains.models import Domain
+from errata.models import Erratum
+from errata.utils import mark_errata_security_updates
+from hosts.models import Host
 from hosts.utils import get_or_create_host
 from operatingsystems.models import OSRelease, OSVariant
+from packages.models import Package, PackageName, PackageUpdate
 from reports.models import Report
 
 
@@ -54,3 +59,33 @@ class GetOrCreateHostTagTests(TestCase):
 
     def test_protocol2_empty_tags(self, _):
         self.assertEqual(self.host_tags('2', ''), [])
+
+
+class RefreshHostUpdateCountsTests(TestCase):
+
+    def test_counts_refreshed_after_errata_security_marking(self):
+        os_release = OSRelease.objects.create(name='Debian 13')
+        host = Host.objects.create(
+            hostname='h.example.com', ipaddress='192.0.2.1',
+            osvariant=OSVariant.objects.create(name='Debian 13', osrelease=os_release),
+            kernel='6.12.0', arch=MachineArchitecture.objects.create(name='x86_64'),
+            domain=Domain.objects.create(name='example.com'),
+            lastreport=timezone.now(),
+        )
+        pkg_arch = PackageArchitecture.objects.create(name='amd64')
+        name = PackageName.objects.create(name='curl')
+        old = Package.objects.create(name=name, arch=pkg_arch, epoch='', version='1', release='1', packagetype='D')
+        new = Package.objects.create(name=name, arch=pkg_arch, epoch='', version='2', release='1', packagetype='D')
+        update = PackageUpdate.objects.create(oldpackage=old, newpackage=new, security=False)
+        host.updates.add(update)
+        host.refresh_from_db()
+        self.assertEqual((host.sec_updates_count, host.bug_updates_count), (0, 1))
+
+        erratum = Erratum.objects.create(
+            name='DSA-0000-1', e_type='security', issue_date=timezone.now(), synopsis='curl',
+        )
+        erratum.fixed_packages.add(new)
+        mark_errata_security_updates(concurrent_processing=False)
+
+        host.refresh_from_db()
+        self.assertEqual((host.sec_updates_count, host.bug_updates_count), (1, 0))

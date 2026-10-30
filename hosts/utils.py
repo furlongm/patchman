@@ -18,6 +18,8 @@
 from socket import gaierror, gethostbyaddr, herror
 
 from django.db import IntegrityError, transaction
+from django.db.models import Count, OuterRef, Subquery
+from django.db.models.functions import Coalesce
 from taggit.models import Tag
 from taggit.utils import parse_tags
 
@@ -35,6 +37,27 @@ def update_rdns(host):
 
     host.reversedns = reversedns.lower()
     host.save()
+
+
+def refresh_host_update_counts():
+    """ Recalculate cached security/bugfix update counts for all hosts.
+        Needed when PackageUpdate.security changes, as that does not fire
+        the Host.updates m2m_changed signal.
+    """
+    from hosts.models import Host
+    through = Host.updates.through
+
+    def count_updates(security):
+        counts = through.objects.filter(
+            host_id=OuterRef('pk'),
+            packageupdate__security=security,
+        ).values('host_id').annotate(c=Count('pk')).values('c')
+        return Coalesce(Subquery(counts), 0)
+
+    Host.objects.update(
+        sec_updates_count=count_updates(True),
+        bug_updates_count=count_updates(False),
+    )
 
 
 def get_report_tags(report):

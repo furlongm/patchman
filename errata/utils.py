@@ -15,6 +15,7 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from errata.models import Erratum
+from hosts.utils import refresh_host_update_counts
 from packages.models import PackageUpdate
 from patchman.signals import pbar_start, pbar_update
 from util import fetch_concurrently, run_concurrently, tz_aware_datetime
@@ -72,6 +73,7 @@ def mark_errata_security_updates(concurrent_processing=True, max_workers=25):
         for i, e in enumerate(Erratum.objects.all()):
             e.scan_for_security_updates()
             pbar_update.send(sender=None, index=i + 1)
+    refresh_host_update_counts()
 
 
 def scan_security_worker(pk):
