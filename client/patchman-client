@@ -720,6 +720,22 @@ reboot_required() {
         return
     fi
 
+    # RHEL/Fedora: dnf needs-restarting checks the kernel and core libraries.
+    # It also exits 1 on errors (e.g. plugin not installed), so only trust
+    # that exit code together with its reboot message.
+    if check_command_exists dnf ; then
+        local needs_restarting
+        needs_restarting=$(LC_ALL=C dnf needs-restarting -r 2>/dev/null)
+        local rc=$?
+        if [ ${rc} -eq 0 ] ; then
+            reboot=False
+            return
+        elif [ ${rc} -eq 1 ] && echo "${needs_restarting}" | grep -q 'Reboot is required' ; then
+            reboot=True
+            return
+        fi
+    fi
+
     # Compare running vs installed kernel via /boot/vmlinuz symlink
     if [ -e /proc/sys/kernel/osrelease ] && [ -L /boot/vmlinuz ] ; then
         running_kernel=$(cat /proc/sys/kernel/osrelease)
