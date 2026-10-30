@@ -32,13 +32,13 @@ from util.filterspecs import Filter, FilterBar
 
 @login_required
 def package_list(request):
-    packages = Package.objects.select_related('name', 'arch')
+    packages = Package.objects.all()
 
     if 'arch_id' in request.GET:
-        packages = packages.filter(arch=request.GET['arch_id']).distinct()
+        packages = packages.filter(arch=request.GET['arch_id'])
 
     if 'packagetype' in request.GET:
-        packages = packages.filter(packagetype=request.GET['packagetype']).distinct()
+        packages = packages.filter(packagetype=request.GET['packagetype'])
 
     if 'erratum_id' in request.GET:
         if request.GET['type'] == 'affected':
@@ -109,12 +109,14 @@ def package_list(request):
     filter_list.append(Filter(request, 'Architecture', 'arch_id', PackageArchitecture.objects.all()))
     filter_bar = FilterBar(request, filter_list)
 
+    count = packages.count()  # faster without joining tables from annotate below
     packages = packages.annotate(
         host_count=Count('host', distinct=True),
         repo_count=Count('mirror__repo', distinct=True),
         affected_count=Count('affected_by_erratum', distinct=True),
         fixed_count=Count('provides_fix_in_erratum', distinct=True),
     )
+    packages.count = lambda: count
 
     table = PackageTable(packages)
     RequestConfig(request, paginate={'per_page': 50}).configure(table)
@@ -151,7 +153,12 @@ def package_name_list(request):
     filter_list.append(Filter(request, 'Architecture', 'arch_id', PackageArchitecture.objects.all()))
     filter_bar = FilterBar(request, filter_list)
 
-    packages = packages.annotate(host_count=Count('package__host', distinct=True))
+    count = packages.count()  # faster without joining tables from annotate below
+    packages = packages.annotate(
+        host_count=Count('package__host', distinct=True),
+        package_count=Count('package', distinct=True),
+    )
+    packages.count = lambda: count
 
     table = PackageNameTable(packages)
     RequestConfig(request, paginate={'per_page': 50}).configure(table)
@@ -245,7 +252,7 @@ class PackageViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows packages to be viewed or edited.
     """
-    queryset = Package.objects.select_related('name', 'arch').all()
+    queryset = Package.objects.all()
     serializer_class = PackageSerializer
     filterset_fields = [
         'name',

@@ -24,5 +24,12 @@ class HostAdmin(admin.ModelAdmin):
     readonly_fields = ('packages', 'updates')
 
 
+class HostRepoAdmin(admin.ModelAdmin):
+    def get_queryset(self, request):
+        qs = super().get_queryset(request) \
+            .select_related('host', 'repo')
+        return qs
+
+
 admin.site.register(Host, HostAdmin)
-admin.site.register(HostRepo)
+admin.site.register(HostRepo, HostRepoAdmin)

@@ -27,6 +27,12 @@ class PackageAdmin(admin.ModelAdmin):
 class PackageUpdateAdmin(admin.ModelAdmin):
     readonly_fields = ('oldpackage', 'newpackage')
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request) \
+            .select_related('oldpackage__name', 'oldpackage__arch',
+                            'newpackage__name', 'newpackage__arch')
+        return qs
+
 
 admin.site.register(Package, PackageAdmin)
 admin.site.register(PackageName)
