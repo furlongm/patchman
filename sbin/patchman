@@ -289,18 +289,24 @@ def dns_checks(host=None):
         host.check_rdns()
 
 
-def process_reports(host=None, force=False):
+def process_reports(host=None, force=False, report_id=None):
     """ Process all pending reports, specify host to process only a single host
         The --force option reprocesses the latest report for each host, so
         that older reports are never re-applied
+        Specify report_id to process only that report, forced
     """
     reports = Report.objects.all()
-    if force:
+    if report_id:
+        reports = reports.filter(pk=report_id)
+        force = True
+    elif force:
         latest = Report.objects.filter(host=OuterRef('host')).order_by('-created', '-id').values('pk')[:1]
         reports = reports.filter(pk=Subquery(latest))
     else:
         reports = reports.filter(processed=False)
-    if host:
+    if report_id:
+        text = f'Processing Report {report_id}'
+    elif host:
         reports = reports.filter(host=host)
         text = f'Processing Reports for Host {host}'
     else:
@@ -378,6 +384,9 @@ def collect_args():
         '-p', '--process-reports', action='store_true',
         help='Process pending Reports')
     parser.add_argument(
+        '-P', '--report', type=int,
+        help='Only process a specific Report (id), forces processing, implies -p')
+    parser.add_argument(
         '-c', '--clean-reports', action='store_true',
         help='Remove all but the last three Reports')
     parser.add_argument(
@@ -429,6 +438,8 @@ def process_args(args):
         args.dbcheck = True
         args.dns_checks = True
         args.update_errata = True
+    if args.report:
+        args.process_reports = True
     if args.list_repos:
         list_repos(args.repo)
         return False
@@ -462,7 +473,7 @@ def process_args(args):
         clean_reports(args.host)
         showhelp = False
     if args.process_reports:
-        process_reports(args.host, args.force)
+        process_reports(args.host, args.force, args.report)
         showhelp = False
     if args.dbcheck:
         dbcheck(args.remove_duplicates)

@@ -66,3 +66,6 @@ class ProcessReportsCLITests(TestCase):
 
     def test_force_with_host(self):
         self.assertEqual(self._processed(host='a.example.com', force=True), [(self.a_new, True)])
+
+    def test_report_id_forces_only_that_report(self):
+        self.assertEqual(self._processed(report_id=self.a_old.id), [(self.a_old, True)])
