@@ -948,7 +948,7 @@ build_json_report() {
     # Convert tags to JSON array
     local tags_json="[]"
     if [ ! -z "${tags}" ] && [ "${tags}" != "Default" ] ; then
-        tags_json=$(echo "${tags}" | tr ',' '\n' | jq -R . | jq -s .)
+        tags_json=$(echo "${tags}" | jq -R 'if test(",") then split(",") else [splits("\\s+")] end | map(gsub("^\\s+|\\s+$"; "")) | map(select(length > 0))')
     fi
 
     # Convert reboot to boolean

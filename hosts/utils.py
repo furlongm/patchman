@@ -19,6 +19,7 @@ from socket import gaierror, gethostbyaddr, herror
 
 from django.db import IntegrityError, transaction
 from taggit.models import Tag
+from taggit.utils import parse_tags
 
 from util import get_datetime_now
 from util.logging import error_message, info_message
@@ -34,6 +35,15 @@ def update_rdns(host):
 
     host.reversedns = reversedns.lower()
     host.save()
+
+
+def get_report_tags(report):
+    """ Protocol 2 sends a list (stored comma-joined), protocol 1 sends the
+        raw config string, which may be comma or space delimited
+    """
+    if report.protocol == '2':
+        return [t.strip() for t in (report.tags or '').split(',') if t.strip()]
+    return parse_tags(report.tags or '')
 
 
 def get_or_create_host(report, arch, osvariant, domain):
@@ -65,7 +75,7 @@ def get_or_create_host(report, arch, osvariant, domain):
             host.osvariant = osvariant
             host.domain = domain
             host.lastreport = report.created
-            host.tags.set(report.tags.split(','), clear=True)
+            host.tags.set(get_report_tags(report), clear=True)
             if report.reboot == 'True':
                 host.reboot_required = True
             else:
