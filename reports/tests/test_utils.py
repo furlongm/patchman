@@ -403,6 +403,32 @@ class ReportProcessTests(TestCase):
         self.assertIsNotNone(host)
         self.assertEqual(host.packages.count(), 1)
 
+    def _processed_report(self):
+        return Report.objects.create(
+            host='forcehost.example.com',
+            domain='example.com',
+            report_ip='192.168.1.12',
+            os='Ubuntu 22.04.3 LTS',
+            kernel='5.15.0-91-generic',
+            arch='x86_64',
+            protocol='2',
+            processed=True,
+            packages=json.dumps([
+                {'name': 'nginx', 'version': '1.18.0', 'release': '1', 'arch': 'amd64', 'type': 'deb'},
+            ]),
+        )
+
+    def test_report_process_skips_processed_report(self):
+        """Test Report.process() skips an already-processed report."""
+        self._processed_report().process(find_updates=False)
+        self.assertFalse(Host.objects.filter(hostname='forcehost.example.com').exists())
+
+    def test_report_process_force_reprocesses_processed_report(self):
+        """Test Report.process(force=True) reprocesses an already-processed report."""
+        self._processed_report().process(find_updates=False, force=True)
+        host = Host.objects.get(hostname='forcehost.example.com')
+        self.assertEqual(host.packages.count(), 1)
+
     def test_report_process_protocol2_with_packages(self):
         """Test Report.process() processes packages correctly."""
         report = Report.objects.create(

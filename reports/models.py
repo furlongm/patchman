@@ -185,14 +185,14 @@ class Report(models.Model):
                 self.domain = fqdn.pop()
         self.save()
 
-    def process(self, find_updates=True, verbose=False):
+    def process(self, find_updates=True, verbose=False, force=False):
         """ Process a report and extract os, arch, domain, packages, repos etc
         """
         if not self.os or not self.kernel or not self.arch:
             error_message(text=f'Error: OS, kernel or arch not sent with report {self.id}')
             return
 
-        if self.processed:
+        if self.processed and not force:
             info_message(text=f'Report {self.id} has already been processed')
             return
 

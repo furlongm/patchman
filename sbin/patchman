@@ -294,22 +294,19 @@ def process_reports(host=None, force=False):
         No reports are skipped in case some reports contain repo information
         and others only contain package information.
     """
-    reports = []
+    reports = Report.objects.all()
+    if not force:
+        reports = reports.filter(processed=False)
     if host:
-        try:
-            reports = Report.objects.filter(
-                processed=force, host=host).order_by('created')
-            text = f'Processing Reports for Host {host}'
-        except Report.DoesNotExist:
-            text = f'No Reports exist for Host {host}'
+        reports = reports.filter(host=host)
+        text = f'Processing Reports for Host {host}'
     else:
         text = 'Processing Reports for all Hosts'
-        reports = Report.objects.filter(processed=force).order_by('created')
 
     info_message(text=text)
 
-    for report in reports.iterator():
-        report.process(find_updates=False)
+    for report in reports.order_by('created').iterator():
+        report.process(find_updates=False, force=force)
 
 
 def dbcheck(remove_duplicates=False):
