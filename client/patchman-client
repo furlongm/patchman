@@ -592,6 +592,7 @@ get_repos() {
             mirror_file=$(echo "${mirror_repo}" | sed -e "s/.* mirror+file://g" | cut -d " " -f 1)
             if [ -f "${mirror_file}" ] ; then
                 for url in $(cat ${mirror_file}) ; do
+                    url=${url%/}
                     dist_repo=$(echo "${mirror_repo}" | sed -e "s#mirror+file:${mirror_file}#${url}#g")
                     dist_repos="${dist_repos}"$'\n'"${dist_repo}"
                 done
