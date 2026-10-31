@@ -284,6 +284,7 @@ class Host(models.Model):
 
     def check_if_reboot_required(self, host_highest):
         """Check if a reboot is required (running kernel < installed highest).
+        Only ever sets reboot_required, never clears it.
 
         Uses labelCompare for RPM-style version tuples parsed from uname -r.
         Only valid for RPM kernels — DEB and Arch use compare_version via
@@ -302,14 +303,11 @@ class Host(models.Model):
         if host_highest.version == ver and \
                 (host_highest.release == rel or
                  host_highest.release.startswith(rel + '.')):
-            self.reboot_required = False
             return
         kernel_ver = ('', str(ver), str(rel))
         host_highest_ver = ('', host_highest.version, host_highest.release)
         if labelCompare(kernel_ver, host_highest_ver) == -1:
             self.reboot_required = True
-        else:
-            self.reboot_required = False
 
     def get_deb_kernel_flavour(self, pkg_name):
         """Extract the flavour suffix from a DEB kernel package name.
@@ -383,7 +381,8 @@ class Host(models.Model):
     def find_kernel_updates(self, kernel_packages, repo_packages):
 
         update_ids = set()
-        self.reboot_required = False
+        # reboot_required starts as reported by the client, the checks
+        # below can only set it, so a client-detected reboot is kept
 
         # build hostrepos for priority filtering (same as find_repo_updates)
         hostrepos = None
@@ -437,19 +436,6 @@ class Host(models.Model):
                 if best_repo is not None:
                     priority = best_repo.priority
 
-            # find repo highest for this kernel name, respecting priority
-            repo_highest = None
-            for pu in repo_packages.filter(pu_q):
-                if priority is not None:
-                    pu_best_repo = find_best_repo(pu, hostrepos)
-                    if not pu_best_repo or pu_best_repo.priority < priority:
-                        continue
-                if repo_highest is None or repo_highest.compare_version(pu) == -1:
-                    repo_highest = pu
-
-            if repo_highest is None:
-                continue
-
             # find host highest installed for reboot check
             host_highest = None
             running_package = None
@@ -464,6 +450,28 @@ class Host(models.Model):
                          hp.release.startswith(rel + '.')):
                     running_package = hp
 
+            # reboot check only on primary kernel packages, independent of repos
+            if host_highest and package.name.name in (
+                'kernel', 'kernel-core', 'kernel-debug-core',
+                'kernel-default', 'kernel-rt', 'kernel-azure',
+                'kernel-kvmsmall',
+                'kernel-uek', 'kernel-uki-virt', 'kernel-debug-uki-virt',
+            ):
+                self.check_if_reboot_required(host_highest)
+
+            # find repo highest for this kernel name, respecting priority
+            repo_highest = None
+            for pu in repo_packages.filter(pu_q):
+                if priority is not None:
+                    pu_best_repo = find_best_repo(pu, hostrepos)
+                    if not pu_best_repo or pu_best_repo.priority < priority:
+                        continue
+                if repo_highest is None or repo_highest.compare_version(pu) == -1:
+                    repo_highest = pu
+
+            if repo_highest is None:
+                continue
+
             # for the running kernel's flavour, compare running vs repo
             # for other flavours, compare highest installed vs repo
             if running_package:
@@ -475,15 +483,6 @@ class Host(models.Model):
                 uid = self.process_update(base_package, repo_highest)
                 if uid is not None:
                     update_ids.add(uid)
-
-            # reboot check only on primary kernel packages
-            if host_highest and package.name.name in (
-                'kernel', 'kernel-core', 'kernel-debug-core',
-                'kernel-default', 'kernel-rt', 'kernel-azure',
-                'kernel-kvmsmall',
-                'kernel-uek', 'kernel-uki-virt', 'kernel-debug-uki-virt',
-            ):
-                self.check_if_reboot_required(host_highest)
 
         return update_ids
 
@@ -510,15 +509,7 @@ class Host(models.Model):
                 if repo_highest is None or repo_highest.compare_version(rp) == -1:
                     repo_highest = rp
 
-            if repo_highest is None:
-                continue
-
-            if package.compare_version(repo_highest) == -1:
-                uid = self.process_update(package, repo_highest)
-                if uid is not None:
-                    update_ids.add(uid)
-
-            # reboot check for main kernel packages (not -headers)
+            # reboot check for main kernel packages (not -headers), independent of repos
             # Arch uname -r format varies by flavour:
             #   linux:     6.12.8-arch1-1         (pkgver=6.12.8.arch1)
             #   linux-lts: 6.1.68-1-lts           (pkgver=6.1.68)
@@ -535,6 +526,14 @@ class Host(models.Model):
                 # check if the package version matches or extends the base
                 if pkg_ver != running_base and not pkg_ver.startswith(running_base + '.'):
                     self.reboot_required = True
+
+            if repo_highest is None:
+                continue
+
+            if package.compare_version(repo_highest) == -1:
+                uid = self.process_update(package, repo_highest)
+                if uid is not None:
+                    update_ids.add(uid)
 
         return update_ids
 

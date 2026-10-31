@@ -206,6 +206,29 @@ class HostUpdateIntegrationTests(TestCase):
         self.assertEqual(host.repos.count(), 1)
         self.assertEqual(host.repos.first(), repo)
 
+    def test_client_reported_reboot_survives_find_updates(self):
+        """Test reboot_required from the client is kept after finding updates,
+        and cleared by a later report without it."""
+        packages = (
+            '[{"name": "kernel-core", "epoch": "", "version": "5.14.0", '
+            '"release": "503.el9", "arch": "x86_64", "type": "rpm"}]'
+        )
+        for reboot in ('True', 'False'):
+            report = Report.objects.create(
+                host='reboot.example.com',
+                domain='example.com',
+                report_ip='192.168.1.52',
+                os='Rocky Linux 9.4',
+                kernel='5.14.0-503.el9.x86_64',
+                arch='x86_64',
+                protocol='2',
+                reboot=reboot,
+                packages=packages,
+            )
+            report.process()
+            host = Host.objects.get(hostname='reboot.example.com')
+            self.assertEqual(host.reboot_required, reboot == 'True')
+
 
 @override_settings(
     REQUIRE_API_KEY=False,
