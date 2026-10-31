@@ -14,11 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+from unittest.mock import patch
+
 from django.test import TestCase, override_settings
 
 from arch.models import MachineArchitecture, PackageArchitecture
 from packages.models import Package, PackageName
 from repos.models import Mirror, MirrorPackage, Repository
+from repos.utils import (
+    add_mirrors_from_urls, check_for_mirrorlists, get_latest_mirrorlist_url,
+)
+
+AL2023 = 'https://cdn.amazonlinux.com/al2023/core'
 
 
 @override_settings(
@@ -139,3 +146,60 @@ class MirrorModelTests(TestCase):
     def test_mirror_str(self):
         """Test mirror string representation."""
         self.assertIn(self.mirror.url, str(self.mirror))
+
+
+@override_settings(MAX_MIRRORS=2)
+class MirrorlistTests(TestCase):
+    """Tests for adding mirrors from mirrorlists."""
+
+    def setUp(self):
+        arch = MachineArchitecture.objects.create(name='x86_64')
+        self.repo = Repository.objects.create(
+            name='Amazon Linux 2023 repository',
+            arch=arch,
+            repotype=Repository.RPM,
+        )
+
+    def _urls(self):
+        return set(self.repo.mirror_set.values_list('url', flat=True))
+
+    def test_mirrors_limited_to_max(self):
+        """Test only MAX_MIRRORS mirrors are added from a list."""
+        add_mirrors_from_urls(self.repo, [f'http://m{i}.example.com/repo' for i in range(5)])
+        self.assertEqual(self.repo.mirror_set.count(), 2)
+
+    def test_previous_mirrors_do_not_block_current(self):
+        """Test mirrors no longer in the list do not count towards the limit."""
+        for guid in ('a' * 64, 'b' * 64):
+            Mirror.objects.create(repo=self.repo, url=f'{AL2023}/guids/{guid}/x86_64')
+        current = f'{AL2023}/guids/{"c" * 64}/x86_64'
+        add_mirrors_from_urls(self.repo, [current + '/'])
+        self.assertIn(current, self._urls())
+
+    def test_latest_mirrorlist_url(self):
+        """Test pinned AL2023 mirrorlists map to the moving latest one."""
+        pinned = f'{AL2023}/mirrors/2023.12.20261102/x86_64/mirror.list'
+        self.assertEqual(
+            get_latest_mirrorlist_url(pinned),
+            f'{AL2023}/mirrors/latest/x86_64/mirror.list',
+        )
+        regional = 'https://al2023-repos-us-east-1-de612dc2.s3.dualstack.us-east-1.amazonaws.com/core/mirrors'
+        self.assertEqual(
+            get_latest_mirrorlist_url(f'{regional}/2023.6.20241010/SRPMS/mirror.list'),
+            f'{regional}/latest/SRPMS/mirror.list',
+        )
+        self.assertIsNone(get_latest_mirrorlist_url(f'{AL2023}/mirrors/latest/x86_64/mirror.list'))
+        self.assertIsNone(get_latest_mirrorlist_url('https://mirrors.example.com/mirrorlist?repo=x'))
+
+    def test_pinned_mirrorlist_follows_latest(self):
+        """Test a repo with only a pinned mirrorlist also gets the latest release."""
+        pinned = f'{AL2023}/mirrors/2023.6.20241010/x86_64/mirror.list'
+        latest = f'{AL2023}/mirrors/latest/x86_64/mirror.list'
+        old_guid = f'{AL2023}/guids/{"a" * 64}/x86_64'
+        new_guid = f'{AL2023}/guids/{"b" * 64}/x86_64'
+        Mirror.objects.create(repo=self.repo, url=pinned)
+        lists = {pinned: [old_guid + '/'], latest: [new_guid + '/']}
+        with patch('repos.utils.get_mirrorlist_urls', side_effect=lambda url: lists.get(url)):
+            check_for_mirrorlists(self.repo)
+        self.assertEqual(self._urls(), {pinned, latest, old_guid, new_guid})
+        self.assertTrue(Mirror.objects.get(url=latest).mirrorlist)
