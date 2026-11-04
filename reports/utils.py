@@ -244,13 +244,14 @@ def process_repo(r_type, r_name, r_id, r_priority, urls, arch):
     for r_url in urls:
         if r_type == Repository.GENTOO and r_url.startswith('rsync'):
             r_url = 'https://api.gentoo.org/mirrors/distfiles.xml'
-        if not r_url.startswith(('http://', 'https://')):
-            warning_message(text=f'Skipping non-http(s) mirror URL: {r_url}')
-            continue
         try:
             mirror = Mirror.objects.get(url=r_url.strip('/'))
         except Mirror.DoesNotExist:
-            if repository:
+            # existing non-http(s) mirrors still identify their repo,
+            # but new ones are not created as they cannot be refreshed
+            if not r_url.startswith(('http://', 'https://')):
+                warning_message(text=f'Skipping non-http(s) mirror URL: {r_url}')
+            elif repository:
                 Mirror.objects.create(repo=repository, url=r_url.rstrip('/'))
             else:
                 unknown.append(r_url)
