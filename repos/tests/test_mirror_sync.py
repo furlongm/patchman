@@ -176,6 +176,13 @@ class MirrorlistTests(TestCase):
         add_mirrors_from_urls(self.repo, [current + '/'])
         self.assertIn(current, self._urls())
 
+    def test_metalink_and_mirrorlist_urls_match(self):
+        """Test metalink repomd.xml urls are stored like mirrorlist base urls."""
+        base = 'http://m.example.com/repo/os'
+        add_mirrors_from_urls(self.repo, [f'{base}/repodata/repomd.xml'])
+        add_mirrors_from_urls(self.repo, [f'{base}/'])
+        self.assertEqual(self._urls(), {base})
+
     def test_latest_mirrorlist_url(self):
         """Test pinned AL2023 mirrorlists map to the moving latest one."""
         pinned = f'{AL2023}/mirrors/2023.12.20261102/x86_64/mirror.list'

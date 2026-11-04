@@ -180,9 +180,9 @@ def add_mirrors_from_urls(repo, mirror_urls):
     for mirror_url in mirror_urls:
         mirror_url = mirror_url.replace('$ARCH', repo.arch.name)
         mirror_url = mirror_url.replace('$basearch', repo.arch.name)
-        # FIXME: maybe we should store the mirrorlist url with full path to repomd.xml?
-        # that is what metalink urls return now
-        urls.append(mirror_url.rstrip('/').replace('repodata/repomd.xml', ''))
+        # metalinks return the full path to repomd.xml, mirrorlists the base url
+        mirror_url = mirror_url.rstrip('/').removesuffix('/repodata/repomd.xml')
+        urls.append(mirror_url.rstrip('/'))
     q = Q(mirrorlist=False, refresh=True, enabled=True, url__in=urls)
     existing = repo.mirror_set.filter(q).count()
     for url in urls:
