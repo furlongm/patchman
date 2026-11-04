@@ -16,3 +16,4 @@ pyvenv.cfg
 .vscode
 .venv
 *.xml
+.env
