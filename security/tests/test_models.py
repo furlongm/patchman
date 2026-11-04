@@ -15,7 +15,9 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 from decimal import Decimal
+from unittest.mock import patch
 
+import requests
 from django.db import IntegrityError
 from django.test import TestCase, override_settings
 
@@ -62,6 +64,34 @@ class CVEMethodTests(TestCase):
         )
         cve.cvss_scores.add(score)
         self.assertIn(score, cve.cvss_scores.all())
+
+    def _response(self, status_code, content=b''):
+        response = requests.Response()
+        response.status_code = status_code
+        response._content = content
+        return response
+
+    def test_fetch_cve_data_skips_error_responses(self):
+        """Error or missing responses should be skipped, not crash."""
+        cve = CVE.objects.create(cve_id='CVE-2024-1234')
+        for response in (self._response(404), self._response(403), None):
+            with patch('security.models.get_url', return_value=response), \
+                    patch.object(CVE, 'parse_nist_cve_data') as parse_nist, \
+                    patch.object(CVE, 'parse_mitre_cve_data') as parse_mitre, \
+                    patch.object(CVE, 'parse_osv_dev_cve_data') as parse_osv:
+                cve.fetch_cve_data(fetch_nist_data=True, sleep_secs=0)
+            parse_nist.assert_not_called()
+            parse_mitre.assert_not_called()
+            parse_osv.assert_not_called()
+
+    def test_fetch_nist_cve_data_parses_valid_response(self):
+        """A valid NIST response should be parsed."""
+        cve = CVE.objects.create(cve_id='CVE-2024-1234')
+        response = self._response(200, b'{"vulnerabilities": []}')
+        with patch('security.models.get_url', return_value=response), \
+                patch.object(CVE, 'parse_nist_cve_data') as parse_nist:
+            cve.fetch_nist_cve_data()
+        parse_nist.assert_called_once_with({'vulnerabilities': []})
 
 
 @override_settings(

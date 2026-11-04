@@ -23,7 +23,10 @@ from django.db import models
 from django.urls import reverse
 
 from security.managers import CVEManager
-from util import error_message, fetch_content, get_url, tz_aware_datetime
+from util import (
+    error_message, fetch_content, get_url, response_is_valid,
+    tz_aware_datetime,
+)
 
 
 class Reference(models.Model):
@@ -164,25 +167,27 @@ class CVE(models.Model):
             self.fetch_nist_cve_data()
             sleep(sleep_secs)  # rate limited, see https://nvd.nist.gov/developers/start-here
 
+    def fetch_cve_json(self, url, source):
+        res = get_url(url)
+        if not response_is_valid(res):
+            status = res.status_code if res is not None else 'No response'
+            error_message(text=f'{status} - Skipping {self.cve_id} - {url}')
+            return
+        data = fetch_content(res, f'Fetching {self.cve_id} {source} data')
+        if data:
+            return json.loads(data)
+
     def fetch_mitre_cve_data(self):
         mitre_cve_url = f'https://cveawg.mitre.org/api/cve/{self.cve_id}'
-        res = get_url(mitre_cve_url)
-        if res.status_code == 404:
-            error_message(text=f'404 - Skipping {self.cve_id} - {mitre_cve_url}')
-            return
-        data = fetch_content(res, f'Fetching {self.cve_id} MITRE data')
-        cve_json = json.loads(data)
-        self.parse_mitre_cve_data(cve_json)
+        cve_json = self.fetch_cve_json(mitre_cve_url, 'MITRE')
+        if cve_json:
+            self.parse_mitre_cve_data(cve_json)
 
     def fetch_osv_dev_cve_data(self):
         osv_dev_cve_url = f'https://api.osv.dev/v1/vulns/{self.cve_id}'
-        res = get_url(osv_dev_cve_url)
-        if res.status_code == 404:
-            error_message(text=f'404 - Skipping {self.cve_id} - {osv_dev_cve_url}')
-            return
-        data = fetch_content(res, f'Fetching {self.cve_id} OSV data')
-        cve_json = json.loads(data)
-        self.parse_osv_dev_cve_data(cve_json)
+        cve_json = self.fetch_cve_json(osv_dev_cve_url, 'OSV')
+        if cve_json:
+            self.parse_osv_dev_cve_data(cve_json)
 
     def parse_osv_dev_cve_data(self, cve_json):
         from security.utils import get_or_create_reference
@@ -201,12 +206,9 @@ class CVE(models.Model):
 
     def fetch_nist_cve_data(self):
         nist_cve_url = f'https://services.nvd.nist.gov/rest/json/cves/2.0?cveIds={self.cve_id}'
-        res = get_url(nist_cve_url)
-        data = fetch_content(res, f'Fetching {self.cve_id} NIST data')
-        if res.status_code == 404:
-            error_message(text=f'404 - Skipping {self.cve_id} - {nist_cve_url}')
-        cve_json = json.loads(data)
-        self.parse_nist_cve_data(cve_json)
+        cve_json = self.fetch_cve_json(nist_cve_url, 'NIST')
+        if cve_json:
+            self.parse_nist_cve_data(cve_json)
 
     def parse_nist_cve_data(self, cve_json):
         from security.utils import get_or_create_reference
