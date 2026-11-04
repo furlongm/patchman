@@ -314,7 +314,7 @@ class ProcessUpdateTests(TestCase):
             domain=self.domain,
             lastreport=timezone.now(),
         )
-        # Create an old RPM package on the host (process_update uses RPM type)
+        # Create an old RPM package on the host
         self.pkg_name = PackageName.objects.create(name='openssl')
         self.old_pkg = Package.objects.create(
             name=self.pkg_name,

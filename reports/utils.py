@@ -155,10 +155,12 @@ def parse_updates(updates_string, security):
         specifying whether it is a security update or not
     """
     updates = {}
-    ulist = updates_string.split()
-    while ulist:
-        name = f'{ulist[0]} {ulist[1]} {ulist[2]}\n'
-        del ulist[:3]
+    # one update per line: name.arch version [repo], apt updates have no repo
+    for line in updates_string.splitlines():
+        fields = line.split()
+        if len(fields) < 2:
+            continue
+        name = ' '.join(fields[:3]) + '\n'
         updates[name] = security
     return updates
 
@@ -168,7 +170,7 @@ def process_update_text(host, update_string, security):
         object. Only works if the original package exists. Returns None otherwise
     """
     update_str = update_string.split()
-    repo_id = update_str[2]
+    repo_id = update_str[2] if len(update_str) > 2 else ''
 
     parts = update_str[0].rpartition('.')
     p_name = parts[0]
@@ -182,28 +184,70 @@ def process_update_text(host, update_string, security):
 def process_update(host, name, epoch, version, release, arch, repo_id, security):
     """ Core update processing logic shared by text and JSON handlers
     """
-    package = get_or_create_package(
-        name=name,
-        epoch=epoch,
-        version=version,
-        release=release,
-        arch=arch,
-        p_type=Package.RPM
-    )
+    update = get_client_update(host, name, epoch, version, release, arch, security)
+    if update is None:
+        return None
     try:
         repo = Repository.objects.get(repo_id=repo_id)
     except Repository.DoesNotExist:
         repo = None
     if repo:
         for mirror in repo.mirror_set.all():
-            MirrorPackage.objects.create(mirror=mirror, package=package)
+            MirrorPackage.objects.create(mirror=mirror, package=update.newpackage)
+    return update
 
-    installed_packages = host.packages.filter(name=package.name, arch=package.arch, packagetype=Package.RPM)
-    if installed_packages:
-        installed_package = installed_packages[0]
-        update = get_or_create_package_update(oldpackage=installed_package, newpackage=package, security=security)
-        return update
-    return None
+
+def get_client_update(host, name, epoch, version, release, arch, security):
+    """ Get or create the PackageUpdate for a client-reported update. Returns
+        None unless an older version of the package is installed on the host
+    """
+    if not name or not arch or not version:
+        return None
+    installed_package = host.packages.filter(name__name=name.lower(), arch__name=arch).first()
+    if installed_package is None:
+        return None
+    package = get_or_create_package(
+        name=name,
+        epoch=epoch,
+        version=version,
+        release=release,
+        arch=arch,
+        p_type=installed_package.packagetype,
+    )
+    if package is None or installed_package.compare_version(package) != -1:
+        return None
+    return get_or_create_package_update(oldpackage=installed_package, newpackage=package, security=security)
+
+
+def find_client_updates(host, report):
+    """ Returns the updates reported by the client in a report that still
+        apply to the host
+    """
+    if report.protocol == '2':
+        sec_updates = report.sec_updates_parsed
+        bug_updates = report.bug_updates_parsed
+    else:
+        sec_updates = [parse_update_text(u) for u in parse_updates(report.sec_updates or '', True)]
+        bug_updates = [parse_update_text(u) for u in parse_updates(report.bug_updates or '', False)]
+    updates = []
+    for reported, security in [(u, True) for u in sec_updates] + [(u, False) for u in bug_updates]:
+        if not isinstance(reported, dict) or not reported.get('version'):
+            continue
+        epoch, version, release = find_evr(reported['version'])
+        update = get_client_update(
+            host, reported.get('name'), epoch, version, release, reported.get('arch'), security,
+        )
+        if update is not None:
+            updates.append(update)
+    return updates
+
+
+def parse_update_text(update_string):
+    """ Converts a sanitized update string into a dict like a JSON update
+    """
+    update_str = update_string.split()
+    parts = update_str[0].rpartition('.')
+    return {'name': parts[0], 'arch': parts[2], 'version': update_str[1]}
 
 
 def parse_repos(repos_string):
