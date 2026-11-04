@@ -195,7 +195,18 @@ class MirrorlistTests(TestCase):
             get_latest_mirrorlist_url(f'{regional}/2023.6.20241010/SRPMS/mirror.list'),
             f'{regional}/latest/SRPMS/mirror.list',
         )
+        local = 'http://mirror.example.com/al2027/core/mirrors'
+        self.assertEqual(
+            get_latest_mirrorlist_url(f'{local}/2027.0.20260803/aarch64/mirror.list'),
+            f'{local}/latest/aarch64/mirror.list',
+        )
+        al2 = 'https://amazonlinux-2-repos-us-east-1.s3.dualstack.us-east-1.amazonaws.com/2/core'
+        self.assertEqual(
+            get_latest_mirrorlist_url(f'{al2}/2.0.20231101.0/x86_64/mirror.list'),
+            f'{al2}/latest/x86_64/mirror.list',
+        )
         self.assertIsNone(get_latest_mirrorlist_url(f'{AL2023}/mirrors/latest/x86_64/mirror.list'))
+        self.assertIsNone(get_latest_mirrorlist_url(f'{al2}/latest/x86_64/mirror.list'))
         self.assertIsNone(get_latest_mirrorlist_url('https://mirrors.example.com/mirrorlist?repo=x'))
 
     def test_pinned_mirrorlist_follows_latest(self):
@@ -210,3 +221,13 @@ class MirrorlistTests(TestCase):
             check_for_mirrorlists(self.repo)
         self.assertEqual(self._urls(), {pinned, latest, old_guid, new_guid})
         self.assertTrue(Mirror.objects.get(url=latest).mirrorlist)
+
+    def test_missing_latest_mirrorlist_not_added(self):
+        """Test the latest mirrorlist is not added if it does not exist, e.g. on a local mirror."""
+        pinned = 'http://mirror.example.com/al2023/core/mirrors/2023.6.20241010/x86_64/mirror.list'
+        guid = f'http://mirror.example.com/al2023/core/guids/{"a" * 64}/x86_64'
+        Mirror.objects.create(repo=self.repo, url=pinned)
+        lists = {pinned: [guid]}
+        with patch('repos.utils.get_mirrorlist_urls', side_effect=lambda url: lists.get(url)):
+            check_for_mirrorlists(self.repo)
+        self.assertEqual(self._urls(), {pinned, guid})

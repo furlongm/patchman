@@ -197,15 +197,14 @@ def add_mirrors_from_urls(repo, mirror_urls):
             info_message(text=text)
 
 
-# mirrorlists pinned to a release, and the moving mirrorlist to also follow
+# mirrorlists pinned to a release, and the moving mirrorlist to also follow.
+# Matched on the path only, so local mirrors and proxies of these are covered.
 LATEST_MIRRORLISTS = [
-    # Amazon Linux 2023 locks releasever by default, so hosts report
+    # Amazon Linux 2023 and later lock releasever by default, so hosts report
     # e.g. .../core/mirrors/2023.12.20261102/x86_64/mirror.list
+    # Amazon Linux 2 can be locked to e.g. .../2/core/2.0.20231101.0/x86_64/mirror.list
     (
-        re.compile(
-            r'^(https?://[^/]*(?:amazonlinux\.com/al2023|al2023-repos-[^/]*)/[^/]+/mirrors/)'
-            r'(?!latest/)[^/]+(/.*mirror\.list)$'
-        ),
+        re.compile(r'^(https?://.+/)\d+(?:\.\d+){2,3}(/[^/]+/mirror\.list)$'),
         r'\1latest\2',
     ),
 ]
@@ -221,14 +220,19 @@ def get_latest_mirrorlist_url(url):
 
 def add_latest_mirrorlists(repo):
     """ Adds the moving mirrorlist for any mirrorlists pinned to a release,
-        so that new releases are found even if all hosts are pinned
+        so that new releases are found even if all hosts are pinned.
+        Only added if it exists, as a local mirror may only carry pinned releases.
     """
     from repos.models import Mirror
     for mirror in repo.mirror_set.all():
         latest_url = get_latest_mirrorlist_url(mirror.url)
-        if latest_url and not Mirror.objects.filter(url=latest_url).exists():
-            Mirror.objects.create(repo=repo, url=latest_url)
-            info_message(text=f'Added latest mirrorlist - {latest_url}')
+        if not latest_url or Mirror.objects.filter(url=latest_url).exists():
+            continue
+        if not get_mirrorlist_urls(latest_url):
+            debug_message(text=f'No latest mirrorlist found at {latest_url}')
+            continue
+        Mirror.objects.create(repo=repo, url=latest_url)
+        info_message(text=f'Added latest mirrorlist - {latest_url}')
 
 
 def check_for_mirrorlists(repo):
