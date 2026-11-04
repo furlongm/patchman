@@ -592,6 +592,7 @@ get_repos() {
             mirror_file=$(echo "${mirror_repo}" | sed -e "s/.* mirror+file://g" | cut -d " " -f 1)
             if [ -f "${mirror_file}" ] ; then
                 for url in $(cat ${mirror_file}) ; do
+                    url=${url%/}
                     dist_repo=$(echo "${mirror_repo}" | sed -e "s#mirror+file:${mirror_file}#${url}#g")
                     dist_repos="${dist_repos}"$'\n'"${dist_repo}"
                 done
@@ -948,7 +949,7 @@ build_json_report() {
     # Convert tags to JSON array
     local tags_json="[]"
     if [ ! -z "${tags}" ] && [ "${tags}" != "Default" ] ; then
-        tags_json=$(echo "${tags}" | tr ',' '\n' | jq -R . | jq -s .)
+        tags_json=$(echo "${tags}" | jq -R 'if test(",") then split(",") else [splits("\\s+")] end | map(gsub("^\\s+|\\s+$"; "")) | map(select(length > 0))')
     fi
 
     # Convert reboot to boolean

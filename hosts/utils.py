@@ -18,7 +18,10 @@
 from socket import gaierror, gethostbyaddr, herror
 
 from django.db import IntegrityError, transaction
+from django.db.models import Count, OuterRef, Subquery
+from django.db.models.functions import Coalesce
 from taggit.models import Tag
+from taggit.utils import parse_tags
 
 from util import get_datetime_now
 from util.logging import error_message, info_message
@@ -36,6 +39,36 @@ def update_rdns(host):
     host.save()
 
 
+def refresh_host_update_counts():
+    """ Recalculate cached security/bugfix update counts for all hosts.
+        Needed when PackageUpdate.security changes, as that does not fire
+        the Host.updates m2m_changed signal.
+    """
+    from hosts.models import Host
+    through = Host.updates.through
+
+    def count_updates(security):
+        counts = through.objects.filter(
+            host_id=OuterRef('pk'),
+            packageupdate__security=security,
+        ).values('host_id').annotate(c=Count('pk')).values('c')
+        return Coalesce(Subquery(counts), 0)
+
+    Host.objects.update(
+        sec_updates_count=count_updates(True),
+        bug_updates_count=count_updates(False),
+    )
+
+
+def get_report_tags(report):
+    """ Protocol 2 sends a list (stored comma-joined), protocol 1 sends the
+        raw config string, which may be comma or space delimited
+    """
+    if report.protocol == '2':
+        return [t.strip() for t in (report.tags or '').split(',') if t.strip()]
+    return parse_tags(report.tags or '')
+
+
 def get_or_create_host(report, arch, osvariant, domain):
     """ Get or create a host from from a report
     """
@@ -46,6 +79,7 @@ def get_or_create_host(report, arch, osvariant, domain):
         except herror:
             report.host = report.report_ip
         report.save()
+    host = None
     try:
         with transaction.atomic():
             host, created = Host.objects.get_or_create(
@@ -64,7 +98,7 @@ def get_or_create_host(report, arch, osvariant, domain):
             host.osvariant = osvariant
             host.domain = domain
             host.lastreport = report.created
-            host.tags.set(report.tags.split(','), clear=True)
+            host.tags.set(get_report_tags(report), clear=True)
             if report.reboot == 'True':
                 host.reboot_required = True
             else:

@@ -196,9 +196,11 @@ def unzstd(contents):
     """ unzstd contents in memory and return the data
     """
     try:
-        if hasattr(zstd, 'decompress'):
-            return zstd.decompress(contents)
-        return zstd.ZstdDecompressor().stream_reader(contents).read()
+        if zstd.__name__ == 'zstandard':
+            # zstandard.decompress() fails without a content size in the frame
+            # header and stops after the first frame, so stream instead
+            return zstd.ZstdDecompressor().stream_reader(contents, read_across_frames=True).read()
+        return zstd.decompress(contents)
     except (zstd.ZstdError, Exception) as e:
         error_message(text=f'zstd: {e}')
 

@@ -17,6 +17,7 @@
 import gzip
 import hashlib
 from io import BytesIO
+from unittest import skipIf
 from unittest.mock import MagicMock
 
 from django.test import TestCase, override_settings
@@ -24,8 +25,13 @@ from django.test import TestCase, override_settings
 from util import (
     Checksum, bunzip2, extract, get_checksum, get_md5, get_sha1, get_sha256,
     get_sha512, gunzip, has_setting_of_type, is_epoch_time, response_is_valid,
-    sanitize_filter_params, tz_aware_datetime,
+    sanitize_filter_params, tz_aware_datetime, unzstd,
 )
+
+try:
+    import zstandard
+except ImportError:
+    zstandard = None
 
 
 @override_settings(
@@ -137,6 +143,20 @@ class CompressionTests(TestCase):
 
         result = extract(compressed, 'gz')
         self.assertEqual(result, original)
+
+    @skipIf(zstandard is None, 'zstandard not installed')
+    def test_unzstd_without_content_size(self):
+        """Test unzstd with a frame that does not declare its content size."""
+        original = b'x' * 100000
+        compressed = zstandard.ZstdCompressor(write_content_size=False).compress(original)
+        self.assertEqual(unzstd(compressed), original)
+
+    @skipIf(zstandard is None, 'zstandard not installed')
+    def test_extract_zstd_multiple_frames(self):
+        """Test extract with zstd data made of multiple frames."""
+        first, second = b'a' * 50000, b'b' * 50000
+        compressed = zstandard.ZstdCompressor().compress(first) + zstandard.ZstdCompressor().compress(second)
+        self.assertEqual(extract(compressed, 'zst'), first + second)
 
     def test_extract_unknown_format(self):
         """Test extract with unknown format returns original."""

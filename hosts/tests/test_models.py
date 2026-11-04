@@ -543,6 +543,45 @@ class DebKernelUpdateTests(TestCase):
         self.assertEqual(update.oldpackage, self.img_51)
         self.assertEqual(update.newpackage, self.img_53)
 
+    def test_deb_reboot_required_newer_kernel_installed(self):
+        """DEB: newer kernel installed but not running. Reboot required."""
+        host = self._create_host(
+            '6.8.0-51-generic',
+            [self.img_49, self.img_51, self.img_53],
+        )
+        repo_packages = Package.objects.filter(mirror=self.mirror)
+        kernel_packages = host.packages.filter(
+            name__name__startswith='linux-image-'
+        )
+
+        host.find_kernel_updates(kernel_packages, repo_packages)
+
+        self.assertTrue(host.reboot_required)
+
+    def test_deb_meta_package_does_not_require_reboot(self):
+        """DEB: running the latest kernel with linux-image-generic installed.
+
+        The meta-package version (6.8.0.53.54) sorts above the kernel it
+        depends on (6.8.0-53.54) and must not flag a reboot.
+        """
+        meta_name = PackageName.objects.create(name='linux-image-generic')
+        meta = Package.objects.create(
+            name=meta_name, arch=self.pkg_arch, epoch='',
+            version='6.8.0.53.54', release='', packagetype='D'
+        )
+        host = self._create_host(
+            '6.8.0-53-generic',
+            [self.img_49, self.img_53, meta],
+        )
+        repo_packages = Package.objects.filter(mirror=self.mirror)
+        kernel_packages = host.packages.filter(
+            name__name__startswith='linux-image-'
+        )
+
+        host.find_kernel_updates(kernel_packages, repo_packages)
+
+        self.assertFalse(host.reboot_required)
+
     def test_deb_flavour_extraction(self):
         """Test get_deb_kernel_flavour helper."""
         host = self._create_host('6.8.0-51-generic', [self.img_51])
