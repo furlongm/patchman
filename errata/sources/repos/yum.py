@@ -25,8 +25,8 @@ from packages.models import Package
 from packages.utils import get_or_create_package
 from patchman.signals import pbar_start, pbar_update
 from security.models import Reference
-from util import extract, get_url, run_concurrently
-from util.logging import clear_forked_pbar, error_message
+from util import extract, get_url, run_concurrently, tz_aware_datetime
+from util.logging import clear_forked_pbar, error_message, warning_message
 
 
 def extract_updateinfo(data, url, concurrent_processing=True, max_workers=25):
@@ -76,11 +76,29 @@ def process_updateinfo_erratum(update):
     e_name = update.find('id').text
     name, ref_type, urls = get_distro_data(e_name, e_type)
     synopsis = update.find('title').text
-    issue_date = update.find('issued').attrib.get('date')
+    issue_date = get_updateinfo_issue_date(update)
+    if issue_date is None:
+        warning_message(text=f'No valid issued or updated date for {e_name}, skipping')
+        update.clear()
+        return
     e, created = get_or_create_erratum(name, e_type, issue_date, synopsis)
     add_updateinfo_erratum_references(e, update, ref_type, urls)
     add_updateinfo_packages(e, update)
     update.clear()
+
+
+def get_updateinfo_issue_date(update):
+    """ Returns the issued date of an updateinfo erratum,
+        falling back to the updated date if there is no valid issued date
+    """
+    for tag in ('issued', 'updated'):
+        element = update.find(tag)
+        date = element.attrib.get('date') if element is not None else None
+        if date:
+            try:
+                return tz_aware_datetime(date)
+            except ValueError:
+                continue
 
 
 def get_distro_data(name, e_type):
