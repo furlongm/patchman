@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
+import json
+
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
@@ -22,6 +24,7 @@ from domains.models import Domain
 from hosts.models import Host, HostRepo
 from operatingsystems.models import OSRelease, OSVariant
 from packages.models import Package, PackageName, PackageUpdate
+from reports.models import Report
 from repos.models import Mirror, MirrorPackage, Repository
 
 
@@ -362,3 +365,90 @@ class HostProcessUpdateTests(TestCase):
         update_id = self.host.process_update(old_pkg, new_pkg)
         update = PackageUpdate.objects.get(id=update_id)
         self.assertTrue(update.security)
+
+
+@override_settings(
+    CELERY_TASK_ALWAYS_EAGER=True,
+    CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}}
+)
+class ClientReportedUpdatesTests(TestCase):
+    """Updates sent by the client must survive find_updates until a newer
+    report no longer applies them."""
+
+    def _report(self, packages, sec_updates='', bug_updates='', protocol='1'):
+        report = Report.objects.create(
+            host='client-updates.example.com',
+            domain='example.com',
+            report_ip='192.168.1.20',
+            os='Ubuntu 22.04',
+            kernel='5.15.0-91-generic',
+            arch='x86_64',
+            protocol=protocol,
+            packages=packages,
+            repos='' if protocol == '1' else '[]',
+            modules='' if protocol == '1' else '[]',
+            sec_updates=sec_updates,
+            bug_updates=bug_updates,
+        )
+        report.process()
+        return Host.objects.get(hostname='client-updates.example.com')
+
+    def test_apt_text_updates_without_repo(self):
+        """bash protocol 1 apt updates have no repo field."""
+        host = self._report(
+            "'nginx' '' '1.18.0' '6ubuntu14' 'amd64' 'deb'\n"
+            "'curl' '' '7.81.0' '1ubuntu1.14' 'amd64' 'deb'\n",
+            sec_updates='nginx.amd64 1.18.0-6ubuntu14.4\n',
+            bug_updates='curl.amd64 7.81.0-1ubuntu1.15\n',
+        )
+        updates = {u.newpackage.name.name: u for u in host.updates.all()}
+        self.assertEqual(set(updates), {'nginx', 'curl'})
+        self.assertEqual(updates['nginx'].newpackage.packagetype, Package.DEB)
+        self.assertEqual(updates['nginx'].newpackage.release, '6ubuntu14.4')
+        self.assertTrue(updates['nginx'].security)
+        self.assertFalse(updates['curl'].security)
+
+    def test_json_updates_survive_find_updates(self):
+        """A later find_updates run must not drop the client's updates."""
+        host = self._report(
+            json.dumps([{'name': 'nginx', 'epoch': '', 'version': '1.18.0',
+                         'release': '6ubuntu14', 'arch': 'amd64', 'type': 'deb'}]),
+            sec_updates=json.dumps([{'name': 'nginx', 'version': '1.18.0-6ubuntu14.4', 'arch': 'amd64'}]),
+            protocol='2',
+        )
+        host.find_updates()
+        self.assertEqual(host.updates.count(), 1)
+
+    def test_stale_client_updates_are_dropped(self):
+        """Once the package is updated, the old client update goes away."""
+        self._report(
+            "'nginx' '' '1.18.0' '6ubuntu14' 'amd64' 'deb'\n",
+            sec_updates='nginx.amd64 1.18.0-6ubuntu14.4\n',
+        )
+        host = self._report("'nginx' '' '1.18.0' '6ubuntu14.4' 'amd64' 'deb'\n")
+        self.assertEqual(host.updates.count(), 0)
+        host.find_updates()
+        self.assertEqual(host.updates.count(), 0)
+
+    def test_client_update_replaces_computed_update(self):
+        """The package manager's choice (pins, priorities) wins over the
+        newest version found in the host's repos."""
+        host = self._report(
+            "'nginx' '' '1.18.0' '6ubuntu14' 'amd64' 'deb'\n",
+            bug_updates='nginx.amd64 1.18.0-6ubuntu14.4\n',
+        )
+        machine_arch = MachineArchitecture.objects.get(name='x86_64')
+        repo = Repository.objects.create(name='pinned', arch=machine_arch, repotype=Repository.DEB, enabled=True)
+        mirror = Mirror.objects.create(repo=repo, url='http://pinned.example.com/', enabled=True, refresh=True)
+        HostRepo.objects.create(host=host, repo=repo, enabled=True)
+        newest = Package.objects.create(
+            name=PackageName.objects.get(name='nginx'),
+            arch=PackageArchitecture.objects.get(name='amd64'),
+            epoch='', version='1.24.0', release='1', packagetype=Package.DEB,
+        )
+        MirrorPackage.objects.create(mirror=mirror, package=newest)
+        host.find_updates()
+        self.assertEqual(
+            [(u.newpackage.version, u.newpackage.release) for u in host.updates.all()],
+            [('1.18.0', '6ubuntu14.4')],
+        )

@@ -144,6 +144,17 @@ class Host(models.Model):
         if rlen > 0:
             info_message(text=f'{self.hostname}: removed {rlen} old reports')
 
+    def find_client_updates(self):
+        """ Returns the updates the client sent with its latest report. Host
+            packages come from the same report, so stale ones are dropped
+        """
+        from reports.models import Report
+        from reports.utils import find_client_updates
+        report = Report.objects.filter(host=self.hostname, processed=True).order_by('-created').first()
+        if report is None:
+            return []
+        return find_client_updates(self, report)
+
     def get_host_repo_packages(self):
         if self.host_repos_only:
             hostrepos_q = Q(mirror__repo__in=self.repos.all(),
@@ -213,6 +224,17 @@ class Host(models.Model):
         kernel_update_ids = self.find_kernel_updates(kernel_packages, repo_packages)
         for ku_id in kernel_update_ids:
             update_ids.add(ku_id)
+
+        # client-reported updates come from the package manager, which knows
+        # about pins and repo priorities, so they replace the computed ones
+        client_updates = self.find_client_updates()
+        if client_updates:
+            client_oldpackage_ids = {u.oldpackage_id for u in client_updates}
+            update_ids = set(PackageUpdate.objects.filter(id__in=update_ids).exclude(
+                oldpackage_id__in=client_oldpackage_ids).values_list('id', flat=True))
+            for update in client_updates:
+                self.updates.add(update)
+                update_ids.add(update.id)
 
         for update in self.updates.all():
             if update.id not in update_ids:
