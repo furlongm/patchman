@@ -169,33 +169,77 @@ def get_mirrorlist_urls(url):
 
 
 def add_mirrors_from_urls(repo, mirror_urls):
-    """ Creates mirrors from a list of mirror urls
+    """ Creates up to MAX_MIRRORS mirrors from a list of mirror urls.
+        Only mirrors in the list count towards the limit, so that mirrors
+        from a previous version of the list (e.g. a list that moves to a
+        new immutable repo on each release) do not block the current ones.
     """
+    from repos.models import Mirror
     max_mirrors = get_max_mirrors()
+    urls = []
     for mirror_url in mirror_urls:
         mirror_url = mirror_url.replace('$ARCH', repo.arch.name)
         mirror_url = mirror_url.replace('$basearch', repo.arch.name)
-        mirror_url = mirror_url.rstrip('/')
-        q = Q(mirrorlist=False, refresh=True, enabled=True)
-        existing = repo.mirror_set.filter(q).count()
+        # metalinks return the full path to repomd.xml, mirrorlists the base url
+        mirror_url = mirror_url.rstrip('/').removesuffix('/repodata/repomd.xml')
+        urls.append(mirror_url.rstrip('/'))
+    q = Q(mirrorlist=False, refresh=True, enabled=True, url__in=urls)
+    existing = repo.mirror_set.filter(q).count()
+    for url in urls:
         if existing >= max_mirrors:
             text = f'{existing} Mirrors already exist (max={max_mirrors}), not adding more'
             warning_message(text=text)
             break
-        from repos.models import Mirror
-
-        # FIXME: maybe we should store the mirrorlist url with full path to repomd.xml?
-        # that is what metalink urls return now
-        m, c = Mirror.objects.get_or_create(repo=repo, url=mirror_url.rstrip('/').replace('repodata/repomd.xml', ''))
+        m, c = Mirror.objects.get_or_create(repo=repo, url=url)
         if c:
-            text = f'Added Mirror - {mirror_url}'
+            existing += 1
+            text = f'Added Mirror - {url}'
             info_message(text=text)
+
+
+# mirrorlists pinned to a release, and the moving mirrorlist to also follow.
+# Matched on the path only, so local mirrors and proxies of these are covered.
+LATEST_MIRRORLISTS = [
+    # Amazon Linux 2023 and later lock releasever by default, so hosts report
+    # e.g. .../core/mirrors/2023.12.20261102/x86_64/mirror.list
+    # Amazon Linux 2 can be locked to e.g. .../2/core/2.0.20231101.0/x86_64/mirror.list
+    (
+        re.compile(r'^(https?://.+/)\d+(?:\.\d+){2,3}(/[^/]+/mirror\.list)$'),
+        r'\1latest\2',
+    ),
+]
+
+
+def get_latest_mirrorlist_url(url):
+    """ Returns the moving mirrorlist url for a mirrorlist pinned to a release
+    """
+    for regex, replacement in LATEST_MIRRORLISTS:
+        if regex.match(url):
+            return regex.sub(replacement, url)
+
+
+def add_latest_mirrorlists(repo):
+    """ Adds the moving mirrorlist for any mirrorlists pinned to a release,
+        so that new releases are found even if all hosts are pinned.
+        Only added if it exists, as a local mirror may only carry pinned releases.
+    """
+    from repos.models import Mirror
+    for mirror in repo.mirror_set.all():
+        latest_url = get_latest_mirrorlist_url(mirror.url)
+        if not latest_url or Mirror.objects.filter(url=latest_url).exists():
+            continue
+        if not get_mirrorlist_urls(latest_url):
+            debug_message(text=f'No latest mirrorlist found at {latest_url}')
+            continue
+        Mirror.objects.create(repo=repo, url=latest_url)
+        info_message(text=f'Added latest mirrorlist - {latest_url}')
 
 
 def check_for_mirrorlists(repo):
     """ Check if any of the mirrors are actually mirrorlists.
         Creates MAX_MIRRORS mirrors from list if so.
     """
+    add_latest_mirrorlists(repo)
     for mirror in repo.mirror_set.all():
         if not mirror.url.startswith(('http://', 'https://')):
             warning_message(text=f'Skipping non-http(s) mirror URL: {mirror.url}')
