@@ -256,6 +256,37 @@ class ProcessRepoTests(TestCase):
         self.assertEqual(repo2.id, repo.id)
         self.assertEqual(repo2.name, 'Zabbix Official Repository - x86_64 x86_64')
 
+    def test_process_repo_non_http_mirror_not_created(self):
+        """Unknown non-http(s) URLs should not create mirrors."""
+        repo, _ = process_repo(
+            r_type=Repository.RPM,
+            r_name='Local x86_64',
+            r_id='local',
+            r_priority=-99,
+            urls=['file:///srv/repo'],
+            arch='x86_64',
+        )
+        self.assertEqual(repo.name, 'Local x86_64')
+        self.assertFalse(Mirror.objects.exists())
+
+    def test_process_repo_existing_non_http_mirror_matches(self):
+        """An existing non-http(s) mirror should still identify its repo,
+        even if the repo was renamed or the client reports a new name.
+        """
+        arch = MachineArchitecture.objects.create(name='x86_64')
+        repo = Repository.objects.create(name='Site Local el9', arch=arch, repotype=Repository.RPM)
+        Mirror.objects.create(repo=repo, url='file:///srv/el9')
+        repo2, _ = process_repo(
+            r_type=Repository.RPM,
+            r_name='Local x86_64',
+            r_id='local',
+            r_priority=-99,
+            urls=['file:///srv/el9/'],
+            arch='x86_64',
+        )
+        self.assertEqual(repo2.id, repo.id)
+        self.assertEqual(Repository.objects.count(), 1)
+
 
 @override_settings(
     CELERY_TASK_ALWAYS_EAGER=True,
