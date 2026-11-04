@@ -16,6 +16,7 @@
 
 import gzip
 import hashlib
+from datetime import datetime, timezone
 from io import BytesIO
 from unittest import skipIf
 from unittest.mock import MagicMock
@@ -248,6 +249,27 @@ class DateTimeTests(TestCase):
         date_str = '2024-01-01T12:00:00'
         result = tz_aware_datetime(date_str)
         self.assertIsNotNone(result.tzinfo)
+
+    def test_tz_aware_datetime_epoch_is_utc(self):
+        """Test epoch timestamps are converted as UTC, not local time."""
+        expected = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        self.assertEqual(tz_aware_datetime(1704067200), expected)
+        self.assertEqual(tz_aware_datetime('1704067200'), expected)
+
+    def test_tz_aware_datetime_utc_suffix(self):
+        """Test a trailing textual UTC timezone is accepted."""
+        result = tz_aware_datetime('2026-08-26 12:34:56 UTC')
+        self.assertEqual(result, datetime(2026, 8, 26, 12, 34, 56, tzinfo=timezone.utc))
+
+    def test_tz_aware_datetime_keeps_offset(self):
+        """Test an explicit timezone offset is not overwritten with UTC."""
+        result = tz_aware_datetime('2026-08-26 12:34:56+05:00')
+        self.assertEqual(result, datetime(2026, 8, 26, 7, 34, 56, tzinfo=timezone.utc))
+
+    def test_tz_aware_datetime_invalid(self):
+        """Test an unparseable datetime raises ValueError."""
+        with self.assertRaises(ValueError):
+            tz_aware_datetime('not a date')
 
 
 @override_settings(

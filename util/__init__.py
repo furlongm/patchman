@@ -18,6 +18,7 @@
 import bz2
 import lzma
 import os
+import re
 import zlib
 
 import magic
@@ -37,7 +38,6 @@ from urllib.parse import parse_qs, urlencode
 
 from django.conf import settings
 from django.utils.dateparse import parse_datetime
-from django.utils.timezone import make_aware
 from requests.exceptions import ConnectionError, HTTPError, Timeout
 from tenacity import (
     retry, retry_if_exception_type, stop_after_attempt, wait_exponential,
@@ -293,15 +293,16 @@ def tz_aware_datetime(date):
     """ Ensure a datetime is timezone-aware
         Returns the tz-aware datetime object
     """
-    if isinstance(date, int) or is_epoch_time(date):
-        parsed_date = datetime.fromtimestamp(int(date))
-    elif isinstance(date, str):
-        parsed_date = parse_datetime(date)
-    else:
+    if isinstance(date, datetime):
         parsed_date = date
-    parsed_date = parsed_date.replace(tzinfo=timezone.utc)
-    if not parsed_date.tzinfo:
-        parsed_date = make_aware(parsed_date)
+    elif isinstance(date, int) or is_epoch_time(date):
+        parsed_date = datetime.fromtimestamp(int(date), tz=timezone.utc)
+    else:
+        parsed_date = parse_datetime(re.sub(r'\s*UTC$', '+00:00', str(date).strip()))
+        if parsed_date is None:
+            raise ValueError(f'Invalid datetime: {date}')
+    if parsed_date.tzinfo is None:
+        parsed_date = parsed_date.replace(tzinfo=timezone.utc)
     return parsed_date
 
 
