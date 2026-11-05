@@ -467,8 +467,25 @@ get_host_data() {
     fi
 }
 
+get_dnf5_updates() {
+    # dnf5 list output differs from dnf4, and list has no --security option
+    local qf='%{name}.%{arch} %{evr} %{repoid}\n'
+    yum -q -C repoquery --upgrades --latest-limit=1 --security \
+        --repo="${1}" --queryformat "${qf}" 2>/dev/null >> "${tmpfile_sec}"
+    yum -q -C repoquery --upgrades --latest-limit=1 \
+        --repo="${1}" --queryformat "${qf}" 2>/dev/null >> "${tmpfile_bug}"
+    if [ -n "${CPE_NAME}" ] ; then
+        sed -i -e "s#${1}#${CPE_NAME}-${1}#g" "${tmpfile_sec}"
+        sed -i -e "s#${1}#${CPE_NAME}-${1}#g" "${tmpfile_bug}"
+    fi
+}
+
 get_yum_updates() {
     yum -q makecache 2>/dev/null
+    if yum --version 2>/dev/null | head -n 1 | grep -q '^dnf5' ; then
+        get_dnf5_updates "${1}"
+        return
+    fi
     let yum_major_version=$(yum --version | head -n 1 | cut -d "." -f 1)
     if [ ${yum_major_version} -gt 3 ] ; then
         yum -q -C --security list updates --disablerepo="*" --enablerepo="${1}" 2>&1 \
