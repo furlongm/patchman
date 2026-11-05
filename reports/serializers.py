@@ -36,8 +36,10 @@ class RepoSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255)
     id = serializers.CharField(max_length=255, required=False, allow_blank=True, default='')
     priority = serializers.IntegerField(required=False, default=0)
+    # not URLField: clients send rsync://, file:// etc, which process_repo
+    # maps or skips, rather than failing the whole report
     urls = serializers.ListField(
-        child=serializers.URLField(max_length=512),
+        child=serializers.CharField(max_length=512),
         required=False,
         default=list
     )
