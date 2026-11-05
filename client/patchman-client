@@ -285,6 +285,10 @@ get_enabled_modules() {
                 x="${x}${line}\n"
             fi
         done < <(echo "${modules_info}")
+        # $(...) strips the trailing blank line, so parse the last block here
+        if [ -n "${x}" ] ; then
+            echo -e "${x}" | grep -q -E "^Stream.*\[e\]" && parse_module "${x}"
+        fi
     done
 
     if ${debug} ; then
