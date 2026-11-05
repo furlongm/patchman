@@ -230,6 +230,17 @@ class RepoSerializerValidationTests(TestCase):
         # urls defaults to empty list
         self.assertEqual(serializer.validated_data['urls'], [])
 
+    def test_non_http_urls(self):
+        """Test non-http(s) urls such as gentoo rsync mirrors are accepted."""
+        data = {
+            'type': 'gentoo',
+            'name': 'Gentoo Linux gentoo Repo x86_64',
+            'id': 'gentoo',
+            'urls': ['rsync://rsync.gentoo.org/gentoo-portage', 'file:///var/db/repos/local'],
+        }
+        serializer = RepoSerializer(data=data)
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
 
 @override_settings(
     CELERY_TASK_ALWAYS_EAGER=True,
