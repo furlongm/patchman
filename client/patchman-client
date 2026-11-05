@@ -782,7 +782,8 @@ build_packages_json() {
         local parts=()
         while IFS= read -r part ; do
             parts+=("${part}")
-        done < <(echo "${line}" | grep -oP "'[^']*'" | tr -d "'")
+        # packages are stored with + as %2b for protocol 1
+        done < <(echo "${line//%2b/+}" | grep -oP "'[^']*'" | tr -d "'")
 
         local name="${parts[0]:-}"
         local epoch="${parts[1]:-}"
