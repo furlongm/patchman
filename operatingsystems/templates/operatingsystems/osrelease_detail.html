@@ -44,7 +44,7 @@
       {% if osvariant_count == 0 %}
         {{ osrelease }} has no Variants
       {% else %}
-        {% gen_table osrelease.osvariant_set.select_related %}
+        {% gen_table osrelease.osvariant_set.all %}
       {% endif %}
     </div>
   </div>
@@ -54,7 +54,7 @@
       {% if repos_count == 0 %}
         {{ osrelease }} has no Repositories
       {% else %}
-        {% gen_table osrelease.repos.select_related %}
+        {% gen_table osrelease.repos.all %}
       {% endif %}
       {% if user.is_authenticated and perms.is_admin %}
         <div class="well well-sm">

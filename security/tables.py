@@ -40,7 +40,7 @@ CWE_ID_TEMPLATE = '<a href="{{ record.get_absolute_url }}">{{ record.cwe_id }}</
 CWE_DESCRIPTION_TEMPLATE = '<span class="expandable-text">{{ record.description }}</span>'
 CWE_CVES_TEMPLATE = (
     '<a href="{% url \'security:cve_list\' %}?cwe_id={{ record.cwe_id }}">'
-    '{{ record.cve_set.count }}</a>'
+    '{{ record.cve_count }}</a>'
 )
 
 # ReferenceTable templates

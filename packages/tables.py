@@ -115,7 +115,7 @@ class PackageNameTable(BaseTable):
         attrs={'th': {'class': 'col-sm-5'}, 'td': {'class': 'col-sm-5'}},
     )
     versions = tables.TemplateColumn(
-        '{{ record.package_set.count }}',
+        '{{ record.package_count }}',
         orderable=False,
         verbose_name='Versions',
         attrs={'th': {'class': 'col-sm-1'}, 'td': {'class': 'col-sm-1'}},

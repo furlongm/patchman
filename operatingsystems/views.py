@@ -19,7 +19,7 @@ from urllib.parse import parse_qs
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Q
+from django.db.models import Count, Prefetch, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django_tables2 import RequestConfig
@@ -34,6 +34,7 @@ from operatingsystems.serializers import (
     OSReleaseSerializer, OSVariantSerializer,
 )
 from operatingsystems.tables import OSReleaseTable, OSVariantTable
+from repos.models import Repository
 from util import sanitize_filter_params
 
 
@@ -182,7 +183,11 @@ def delete_nohost_osvariants(request):
 
 @login_required
 def osrelease_list(request):
-    osreleases = OSRelease.objects.all()
+    osreleases = OSRelease.objects.all().order_by('name').annotate(
+        repos_count=Count('repos', distinct=True),
+        osvariant_count=Count('osvariant', distinct=True),
+        erratum_count=Count('erratum', distinct=True),
+    )
 
     if 'erratum_id' in request.GET:
         osreleases = osreleases.filter(erratum=request.GET['erratum_id'])
@@ -216,7 +221,10 @@ def osrelease_list(request):
 
 @login_required
 def osrelease_detail(request, osrelease_id):
-    osrelease = get_object_or_404(OSRelease, id=osrelease_id)
+    repos = Prefetch('repos', Repository.objects.prefetch_related('mirror_set'))
+    osvariant_set = Prefetch('osvariant_set', OSVariant.objects.prefetch_related('host_set'))
+    osrelease = get_object_or_404(OSRelease.objects.prefetch_related(repos, osvariant_set),
+                                  id=osrelease_id)
 
     if request.method == 'POST':
         repos_form = AddReposToOSReleaseForm(request.POST, instance=osrelease)

@@ -23,7 +23,7 @@ SELECT_ALL_CHECKBOX = '<input type="checkbox" id="select-all-page" title="Select
 REPO_NAME_TEMPLATE = '<a href="{{ record.get_absolute_url }}">{{ record }}</a>'
 MIRRORS_TEMPLATE = (
     '<a href="{% url \'repos:mirror_list\' %}?repo_id={{ record.id }}">'
-    '{{ record.mirror_set.count }}</a>'
+    '{{ record.mirror_count }}</a>'
 )
 REPO_ENABLED_TEMPLATE = '{% load common %}{% yes_no_img record.enabled %}'
 SECURITY_TEMPLATE = '{% load common %}{% yes_no_img record.security %}'

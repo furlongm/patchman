@@ -20,7 +20,7 @@ from urllib.parse import parse_qs
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -46,7 +46,7 @@ from util.filterspecs import Filter, FilterBar
 @login_required
 def repo_list(request):
 
-    repos = Repository.objects.select_related('arch').order_by('name')
+    repos = Repository.objects.order_by('name').annotate(mirror_count=Count('mirror', distinct=True))
 
     if 'repotype' in request.GET:
         repos = repos.filter(repotype=request.GET['repotype'])
@@ -417,7 +417,7 @@ def _get_filtered_repos(filter_params):
     """Helper to reconstruct filtered queryset from filter params."""
     params = parse_qs(filter_params)
 
-    repos = Repository.objects.select_related('arch').order_by('name')
+    repos = Repository.objects.order_by('name')
 
     if 'repotype' in params:
         repos = repos.filter(repotype=params['repotype'][0])
@@ -588,7 +588,7 @@ class RepositoryViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows repositories to be viewed or edited.
     """
-    queryset = Repository.objects.select_related('arch').all()
+    queryset = Repository.objects.all()
     serializer_class = RepositorySerializer
 
 
