@@ -256,6 +256,65 @@ class ProcessRepoTests(TestCase):
         self.assertEqual(repo2.id, repo.id)
         self.assertEqual(repo2.name, 'Zabbix Official Repository - x86_64 x86_64')
 
+    def test_process_repo_same_name_different_repo_id_not_merged(self):
+        """Same repo name from different major versions must not merge (#881)."""
+        el9, _ = process_repo(
+            r_type=Repository.RPM,
+            r_name='Example Repo x86_64',
+            r_id='cpe:/o:redhat:enterprise_linux:9::baseos-example',
+            r_priority=-99,
+            urls=['https://repo.example.com/example/9/x86_64'],
+            arch='x86_64',
+        )
+        el10, _ = process_repo(
+            r_type=Repository.RPM,
+            r_name='Example Repo x86_64',
+            r_id='cpe:/o:redhat:enterprise_linux:10::baseos-example',
+            r_priority=-99,
+            urls=['https://repo.example.com/example/10/x86_64'],
+            arch='x86_64',
+        )
+        self.assertNotEqual(el9.id, el10.id)
+        self.assertEqual(
+            list(el9.mirror_set.values_list('url', flat=True)),
+            ['https://repo.example.com/example/9/x86_64'],
+        )
+        el9.refresh_from_db()
+        self.assertEqual(el9.repo_id, 'cpe:/o:redhat:enterprise_linux:9::baseos-example')
+
+        # a second el10 host on a new mirror joins the el10 repo, not el9
+        el10b, _ = process_repo(
+            r_type=Repository.RPM,
+            r_name='Example Repo x86_64',
+            r_id='cpe:/o:redhat:enterprise_linux:10::baseos-example',
+            r_priority=-99,
+            urls=['https://mirror2.example.com/example/10/x86_64'],
+            arch='x86_64',
+        )
+        self.assertEqual(el10b.id, el10.id)
+        self.assertEqual(el10.mirror_set.count(), 2)
+
+    def test_process_repo_same_name_same_repo_id_merged(self):
+        """Different mirrors of the same repo still share one Repository."""
+        repo1, _ = process_repo(
+            r_type=Repository.RPM,
+            r_name='Rocky BaseOS',
+            r_id='baseos',
+            r_priority=-99,
+            urls=['https://mirror1.example.com/rocky/9/BaseOS/x86_64/os'],
+            arch='x86_64',
+        )
+        repo2, _ = process_repo(
+            r_type=Repository.RPM,
+            r_name='Rocky BaseOS',
+            r_id='baseos',
+            r_priority=-99,
+            urls=['https://mirror2.example.com/rocky/9/BaseOS/x86_64/os'],
+            arch='x86_64',
+        )
+        self.assertEqual(repo1.id, repo2.id)
+        self.assertEqual(repo1.mirror_set.count(), 2)
+
 
 @override_settings(
     CELERY_TASK_ALWAYS_EAGER=True,

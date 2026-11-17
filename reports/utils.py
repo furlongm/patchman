@@ -259,6 +259,9 @@ def process_repo(r_type, r_name, r_id, r_priority, urls, arch):
 
     if not repository:
         repository = get_or_create_repo(r_name, r_arch, r_type)
+        if r_id and repository.repo_id and repository.repo_id != r_id:
+            # same name but a different repo (e.g. el9 vs el10), don't merge
+            repository = get_or_create_repo(f'{r_name} ({r_id})'[:255], r_arch, r_type)
 
     if r_id and repository.repo_id != r_id:
         repository.repo_id = r_id
