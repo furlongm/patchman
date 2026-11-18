@@ -721,10 +721,40 @@ reboot_required() {
         return
     fi
 
+    # RHEL/Fedora/SUSE: ask the package manager. needs-restarting also
+    # exits 1 on errors (e.g. plugin missing), so require its message too
+    local output
+    local rc=-1
+    if check_command_exists dnf ; then
+        output=$(dnf -C needs-restarting -r 2>/dev/null)
+        rc=$?
+    elif check_command_exists needs-restarting ; then
+        output=$(needs-restarting -r 2>/dev/null)
+        rc=$?
+    fi
+    if [ ${rc} -eq 0 ] ; then
+        reboot=False
+        return
+    elif [ ${rc} -eq 1 ] && echo "${output}" | grep -q 'Reboot is required' ; then
+        reboot=True
+        return
+    fi
+    if check_command_exists zypper ; then
+        zypper -q needs-rebooting >/dev/null 2>&1
+        rc=$?
+        if [ ${rc} -eq 102 ] ; then
+            reboot=True
+            return
+        elif [ ${rc} -eq 0 ] ; then
+            reboot=False
+            return
+        fi
+    fi
+
     # Compare running vs installed kernel via /boot/vmlinuz symlink
     if [ -e /proc/sys/kernel/osrelease ] && [ -L /boot/vmlinuz ] ; then
         running_kernel=$(cat /proc/sys/kernel/osrelease)
-        installed_kernel=$(readlink /boot/vmlinuz | sed -e 's/^vmlinuz-//')
+        installed_kernel=$(basename "$(readlink /boot/vmlinuz)" | sed -e 's/^vmlinuz-//')
         if [ "${running_kernel}" != "${installed_kernel}" ] ; then
             reboot=True
             return
