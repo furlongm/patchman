@@ -5,7 +5,7 @@ Backlog for patchman and patchman-client, tracked with
 patchman source tree, like `gh-pages`.
 
 - `issues.jsonl` - `bd export` of the local beads database
-- `describe.sh`, `add-missing.sh` - scripts used to seed the issues
+- `describe.sh`, `add-missing.sh`, `add-new.sh` - scripts used to seed the issues
 - `bundles/` - git bundles of unpushed branches, as a backup
 
 Restore a branch from a bundle (needs origin/main and origin/develop):
