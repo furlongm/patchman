@@ -1,3 +1,22 @@
+patchman (4.0.23-1) stable; urgency=medium
+
+  * fix timezone handling when parsing datetimes
+  * fall back to updated date for yum errata without issued date
+  * accept non-http repo urls in protocol 2 reports
+  * match repos by existing non-http mirror urls
+  * detect required reboots via needs-restarting and zypper
+  * parse the last module info block in the client
+  * send + rather than %2b in protocol 2 packages
+  * use repoquery for yum updates on dnf5
+  * collect yum repos on dnf5
+  * apt-parsing updates
+  * handle debian testing/sid os strings
+  * skip cve data on error responses instead of crashing
+  * keep client-reported updates when finding updates
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Fri, 20 Nov 2026 05:59:03 +0000
+
 patchman (4.0.22-1) stable; urgency=medium
 
   [ dependabot[bot] ]
