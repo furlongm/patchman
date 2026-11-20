@@ -21,7 +21,7 @@ jobs:
       is_prerelease: ${{ steps.set-vars.outputs.is_prerelease }}
       target_branch: ${{ steps.set-vars.outputs.target_branch }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - id: set-vars
@@ -60,7 +60,7 @@ jobs:
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Create release
@@ -80,7 +80,7 @@ jobs:
     if: needs.setup.outputs.is_prerelease == 'false'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ needs.setup.outputs.target_branch }}
@@ -134,7 +134,7 @@ jobs:
         run: |
           rm /bin/sh
           ln -sf /bin/bash /bin/sh
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           # For stable releases, use target branch (has updated changelog); for pre-releases, use the tag
@@ -192,7 +192,7 @@ jobs:
         run: |
           dnf -y install epel-release
           dnf -y install rpm-build python3 python3-setuptools git
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ needs.setup.outputs.is_prerelease == 'false' && needs.setup.outputs.target_branch || github.ref }}
@@ -223,7 +223,7 @@ jobs:
     if: needs.setup.outputs.is_prerelease == 'false'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Set up python
         uses: actions/setup-python@v5
         with:
