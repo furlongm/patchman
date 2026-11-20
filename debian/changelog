@@ -1,5 +1,11 @@
 patchman (4.0.23-1) stable; urgency=medium
 
+  * UNRELEASED
+
+ -- Marcus Furlong <furlongm@gmail.com>  Fri, 20 Nov 2026 06:05:47 +0000
+
+patchman (4.0.23-1) stable; urgency=medium
+
   * fix timezone handling when parsing datetimes
   * fall back to updated date for yum errata without issued date
   * accept non-http repo urls in protocol 2 reports
