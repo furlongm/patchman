@@ -1,3 +1,12 @@
+patchman (4.0.24-1) stable; urgency=medium
+
+  * use actions/checkout v7
+  * use actions/setup-python v7
+  * use softprops/action-gh-release v3
+  * auto-commit to update version skip-checks: true
+
+ -- Marcus Furlong <furlongm@gmail.com>  Fri, 20 Nov 2026 06:16:21 +0000
+
 patchman (4.0.23-1) stable; urgency=medium
 
   * UNRELEASED
