@@ -290,6 +290,36 @@ class KernelUpdateTests(TestCase):
         self.assertEqual(host.updates.count(), 0)
         self.assertFalse(host.reboot_required)
 
+    def test_reboot_required_without_repos(self):
+        """Reboot check does not depend on the kernel being in a repo."""
+        host = self._create_host(
+            '5.14.0-362.el9',
+            [self.kernel_362, self.kernel_503],
+        )
+        kernel_packages = host.packages.filter(name=self.kernel_name)
+
+        host.find_kernel_updates(kernel_packages, Package.objects.none())
+
+        host.refresh_from_db()
+        self.assertEqual(host.updates.count(), 0)
+        self.assertTrue(host.reboot_required)
+
+    def test_client_reported_reboot_kept(self):
+        """A reboot reported by the client is not cleared by the server check."""
+        host = self._create_host(
+            '5.14.0-503.el9',
+            [self.kernel_362, self.kernel_427, self.kernel_503],
+        )
+        host.reboot_required = True
+        host.save()
+        repo_packages = Package.objects.filter(mirror=self.mirror)
+        kernel_packages = host.packages.filter(name=self.kernel_name)
+
+        host.find_kernel_updates(kernel_packages, repo_packages)
+
+        host.refresh_from_db()
+        self.assertTrue(host.reboot_required)
+
     def test_latest_not_installed(self):
         """Scenario 3: latest kernel not installed.
 
@@ -803,6 +833,21 @@ class ArchKernelUpdateTests(TestCase):
         )
 
         host.find_kernel_updates(kernel_packages, repo_packages)
+
+        host.refresh_from_db()
+        self.assertTrue(host.reboot_required)
+
+    def test_arch_reboot_required_without_repos(self):
+        """Arch: reboot check does not depend on the kernel being in a repo."""
+        host = self._create_host(
+            '6.12.8-arch1-1',
+            [self.linux_repo, self.linux_headers_repo],
+        )
+        kernel_packages = host.packages.filter(
+            Q(name=self.linux_name) | Q(name=self.linux_headers_name)
+        )
+
+        host.find_kernel_updates(kernel_packages, Package.objects.none())
 
         host.refresh_from_db()
         self.assertTrue(host.reboot_required)
