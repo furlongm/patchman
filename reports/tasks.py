@@ -31,8 +31,8 @@ from util.logging import info_message, warning_message
     retry_backoff=True,
     retry_kwargs={'max_retries': 5}
 )
-def process_report(self, report_id):
-    """ Task to process a single report
+def process_report(self, report_id, force=False):
+    """ Task to process a single report, force is passed to Report.process()
     """
     report = Report.objects.get(id=report_id)
     report_id_lock_key = f'process_report_id_lock_{report_id}'
@@ -58,7 +58,7 @@ def process_report(self, report_id):
             else:
                 try:
                     cache.set(report_host_lock_key, report.id, lock_expire)
-                    report.process()
+                    report.process(force=force)
                 finally:
                     cache.delete(report_host_lock_key)
         finally:

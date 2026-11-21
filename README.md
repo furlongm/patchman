@@ -56,13 +56,13 @@ the usage:
 
 ```shell
 $ sbin/patchman -h
-usage: patchman [-h] [-f] [-q] [-r] [-R REPO] [-lr] [-lh] [-dh] [-u] [-A] [-shro | -uhro] [-sdns | -udns] [-H HOST] [-p] [-c] [-d] [-rd] [-n] [-a] [-D hostA hostB] [-e] [-E ERRATUM_TYPE] [-v] [--cve CVE] [--fetch-nist-data]
+usage: patchman [-h] [-f] [-q] [-r] [-R REPO] [-lr] [-lh] [-dh] [-u] [-A] [-shro | -uhro] [-sdns | -udns] [-H HOST] [-p] [-P REPORT] [-c] [-d] [-rd] [-n] [-a] [-D hostA hostB] [-e] [-E ERRATUM_TYPE] [-v] [--cve CVE] [--fetch-nist-data]
 
 Patchman CLI tool
 
 options:
   -h, --help            show this help message and exit
-  -f, --force           Ignore stored checksums and force-refresh all Mirrors
+  -f, --force           Ignore stored Mirror/Errata checksums, reprocess the latest Report for each Host
   -q, --quiet           Quiet mode (e.g. for cronjobs)
   -r, --refresh-repos   Refresh Repositories
   -R REPO, --repo REPO  Only perform action on a specific Repository (repo_id)
@@ -83,6 +83,8 @@ options:
   -H HOST, --host HOST  Only perform action on a specific Host (fqdn)
   -p, --process-reports
                         Process pending Reports
+  -P REPORT, --report REPORT
+                        Only process a specific Report (id), forces processing, implies -p
   -c, --clean-reports   Remove all but the last three Reports
   -d, --dbcheck         Perform some sanity checks and clean unused db entries
   -rd, --remove-duplicates

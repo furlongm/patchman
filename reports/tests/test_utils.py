@@ -15,6 +15,7 @@
 # along with Patchman. If not, see <http://www.gnu.org/licenses/>
 
 import json
+from datetime import timedelta
 
 from django.test import TestCase, override_settings
 from django.utils import timezone
@@ -432,6 +433,79 @@ class ReportProcessTests(TestCase):
         self.assertTrue(report.processed)
         host = Host.objects.get(hostname='newhost.example.com')
         self.assertIsNotNone(host)
+        self.assertEqual(host.packages.count(), 1)
+
+    def _processed_report(self):
+        return Report.objects.create(
+            host='forcehost.example.com',
+            domain='example.com',
+            report_ip='192.168.1.12',
+            os='Ubuntu 22.04.3 LTS',
+            kernel='5.15.0-91-generic',
+            arch='x86_64',
+            protocol='2',
+            processed=True,
+            packages=json.dumps([
+                {'name': 'nginx', 'version': '1.18.0', 'release': '1', 'arch': 'amd64', 'type': 'deb'},
+            ]),
+        )
+
+    def test_report_process_skips_processed_report(self):
+        """Test Report.process() skips an already-processed report."""
+        self._processed_report().process(find_updates=False)
+        self.assertFalse(Host.objects.filter(hostname='forcehost.example.com').exists())
+
+    def test_report_process_force_reprocesses_processed_report(self):
+        """Test Report.process(force=True) reprocesses an already-processed report."""
+        self._processed_report().process(find_updates=False, force=True)
+        host = Host.objects.get(hostname='forcehost.example.com')
+        self.assertEqual(host.packages.count(), 1)
+
+    def _older_report(self, newer):
+        older = Report.objects.create(
+            host='forcehost.example.com', domain='example.com', report_ip='192.168.1.12',
+            os='Ubuntu 22.04.3 LTS', kernel='4.0.0-older', arch='x86_64', protocol='2',
+            packages=json.dumps([]),
+        )
+        Report.objects.filter(pk=older.pk).update(created=newer.created - timedelta(days=1))
+        older.refresh_from_db()
+        return older
+
+    def test_report_process_skips_report_older_than_last_processed(self):
+        """Test Report.process() does not apply a report older than the host's last report."""
+        newer = self._processed_report()
+        newer.process(find_updates=False, force=True)
+        older = self._older_report(newer)
+
+        older.process(find_updates=False)
+
+        older.refresh_from_db()
+        self.assertTrue(older.processed)
+        host = Host.objects.get(hostname='forcehost.example.com')
+        self.assertEqual(host.kernel, '5.15.0-91-generic')
+        self.assertEqual(host.packages.count(), 1)
+
+    def test_report_process_force_applies_older_report(self):
+        """Test Report.process(force=True) applies an explicitly chosen older report."""
+        newer = self._processed_report()
+        newer.process(find_updates=False, force=True)
+        older = self._older_report(newer)
+
+        older.process(find_updates=False, force=True)
+
+        host = Host.objects.get(hostname='forcehost.example.com')
+        self.assertEqual(host.kernel, '4.0.0-older')
+        self.assertEqual(host.packages.count(), 0)
+
+    def test_report_process_force_reprocesses_latest_report(self):
+        """Test Report.process(force=True) still reprocesses the host's latest report."""
+        report = self._processed_report()
+        report.process(find_updates=False, force=True)
+        host = Host.objects.get(hostname='forcehost.example.com')
+        host.packages.clear()
+
+        report.process(find_updates=False, force=True)
+
         self.assertEqual(host.packages.count(), 1)
 
     def test_report_process_protocol2_with_packages(self):
